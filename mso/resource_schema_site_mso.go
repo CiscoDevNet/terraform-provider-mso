@@ -71,7 +71,7 @@ func resourceMSOSchemaSiteCreate(d *schema.ResourceData, m interface{}) error {
 
 	schemasite := models.NewSchemaSite(schemasiteAttr)
 
-	cont, err := msoClient.Save("https://173.36.219.193/api/v1/schemas/sites", schemasite)
+	cont, err := msoClient.Save("api/v1/schemas/sites", schemasite)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 
 	dn := d.Id()
 
-	cont, err := msoClient.GetViaURL("https://173.36.219.193/api/v1/schemas/sites/" + dn)
+	cont, err := msoClient.GetViaURL("api/v1/schemas/sites/" + dn)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func resourceMSOSchemaSiteUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 	schemasite := models.NewSchemaSite(schemasiteAttr)
-	cont, err := msoClient.PatchbyID("https://173.36.219.193/api/v1/schemas/sites/"+d.Id(), schemasite)
+	cont, err := msoClient.PatchbyID("api/v1/schemas/sites/"+d.Id(), schemasite)
 
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	dn := d.Id()
-	err := msoClient.DeletebyId("https://173.36.219.193/api/v1/schemas/sites/" + dn)
+	err := msoClient.DeletebyId("api/v1/schemas/sites/" + dn)
 	if err != nil {
 		return err
 	}
@@ -159,13 +159,4 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId("")
 	return err
-}
-
-func toStringList(configured interface{}) []string {
-	vs := make([]string, 0, 1)
-	val, ok := configured.(string)
-	if ok && val != "" {
-		vs = append(vs, val)
-	}
-	return vs
 }
