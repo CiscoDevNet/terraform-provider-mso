@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -19,7 +19,7 @@ func Provider() terraform.ResourceProvider {
 			},
 			"password": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MSO_PASSWORD", nil),
 				Description: "Password for the MSO Account",
 			},
@@ -60,6 +60,7 @@ func configureClient(d *schema.ResourceData) (interface{}, error) {
 	config := Config{
 		Username:   d.Get("username").(string),
 		Password:   d.Get("password").(string),
+		URL:        d.Get("url").(string),
 		IsInsecure: d.Get("insecure").(bool),
 		ProxyUrl:   d.Get("proxy_url").(string),
 	}
@@ -81,6 +82,9 @@ func (c Config) Valid() error {
 
 		return fmt.Errorf("Password must be provided for the MSO provider")
 	}
+	if c.URL == "" {
+		return fmt.Errorf("URL must be provided for MSO provider")
+	}
 
 	return nil
 }
@@ -88,7 +92,7 @@ func (c Config) Valid() error {
 func (c Config) getClient() interface{} {
 	if c.Password != "" {
 
-		return client.GetClient(c.Username, c.Password)
+		return client.GetClient(c.URL, c.Username, client.Password(c.Password), client.Insecure(c.IsInsecure), client.ProxyUrl(c.ProxyUrl))
 
 	}
 	return nil
@@ -100,4 +104,5 @@ type Config struct {
 	Password   string
 	IsInsecure bool
 	ProxyUrl   string
+	URL        string
 }
