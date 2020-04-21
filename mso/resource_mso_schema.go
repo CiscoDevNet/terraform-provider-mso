@@ -1,4 +1,4 @@
-package aci
+package mso
 
 import (
 	"fmt"
@@ -6,8 +6,9 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform/helper/schema"
-	//"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	// "github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceMSOSchema() *schema.Resource {
@@ -33,7 +34,6 @@ func resourceMSOSchema() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				
 			},
 
 			"sites": &schema.Schema{
@@ -42,10 +42,10 @@ func resourceMSOSchema() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				//Computed: true,
 			},
-
 		}),
 	}
 }
+
 // func getRemoteCloudApplicationcontainer(client *client.Client, dn string) (*models.CloudApplicationcontainer, error) {
 // 	cloudAppCont, err := client.Get(dn)
 // 	if err != nil {
@@ -96,30 +96,30 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema: Beginning Creation")
 	msoClient := m.(*client.Client)
 	schemaAttr := models.SchemaAttributes{}
-	if schema,ok := d.GetOk("schema");ok{
-		schemaAttr.Schema=schema.(string)
+	if schema, ok := d.GetOk("schema"); ok {
+		schemaAttr.Schema = schema.(string)
 
 	}
-    if templates,ok := d.GetOk("templates");ok{
+	if templates, ok := d.GetOk("templates"); ok {
 		templateList := toStringList(templates.([]interface{}))
-		schemaAttr.Templates=templateList
+		schemaAttr.Templates = templateList
 	}
-	
+
 	if sites, ok := d.GetOk("sites"); ok {
 		siteList := toStringList(sites.([]interface{}))
-		schemaAttr.Sites=siteList
-	
+		schemaAttr.Sites = siteList
+
 	}
 	schemaApp := models.NewSchemacontainer(schemaAttr)
 
-	cont,err := msoClient.Save("https://173.36.219.193/api/v1/schemas",schemaApp)
+	cont, err := msoClient.Save("https://173.36.219.193/api/v1/schemas", schemaApp)
 	if err != nil {
 		return err
 	}
 
-	id:=cont.S("id")
+	id := cont.S("id")
 	log.Println("Id value", id)
-	d.SetId(fmt.Sprintf("%v",id))
+	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaRead(d, m)
@@ -137,29 +137,29 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if d.HasChange("templates") {
-		if templates,ok := d.GetOk("templates");ok{
+		if templates, ok := d.GetOk("templates"); ok {
 			templateList := toStringList(templates.([]interface{}))
-			schemaAttr.Templates=templateList
+			schemaAttr.Templates = templateList
 		}
 	}
 
 	if d.HasChange("sites") {
 		if sites, ok := d.GetOk("sites"); ok {
 			siteList := toStringList(sites.([]interface{}))
-			schemaAttr.Sites=siteList
-		
+			schemaAttr.Sites = siteList
+
 		}
 	}
-   schemaApp := models.NewSchemacontainer(schemaAttr)
-  cont,err := msoClient.PatchbyID("https://173.36.219.193/api/v1/schemas/"+d.Id(),schemaApp)
+	schemaApp := models.NewSchemacontainer(schemaAttr)
+	cont, err := msoClient.PatchbyID("https://173.36.219.193/api/v1/schemas/"+d.Id(), schemaApp)
 
 	if err != nil {
 		return err
 	}
-	
-	id:=cont.S("id")
+
+	id := cont.S("id")
 	log.Println("Id value", id)
-	d.SetId(fmt.Sprintf("%v",id))
+	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
 
 	return resourceMSOSchemaRead(d, m)
@@ -172,8 +172,8 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	dn := d.Id()
-	
-   con, err := msoClient.GetViaURL("https://173.36.219.193/api/v1/schemas/" + dn)
+
+	con, err := msoClient.GetViaURL("https://173.36.219.193/api/v1/schemas/" + dn)
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("schema", con.S("schema"))
 	d.Set("templates", con.S("templates").String())
 	d.Set("sites", con.S("sites").String())
-	
+
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
@@ -203,12 +203,11 @@ func resourceMSOSchemaDelete(d *schema.ResourceData, m interface{}) error {
 	return err
 }
 
-
 func toStringList(configured interface{}) []string {
-    vs := make([]string, 0, 1)
-    val, ok := configured.(string)
-    if ok && val != "" {
-        vs = append(vs, val)
-    }
-    return vs
+	vs := make([]string, 0, 1)
+	val, ok := configured.(string)
+	if ok && val != "" {
+		vs = append(vs, val)
+	}
+	return vs
 }
