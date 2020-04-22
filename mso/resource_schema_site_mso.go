@@ -8,7 +8,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/models"
 
 	// "github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceMSOSchemaSite() *schema.Resource {

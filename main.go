@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/ciscoecosystem/terraform-provider-mso/mso"
-	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform/plugin"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func main() {

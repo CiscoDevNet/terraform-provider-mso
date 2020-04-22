@@ -6,9 +6,8 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-
-	// "github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
+	//"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceMSOSchema() *schema.Resource {
@@ -30,10 +29,73 @@ func resourceMSOSchema() *schema.Resource {
 				Required: true,
 			},
 
+			// "templates": &schema.Schema{
+			// 	Type:     schema.TypeList,
+			// 	Optional: true,
+			// 	Elem:     &schema.Schema{Type: schema.TypeString},
+
+			// },
+
 			"templates": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type: schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+
+						"name": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							//Computed: true,
+						},
+						"tenantid": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							//Computed: true,
+						},
+						"displayname": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							//Computed: true,
+						},
+
+						"anps": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"contracts": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"vrfs": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"bds": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"filters": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"externalepgs": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"servicegraphs": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+					},
+				},
+
+				Required: true,
 			},
 
 			"sites": &schema.Schema{
@@ -100,10 +162,32 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 		schemaAttr.Schema = schema.(string)
 
 	}
-	if templates, ok := d.GetOk("templates"); ok {
-		templateList := toStringList(templates.([]interface{}))
-		schemaAttr.Templates = templateList
+
+	maplisttemplates := make([]interface{}, 0, 1)
+	if val, ok := d.GetOk("templates"); ok {
+		tp := val.(*schema.Set).List()
+		for _, val := range tp {
+			map1 := make(map[string]interface{})
+			inner := val.(map[string]interface{})
+			map1["name"] = fmt.Sprintf("%v", inner["name"])
+			map1["tenantId"] = fmt.Sprintf("%v", inner["tenantid"])
+			map1["displayName"] = fmt.Sprintf("%v", inner["displayname"])
+			map1["anps"] = toStringList(inner["anps"].([]interface{}))
+			map1["contracts"] = toStringList(inner["contracts"].([]interface{}))
+			map1["vrfs"] = toStringList(inner["vrfs"].([]interface{}))
+			map1["bds"] = toStringList(inner["bds"].([]interface{}))
+			map1["filters"] = toStringList(inner["filters"].([]interface{}))
+			map1["externalEpgs"] = toStringList(inner["externalepgs"].([]interface{}))
+			map1["serviceGraphs"] = toStringList(inner["servicegraphs"].([]interface{}))
+			maplisttemplates = append(maplisttemplates, map1)
+		}
+		//aAttr.RoundRobin = maplistrr
+		schemaAttr.Templates = maplisttemplates
 	}
+	// if templates,ok := d.GetOk("templates");ok{
+	// 	templateList := toStringList(templates.([]interface{}))
+	// 	schemaAttr.Templates=templateList
+	// }
 
 	if sites, ok := d.GetOk("sites"); ok {
 		siteList := toStringList(sites.([]interface{}))
@@ -117,7 +201,7 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	id := cont.S("id")
+	id := cont.S("id").String()
 	log.Println("Id value", id)
 	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
@@ -137,9 +221,26 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if d.HasChange("templates") {
-		if templates, ok := d.GetOk("templates"); ok {
-			templateList := toStringList(templates.([]interface{}))
-			schemaAttr.Templates = templateList
+		maplisttemplates := make([]interface{}, 0, 1)
+		if val, ok := d.GetOk("templates"); ok {
+			tp := val.(*schema.Set).List()
+			for _, val := range tp {
+				map1 := make(map[string]interface{})
+				inner := val.(map[string]interface{})
+				map1["name"] = fmt.Sprintf("%v", inner["name"])
+				map1["tenantId"] = fmt.Sprintf("%v", inner["tenantid"])
+				map1["displayName"] = fmt.Sprintf("%v", inner["displayname"])
+				map1["anps"] = toStringList(inner["anps"].([]interface{}))
+				map1["contracts"] = toStringList(inner["contracts"].([]interface{}))
+				map1["vrfs"] = toStringList(inner["vrfs"].([]interface{}))
+				map1["bds"] = toStringList(inner["bds"].([]interface{}))
+				map1["filters"] = toStringList(inner["filters"].([]interface{}))
+				map1["externalEpgs"] = toStringList(inner["externalepgs"].([]interface{}))
+				map1["serviceGraphs"] = toStringList(inner["servicegraphs"].([]interface{}))
+				maplisttemplates = append(maplisttemplates, map1)
+			}
+			//aAttr.RoundRobin = maplistrr
+			schemaAttr.Templates = maplisttemplates
 		}
 	}
 
