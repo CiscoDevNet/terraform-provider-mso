@@ -7,7 +7,6 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
-	//"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceMSOSchema() *schema.Resource {
@@ -16,10 +15,6 @@ func resourceMSOSchema() *schema.Resource {
 		Update: resourceMSOSchemaUpdate,
 		Read:   resourceMSOSchemaRead,
 		Delete: resourceMSOSchemaDelete,
-
-		// Importer: &schema.ResourceImporter{
-		// 	State: resourceMSOSchemaImport,
-		// },
 
 		SchemaVersion: 1,
 
