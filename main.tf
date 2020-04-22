@@ -1,22 +1,21 @@
 provider "mso" {
   username = "admin"
-  password = "Ins3965!Ins3965!"
-  url      = "https://10.23.248.134"
+  password = "ins3965!ins3965!"
+  url      = "https://173.36.219.193/"
   insecure = true
 }
 
 resource "mso_schema" "schema1" {
   name          = "nkp"
   template_name = "temp1"
-  tenant_id     = "5e9fcbc30f00000d06fccecf"
+  tenant_id     = "5e9d09482c000068500a269a"
 
 }
 
-# resource "mso_schema_site" "schemasite1" {
-#     schema = "Test1"
-#     template = "Template1"
-#     site = "Site1"
-
-# }
+resource "mso_schema_site" "schemasite1" {
+    schema_id = mso_schema.schema1.id
+    template_name = "temp1"
+    site_id = "5c7c95b25100008f01c1ee3c"
+}
 
 

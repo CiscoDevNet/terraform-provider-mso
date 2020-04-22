@@ -25,17 +25,17 @@ func resourceMSOSchemaSite() *schema.Resource {
 		SchemaVersion: 1,
 
 		Schema: (map[string]*schema.Schema{
-			"schema": &schema.Schema{
+			"schema_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"template": &schema.Schema{
+			"template_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"site": &schema.Schema{
+			"site_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -43,36 +43,15 @@ func resourceMSOSchemaSite() *schema.Resource {
 	}
 }
 
-// func resourceMSOSchemaImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-//     log.Printf("[DEBUG] %s: Beginning Import", d.Id())
-//     aciClient := m.(*client.Client)
-
-//     dn := d.Id()
-
-//     cloudApp, err := getRemoteCloudApplicationcontainer(aciClient, dn)
-
-//     if err != nil {
-//         return nil, err
-//     }
-
 func resourceMSOSchemaSiteCreate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
-	schemasiteAttr := models.SchemaSiteAttributes{}
-	if schema, ok := d.GetOk("schema"); ok {
-		schemasiteAttr.Schema = schema.(string)
-	}
+	schemaId := d.Get("schema_id").(string)
+	templateName := d.Get("template_name").(string)
+	siteId := d.Get("site_id").(string)
 
-	if template, ok := d.GetOk("template"); ok {
-		schemasiteAttr.Template = template.(string)
-	}
+	schemasite := models.NewSchemaSite("add", siteId, templateName)
 
-	if site, ok := d.GetOk("site"); ok {
-		schemasiteAttr.Site = site.(string)
-	}
-
-	schemasite := models.NewSchemaSite(schemasiteAttr)
-
-	cont, err := msoClient.Save("api/v1/schemas/sites", schemasite)
+	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemasite)
 	if err != nil {
 		return err
 	}
@@ -90,13 +69,16 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 
-	dn := d.Id()
+	schemaId := d.Get("schema_id").(string)
 
-	cont, err := msoClient.GetViaURL("api/v1/schemas/sites/" + dn)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
-
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return fmt.Errorf("No Template found")
+	}
 	d.SetId(fmt.Sprintf("%v", cont.S("id")))
 	d.Set("schema", cont.S("schema").String())
 	d.Set("templates", cont.S("templates").String())
@@ -107,57 +89,59 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceMSOSchemaSiteUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] CloudApplicationcontainer: Beginning Update")
+	// log.Printf("[DEBUG] CloudApplicationcontainer: Beginning Update")
 
-	msoClient := m.(*client.Client)
+	// msoClient := m.(*client.Client)
 
-	schemasiteAttr := models.SchemaSiteAttributes{}
+	// schemasiteAttr := models.SchemaSiteAttributes{}
 
-	if d.HasChange("schema") {
-		if schema, ok := d.GetOk("schema"); ok {
-			schemasiteAttr.Template = schema.(string)
-		}
-	}
+	// if d.HasChange("schema") {
+	// 	if schema, ok := d.GetOk("schema"); ok {
+	// 		schemasiteAttr.Template = schema.(string)
+	// 	}
+	// }
 
-	if d.HasChange("templates") {
-		if templates, ok := d.GetOk("templates"); ok {
-			schemasiteAttr.Template = templates.(string)
-		}
-	}
+	// if d.HasChange("templates") {
+	// 	if templates, ok := d.GetOk("templates"); ok {
+	// 		schemasiteAttr.Template = templates.(string)
+	// 	}
+	// }
 
-	if d.HasChange("sites") {
-		if site, ok := d.GetOk("site"); ok {
-			schemasiteAttr.Site = site.(string)
-		}
-	}
-	schemasite := models.NewSchemaSite(schemasiteAttr)
-	cont, err := msoClient.PatchbyID("api/v1/schemas/sites/"+d.Id(), schemasite)
+	// if d.HasChange("sites") {
+	// 	if site, ok := d.GetOk("site"); ok {
+	// 		schemasiteAttr.Site = site.(string)
+	// 	}
+	// }
+	// schemasite := models.NewSchemaSite(schemasiteAttr)
+	// cont, err := msoClient.PatchbyID("api/v1/schemas/sites/"+d.Id(), schemasite)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	id := cont.S("id")
-	log.Println("Id value", id)
-	d.SetId(fmt.Sprintf("%v", id))
-	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
+	// id := cont.S("id")
+	// log.Println("Id value", id)
+	// d.SetId(fmt.Sprintf("%v", id))
+	// log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
 
-	return resourceMSOSchemaSiteRead(d, m)
+	// return resourceMSOSchemaSiteRead(d, m)
+	return nil
 
 }
 
 func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
+	// log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 
-	msoClient := m.(*client.Client)
-	dn := d.Id()
-	err := msoClient.DeletebyId("api/v1/schemas/sites/" + dn)
-	if err != nil {
-		return err
-	}
+	// msoClient := m.(*client.Client)
+	// dn := d.Id()
+	// err := msoClient.DeletebyId("api/v1/schemas/sites/" + dn)
+	// if err != nil {
+	// 	return err
+	// }
 
-	log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
+	// log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
 
-	d.SetId("")
-	return err
+	// d.SetId("")
+	// return err
+	return nil
 }
