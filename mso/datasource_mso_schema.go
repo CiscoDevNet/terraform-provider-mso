@@ -7,17 +7,12 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
-	//"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func datasourceMSOSchema() *schema.Resource {
 	return &schema.Resource{
 
 		Read: datasourceMSOSchemaRead,
-
-		// Importer: &schema.ResourceImporter{
-		// 	State: resourceMSOSchemaImport,
-		// },
 
 		SchemaVersion: 1,
 
@@ -46,12 +41,10 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	name := d.Get("name").(string)
-	log.Println("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOMMM")
 	con, err := msoClient.GetViaURL("api/v1/schemas")
 	if err != nil {
 		return err
 	}
-	log.Println("DOOOOOOOOOOOOOOOOOOOOOOOM")
 	data := con.S("schemas").Data().([]interface{})
 	var flag bool
 	var cnt int
