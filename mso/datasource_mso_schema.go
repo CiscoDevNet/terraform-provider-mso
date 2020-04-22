@@ -57,7 +57,7 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		cnt = cnt + 1
 	}
 	if flag != true {
-		return fmt.Errorf("Site of specified name not found")
+		return fmt.Errorf("Schema of specified name not found")
 	}
 
 	dataCon := con.S("schemas").Index(cnt)
