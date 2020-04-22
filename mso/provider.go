@@ -48,9 +48,9 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site": resourceMSOSchemaSite(),
 		},
 
-		// DataSourcesMap: map[string]*schema.Resource{
-		// 	"aci_tenant":                                    dataSourceAciTenant(),
-		// },
+		DataSourcesMap: map[string]*schema.Resource{
+			"mso_schema": datasourceMSOSchema(),
+		},
 
 		ConfigureFunc: configureClient,
 	}
