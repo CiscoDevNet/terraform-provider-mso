@@ -6,7 +6,7 @@ provider "mso" {
 }
 
 resource "mso_schema" "schema1" {
-  name          = "nkp"
+  name          = "nkp2"
   template_name = "temp1"
   tenant_id     = "5e9d09482c000068500a269a"
 
