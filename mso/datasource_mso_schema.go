@@ -62,30 +62,28 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 
 	dataCon := con.S("schemas").Index(cnt)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
-	d.Set("name", models.StripQuotes(con.S("displayName").String()))
-	count, err := con.ArrayCount("templates")
+	d.Set("name", models.StripQuotes(dataCon.S("displayName").String()))
+	count, err := dataCon.ArrayCount("templates")
 	if err != nil {
 		return fmt.Errorf("No Template found")
 	}
-	stateTemplate := d.Get("template_name").(string)
-	stateTenant := d.Get("tenant_id").(string)
+
 	found := false
 	for i := 0; i < count; i++ {
-		tempCont, err := con.ArrayElement(i, "templates")
+		tempCont, err := dataCon.ArrayElement(i, "templates")
 
 		if err != nil {
 			return fmt.Errorf("Unable to parse the template list")
 		}
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 		apiTenant := models.StripQuotes(tempCont.S("tenantId").String())
-		log.Printf("apitemp %s apiten %s statetemp %s stateten %s", apiTemplate, apiTenant, stateTemplate, stateTenant)
-		if apiTemplate == stateTemplate && apiTenant == stateTenant {
-			d.Set("template_name", apiTemplate)
-			d.Set("tenant_id", apiTenant)
-			found = true
-			break
-		}
+
+		d.Set("template_name", apiTemplate)
+		d.Set("tenant_id", apiTenant)
+		found = true
+		break
 	}
+
 	if !found {
 		d.Set("template_name", "")
 		d.Set("tenant_id", "")

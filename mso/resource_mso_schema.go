@@ -16,6 +16,10 @@ func resourceMSOSchema() *schema.Resource {
 		Read:   resourceMSOSchemaRead,
 		Delete: resourceMSOSchemaDelete,
 
+		// Importer: &schema.ResourceImporter{
+		// 	State: resourceMSOSchemaImport,
+		// },
+
 		SchemaVersion: 1,
 
 		Schema: (map[string]*schema.Schema{
