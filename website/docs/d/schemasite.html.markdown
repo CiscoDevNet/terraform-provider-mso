@@ -21,8 +21,8 @@ data "mso_schema_site" "sample_schema_site" {
 
 ## Argument Reference ##
 
-* `name` - (Required) name of the schema.
-* `schema_id` - (Required) The name of the template.
+* `name` - (Required) name of the site to fetch.
+* `schema_id` - (Required) The schema-id where site is associated.
 
 
 ## Attribute Reference ##
