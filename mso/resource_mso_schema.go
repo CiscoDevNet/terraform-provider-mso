@@ -7,6 +7,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceMSOSchema() *schema.Resource {
@@ -24,18 +25,21 @@ func resourceMSOSchema() *schema.Resource {
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"tenant_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
 	}
@@ -114,7 +118,6 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		}
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 		apiTenant := models.StripQuotes(tempCont.S("tenantId").String())
-		log.Printf("apitemp %s apiten %s statetemp %s stateten %s", apiTemplate, apiTenant, stateTemplate, stateTenant)
 		if apiTemplate == stateTemplate && apiTenant == stateTenant {
 			d.Set("template_name", apiTemplate)
 			d.Set("tenant_id", apiTenant)

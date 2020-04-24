@@ -23,8 +23,8 @@ resource "mso_schema_site" "foo_schema_site" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) name of the schema.
-* `site_id` - (Required) The name of the template.
-* `template_name` - (Required) The name of the site to manage.
+* `site_id` - (Required) Site-id to associate.
+* `template_name` - (Required) Template to be deployed on the site.
 
 ## Attribute Reference ##
 
