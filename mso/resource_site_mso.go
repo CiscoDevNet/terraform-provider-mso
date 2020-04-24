@@ -39,11 +39,6 @@ func resourceMSOSite() *schema.Resource {
 				Required: true,
 			},
 
-			"site": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
 			"labels": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
@@ -52,7 +47,7 @@ func resourceMSOSite() *schema.Resource {
 			},
 
 			"location": &schema.Schema{
-				Type:     schema.TypeSet,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -73,9 +68,8 @@ func resourceMSOSite() *schema.Resource {
 
 			"urls": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Computed: true,
 			},
 		}),
 	}
@@ -100,10 +94,6 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 
 	if apic_site_id, ok := d.GetOk("apic_site_id"); ok {
 		siteAttr.ApicSiteId = apic_site_id.(string)
-	}
-
-	if site, ok := d.GetOk("site"); ok {
-		siteAttr.Site = site.(string)
 	}
 
 	if labels, ok := d.GetOk("labels"); ok {
@@ -165,10 +155,6 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 		siteAttr.ApicSiteId = d.Get("apic_site_id").(string)
 	}
 
-	if d.HasChange("site") {
-		siteAttr.Site = d.Get("site").(string)
-	}
-
 	if d.HasChange("labels") {
 		siteAttr.Labels = d.Get("labels").([]interface{})
 	}
@@ -220,45 +206,8 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("username", con.S("username").String())
 	d.Set("password", con.S("password").String())
 	d.Set("apic_site_id", con.S("apic_site_id").String())
-	d.Set("site", con.S("site").String())
-
-	count1, err := con.ArrayCount("labels")
-	if err != nil {
-		return fmt.Errorf("No Label found")
-	}
-	found1 := false
-	for i := 0; i < count1; i++ {
-
-		temp, err := con.ArrayElement(i, "labels")
-		log.Println(temp)
-		d.Set("labels", temp)
-		found1 = true
-		if err != nil {
-			return fmt.Errorf("Unable to parse the label list")
-		}
-	}
-	if !found1 {
-		d.Set("labels", "")
-	}
-
-	count2, err := con.ArrayCount("urls")
-	if err != nil {
-		return fmt.Errorf("No URL found")
-	}
-	found2 := false
-	for i := 0; i < count2; i++ {
-
-		temp, err := con.ArrayElement(i, "urls")
-		log.Println(temp)
-		d.Set("urls", temp)
-		found2 = true
-		if err != nil {
-			return fmt.Errorf("Unable to parse the url list")
-		}
-	}
-	if !found2 {
-		d.Set("urls", "")
-	}
+	d.Set("labels", con.S("labels").Data().([]interface{}))
+	d.Set("urls", con.S("urls").Data().([]interface{}))
 
 	loc1 := con.S("location").Data()
 	locset := make(map[string]interface{})
@@ -266,11 +215,11 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		loc := loc1.(map[string]interface{})
 		locset["lat"] = fmt.Sprintf("%v", loc["lat"])
 		locset["long"] = fmt.Sprintf("%v", loc["long"])
+
 	} else {
 		locset = nil
 	}
 	d.Set("location", locset)
-
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
