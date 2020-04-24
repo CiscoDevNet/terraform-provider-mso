@@ -8,24 +8,24 @@ description: |-
 
 # mso_schema_site #
 
-Data source for MSO schema site
+Data source for MSO schema site, to fetch the MSO schema site details.
 
 ## Example Usage ##
 
 ```hcl
 data "mso_schema_site" "sample_schema_site" {
-  schema  = "schema1"
-  site  = "bdsol-pod51"
-  template  = "template1"
+  name       = "sitename"
+  schema_id  = "schema-id"
 }
 ```
 
 ## Argument Reference ##
 
-* `schema` - (Required) name of the schema.
-* `template` - (Required) The name of the template.
-* `site` - (Required) The name of the site to manage.
+* `name` - (Required) name of the schema.
+* `schema_id` - (Required) The name of the template.
+
 
 ## Attribute Reference ##
 
-No attributes are exported
+* `template_name` - (Required) The name of the template deployed to the site.
+* `site_id` - (Optional) Site id is set to the MSO site UUID.
