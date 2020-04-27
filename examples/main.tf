@@ -40,3 +40,41 @@ output "demo" {
 
 
 
+
+
+resource "mso_user" "user1" {
+  username      = "nirav12"
+  user_password  = " user@123412341234"
+  first_name="hil"
+  last_name="hil"
+
+  email="hil@gmail.com"     
+  phone="123456789150"
+  account_status="inactive"
+  roles{
+    roleid="0000ffff0000000000000031"
+    access_type="readWrite"
+       //access_type={}
+    }
+    roles{
+    roleid="5ea2bf5a2f0000610b82aa5d"
+    access_type="readWrite"
+       //access_type={}
+    }
+  
+}
+
+
+
+
+data "mso_user" "schema10" {
+  username = "nirav12"
+}
+
+output "demo1" {
+  value = "${data.mso_user.schema10}"
+}
+  
+
+
+  //description   = "This user is created by terraform"
