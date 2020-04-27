@@ -139,28 +139,24 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 
 	siteAttr := models.SiteAttributes{}
 
-	if d.HasChange("name") {
-		siteAttr.Name = d.Get("name").(string)
+	if name, ok := d.GetOk("name"); ok {
+		siteAttr.Name = name.(string)
 	}
 
-	if d.HasChange("username") {
-		siteAttr.ApicUsername = d.Get("username").(string)
+	if username, ok := d.GetOk("username"); ok {
+		siteAttr.ApicUsername = username.(string)
 	}
 
-	if d.HasChange("password") {
-		siteAttr.ApicPassword = d.Get("password").(string)
+	if password, ok := d.GetOk("password"); ok {
+		siteAttr.ApicPassword = password.(string)
 	}
 
-	if d.HasChange("apic_site_id") {
-		siteAttr.ApicSiteId = d.Get("apic_site_id").(string)
+	if apic_site_id, ok := d.GetOk("apic_site_id"); ok {
+		siteAttr.ApicSiteId = apic_site_id.(string)
 	}
 
-	if d.HasChange("labels") {
-		siteAttr.Labels = d.Get("labels").([]interface{})
-	}
-
-	if d.HasChange("urls") {
-		siteAttr.Url = d.Get("urls").([]interface{})
+	if labels, ok := d.GetOk("labels"); ok {
+		siteAttr.Labels = labels.([]interface{})
 	}
 
 	var loc *models.Location
@@ -174,6 +170,10 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 		} else {
 			siteAttr.Location = nil
 		}
+	}
+
+	if urls, ok := d.GetOk("urls"); ok {
+		siteAttr.Url = urls.([]interface{})
 	}
 
 	siteApp := models.NewSite(siteAttr)
