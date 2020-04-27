@@ -9,7 +9,7 @@ resource "mso_site" "site1" {
   name = "mso2"
   username = "admin"
   password = "noir0!234"
-  apic_site_id = "102"
+  apic_site_id = "18"
   # labels = [ "11" ]
   urls = [ "https://3.208.123.222" ]
 }

@@ -77,6 +77,13 @@ func resourceMSOSite() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"cloud_providers": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -181,6 +188,10 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	if urls, ok := d.GetOk("urls"); ok {
 		siteAttr.Url = urls.([]interface{})
 	}
+
+	if cloudProviders, ok := d.GetOk("cloud_providers"); ok {
+		siteAttr.CloudProviders = cloudProviders.([]interface{})
+	}
 	siteAttr.Platform = d.Get("platform").(string)
 	siteApp := models.NewSite(siteAttr)
 	cont, err := msoClient.Put(fmt.Sprintf("api/v1/sites/%s", d.Id()), siteApp)
@@ -210,12 +221,11 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(models.StripQuotes(con.S("id").String()))
 	d.Set("name", models.StripQuotes(con.S("name").String()))
 	d.Set("username", models.StripQuotes(con.S("username").String()))
-	d.Set("password", models.StripQuotes(con.S("password").String()))
 	d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 	d.Set("labels", con.S("labels").Data().([]interface{}))
 	d.Set("urls", con.S("urls").Data().([]interface{}))
 	d.Set("platform", models.StripQuotes(con.S("platform").String()))
-
+	d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
 	loc1 := con.S("location").Data()
 	locset := make(map[string]interface{})
 	if loc1 != nil {
