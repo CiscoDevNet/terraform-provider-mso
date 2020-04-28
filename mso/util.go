@@ -8,3 +8,5 @@ func toStringList(configured interface{}) []string {
 	}
 	return vs
 }
+
+const version = 1
