@@ -48,8 +48,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site": resourceMSOSchemaSite(),
 			"mso_site":        resourceMSOSite(),
 			"mso_role":        resourceMSORole(),
-
-			"mso_user": resourceMSOUser(),
+			"mso_user": 	   resourceMSOUser(),
+			"mso_label":       resourceMSOLabel(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -57,8 +57,9 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site": datasourceMSOSchemaSite(),
 			"mso_site":        datasourceMSOSite(),
 			"mso_role":        datasourceMSORole(),
-
-			"mso_user": datasourceMSOUser(),
+			"mso_user":        datasourceMSOUser(),
+			"mso_label":       datasourceMSOLabel(),
+			
 		},
 
 		ConfigureFunc: configureClient,
