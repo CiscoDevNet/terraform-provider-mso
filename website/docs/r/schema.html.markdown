@@ -24,9 +24,9 @@ resource "mso_schema" "foo_schema" {
 ## Argument Reference ##
 
 * `name` - (Required) name of the schema.
-* `template_name` - (optional) name of templates for this schema.
-* `tenant_id` - (optional) temant_id for this schema.
+* `template_name` - (Required) name of template attached to this schema.
+* `tenant_id` - (Required) tenant_id for this schema.
 
 ## Attribute Reference ##
 
-No attributes are exported
+The only Attribute exposed for this resource is `id`. Which is set to the id of schema created.

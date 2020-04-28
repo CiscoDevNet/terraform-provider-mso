@@ -14,18 +14,18 @@ Manages MSO Schema Site
 
 ```hcl
 resource "mso_schema_site" "foo_schema_site" {
-  schema  = "schema1"
-  site  = "bdsol-pod51"
-  template  = "template1"
+  schema_id  = "${mso_schema.schema1.id}"
+  site_id  = "bdsol-pod51"
+  template_name  = "template1"
 }
 ```
 
 ## Argument Reference ##
 
-* `schema` - (Required) name of the schema.
-* `template` - (Required) The name of the template.
-* `site` - (Required) The name of the site to manage.
+* `schema_id` - (Required) name of the schema.
+* `site_id` - (Required) Site-id to associate.
+* `template_name` - (Required) Template to be deployed on the site.
 
 ## Attribute Reference ##
 
-No attributes are exported
+The only attribute exported with this resource is `id`. Which is set to the id of site associated.
