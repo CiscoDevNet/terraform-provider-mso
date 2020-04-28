@@ -148,7 +148,7 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Schema: Beginning Creation")
+	log.Printf("[DEBUG] Schema: Beginning Creation of resource")
 	msoClient := m.(*client.Client)
 	var user string
 	if username,ok:=d.GetOk("username");ok{
