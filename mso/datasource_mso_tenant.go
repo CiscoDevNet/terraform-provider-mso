@@ -112,9 +112,9 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unable to parse the site associations list")
 		}
 
-		map1 := make(map[string]interface{})
-		map1["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
-		site_associations = append(site_associations, map1)
+		mapSite := make(map[string]interface{})
+		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
+		site_associations = append(site_associations, mapSite)
 	}
 
 	d.Set("site_associations", site_associations)
@@ -131,9 +131,9 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unable to parse the user associations list")
 		}
 
-		map1 := make(map[string]interface{})
-		map1["user_id"] = models.StripQuotes(usersCont.S("userId").String())
-		user_associations = append(user_associations, map1)
+		mapUser := make(map[string]interface{})
+		mapUser["user_id"] = models.StripQuotes(usersCont.S("userId").String())
+		user_associations = append(user_associations, mapUser)
 	}
 
 	d.Set("user_associations", user_associations)
