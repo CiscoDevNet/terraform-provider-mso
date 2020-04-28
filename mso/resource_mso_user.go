@@ -101,12 +101,12 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 			if inner["access_type"] != "" {
 				map1["accessType"] = fmt.Sprintf("%v", inner["access_type"])
 			}
-			//map1["sortOrder"], _ =fmt.Sprintf("%v", inner["sort_order"]))
+			
 			roles = append(roles, map1)
 		}
-		//aAttr.RoundRobin = maplistrr
+		
 	}
-	//roles:= d.Get("roles").(string)
+
 
 	userApp := models.NewUser("", user, userPassword, firstName, lastName, email, phone, accountStatus, domain, roles)
 	cont, err := msoClient.Save("api/v1/users", userApp)

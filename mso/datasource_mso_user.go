@@ -54,12 +54,8 @@ func datasourceMSOUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			// "roles": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Optional: true,
-			// },
-
-			"roles": &schema.Schema{
+			
+		"roles": &schema.Schema{
 				Type: schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

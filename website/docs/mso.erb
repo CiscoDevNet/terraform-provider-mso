@@ -1,0 +1,60 @@
+<% wrap_layout :inner do %>
+    <% content_for :sidebar do %>
+      <div class="docs-sidebar hidden-print affix-top" role="complementary">
+        <ul class="nav docs-sidenav">
+          <li<%= sidebar_current("docs-home") %>>
+          <a href="/docs/providers/index.html">All Providers</a>
+          </li>
+  
+          <li<%= sidebar_current("docs-mso-index") %>>
+          <a href="/docs/providers/mso/index.html">MSO Provider</a>
+         
+         </li>
+  
+  
+          <li<%= sidebar_current("docs-mso-datasource") %>>
+          <a href="#">Data Resources</a>
+              <ul class="nav nav-visible">
+                  <li<%= sidebar_current("docs-mso-data-source-schema") %>>
+                    <a href="/docs/providers/mso/d/schema.html">mso_schema</a>
+                  </li>
+                  <li<%= sidebar_current("docs-mso-data-source-schema_site") %>>
+                    <a href="/docs/providers/mso/d/schemasite.html">mso_schema_site</a>
+                  </li>
+ 		        <li<%= sidebar_current("docs-mso-data-source-user") %>>
+                  <a href="/docs/providers/mso/d/user.html">mso_user</a>
+                </li>
+                  <li<%= sidebar_current("docs-mso-index") %>>
+                    <a href="/docs/providers/mso/index.html">MSO</a>
+                  </li>
+              </ul>
+          </li>
+          <li<%= sidebar_current("docs-mso-resource") %>>
+          <a href="#">Resources</a>
+              <ul class="nav nav-visible">
+                  <li<%= sidebar_current("docs-mso-resource-schema") %>>
+                    <a href="/docs/providers/mso/r/schema.html">mso_schema</a>
+                  </li>
+                  <li<%= sidebar_current("docs-mso-resource-schema_site") %>>
+                    <a href="/docs/providers/mso/r/schemasite.html">mso_schema_site</a>
+                  </li>
+  	  <li<%= sidebar_current("docs-mso-resource-user") %>>
+                  <a href="/docs/providers/mso/d/user.html">mso_user</a>
+                </li>
+                  <li<%= sidebar_current("docs-mso-index") %>>
+                    <a href="/docs/providers/mso/index.html">MSO</a>
+                  </li>
+              </ul>
+          </li>
+        </ul>
+      </div>
+    <% end %>
+  
+    <%= yield %>
+    <% end %>
+        </ul>
+      </div>
+    <% end %>
+  
+    <%= yield %>
+    <% end %>
