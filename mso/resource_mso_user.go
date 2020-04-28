@@ -80,14 +80,40 @@ func resourceMSOUser() *schema.Resource {
 func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema: Beginning Creation")
 	msoClient := m.(*client.Client)
-	user := d.Get("username").(string)
-	userPassword := d.Get("user_password").(string)
-	firstName := d.Get("first_name").(string)
-	lastName := d.Get("last_name").(string)
-	email := d.Get("email").(string)
-	phone := d.Get("phone").(string)
-	accountStatus := d.Get("account_status").(string)
-	domain := d.Get("domain").(string)
+
+	var user string
+	if username,ok:=d.GetOk("username");ok{
+		user=username.(string)
+	}
+	var userPassword string
+	if password,ok:=d.GetOk("user_password");ok{
+		userPassword=password.(string)
+	}
+	var firstName string
+	if firstname,ok:=d.GetOk("first_name");ok{
+		firstName=firstname.(string)
+	}
+	var lastName string
+	if lastname,ok:=d.GetOk("last_name");ok{
+		lastName=lastname.(string)
+	}
+   var email string 
+   if emails,ok:=d.GetOk("email");ok{
+	email=emails.(string)
+}
+	var phone string
+	if phones,ok := d.GetOk("phone");ok{
+       phone=phones.(string)
+	}
+	var accountStatus string
+	if accountstatus,ok := d.GetOk("account_status");ok{
+		accountStatus=accountstatus.(string)
+	 }
+	var domain string
+	if Domain,ok := d.GetOk("domain");ok{
+		domain=Domain.(string)
+	 }
+	
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
 		tp := val.(*schema.Set).List()
@@ -101,12 +127,12 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 			if inner["access_type"] != "" {
 				map1["accessType"] = fmt.Sprintf("%v", inner["access_type"])
 			}
-			
+			//map1["sortOrder"], _ =fmt.Sprintf("%v", inner["sort_order"]))
 			roles = append(roles, map1)
 		}
-		
+		//aAttr.RoundRobin = maplistrr
 	}
-
+	//roles:= d.Get("roles").(string)
 
 	userApp := models.NewUser("", user, userPassword, firstName, lastName, email, phone, accountStatus, domain, roles)
 	cont, err := msoClient.Save("api/v1/users", userApp)
@@ -124,15 +150,38 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema: Beginning Creation")
 	msoClient := m.(*client.Client)
-	user := d.Get("username").(string)
-	userPassword := d.Get("user_password").(string)
-	firstName := d.Get("first_name").(string)
-	lastName := d.Get("last_name").(string)
-	email := d.Get("email").(string)
-	phone := d.Get("phone").(string)
-
-	accountStatus := d.Get("account_status").(string)
-	domain := d.Get("domain").(string)
+	var user string
+	if username,ok:=d.GetOk("username");ok{
+		user=username.(string)
+	}
+	var userPassword string
+	if password,ok:=d.GetOk("user_password");ok{
+		userPassword=password.(string)
+	}
+	var firstName string
+	if firstname,ok:=d.GetOk("first_name");ok{
+		firstName=firstname.(string)
+	}
+	var lastName string
+	if lastname,ok:=d.GetOk("last_name");ok{
+		lastName=lastname.(string)
+	}
+   var email string 
+   if emails,ok:=d.GetOk("email");ok{
+	email=emails.(string)
+}
+	var phone string
+	if phones,ok := d.GetOk("phone");ok{
+       phone=phones.(string)
+	}
+	var accountStatus string
+	if accountstatus,ok := d.GetOk("account_status");ok{
+		accountStatus=accountstatus.(string)
+	 }
+	var domain string
+	if Domain,ok := d.GetOk("domain");ok{
+		domain=Domain.(string)
+	 }
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
 
