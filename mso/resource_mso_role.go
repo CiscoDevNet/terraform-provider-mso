@@ -19,12 +19,6 @@ func resourceMSORole() *schema.Resource {
 		SchemaVersion: 1,
 
 		Schema: (map[string]*schema.Schema{
-			"role_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -137,7 +131,6 @@ func resourceMSORoleUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
 
 	return resourceMSORoleRead(d, m)
-	return nil
 
 }
 
@@ -212,5 +205,5 @@ func resourceMSORoleDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
 
 	d.SetId("")
-	return err
+	return nil
 }
