@@ -142,9 +142,7 @@ func testAccCheckMSOSchemaAttributes(name string, st *SchemaTest) resource.TestC
 		if "temp1" != st.TemplateName {
 			return fmt.Errorf("Bad Template name %s", st.TemplateName)
 		}
-		
-	
-		
+
 		return nil
 	}
 }

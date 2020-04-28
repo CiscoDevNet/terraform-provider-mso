@@ -149,12 +149,3 @@ func resourceMSOSchemaDelete(d *schema.ResourceData, m interface{}) error {
 	d.SetId("")
 	return err
 }
-
-func toStringList(configured interface{}) []string {
-	vs := make([]string, 0, 1)
-	val, ok := configured.(string)
-	if ok && val != "" {
-		vs = append(vs, val)
-	}
-	return vs
-}
