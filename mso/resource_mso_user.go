@@ -82,38 +82,38 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	var user string
-	if username,ok:=d.GetOk("username");ok{
-		user=username.(string)
+	if username, ok := d.GetOk("username"); ok {
+		user = username.(string)
 	}
 	var userPassword string
-	if password,ok:=d.GetOk("user_password");ok{
-		userPassword=password.(string)
+	if password, ok := d.GetOk("user_password"); ok {
+		userPassword = password.(string)
 	}
 	var firstName string
-	if firstname,ok:=d.GetOk("first_name");ok{
-		firstName=firstname.(string)
+	if firstname, ok := d.GetOk("first_name"); ok {
+		firstName = firstname.(string)
 	}
 	var lastName string
-	if lastname,ok:=d.GetOk("last_name");ok{
-		lastName=lastname.(string)
+	if lastname, ok := d.GetOk("last_name"); ok {
+		lastName = lastname.(string)
 	}
-   var email string 
-   if emails,ok:=d.GetOk("email");ok{
-	email=emails.(string)
-}
+	var email string
+	if emails, ok := d.GetOk("email"); ok {
+		email = emails.(string)
+	}
 	var phone string
-	if phones,ok := d.GetOk("phone");ok{
-       phone=phones.(string)
+	if phones, ok := d.GetOk("phone"); ok {
+		phone = phones.(string)
 	}
 	var accountStatus string
-	if accountstatus,ok := d.GetOk("account_status");ok{
-		accountStatus=accountstatus.(string)
-	 }
+	if accountstatus, ok := d.GetOk("account_status"); ok {
+		accountStatus = accountstatus.(string)
+	}
 	var domain string
-	if Domain,ok := d.GetOk("domain");ok{
-		domain=Domain.(string)
-	 }
-	
+	if Domain, ok := d.GetOk("domain"); ok {
+		domain = Domain.(string)
+	}
+
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
 		tp := val.(*schema.Set).List()
@@ -151,37 +151,37 @@ func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema: Beginning Creation of resource")
 	msoClient := m.(*client.Client)
 	var user string
-	if username,ok:=d.GetOk("username");ok{
-		user=username.(string)
+	if username, ok := d.GetOk("username"); ok {
+		user = username.(string)
 	}
 	var userPassword string
-	if password,ok:=d.GetOk("user_password");ok{
-		userPassword=password.(string)
+	if password, ok := d.GetOk("user_password"); ok {
+		userPassword = password.(string)
 	}
 	var firstName string
-	if firstname,ok:=d.GetOk("first_name");ok{
-		firstName=firstname.(string)
+	if firstname, ok := d.GetOk("first_name"); ok {
+		firstName = firstname.(string)
 	}
 	var lastName string
-	if lastname,ok:=d.GetOk("last_name");ok{
-		lastName=lastname.(string)
+	if lastname, ok := d.GetOk("last_name"); ok {
+		lastName = lastname.(string)
 	}
-   var email string 
-   if emails,ok:=d.GetOk("email");ok{
-	email=emails.(string)
-}
+	var email string
+	if emails, ok := d.GetOk("email"); ok {
+		email = emails.(string)
+	}
 	var phone string
-	if phones,ok := d.GetOk("phone");ok{
-       phone=phones.(string)
+	if phones, ok := d.GetOk("phone"); ok {
+		phone = phones.(string)
 	}
 	var accountStatus string
-	if accountstatus,ok := d.GetOk("account_status");ok{
-		accountStatus=accountstatus.(string)
-	 }
+	if accountstatus, ok := d.GetOk("account_status"); ok {
+		accountStatus = accountstatus.(string)
+	}
 	var domain string
-	if Domain,ok := d.GetOk("domain");ok{
-		domain=Domain.(string)
-	 }
+	if Domain, ok := d.GetOk("domain"); ok {
+		domain = Domain.(string)
+	}
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
 
