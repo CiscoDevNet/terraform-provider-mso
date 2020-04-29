@@ -1,0 +1,912 @@
+2020/04/28 19:12:05 [INFO] Terraform version: 0.12.21  
+2020/04/28 19:12:05 [INFO] Go runtime version: go1.12.13
+2020/04/28 19:12:05 [INFO] CLI args: []string{"/Users/nirav.katarmal/go/bin/terraform", "apply"}
+2020/04/28 19:12:05 [DEBUG] Attempting to open CLI config file: /Users/nirav.katarmal/.terraformrc
+2020/04/28 19:12:05 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2020/04/28 19:12:05 [INFO] CLI command args: []string{"apply"}
+2020/04/28 19:12:05 [TRACE] Meta.Backend: no config given or present on disk, so returning nil config
+2020/04/28 19:12:05 [TRACE] Meta.Backend: backend has not previously been initialized in this working directory
+2020/04/28 19:12:05 [DEBUG] New state was assigned lineage "d1f8f684-1da5-4e48-abb8-c3e852ad899e"
+2020/04/28 19:12:05 [TRACE] Meta.Backend: using default local state only (no backend configuration, and no existing initialized backend)
+2020/04/28 19:12:05 [TRACE] Meta.Backend: instantiated backend of type <nil>
+2020/04/28 19:12:05 [DEBUG] checking for provider in "."
+2020/04/28 19:12:05 [DEBUG] checking for provider in "/Users/nirav.katarmal/go/bin"
+2020/04/28 19:12:05 [WARN] found legacy provider "terraform-provider-aci"
+2020/04/28 19:12:05 [WARN] found legacy provider "terraform-provider-aws"
+2020/04/28 19:12:05 [WARN] found legacy provider "terraform-provider-constellix"
+2020/04/28 19:12:05 [WARN] found legacy provider "terraform-provider-dme"
+2020/04/28 19:12:05 [WARN] found legacy provider "terraform-provider-mso"
+2020/04/28 19:12:05 [DEBUG] checking for provider in ".terraform/plugins/darwin_amd64"
+2020/04/28 19:12:05 [DEBUG] found valid plugin: "aci", "0.0.0", "/Users/nirav.katarmal/go/bin/terraform-provider-aci"
+2020/04/28 19:12:05 [DEBUG] found valid plugin: "aws", "0.0.0", "/Users/nirav.katarmal/go/bin/terraform-provider-aws"
+2020/04/28 19:12:05 [DEBUG] found valid plugin: "constellix", "0.0.0", "/Users/nirav.katarmal/go/bin/terraform-provider-constellix"
+2020/04/28 19:12:05 [DEBUG] found valid plugin: "dme", "0.0.0", "/Users/nirav.katarmal/go/bin/terraform-provider-dme"
+2020/04/28 19:12:05 [DEBUG] found valid plugin: "mso", "0.0.0", "/Users/nirav.katarmal/go/bin/terraform-provider-mso"
+2020/04/28 19:12:05 [DEBUG] checking for provisioner in "."
+2020/04/28 19:12:05 [DEBUG] checking for provisioner in "/Users/nirav.katarmal/go/bin"
+2020/04/28 19:12:05 [DEBUG] checking for provisioner in ".terraform/plugins/darwin_amd64"
+2020/04/28 19:12:05 [TRACE] Meta.Backend: backend <nil> does not support operations, so wrapping it in a local backend
+2020/04/28 19:12:05 [INFO] backend/local: starting Apply operation
+2020/04/28 19:12:05 [TRACE] backend/local: requesting state manager for workspace "default"
+2020/04/28 19:12:05 [TRACE] backend/local: state manager for workspace "default" will:
+ - read initial snapshot from terraform.tfstate
+ - write new snapshots to terraform.tfstate
+ - create any backup at terraform.tfstate.backup
+2020/04/28 19:12:05 [TRACE] backend/local: requesting state lock for workspace "default"
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: preparing to manage state snapshots at terraform.tfstate
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: no previously-stored snapshot exists
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: locking terraform.tfstate using fcntl flock
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: writing lock metadata to .terraform.tfstate.lock.info
+2020/04/28 19:12:05 [TRACE] backend/local: reading remote state for workspace "default"
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: reading latest snapshot from terraform.tfstate
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: snapshot file has nil snapshot, but that's okay
+2020/04/28 19:12:05 [TRACE] statemgr.Filesystem: read nil snapshot
+2020/04/28 19:12:05 [TRACE] backend/local: retrieving local state snapshot for workspace "default"
+2020/04/28 19:12:05 [TRACE] backend/local: building context for current working directory
+2020/04/28 19:12:05 [TRACE] terraform.NewContext: starting
+2020/04/28 19:12:05 [TRACE] terraform.NewContext: resolving provider version selections
+2020/04/28 19:12:05 [TRACE] terraform.NewContext: loading provider schemas
+2020/04/28 19:12:05 [TRACE] LoadSchemas: retrieving schema for provider type "mso"
+2020-04-28T19:12:05.266+0530 [INFO]  plugin: configuring client automatic mTLS
+2020-04-28T19:12:05.307+0530 [DEBUG] plugin: starting plugin: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso args=[/Users/nirav.katarmal/go/bin/terraform-provider-mso]
+2020-04-28T19:12:05.314+0530 [DEBUG] plugin: plugin started: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91020
+2020-04-28T19:12:05.314+0530 [DEBUG] plugin: waiting for RPC address: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso
+2020-04-28T19:12:05.339+0530 [INFO]  plugin.terraform-provider-mso: configuring server automatic mTLS: timestamp=2020-04-28T19:12:05.338+0530
+2020-04-28T19:12:05.388+0530 [DEBUG] plugin: using plugin: version=5
+2020-04-28T19:12:05.388+0530 [DEBUG] plugin.terraform-provider-mso: plugin address: address=/var/folders/9r/n9wy2k4n00xgzd3vwwg2dl7572n7lr/T/plugin334866307 network=unix timestamp=2020-04-28T19:12:05.388+0530
+2020/04/28 19:12:05 [TRACE] GRPCProvider: GetSchema
+2020/04/28 19:12:05 [TRACE] GRPCProvider: Close
+2020-04-28T19:12:05.496+0530 [DEBUG] plugin: plugin process exited: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91020
+2020-04-28T19:12:05.496+0530 [DEBUG] plugin: plugin exited
+2020/04/28 19:12:05 [TRACE] terraform.NewContext: complete
+2020/04/28 19:12:05 [TRACE] backend/local: finished building terraform.Context
+2020/04/28 19:12:05 [TRACE] backend/local: requesting interactive input, if necessary
+2020/04/28 19:12:05 [TRACE] Context.Input: Prompting for provider arguments
+2020/04/28 19:12:05 [TRACE] Context.Input: Provider provider.mso declared at main.tf:1,1-15
+2020/04/28 19:12:05 [TRACE] Context.Input: Input for provider.mso: map[string]cty.Value{}
+2020/04/28 19:12:05 [TRACE] backend/local: running validation operation
+2020/04/28 19:12:05 [INFO] terraform: building graph: GraphTypeValidate
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ConfigTransformer
+2020/04/28 19:12:05 [TRACE] ConfigTransformer: Starting for path: 
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ConfigTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.LocalTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.LocalTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OutputTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OutputTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OrphanResourceInstanceTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OrphanResourceInstanceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.StateTransformer
+2020/04/28 19:12:05 [TRACE] StateTransformer: state is empty, so nothing to do
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.StateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OrphanOutputTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OrphanOutputTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachResourceConfigTransformer
+2020/04/28 19:12:05 [TRACE] AttachResourceConfigTransformer: attaching to "mso_site.site_test_1" (*terraform.NodeValidatableResource) config from main.tf:9,1-34
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachResourceConfigTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachStateTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachStateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootVariableTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootVariableTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.MissingProvisionerTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.MissingProvisionerTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ProvisionerTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ProvisionerTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ModuleVariableTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ModuleVariableTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.graphTransformerMulti
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderConfigTransformer
+2020/04/28 19:12:05 [TRACE] ProviderConfigTransformer: attaching to "provider.mso" provider configuration from main.tf:1,1-15
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderConfigTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.MissingProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.MissingProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderTransformer
+2020/04/28 19:12:05 [TRACE] ProviderTransformer: mso_site.site_test_1 is provided by provider.mso or inherited equivalent
+2020/04/28 19:12:05 [TRACE] ProviderTransformer: exact match for provider.mso serving mso_site.site_test_1
+2020/04/28 19:12:05 [DEBUG] ProviderTransformer: "mso_site.site_test_1" (*terraform.NodeValidatableResource) needs provider.mso
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.PruneProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.PruneProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ParentProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ParentProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.graphTransformerMulti with new graph:
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RemovedModuleTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RemovedModuleTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachSchemaTransformer
+2020/04/28 19:12:05 [TRACE] AttachSchemaTransformer: attaching resource schema to mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] AttachSchemaTransformer: attaching provider config schema to provider.mso
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachSchemaTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ReferenceTransformer
+2020/04/28 19:12:05 [DEBUG] ReferenceTransformer: "mso_site.site_test_1" references: []
+2020/04/28 19:12:05 [DEBUG] ReferenceTransformer: "provider.mso" references: []
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ReferenceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CountBoundaryTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CountBoundaryTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TargetsTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TargetsTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ForcedCBDTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ForcedCBDTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CloseProviderTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CloseProviderTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CloseProvisionerTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CloseProvisionerTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  root - terraform.graphNodeRoot
+    meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    provider.mso (close) - *terraform.graphNodeCloseProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TransitiveReductionTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TransitiveReductionTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+  mso_site.site_test_1 - *terraform.NodeValidatableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodeValidatableResource
+  root - terraform.graphNodeRoot
+    meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    provider.mso (close) - *terraform.graphNodeCloseProvider
+  ------
+2020/04/28 19:12:05 [DEBUG] Starting graph walk: walkValidate
+2020/04/28 19:12:05 [TRACE] dag/walk: updating graph
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "provider.mso"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "provider.mso (close)"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "root"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "root" waiting on "provider.mso (close)"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "mso_site.site_test_1" waiting on "provider.mso"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "meta.count-boundary (EachMode fixup)" waiting on "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "provider.mso (close)" waiting on "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "root" waiting on "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "root", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "mso_site.site_test_1", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "meta.count-boundary (EachMode fixup)", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "provider.mso (close)", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "provider.mso"
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso": starting visit (*terraform.NodeApplyableProvider)
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso": evaluating
+2020/04/28 19:12:05 [TRACE] [walkValidate] Entering eval tree: provider.mso
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalInitProvider
+2020-04-28T19:12:05.500+0530 [INFO]  plugin: configuring client automatic mTLS
+2020-04-28T19:12:05.540+0530 [DEBUG] plugin: starting plugin: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso args=[/Users/nirav.katarmal/go/bin/terraform-provider-mso]
+2020-04-28T19:12:05.549+0530 [DEBUG] plugin: plugin started: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91021
+2020-04-28T19:12:05.549+0530 [DEBUG] plugin: waiting for RPC address: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso
+2020-04-28T19:12:05.572+0530 [INFO]  plugin.terraform-provider-mso: configuring server automatic mTLS: timestamp=2020-04-28T19:12:05.572+0530
+2020-04-28T19:12:05.610+0530 [DEBUG] plugin.terraform-provider-mso: plugin address: address=/var/folders/9r/n9wy2k4n00xgzd3vwwg2dl7572n7lr/T/plugin116566136 network=unix timestamp=2020-04-28T19:12:05.610+0530
+2020-04-28T19:12:05.610+0530 [DEBUG] plugin: using plugin: version=5
+2020/04/28 19:12:05 [TRACE] BuiltinEvalContext: Initialized "mso" provider for provider.mso
+2020/04/28 19:12:05 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalOpFilter
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalValidateProvider
+2020/04/28 19:12:05 [TRACE] buildProviderConfig for provider.mso: using explicit config only
+2020/04/28 19:12:05 [TRACE] GRPCProvider: GetSchema
+2020/04/28 19:12:05 [TRACE] GRPCProvider: PrepareProviderConfig
+2020/04/28 19:12:05 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:05 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:05 [TRACE] [walkValidate] Exiting eval tree: provider.mso
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso": visit complete
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": starting visit (*terraform.NodeValidatableResource)
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": evaluating
+2020/04/28 19:12:05 [TRACE] [walkValidate] Entering eval tree: mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalValidateResource
+2020/04/28 19:12:05 [TRACE] GRPCProvider: ValidateResourceTypeConfig
+2020/04/28 19:12:05 [TRACE] [walkValidate] Exiting eval tree: mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": visit complete
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "provider.mso (close)"
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso (close)": starting visit (*terraform.graphNodeCloseProvider)
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso (close)": evaluating
+2020/04/28 19:12:05 [TRACE] [walkValidate] Entering eval tree: provider.mso (close)
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalCloseProvider
+2020/04/28 19:12:05 [TRACE] GRPCProvider: Close
+2020/04/28 19:12:05 [TRACE] vertex "meta.count-boundary (EachMode fixup)": starting visit (*terraform.NodeCountBoundary)
+2020/04/28 19:12:05 [TRACE] vertex "meta.count-boundary (EachMode fixup)": evaluating
+2020/04/28 19:12:05 [TRACE] [walkValidate] Entering eval tree: meta.count-boundary (EachMode fixup)
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalCountFixZeroOneBoundaryGlobal
+2020/04/28 19:12:05 [TRACE] [walkValidate] Exiting eval tree: meta.count-boundary (EachMode fixup)
+2020/04/28 19:12:05 [TRACE] vertex "meta.count-boundary (EachMode fixup)": visit complete
+2020-04-28T19:12:05.693+0530 [DEBUG] plugin: plugin process exited: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91021
+2020-04-28T19:12:05.693+0530 [DEBUG] plugin: plugin exited
+2020/04/28 19:12:05 [TRACE] [walkValidate] Exiting eval tree: provider.mso (close)
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso (close)": visit complete
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "root"
+2020/04/28 19:12:05 [TRACE] vertex "root": starting visit (terraform.graphNodeRoot)
+2020/04/28 19:12:05 [TRACE] vertex "root": visit complete
+2020/04/28 19:12:05 [INFO] backend/local: apply calling Refresh
+2020/04/28 19:12:05 [INFO] terraform: building graph: GraphTypeRefresh
+2020/04/28 19:12:05 [TRACE] No managed resources in state during refresh; skipping managed resource transformer
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ConfigTransformer
+2020/04/28 19:12:05 [TRACE] ConfigTransformer: Starting for path: 
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ConfigTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OrphanResourceInstanceTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OrphanResourceInstanceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.StateTransformer
+2020/04/28 19:12:05 [TRACE] StateTransformer: state is empty, so nothing to do
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.StateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachStateTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachStateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachResourceConfigTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachResourceConfigTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootVariableTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootVariableTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.LocalTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.LocalTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OutputTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OutputTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ModuleVariableTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ModuleVariableTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.graphTransformerMulti
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderConfigTransformer
+2020/04/28 19:12:05 [TRACE] ProviderConfigTransformer: attaching to "provider.mso" provider configuration from main.tf:1,1-15
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderConfigTransformer with new graph:
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.MissingProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.MissingProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.PruneProviderTransformer
+2020/04/28 19:12:05 [DEBUG] pruning unused provider.mso
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.PruneProviderTransformer with new graph:
+  ------
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ParentProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ParentProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.graphTransformerMulti (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachSchemaTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachSchemaTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ReferenceTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ReferenceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachDependenciesTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachDependenciesTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TargetsTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TargetsTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CloseProviderTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CloseProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootTransformer with new graph:
+  root - terraform.graphNodeRoot
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TransitiveReductionTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TransitiveReductionTransformer (no changes)
+2020/04/28 19:12:05 [DEBUG] Starting graph walk: walkRefresh
+2020/04/28 19:12:05 [TRACE] dag/walk: updating graph
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "root"
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "root"
+2020/04/28 19:12:05 [TRACE] vertex "root": starting visit (terraform.graphNodeRoot)
+2020/04/28 19:12:05 [TRACE] vertex "root": visit complete
+2020/04/28 19:12:05 [INFO] backend/local: apply calling Plan
+2020/04/28 19:12:05 [INFO] terraform: building graph: GraphTypePlan
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ConfigTransformer
+2020/04/28 19:12:05 [TRACE] ConfigTransformer: Starting for path: 
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ConfigTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.LocalTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.LocalTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OutputTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OutputTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OrphanResourceInstanceTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OrphanResourceInstanceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.StateTransformer
+2020/04/28 19:12:05 [TRACE] StateTransformer: state is empty, so nothing to do
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.StateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OrphanOutputTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OrphanOutputTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachResourceConfigTransformer
+2020/04/28 19:12:05 [TRACE] AttachResourceConfigTransformer: attaching to "mso_site.site_test_1" (*terraform.NodePlannableResource) config from main.tf:9,1-34
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachResourceConfigTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachStateTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachStateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootVariableTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootVariableTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.MissingProvisionerTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.MissingProvisionerTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ProvisionerTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ProvisionerTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ModuleVariableTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ModuleVariableTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.graphTransformerMulti
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderConfigTransformer
+2020/04/28 19:12:05 [TRACE] ProviderConfigTransformer: attaching to "provider.mso" provider configuration from main.tf:1,1-15
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderConfigTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.MissingProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.MissingProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderTransformer
+2020/04/28 19:12:05 [TRACE] ProviderTransformer: mso_site.site_test_1 is provided by provider.mso or inherited equivalent
+2020/04/28 19:12:05 [TRACE] ProviderTransformer: exact match for provider.mso serving mso_site.site_test_1
+2020/04/28 19:12:05 [DEBUG] ProviderTransformer: "mso_site.site_test_1" (*terraform.NodePlannableResource) needs provider.mso
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.PruneProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.PruneProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ParentProviderTransformer
+2020/04/28 19:12:05 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ParentProviderTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.graphTransformerMulti with new graph:
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RemovedModuleTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RemovedModuleTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachSchemaTransformer
+2020/04/28 19:12:05 [TRACE] AttachSchemaTransformer: attaching resource schema to mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] AttachSchemaTransformer: attaching provider config schema to provider.mso
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachSchemaTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ReferenceTransformer
+2020/04/28 19:12:05 [DEBUG] ReferenceTransformer: "mso_site.site_test_1" references: []
+2020/04/28 19:12:05 [DEBUG] ReferenceTransformer: "provider.mso" references: []
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ReferenceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CountBoundaryTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CountBoundaryTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TargetsTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TargetsTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ForcedCBDTransformer
+2020/04/28 19:12:05 [TRACE] ForcedCBDTransformer: "mso_site.site_test_1" (*terraform.NodePlannableResource) has no CBD descendent, so skipping
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ForcedCBDTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CloseProviderTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CloseProviderTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.CloseProvisionerTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.CloseProvisionerTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  root - terraform.graphNodeRoot
+    meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    provider.mso (close) - *terraform.graphNodeCloseProvider
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TransitiveReductionTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TransitiveReductionTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+  mso_site.site_test_1 - *terraform.NodePlannableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodePlannableResource
+  root - terraform.graphNodeRoot
+    meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    provider.mso (close) - *terraform.graphNodeCloseProvider
+  ------
+2020/04/28 19:12:05 [DEBUG] Starting graph walk: walkPlan
+2020/04/28 19:12:05 [TRACE] dag/walk: updating graph
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "provider.mso"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "provider.mso (close)"
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "root"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "mso_site.site_test_1" waiting on "provider.mso"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "meta.count-boundary (EachMode fixup)" waiting on "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "provider.mso (close)" waiting on "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "root" waiting on "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:05 [TRACE] dag/walk: added edge: "root" waiting on "provider.mso (close)"
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "root", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "mso_site.site_test_1", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "meta.count-boundary (EachMode fixup)", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: dependencies changed for "provider.mso (close)", sending new deps
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "provider.mso"
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso": starting visit (*terraform.NodeApplyableProvider)
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso": evaluating
+2020/04/28 19:12:05 [TRACE] [walkPlan] Entering eval tree: provider.mso
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalInitProvider
+2020-04-28T19:12:05.705+0530 [INFO]  plugin: configuring client automatic mTLS
+2020-04-28T19:12:05.743+0530 [DEBUG] plugin: starting plugin: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso args=[/Users/nirav.katarmal/go/bin/terraform-provider-mso]
+2020-04-28T19:12:05.747+0530 [DEBUG] plugin: plugin started: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91022
+2020-04-28T19:12:05.747+0530 [DEBUG] plugin: waiting for RPC address: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso
+2020-04-28T19:12:05.768+0530 [INFO]  plugin.terraform-provider-mso: configuring server automatic mTLS: timestamp=2020-04-28T19:12:05.768+0530
+2020-04-28T19:12:05.806+0530 [DEBUG] plugin: using plugin: version=5
+2020-04-28T19:12:05.806+0530 [DEBUG] plugin.terraform-provider-mso: plugin address: address=/var/folders/9r/n9wy2k4n00xgzd3vwwg2dl7572n7lr/T/plugin471176893 network=unix timestamp=2020-04-28T19:12:05.806+0530
+2020/04/28 19:12:05 [TRACE] BuiltinEvalContext: Initialized "mso" provider for provider.mso
+2020/04/28 19:12:05 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:05 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalOpFilter
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalOpFilter
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalConfigProvider
+2020/04/28 19:12:05 [TRACE] buildProviderConfig for provider.mso: using explicit config only
+2020/04/28 19:12:05 [TRACE] GRPCProvider: GetSchema
+2020/04/28 19:12:05 [TRACE] GRPCProvider: Configure
+2020/04/28 19:12:05 [TRACE] [walkPlan] Exiting eval tree: provider.mso
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso": visit complete
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": starting visit (*terraform.NodePlannableResource)
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": evaluating
+2020/04/28 19:12:05 [TRACE] [walkPlan] Entering eval tree: mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalWriteResourceState
+2020/04/28 19:12:05 [TRACE] [walkPlan] Exiting eval tree: mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": expanding dynamic subgraph
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ResourceCountTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ResourceCountTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodePlannableResourceInstance
+  ------
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.OrphanResourceCountTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.OrphanResourceCountTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.AttachStateTransformer
+2020/04/28 19:12:05 [DEBUG] Resource instance state not found for node "mso_site.site_test_1", instance mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.AttachStateTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.TargetsTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.TargetsTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.ReferenceTransformer
+2020/04/28 19:12:05 [DEBUG] ReferenceTransformer: "mso_site.site_test_1" references: []
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.ReferenceTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] Executing graph transform *terraform.RootTransformer
+2020/04/28 19:12:05 [TRACE] Completed graph transform *terraform.RootTransformer (no changes)
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": entering dynamic subgraph
+2020/04/28 19:12:05 [TRACE] dag/walk: updating graph
+2020/04/28 19:12:05 [TRACE] dag/walk: added new vertex: "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": starting visit (*terraform.NodePlannableResourceInstance)
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": evaluating
+2020/04/28 19:12:05 [TRACE] [walkPlan] Entering eval tree: mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalReadState
+2020/04/28 19:12:05 [TRACE] EvalReadState: reading state for mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] EvalReadState: no state present for mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalValidateSelfRef
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalDiff
+2020/04/28 19:12:05 [TRACE] Re-validating config for "mso_site.site_test_1"
+2020/04/28 19:12:05 [TRACE] GRPCProvider: ValidateResourceTypeConfig
+2020/04/28 19:12:05 [TRACE] GRPCProvider: PlanResourceChange
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalCheckPreventDestroy
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalWriteState
+2020/04/28 19:12:05 [TRACE] EvalWriteState: writing current state object for mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalWriteDiff
+2020/04/28 19:12:05 [TRACE] EvalWriteDiff: recorded Create change for mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] [walkPlan] Exiting eval tree: mso_site.site_test_1
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": visit complete
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": dynamic subgraph completed successfully
+2020/04/28 19:12:05 [TRACE] vertex "mso_site.site_test_1": visit complete
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:05 [TRACE] vertex "meta.count-boundary (EachMode fixup)": starting visit (*terraform.NodeCountBoundary)
+2020/04/28 19:12:05 [TRACE] vertex "meta.count-boundary (EachMode fixup)": evaluating
+2020/04/28 19:12:05 [TRACE] [walkPlan] Entering eval tree: meta.count-boundary (EachMode fixup)
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalCountFixZeroOneBoundaryGlobal
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "provider.mso (close)"
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso (close)": starting visit (*terraform.graphNodeCloseProvider)
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso (close)": evaluating
+2020/04/28 19:12:05 [TRACE] [walkPlan] Entering eval tree: provider.mso (close)
+2020/04/28 19:12:05 [TRACE] <root>: eval: *terraform.EvalCloseProvider
+2020/04/28 19:12:05 [TRACE] GRPCProvider: Close
+2020/04/28 19:12:05 [TRACE] [walkPlan] Exiting eval tree: meta.count-boundary (EachMode fixup)
+2020/04/28 19:12:05 [TRACE] vertex "meta.count-boundary (EachMode fixup)": visit complete
+2020-04-28T19:12:05.892+0530 [DEBUG] plugin: plugin process exited: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91022
+2020-04-28T19:12:05.892+0530 [DEBUG] plugin: plugin exited
+2020/04/28 19:12:05 [TRACE] [walkPlan] Exiting eval tree: provider.mso (close)
+2020/04/28 19:12:05 [TRACE] vertex "provider.mso (close)": visit complete
+2020/04/28 19:12:05 [TRACE] dag/walk: visiting "root"
+2020/04/28 19:12:05 [TRACE] vertex "root": starting visit (terraform.graphNodeRoot)
+2020/04/28 19:12:05 [TRACE] vertex "root": visit complete
+2020/04/28 19:12:05 [DEBUG] command: asking for input: "Do you want to perform these actions?"
+2020/04/28 19:12:08 [INFO] backend/local: apply calling Apply
+2020/04/28 19:12:08 [INFO] terraform: building graph: GraphTypeApply
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.ConfigTransformer
+2020/04/28 19:12:08 [TRACE] ConfigTransformer: Starting for path: 
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.ConfigTransformer with new graph:
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+  ------
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.DiffTransformer
+2020/04/28 19:12:08 [TRACE] DiffTransformer starting
+2020/04/28 19:12:08 [TRACE] DiffTransformer: found Create change for mso_site.site_test_1 
+2020/04/28 19:12:08 [TRACE] DiffTransformer: mso_site.site_test_1 will be represented by mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] DiffTransformer complete
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.DiffTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+  ------
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.OrphanResourceTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.OrphanResourceTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.OrphanOutputTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.OrphanOutputTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.AttachResourceConfigTransformer
+2020/04/28 19:12:08 [TRACE] AttachResourceConfigTransformer: attaching to "mso_site.site_test_1 (prepare state)" (*terraform.NodeApplyableResource) config from main.tf:9,1-34
+2020/04/28 19:12:08 [TRACE] AttachResourceConfigTransformer: attaching to "mso_site.site_test_1" (*terraform.NodeApplyableResourceInstance) config from main.tf:9,1-34
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.AttachResourceConfigTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.AttachStateTransformer
+2020/04/28 19:12:08 [DEBUG] Resource state not found for node "mso_site.site_test_1", instance mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.AttachStateTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.MissingProvisionerTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.MissingProvisionerTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.ProvisionerTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.ProvisionerTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.RootVariableTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.RootVariableTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.LocalTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.LocalTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.OutputTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.OutputTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.ModuleVariableTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.ModuleVariableTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.graphTransformerMulti
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderConfigTransformer
+2020/04/28 19:12:08 [TRACE] ProviderConfigTransformer: attaching to "provider.mso" provider configuration from main.tf:1,1-15
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderConfigTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.MissingProviderTransformer
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.MissingProviderTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ProviderTransformer
+2020/04/28 19:12:08 [TRACE] ProviderTransformer: mso_site.site_test_1 (prepare state) is provided by provider.mso or inherited equivalent
+2020/04/28 19:12:08 [TRACE] ProviderTransformer: mso_site.site_test_1 is provided by provider.mso or inherited equivalent
+2020/04/28 19:12:08 [TRACE] ProviderTransformer: exact match for provider.mso serving mso_site.site_test_1 (prepare state)
+2020/04/28 19:12:08 [DEBUG] ProviderTransformer: "mso_site.site_test_1 (prepare state)" (*terraform.NodeApplyableResource) needs provider.mso
+2020/04/28 19:12:08 [TRACE] ProviderTransformer: exact match for provider.mso serving mso_site.site_test_1
+2020/04/28 19:12:08 [DEBUG] ProviderTransformer: "mso_site.site_test_1" (*terraform.NodeApplyableResourceInstance) needs provider.mso
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ProviderTransformer with new graph:
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.PruneProviderTransformer
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.PruneProviderTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Executing graph transform *terraform.ParentProviderTransformer
+2020/04/28 19:12:08 [TRACE] (graphTransformerMulti) Completed graph transform *terraform.ParentProviderTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.graphTransformerMulti with new graph:
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.RemovedModuleTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.RemovedModuleTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.AttachSchemaTransformer
+2020/04/28 19:12:08 [TRACE] AttachSchemaTransformer: attaching resource schema to mso_site.site_test_1 (prepare state)
+2020/04/28 19:12:08 [TRACE] AttachSchemaTransformer: attaching resource schema to mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] AttachSchemaTransformer: attaching provider config schema to provider.mso
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.AttachSchemaTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.ReferenceTransformer
+2020/04/28 19:12:08 [DEBUG] ReferenceTransformer: "mso_site.site_test_1 (prepare state)" references: []
+2020/04/28 19:12:08 [DEBUG] ReferenceTransformer: "mso_site.site_test_1" references: []
+2020/04/28 19:12:08 [DEBUG] ReferenceTransformer: "provider.mso" references: []
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.ReferenceTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.AttachDependenciesTransformer
+2020/04/28 19:12:08 [TRACE] AttachDependenciesTransformer: mso_site.site_test_1 depends on []
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.AttachDependenciesTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.DestroyEdgeTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.DestroyEdgeTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.CBDEdgeTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.CBDEdgeTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.PruneUnusedValuesTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.PruneUnusedValuesTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.CountBoundaryTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.CountBoundaryTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.TargetsTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.TargetsTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.CloseProviderTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.CloseProviderTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  ------
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.CloseProvisionerTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.CloseProvisionerTransformer (no changes)
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.RootTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.RootTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  root - terraform.graphNodeRoot
+    meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    provider.mso (close) - *terraform.graphNodeCloseProvider
+  ------
+2020/04/28 19:12:08 [TRACE] Executing graph transform *terraform.TransitiveReductionTransformer
+2020/04/28 19:12:08 [TRACE] Completed graph transform *terraform.TransitiveReductionTransformer with new graph:
+  meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+  mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+    mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+  mso_site.site_test_1 (prepare state) - *terraform.NodeApplyableResource
+    provider.mso - *terraform.NodeApplyableProvider
+  provider.mso - *terraform.NodeApplyableProvider
+  provider.mso (close) - *terraform.graphNodeCloseProvider
+    mso_site.site_test_1 - *terraform.NodeApplyableResourceInstance
+  root - terraform.graphNodeRoot
+    meta.count-boundary (EachMode fixup) - *terraform.NodeCountBoundary
+    provider.mso (close) - *terraform.graphNodeCloseProvider
+  ------
+2020/04/28 19:12:08 [DEBUG] Starting graph walk: walkApply
+2020/04/28 19:12:08 [TRACE] dag/walk: updating graph
+2020/04/28 19:12:08 [TRACE] dag/walk: added new vertex: "mso_site.site_test_1 (prepare state)"
+2020/04/28 19:12:08 [TRACE] dag/walk: added new vertex: "mso_site.site_test_1"
+2020/04/28 19:12:08 [TRACE] dag/walk: added new vertex: "provider.mso"
+2020/04/28 19:12:08 [TRACE] dag/walk: added new vertex: "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:08 [TRACE] dag/walk: added new vertex: "provider.mso (close)"
+2020/04/28 19:12:08 [TRACE] dag/walk: added new vertex: "root"
+2020/04/28 19:12:08 [TRACE] dag/walk: added edge: "root" waiting on "meta.count-boundary (EachMode fixup)"
+2020/04/28 19:12:08 [TRACE] dag/walk: added edge: "mso_site.site_test_1" waiting on "mso_site.site_test_1 (prepare state)"
+2020/04/28 19:12:08 [TRACE] dag/walk: added edge: "meta.count-boundary (EachMode fixup)" waiting on "mso_site.site_test_1"
+2020/04/28 19:12:08 [TRACE] dag/walk: added edge: "provider.mso (close)" waiting on "mso_site.site_test_1"
+2020/04/28 19:12:08 [TRACE] dag/walk: added edge: "mso_site.site_test_1 (prepare state)" waiting on "provider.mso"
+2020/04/28 19:12:08 [TRACE] dag/walk: added edge: "root" waiting on "provider.mso (close)"
+2020/04/28 19:12:08 [TRACE] dag/walk: dependencies changed for "root", sending new deps
+2020/04/28 19:12:08 [TRACE] dag/walk: dependencies changed for "mso_site.site_test_1", sending new deps
+2020/04/28 19:12:08 [TRACE] dag/walk: dependencies changed for "meta.count-boundary (EachMode fixup)", sending new deps
+2020/04/28 19:12:08 [TRACE] dag/walk: dependencies changed for "provider.mso (close)", sending new deps
+2020/04/28 19:12:08 [TRACE] dag/walk: dependencies changed for "mso_site.site_test_1 (prepare state)", sending new deps
+2020/04/28 19:12:08 [TRACE] dag/walk: visiting "provider.mso"
+2020/04/28 19:12:08 [TRACE] vertex "provider.mso": starting visit (*terraform.NodeApplyableProvider)
+2020/04/28 19:12:08 [TRACE] vertex "provider.mso": evaluating
+2020/04/28 19:12:08 [TRACE] [walkApply] Entering eval tree: provider.mso
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalInitProvider
+2020-04-28T19:12:08.714+0530 [INFO]  plugin: configuring client automatic mTLS
+2020-04-28T19:12:08.753+0530 [DEBUG] plugin: starting plugin: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso args=[/Users/nirav.katarmal/go/bin/terraform-provider-mso]
+2020-04-28T19:12:08.757+0530 [DEBUG] plugin: plugin started: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91026
+2020-04-28T19:12:08.757+0530 [DEBUG] plugin: waiting for RPC address: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso
+2020-04-28T19:12:08.780+0530 [INFO]  plugin.terraform-provider-mso: configuring server automatic mTLS: timestamp=2020-04-28T19:12:08.779+0530
+2020-04-28T19:12:08.820+0530 [DEBUG] plugin: using plugin: version=5
+2020-04-28T19:12:08.820+0530 [DEBUG] plugin.terraform-provider-mso: plugin address: address=/var/folders/9r/n9wy2k4n00xgzd3vwwg2dl7572n7lr/T/plugin565401777 network=unix timestamp=2020-04-28T19:12:08.819+0530
+2020/04/28 19:12:08 [TRACE] BuiltinEvalContext: Initialized "mso" provider for provider.mso
+2020/04/28 19:12:08 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:08 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalOpFilter
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalOpFilter
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalConfigProvider
+2020/04/28 19:12:08 [TRACE] buildProviderConfig for provider.mso: using explicit config only
+2020/04/28 19:12:08 [TRACE] GRPCProvider: GetSchema
+2020/04/28 19:12:08 [TRACE] GRPCProvider: Configure
+2020/04/28 19:12:08 [TRACE] [walkApply] Exiting eval tree: provider.mso
+2020/04/28 19:12:08 [TRACE] vertex "provider.mso": visit complete
+2020/04/28 19:12:08 [TRACE] dag/walk: visiting "mso_site.site_test_1 (prepare state)"
+2020/04/28 19:12:08 [TRACE] vertex "mso_site.site_test_1 (prepare state)": starting visit (*terraform.NodeApplyableResource)
+2020/04/28 19:12:08 [TRACE] vertex "mso_site.site_test_1 (prepare state)": evaluating
+2020/04/28 19:12:08 [TRACE] [walkApply] Entering eval tree: mso_site.site_test_1 (prepare state)
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalWriteResourceState
+2020/04/28 19:12:08 [TRACE] [walkApply] Exiting eval tree: mso_site.site_test_1 (prepare state)
+2020/04/28 19:12:08 [TRACE] vertex "mso_site.site_test_1 (prepare state)": visit complete
+2020/04/28 19:12:08 [TRACE] dag/walk: visiting "mso_site.site_test_1"
+2020/04/28 19:12:08 [TRACE] vertex "mso_site.site_test_1": starting visit (*terraform.NodeApplyableResourceInstance)
+2020/04/28 19:12:08 [TRACE] vertex "mso_site.site_test_1": evaluating
+2020/04/28 19:12:08 [TRACE] [walkApply] Entering eval tree: mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalSequence
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalReadDiff
+2020/04/28 19:12:08 [TRACE] EvalReadDiff: Read Create change from plan for mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalIf
+2020/04/28 19:12:08 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalIf
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalReadState
+2020/04/28 19:12:08 [TRACE] EvalReadState: reading state for mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] EvalReadState: no state present for mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalReadDiff
+2020/04/28 19:12:08 [TRACE] EvalReadDiff: Read Create change from plan for mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalDiff
+2020/04/28 19:12:08 [TRACE] Re-validating config for "mso_site.site_test_1"
+2020/04/28 19:12:08 [TRACE] GRPCProvider: ValidateResourceTypeConfig
+2020/04/28 19:12:08 [TRACE] GRPCProvider: PlanResourceChange
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalCheckPlannedChange
+2020/04/28 19:12:08 [TRACE] EvalCheckPlannedChange: Verifying that actual change (action Create) matches planned change (action Create)
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalGetProvider
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalReadState
+2020/04/28 19:12:08 [TRACE] EvalReadState: reading state for mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] EvalReadState: no state present for mso_site.site_test_1
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalReduceDiff
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalIf
+2020/04/28 19:12:08 [TRACE] <root>: eval: terraform.EvalNoop
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalApplyPre
+2020/04/28 19:12:08 [TRACE] <root>: eval: *terraform.EvalApply
+2020/04/28 19:12:08 [DEBUG] mso_site.site_test_1: applying the planned Create change
+2020/04/28 19:12:08 [TRACE] GRPCProvider: ApplyResourceChange
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 [DEBUG] setting computed for "labels" from ComputedKeys
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 [DEBUG] setting computed for "cloud_providers" from ComputedKeys
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 [DEBUG] Site: Beginning Creation
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 HTTP request POST api/v1/sites {"apicSiteId":"998","cloudProviders":null,"labels":null,"location":null,"name":"Cisco_MSO","password":"cisco123","urls":["https://192.168.10.102/"],"username":"admin"}
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 [DEBUG] Begin Injection
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 HTTP request POST /api/v1/auth/login {"password":"Crest@123456","username":"admin"}
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 HTTP request after injection POST /api/v1/auth/login
+2020-04-28T19:12:08.906+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:08 [DEBUG] Begining DO method https://10.0.9.21/api/v1/auth/login
+2020-04-28T19:12:09.312+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:09 
+2020-04-28T19:12:09.312+0530 [DEBUG] plugin.terraform-provider-mso: HTTP Request: POST https://10.0.9.21/api/v1/auth/login
+2020-04-28T19:12:09.312+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:09 nHTTP Response: 201 201 Created &{201 Created 201 HTTP/1.1 1 1 map[Cache-Control:[no-cache] Content-Language:[en] Content-Length:[1186] Content-Type:[application/json] Date:[Tue, 28 Apr 2020 13:42:07 GMT] Expires:[Thu, 01 Jan 1970 00:00:01 GMT] Server:[nginx] Strict-Transport-Security:[max-age=31536000; includeSubDomains] X-Frame-Options:[SAMEORIGIN] X-Ratelimit-Limit:[0] X-Ratelimit-Remaining:[0] X-Ratelimit-Reset:[0]] 0xc000081e40 1186 [] false false map[] 0xc00022b600 0xc0000e2420}
+2020-04-28T19:12:09.313+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:09 
+2020-04-28T19:12:09.313+0530 [DEBUG] plugin.terraform-provider-mso:  HTTP response unique string POST https://10.0.9.21/api/v1/auth/login {"userId":"0000ffff0000000000000020","needsPasswordUpdate":false,"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODgwODI1MjcsImlhdCI6MTU4ODA4MTMyNywiaXNzIjoidDFaY0VQUTVXU1dPR2IzY2hqNFI0SHJZV0JsQk9RbU4iLCJ1c2VySWQiOiIwMDAwZmZmZjAwMDAwMDAwMDAwMDAwMjAiLCJ1c2VybmFtZSI6ImFkbWluIiwicGVybWlzc2lvbnMiOlsidmlldy1zaXRlcyIsInZpZXctdGVuYW50cyIsInZpZXctc2NoZW1hcyIsInZpZXctdGVuYW50LXNjaGVtYXMiLCJ2aWV3LXVzZXJzIiwidmlldy1yb2xlcyIsInZpZXctYWxsLWF1ZGl0LXJlY29yZHMiLCJ2aWV3LWJhY2t1cCIsInZpZXctbGFiZWxzIiwibWFuYWdlLXN5c3RlbSIsIm1hbmFnZS1zaXRlcyIsIm1hbmFnZS10ZW5hbnRzIiwibWFuYWdlLWxhYmVscyIsIm1hbmFnZS1zY2hlbWFzIiwibWFuYWdlLXRlbmFudC1zY2hlbWFzIiwibWFuYWdlLXVzZXJzIiwibWFuYWdlLXJvbGVzIiwibWFuYWdlLWF1ZGl0LXJlY29yZHMiLCJtYW5hZ2UtYmFja3VwIiwibWFuYWdlLWxhYmVscyIsIm1hbmFnZS1zeXN0ZW0iXX0.sEQxcHHXdvzDguoY1yvPiQzL8PhIJNfxIrywAzeGDKg","permissions":["view-sites","view-tenants","view-schemas","view-tenant-schemas","view-users","view-roles","view-all-audit-records","view-backup","view-labels","manage-system","manage-sites","manage-tenants","manage-labels","manage-schemas","manage-tenant-schemas","manage-users","manage-roles","manage-audit-records","manage-backup","manage-labels","manage-system"]}
+2020-04-28T19:12:09.313+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:09 [DEBUG] Exit from do method
+2020-04-28T19:12:09.313+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:09 HTTP request after injection POST api/v1/sites
+2020-04-28T19:12:09.313+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:09 [DEBUG] Begining DO method https://10.0.9.21/api/v1/sites
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: HTTP Request: POST https://10.0.9.21/api/v1/sites
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 nHTTP Response: 201 201 Created &{201 Created 201 HTTP/1.1 1 1 map[Cache-Control:[no-cache] Content-Language:[en] Content-Length:[280] Content-Type:[application/json] Date:[Tue, 28 Apr 2020 13:42:08 GMT] Expires:[Thu, 01 Jan 1970 00:00:01 GMT] Location:[/api/v1/sites/5ea832af0f0000521ada2a29] Server:[nginx] Strict-Transport-Security:[max-age=31536000; includeSubDomains] X-Frame-Options:[SAMEORIGIN] X-Ratelimit-Limit:[0] X-Ratelimit-Remaining:[0] X-Ratelimit-Reset:[0]] 0xc0001b3dc0 280 [] false false map[] 0xc00022b500 0xc0000e2420}
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso:  HTTP response unique string POST https://10.0.9.21/api/v1/sites {"id":"5ea832af0f0000521ada2a29","name":"Cisco_MSO","urls":["https://192.168.10.102"],"username":"admin","password":"******","apicSiteId":"998","labels":[],"passwordEncryptionStatus":true,"platform":"on-premise","apicVersion":"4.0(1h)","_updateVersion":0,"_versionDefaulted":true}
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 [DEBUG] Exit from do method
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 [DEBUG] 5ea832af0f0000521ada2a29: Creation finished successfully
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 [DEBUG] 5ea832af0f0000521ada2a29: Beginning Read
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 HTTP request GET api/v1/sites/5ea832af0f0000521ada2a29 {}
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 [DEBUG] Begin Injection
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 HTTP request POST /api/v1/auth/login {"password":"Crest@123456","username":"admin"}
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 HTTP request after injection POST /api/v1/auth/login
+2020-04-28T19:12:10.978+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:10 [DEBUG] Begining DO method https://10.0.9.21/api/v1/auth/login
+2020-04-28T19:12:11.209+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso: HTTP Request: POST https://10.0.9.21/api/v1/auth/login
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 nHTTP Response: 201 201 Created &{201 Created 201 HTTP/1.1 1 1 map[Cache-Control:[no-cache] Content-Language:[en] Content-Length:[1186] Content-Type:[application/json] Date:[Tue, 28 Apr 2020 13:42:09 GMT] Expires:[Thu, 01 Jan 1970 00:00:01 GMT] Server:[nginx] Strict-Transport-Security:[max-age=31536000; includeSubDomains] X-Frame-Options:[SAMEORIGIN] X-Ratelimit-Limit:[0] X-Ratelimit-Remaining:[0] X-Ratelimit-Reset:[0]] 0xc000081f00 1186 [] false false map[] 0xc0001d1900 0xc0000e2420}
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso:  HTTP response unique string POST https://10.0.9.21/api/v1/auth/login {"userId":"0000ffff0000000000000020","needsPasswordUpdate":false,"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODgwODI1MjksImlhdCI6MTU4ODA4MTMyOSwiaXNzIjoiZXk2bUxDUHlDeHQ0OHdudVZoQTVyMERLRXJPWUtZdUciLCJ1c2VySWQiOiIwMDAwZmZmZjAwMDAwMDAwMDAwMDAwMjAiLCJ1c2VybmFtZSI6ImFkbWluIiwicGVybWlzc2lvbnMiOlsidmlldy1zaXRlcyIsInZpZXctdGVuYW50cyIsInZpZXctc2NoZW1hcyIsInZpZXctdGVuYW50LXNjaGVtYXMiLCJ2aWV3LXVzZXJzIiwidmlldy1yb2xlcyIsInZpZXctYWxsLWF1ZGl0LXJlY29yZHMiLCJ2aWV3LWJhY2t1cCIsInZpZXctbGFiZWxzIiwibWFuYWdlLXN5c3RlbSIsIm1hbmFnZS1zaXRlcyIsIm1hbmFnZS10ZW5hbnRzIiwibWFuYWdlLWxhYmVscyIsIm1hbmFnZS1zY2hlbWFzIiwibWFuYWdlLXRlbmFudC1zY2hlbWFzIiwibWFuYWdlLXVzZXJzIiwibWFuYWdlLXJvbGVzIiwibWFuYWdlLWF1ZGl0LXJlY29yZHMiLCJtYW5hZ2UtYmFja3VwIiwibWFuYWdlLWxhYmVscyIsIm1hbmFnZS1zeXN0ZW0iXX0.eW3_iGfyiV6ZcALfh7KYIlSkK-NXwffYoQUtS3NiH_Y","permissions":["view-sites","view-tenants","view-schemas","view-tenant-schemas","view-users","view-roles","view-all-audit-records","view-backup","view-labels","manage-system","manage-sites","manage-tenants","manage-labels","manage-schemas","manage-tenant-schemas","manage-users","manage-roles","manage-audit-records","manage-backup","manage-labels","manage-system"]}
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 [DEBUG] Exit from do method
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 HTTP request after injection GET api/v1/sites/5ea832af0f0000521ada2a29
+2020-04-28T19:12:11.210+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 [DEBUG] Begining DO method https://10.0.9.21/api/v1/sites/5ea832af0f0000521ada2a29
+2020-04-28T19:12:11.272+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 
+2020-04-28T19:12:11.272+0530 [DEBUG] plugin.terraform-provider-mso: HTTP Request: GET https://10.0.9.21/api/v1/sites/5ea832af0f0000521ada2a29
+2020-04-28T19:12:11.272+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 nHTTP Response: 200 200 OK &{200 OK 200 HTTP/1.1 1 1 map[Cache-Control:[no-cache] Content-Language:[en] Content-Length:[281] Content-Type:[application/json] Date:[Tue, 28 Apr 2020 13:42:09 GMT] Expires:[Thu, 01 Jan 1970 00:00:01 GMT] Server:[nginx] Strict-Transport-Security:[max-age=31536000; includeSubDomains] X-Frame-Options:[SAMEORIGIN] X-Ratelimit-Limit:[0] X-Ratelimit-Remaining:[0] X-Ratelimit-Reset:[0]] 0xc0001b3ec0 281 [] false false map[] 0xc0001d1800 0xc0000e2420}
+2020-04-28T19:12:11.272+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 
+2020-04-28T19:12:11.272+0530 [DEBUG] plugin.terraform-provider-mso:  HTTP response unique string GET https://10.0.9.21/api/v1/sites/5ea832af0f0000521ada2a29 {"id":"5ea832af0f0000521ada2a29","name":"Cisco_MSO","urls":["https://192.168.10.102"],"username":"admin","password":"******","apicSiteId":"998","labels":[],"passwordEncryptionStatus":true,"platform":"on-premise","apicVersion":"4.0(1h)","_updateVersion":1,"_versionDefaulted":false}
+2020-04-28T19:12:11.272+0530 [DEBUG] plugin.terraform-provider-mso: 2020/04/28 19:12:11 [DEBUG] Exit from do method
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: panic: interface conversion: interface {} is nil, not []interface {}
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: 
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: goroutine 30 [running]:
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: github.com/ciscoecosystem/terraform-provider-mso/mso.resourceMSOSiteRead(0xc000222240, 0x1c542a0, 0xc00010c500, 0x1, 0x1)
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/ciscoecosystem/terraform-provider-mso/mso/resource_mso_site.go:228 +0xe20
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: github.com/ciscoecosystem/terraform-provider-mso/mso.resourceMSOSiteCreate(0xc000222240, 0x1c542a0, 0xc00010c500, 0x2, 0x275be20)
+2020-04-28T19:12:11.275+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/ciscoecosystem/terraform-provider-mso/mso/resource_mso_site.go:144 +0x636
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/helper/schema.(*Resource).Apply(0xc000130c80, 0xc000218150, 0xc0005d0540, 0x1c542a0, 0xc00010c500, 0xc00048cc01, 0xc000301680, 0xc00048ccc8)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/helper/schema/resource.go:308 +0x3a7
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/helper/schema.(*Provider).Apply(0xc000131300, 0xc0001c78e0, 0xc000218150, 0xc0005d0540, 0xc0002123e8, 0xc00021e010, 0x1b4ce60)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/helper/schema/provider.go:297 +0x99
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/helper/plugin.(*GRPCProviderServer).ApplyResourceChange(0xc0000c29f0, 0x1f6a220, 0xc000300900, 0xc000218000, 0xc0000c29f0, 0xc000300900, 0xc000069a58)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/helper/plugin/grpc_provider.go:923 +0x8fa
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/internal/tfplugin5._Provider_ApplyResourceChange_Handler(0x1c8ed00, 0xc0000c29f0, 0x1f6a220, 0xc000300900, 0xc0001f60a0, 0x0, 0x1f6a220, 0xc000300900, 0xc000204000, 0x15d)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/internal/tfplugin5/tfplugin5.pb.go:3303 +0x217
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/vendor/google.golang.org/grpc.(*Server).processUnaryRPC(0xc000001e00, 0x1f75b00, 0xc000468780, 0xc0001fe000, 0xc000300630, 0x2730080, 0x0, 0x0, 0x0)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/vendor/google.golang.org/grpc/server.go:998 +0x46a
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/vendor/google.golang.org/grpc.(*Server).handleStream(0xc000001e00, 0x1f75b00, 0xc000468780, 0xc0001fe000, 0x0)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/vendor/google.golang.org/grpc/server.go:1278 +0xd97
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: github.com/hashicorp/terraform/vendor/google.golang.org/grpc.(*Server).serveStreams.func1.1(0xc0000380a0, 0xc000001e00, 0x1f75b00, 0xc000468780, 0xc0001fe000)
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/vendor/google.golang.org/grpc/server.go:717 +0xbb
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: created by github.com/hashicorp/terraform/vendor/google.golang.org/grpc.(*Server).serveStreams.func1
+2020-04-28T19:12:11.276+0530 [DEBUG] plugin.terraform-provider-mso: 	/Users/nirav.katarmal/go/src/github.com/hashicorp/terraform/vendor/google.golang.org/grpc/server.go:715 +0xa1
+2020-04-28T19:12:11.279+0530 [DEBUG] plugin: plugin process exited: path=/Users/nirav.katarmal/go/bin/terraform-provider-mso pid=91026 error="exit status 2"
+2020/04/28 19:12:11 [DEBUG] mso_site.site_test_1: apply errored, but we're indicating that via the Error pointer rather than returning it: rpc error: code = Unavailable desc = transport is closing
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalMaybeTainted
+2020/04/28 19:12:11 [TRACE] EvalMaybeTainted: mso_site.site_test_1 encountered an error during creation, so it is now marked as tainted
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalWriteState
+2020/04/28 19:12:11 [TRACE] EvalWriteState: removing state object for mso_site.site_test_1
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalApplyProvisioners
+2020/04/28 19:12:11 [TRACE] EvalApplyProvisioners: mso_site.site_test_1 has no state, so skipping provisioners
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalMaybeTainted
+2020/04/28 19:12:11 [TRACE] EvalMaybeTainted: mso_site.site_test_1 encountered an error during creation, so it is now marked as tainted
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalWriteState
+2020/04/28 19:12:11 [TRACE] EvalWriteState: removing state object for mso_site.site_test_1
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalIf
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalIf
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalWriteDiff
+2020/04/28 19:12:11 [TRACE] <root>: eval: *terraform.EvalApplyPost
+2020/04/28 19:12:11 [ERROR] <root>: eval: *terraform.EvalApplyPost, err: rpc error: code = Unavailable desc = transport is closing
+2020/04/28 19:12:11 [ERROR] <root>: eval: *terraform.EvalSequence, err: rpc error: code = Unavailable desc = transport is closing
+2020/04/28 19:12:11 [TRACE] [walkApply] Exiting eval tree: mso_site.site_test_1
+2020/04/28 19:12:11 [TRACE] vertex "mso_site.site_test_1": visit complete
+2020/04/28 19:12:11 [TRACE] dag/walk: upstream of "meta.count-boundary (EachMode fixup)" errored, so skipping
+2020/04/28 19:12:11 [TRACE] dag/walk: upstream of "provider.mso (close)" errored, so skipping
+2020/04/28 19:12:11 [TRACE] dag/walk: upstream of "root" errored, so skipping
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: reading latest snapshot from terraform.tfstate
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: snapshot file has nil snapshot, but that's okay
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: read nil snapshot
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: no original state snapshot to back up
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: state has changed since last snapshot, so incrementing serial to 1
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: writing snapshot at terraform.tfstate
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: removing lock metadata file .terraform.tfstate.lock.info
+2020/04/28 19:12:11 [TRACE] statemgr.Filesystem: unlocking terraform.tfstate using fcntl flock
+2020-04-28T19:12:11.304+0530 [DEBUG] plugin: plugin exited

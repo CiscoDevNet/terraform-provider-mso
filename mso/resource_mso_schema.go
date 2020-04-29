@@ -17,7 +17,6 @@ func resourceMSOSchema() *schema.Resource {
 		Read:   resourceMSOSchemaRead,
 		Delete: resourceMSOSchemaDelete,
 
-		
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
