@@ -49,7 +49,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_site":        	resourceMSOSite(),
 			"mso_role":        	resourceMSORole(),
 			"mso_user":        	resourceMSOUser(),
-      			"mso_label":       	resourceMSOLabel(),
+			"mso_label":       	resourceMSOLabel(),
 			"mso_schema_template":  resourceMSOSchemaTemplate(),
 		},
 
