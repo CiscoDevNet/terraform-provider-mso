@@ -17,6 +17,8 @@ func resourceMSOSite() *schema.Resource {
 		Read:   resourceMSOSiteRead,
 		Delete: resourceMSOSiteDelete,
 
+		SchemaVersion: version,
+
 		Schema: (map[string]*schema.Schema{
 
 			"name": &schema.Schema{
@@ -116,14 +118,10 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 	var loc *models.Location
 	if location, ok := d.GetOk("location"); ok {
 		loc = &models.Location{}
-		tp := location.(map[string]interface{})
-		loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", tp["lat"]), 64)
-		loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", tp["long"]), 64)
-		if loc != nil {
-			siteAttr.Location = loc
-		} else {
-			siteAttr.Location = nil
-		}
+		loc_map := location.(map[string]interface{})
+		loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["lat"]), 64)
+		loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
+		siteAttr.Location = loc
 	}
 
 	if urls, ok := d.GetOk("urls"); ok {
@@ -137,12 +135,12 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		log.Println(err)
 		return err
 	}
+
 	id := models.StripQuotes(cont.S("id").String())
 	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSiteRead(d, m)
-
 }
 
 func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
@@ -175,14 +173,10 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	var loc *models.Location
 	if location, ok := d.GetOk("location"); ok {
 		loc = &models.Location{}
-		tp := location.(map[string]interface{})
-		loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", tp["lat"]), 64)
-		loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", tp["long"]), 64)
-		if loc != nil {
-			siteAttr.Location = loc
-		} else {
-			siteAttr.Location = nil
-		}
+		loc_map := location.(map[string]interface{})
+		loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["lat"]), 64)
+		loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
+		siteAttr.Location = loc
 	}
 
 	if urls, ok := d.GetOk("urls"); ok {
@@ -192,8 +186,10 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	if cloudProviders, ok := d.GetOk("cloud_providers"); ok {
 		siteAttr.CloudProviders = cloudProviders.([]interface{})
 	}
+
 	siteAttr.Platform = d.Get("platform").(string)
 	siteApp := models.NewSite(siteAttr)
+
 	cont, err := msoClient.Put(fmt.Sprintf("api/v1/sites/%s", d.Id()), siteApp)
 	if err != nil {
 		return err
@@ -204,7 +200,6 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
 
 	return resourceMSOSiteRead(d, m)
-
 }
 
 func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
@@ -226,6 +221,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("urls", con.S("urls").Data().([]interface{}))
 	d.Set("platform", models.StripQuotes(con.S("platform").String()))
 	d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
+
 	loc1 := con.S("location").Data()
 	locset := make(map[string]interface{})
 	if loc1 != nil {
@@ -236,6 +232,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		locset = nil
 	}
 	d.Set("location", locset)
+
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
