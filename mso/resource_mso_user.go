@@ -134,11 +134,10 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 			if inner_roles["access_type"] != "" {
 				map_roles["accessType"] = fmt.Sprintf("%v", inner_roles["access_type"])
 			}
-			
+
 			roles = append(roles, map_roles)
 		}
-}
-	
+	}
 
 	userApp := models.NewUser("", user, userPassword, firstName, lastName, email, phone, accountStatus, domain, roles)
 	cont, err := msoClient.Save("api/v1/users", userApp)
@@ -195,7 +194,7 @@ func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
 	if Domain, ok := d.GetOk("domain"); ok {
 		domain = Domain.(string)
 	}
-	
+
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
 

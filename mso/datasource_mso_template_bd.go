@@ -1,6 +1,12 @@
 package mso
 
 import (
+	"fmt"
+	"log"
+	"regexp"
+
+	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 )
@@ -113,4 +119,89 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func dataSourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
+
+	msoClient := m.(*client.Client)
+
+	schemaId := d.Get("schema_id").(string)
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return err
+	}
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return fmt.Errorf("No Template found")
+	}
+	stateTemplate := d.Get("template_name").(string)
+	found := false
+	stateBD := d.Get("name")
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			bdCount, err := tempCont.ArrayCount("bds")
+			if err != nil {
+				return fmt.Errorf("Unable to get BD list")
+			}
+			for j := 0; j < bdCount; j++ {
+				bdCont, err := tempCont.ArrayElement(j, "bds")
+				if err != nil {
+					return err
+				}
+				apiBD := models.StripQuotes(bdCont.S("name").String())
+				if apiBD == stateBD {
+					d.SetId(apiBD)
+					d.Set("name", apiBD)
+					d.Set("schema_id", schemaId)
+					d.Set("template_name", apiTemplate)
+					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
+					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
+					d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
+					d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
+					d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+
+					vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
+					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
+					match := re.FindStringSubmatch(vrfRef)
+					d.Set("vrf_name", match[3])
+					d.Set("vrf_schema_id", match[1])
+					d.Set("vrf_template_name", match[2])
+
+					if bdCont.Exists("dhcpLabel") {
+						dhcpPolMap := make(map[string]interface{})
+						dhcpPolMap["name"] = models.StripQuotes(bdCont.S("dhcpLabel", "name").String())
+						dhcpPolMap["version"] = models.StripQuotes(bdCont.S("dhcpLabel", "version").String())
+						if bdCont.Exists("dhcpLabel", "dhcpOptionLabel") {
+							dhcpPolMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "name").String())
+							dhcpPolMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "version").String())
+						}
+						d.Set("dhcp_policy", dhcpPolMap)
+					} else {
+						d.Set("dhcp_policy", make(map[string]interface{}))
+					}
+					found = true
+					break
+				}
+
+			}
+		}
+
+	}
+
+	if !found {
+		return fmt.Errorf("Unable to find the BD %s", stateBD)
+	}
+
+	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
+	return nil
+
 }
