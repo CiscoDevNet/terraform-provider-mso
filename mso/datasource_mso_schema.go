@@ -15,7 +15,7 @@ func datasourceMSOSchema() *schema.Resource {
 
 		Read: datasourceMSOSchemaRead,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -51,29 +51,29 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	}
 	data := con.S("schemas").Data().([]interface{})
 	var flag bool
-	var cnt int
+	var count int
 	for _, info := range data {
 		val := info.(map[string]interface{})
 		if val["displayName"].(string) == name {
 			flag = true
 			break
 		}
-		cnt = cnt + 1
+		count = count + 1
 	}
 	if flag != true {
 		return fmt.Errorf("Schema of specified name not found")
 	}
 
-	dataCon := con.S("schemas").Index(cnt)
+	dataCon := con.S("schemas").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 	d.Set("name", models.StripQuotes(dataCon.S("displayName").String()))
-	count, err := dataCon.ArrayCount("templates")
+	countTemplate, err := dataCon.ArrayCount("templates")
 	if err != nil {
 		return fmt.Errorf("No Template found")
 	}
 
 	found := false
-	for i := 0; i < count; i++ {
+	for i := 0; i < countTemplate; i++ {
 		tempCont, err := dataCon.ArrayElement(i, "templates")
 
 		if err != nil {
