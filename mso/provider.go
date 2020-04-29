@@ -52,6 +52,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_label":           resourceMSOLabel(),
 			"mso_schema_template": resourceMSOSchemaTemplate(),
 			"mso_tenant":          resourceMSOTenant(),
+			"mso_template_bd":     resourceMSOTemplateBD(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
