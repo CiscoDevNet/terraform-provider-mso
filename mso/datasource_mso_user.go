@@ -14,7 +14,7 @@ func datasourceMSOUser() *schema.Resource {
 
 		Read: datasourceMSOUserRead,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"username": &schema.Schema{
