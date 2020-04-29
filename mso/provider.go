@@ -60,7 +60,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_role":        	datasourceMSORole(),
 			"mso_user":        	datasourceMSOUser(),
 			"mso_label":       	datasourceMSOLabel(),
-      			"mso_schema_template":  datasourceMSOSchemaTemplate(),
+			"mso_schema_template":  datasourceMSOSchemaTemplate(),
 			
 		},
 
