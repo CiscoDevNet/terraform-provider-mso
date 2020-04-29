@@ -25,12 +25,14 @@ resource "mso_schema_template" "st1" {
   schema_id = "${mso_schema.s01.id}"
   name = "Temp200"
   display_name = "Temp845"
-  tenant_id = "5c4d9f3d2700007e01f80949"
-  
+  tenant_id = "5c4d9f3d2700007e01f80949" 
+
 }
 resource "mso_tenant" "tenant1" {
-		name = "mso1"
-		display_name = "mso1"
+	name = "m3"
+	display_name = "m3"
+  site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
+  user_associations{user_id = "0000ffff0000000000000020"}
 }
 
 data "mso_tenant" "schema1" {
@@ -39,7 +41,7 @@ data "mso_tenant" "schema1" {
 }
 
 output "demo1" {
-  value = "${data.mso_tenant.schema1.id}"
+  value = "${data.mso_tenant.schema1}"
 }
 
 resource "mso_site" "site1" {

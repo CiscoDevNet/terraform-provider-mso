@@ -46,6 +46,7 @@ func resourceMSOTenant() *schema.Resource {
 						},
 					},
 				},
+				Optional: true,
 				Computed: true,
 			},
 
@@ -57,8 +58,14 @@ func resourceMSOTenant() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"security_domains": {
+							Type:     schema.TypeList,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Optional: true,
+						},
 					},
 				},
+				Optional: true,
 				Computed: true,
 			},
 		}),
@@ -89,9 +96,10 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 			mapSite := make(map[string]interface{})
 			inner := val.(map[string]interface{})
-			if inner["siteId"] != "" {
-				mapSite["site_id"] = fmt.Sprintf("%v", inner["site_id"])
+			if inner["site_id"] != "" {
+				mapSite["siteId"] = fmt.Sprintf("%v", inner["site_id"])
 			}
+			mapSite["securityDomains"] = make([]interface{}, 0)
 			site_associations = append(site_associations, mapSite)
 		}
 	}
@@ -104,8 +112,8 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 			mapUser := make(map[string]interface{})
 			inner := val.(map[string]interface{})
-			if inner["userId"] != "" {
-				mapUser["user_id"] = fmt.Sprintf("%v", inner["user_id"])
+			if inner["user_id"] != "" {
+				mapUser["userId"] = fmt.Sprintf("%v", inner["user_id"])
 			}
 			user_associations = append(user_associations, mapUser)
 		}
@@ -154,7 +162,8 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 
 			mapSite := make(map[string]interface{})
 			inner := val.(map[string]interface{})
-			mapSite["userId"] = fmt.Sprintf("%v", inner["site_id"])
+			mapSite["siteId"] = fmt.Sprintf("%v", inner["site_id"])
+			mapSite["securityDomains"] = make([]interface{}, 0)
 			site_associations = append(site_associations, mapSite)
 		}
 	}
@@ -213,12 +222,13 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 
 		mapSite := make(map[string]interface{})
 		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
+		mapSite["security_domains"] = sitesCont.S("securityDomains").Data().([]interface{})
 		site_associations = append(site_associations, mapSite)
 	}
 
 	d.Set("site_associations", site_associations)
 
-	count2, err := con.ArrayCount("userAssociations")
+	count2, _ := con.ArrayCount("userAssociations")
 	if err != nil {
 		d.Set("user_assocoations", make([]interface{}, 0))
 	}

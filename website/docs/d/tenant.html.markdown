@@ -27,5 +27,5 @@ data "mso_tenant" "tenant1" {
 ## Attribute Reference ##
 
 * `description` - (Optional) The description for this tenant.
-* `users` - (Optional) A list of associated users for this tenant.
-* `sites` - (Optional) A list of associated sites for this tenant.
+* `user_associations` - (Optional) A list of associated users for this tenant.
+* `site_association` - (Optional) A list of associated sites for this tenant.
