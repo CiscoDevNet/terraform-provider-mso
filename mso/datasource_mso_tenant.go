@@ -100,11 +100,7 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 	}
 
-	count1, err := dataCon.ArrayCount("siteAssociations")
-	if err != nil {
-		return fmt.Errorf("No Site Association found")
-	}
-
+	count1, _ := dataCon.ArrayCount("siteAssociations")
 	site_associations := make([]interface{}, 0)
 	for i := 0; i < count1; i++ {
 		sitesCont, err := dataCon.ArrayElement(i, "siteAssociations")
@@ -119,11 +115,10 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("site_associations", site_associations)
 
-	count2, err := dataCon.ArrayCount("userAssociations")
+	count2, err := con.ArrayCount("userAssociations")
 	if err != nil {
-		return fmt.Errorf("No User Association found")
+		d.Set("user_assocoations", make([]interface{}, 0))
 	}
-
 	user_associations := make([]interface{}, 0)
 	for i := 0; i < count2; i++ {
 		usersCont, err := dataCon.ArrayElement(i, "userAssociations")
