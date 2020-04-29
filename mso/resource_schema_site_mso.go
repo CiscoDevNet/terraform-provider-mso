@@ -17,11 +17,7 @@ func resourceMSOSchemaSite() *schema.Resource {
 		Read:   resourceMSOSchemaSiteRead,
 		Delete: resourceMSOSchemaSiteDelete,
 
-		// Importer: &schema.ResourceImporter{
-		//     State: resourceMSOSchemaSiteImport,
-		// },
-
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -71,19 +67,18 @@ func resourceMSOSchemaSiteCreate(d *schema.ResourceData, m interface{}) error {
 
 func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
-
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
-
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
+
 	count, err := cont.ArrayCount("sites")
 	if err != nil {
 		return fmt.Errorf("No Template found")
 	}
+
 	stateSiteId := d.Get("site_id").(string)
 	stateTemplate := d.Get("template_name").(string)
 	found := false
