@@ -14,7 +14,7 @@ func datasourceMSORole() *schema.Resource {
 
 		Read: datasourceMSORoleRead,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -52,28 +52,28 @@ func datasourceMSORoleRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	name := d.Get("name").(string)
 	con, err := msoClient.GetViaURL("api/v1/roles")
 	if err != nil {
 		return err
 	}
+
 	data := con.S("roles").Data().([]interface{})
 	var flag bool
-	var cnt int
+	var count int
 	for _, info := range data {
 		val := info.(map[string]interface{})
 		if val["name"].(string) == name {
 			flag = true
 			break
 		}
-		cnt = cnt + 1
+		count = count + 1
 	}
 	if flag != true {
 		return fmt.Errorf("Role of specified name not found")
 	}
 
-	dataCon := con.S("roles").Index(cnt)
+	dataCon := con.S("roles").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
 	d.Set("display_name", models.StripQuotes(dataCon.S("displayName").String()))
