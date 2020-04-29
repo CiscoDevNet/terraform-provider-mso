@@ -5,12 +5,12 @@ provider "mso" {
   insecure = true
 }
 
-# resource "mso_schema" "s01" {
-#   name = "Shah"
-#   template_name = "template99"
-#   tenant_id = "5ea7e44b2c00007ebb0a2781"
+resource "mso_schema" "s01" {
+  name = "Shah"
+  template_name = "template99"
+  tenant_id = "5ea7e44b2c00007ebb0a2781"
   
-# }
+}
 
 data "mso_schema_template" "st10" {
   name = "Template101"

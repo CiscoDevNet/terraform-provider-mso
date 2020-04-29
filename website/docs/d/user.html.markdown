@@ -6,7 +6,7 @@ description: |-
   Data source for MSO User
 ---
 
-# mso_user#
+# mso_user #
 
 Data source for MSO User
 
@@ -20,16 +20,17 @@ data "mso_user" "schema10" {
 
 ## Argument Reference ##
 
-* `username` - (Required) username of the schema.
+* `username` - (Required) username of the user. It must contain at least 1 character in length.
 
 ## Attribute Reference ##
-* `user_password` - (Optional) password of the user.
+
+* `user_password` - (Optional) password of the user. It must contain at least 8 characters in length.
+* `roles` - (Optional) roles given to the user.
+* `roles.roleid` - (Optional) id of roles given to the user.
 * `first_name` - (Optional) firstname of the user.
 * `last_name` - (Optional) lastname of the user.
 * `email` - (Optional) email of the user.
 * `phone` - (Optional) phone of the user.
 * `account-status` - (Optional) account status of the user.
 * `domain` - (Optional) domain status of the user.
-* `roles` - (Optional) roles given to the user.
-* `roles.roleid` - (Optional) id of roles given to the user.
 * `roles.access_type` - (Optional) access_type of roles given to the user.

@@ -15,7 +15,7 @@ func datasourceMSOSchemaTemplate() *schema.Resource {
 
 		Read: datasourceMSOSchemaTemplateRead,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{

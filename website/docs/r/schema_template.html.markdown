@@ -6,7 +6,7 @@ description: |-
   Manages MSO Schema Template
 ---
 
-# schema template #
+# mso_schema_template #
 
 Manages MSO Schema Site
 
@@ -30,4 +30,4 @@ resource "mso_schema_template" "st1" {
 
 ## Attribute Reference ##
 
-The only attribute exported with this resource is `id`. Which is set to the id of site associated.
+The only attribute exported with this resource is `id`. Which is set to the id of schema template associated.

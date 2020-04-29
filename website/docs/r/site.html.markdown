@@ -6,7 +6,7 @@ description: |-
   Manages MSO Site
 ---
 
-# schema #
+# mso_site #
 
 Manages MSO Site
 
@@ -29,8 +29,9 @@ resource "mso_site" "foo_site" {
 * `password` - (Required) The password for the APICs.
 * `apic_site_id` - (Required) The site ID of the APICs.
 * `urls` - (Required) A list of URLs to reference the APICs.
+* `labels` - (Optional) The labels for this site.
+* `locations` - (Optional) Location of the site.
 
 ## Attribute Reference ##
 
-* `labels` - (Optional) The labels for this site.
-* `locations` - (Optional) Location of the site.
+No Attributes are Exported.

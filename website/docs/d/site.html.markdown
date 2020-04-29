@@ -24,9 +24,9 @@ data "mso_site" "sample_site" {
 
 ## Attribute Reference ##
 
-* `username` - (Required) The username for the APICs.
-* `password` - (Required) The password for the APICs.
-* `apic_site_id` - (Required) The site ID of the APICs.
-* `urls` - (Required) A list of URLs to reference the APICs.
+* `username` - (Optional) The username for the APICs.
+* `password` - (Optional) The password for the APICs.
+* `apic_site_id` - (Optional) The site ID of the APICs.
+* `urls` - (Optional) A list of URLs to reference the APICs.
 * `labels` - (Optional) The labels for this site.
 * `locations` - (Optional) Location of the site.

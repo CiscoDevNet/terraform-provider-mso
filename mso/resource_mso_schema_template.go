@@ -18,7 +18,7 @@ func resourceMSOSchemaTemplate() *schema.Resource {
 		Update: resourceMSOSchemaTemplateUpdate,
 		Delete: resourceMSOSchemaTemplateDelete,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{

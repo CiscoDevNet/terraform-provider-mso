@@ -6,7 +6,7 @@ description: |-
   Manages MSO Schema Site
 ---
 
-# schema #
+# mso_schema_site #
 
 Manages MSO Schema Site
 
@@ -28,4 +28,4 @@ resource "mso_schema_site" "foo_schema_site" {
 
 ## Attribute Reference ##
 
-The only attribute exported with this resource is `id`. Which is set to the id of site associated.
+The only attribute exported with this resource is `id`. Which is set to the id of schema site associated.

@@ -24,8 +24,7 @@ data "mso_schema_template" "st10" {
 * `name` - (Required) name of the template to fetch.
 * `schema_id` - (Required) The schema-id where template is associated.
 
-
 ## Attribute Reference ##
 
-* `tenant_id` - (Required) Tenant id is set to the MSO template UUID.
+* `tenant_id` - (Optional) Tenant id is set to the MSO template UUID.
 * `display_name` - (Optional) The display name of the template deployed to the site

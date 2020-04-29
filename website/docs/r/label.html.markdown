@@ -6,7 +6,7 @@ description: |-
   Manages MSO Resource Label
 ---
 
-# schema #
+# mso_label #
 
 Manages MSO Label
 
@@ -24,7 +24,6 @@ Manages MSO Label
 * `label` - (Required) name of the label.
 * `type` - (Required) type of the label.
 
-
 ## Attribute Reference ##
 
-The only attribute exported with this resource is `id`. Which is set to the id of label associated.
+No Attributes are Exported.
