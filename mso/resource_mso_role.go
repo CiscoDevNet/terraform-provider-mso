@@ -16,7 +16,7 @@ func resourceMSORole() *schema.Resource {
 		Read:   resourceMSORoleRead,
 		Delete: resourceMSORoleDelete,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -76,7 +76,6 @@ func resourceMSORoleCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	roleApp := models.NewRole(siteAttr)
-
 	cont, err := msoClient.Save("api/v1/roles", roleApp)
 	if err != nil {
 		log.Println(err)
@@ -88,7 +87,6 @@ func resourceMSORoleCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSORoleRead(d, m)
-
 }
 
 func resourceMSORoleUpdate(d *schema.ResourceData, m interface{}) error {
@@ -120,7 +118,6 @@ func resourceMSORoleUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	roleApp := models.NewRole(siteAttr)
-
 	cont, err := msoClient.Put(fmt.Sprintf("api/v1/roles/%s", d.Id()), roleApp)
 	if err != nil {
 		return err
@@ -131,15 +128,12 @@ func resourceMSORoleUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
 
 	return resourceMSORoleRead(d, m)
-
 }
 
 func resourceMSORoleRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 	msoClient := m.(*client.Client)
-
 	dn := d.Id()
-
 	con, err := msoClient.GetViaURL("api/v1/roles/" + dn)
 	if err != nil {
 		return err
@@ -150,41 +144,40 @@ func resourceMSORoleRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("display_name", models.StripQuotes(con.S("displayName").String()))
 	d.Set("description", models.StripQuotes(con.S("description").String()))
 
-	count1, err := con.ArrayCount("readPermissions")
+	countReadP, err := con.ArrayCount("readPermissions")
 	if err != nil {
 		return fmt.Errorf("No Read Permission found")
 	}
-	found1 := false
-	for i := 0; i < count1; i++ {
+	foundReadPermissions := false
+	for i := 0; i < countReadP; i++ {
 
 		temp, err := con.ArrayElement(i, "readPermissions")
-		log.Println(temp)
 		d.Set("read_permissions", temp)
-		found1 = true
+		foundReadPermissions = true
 		if err != nil {
 			return fmt.Errorf("Unable to parse the read permissions list")
 		}
 	}
-	if !found1 {
+
+	if !foundReadPermissions {
 		d.Set("read_permissions", "")
 	}
 
-	count2, err := con.ArrayCount("writePermissions")
+	countWriteP, err := con.ArrayCount("writePermissions")
 	if err != nil {
 		return fmt.Errorf("No write permission found")
 	}
-	found2 := false
-	for i := 0; i < count2; i++ {
+	foundWritePermissions := false
 
+	for i := 0; i < countWriteP; i++ {
 		temp, err := con.ArrayElement(i, "writePermissions")
-		log.Println(temp)
 		d.Set("write_permissions", temp)
-		found2 = true
+		foundWritePermissions = true
 		if err != nil {
 			return fmt.Errorf("Unable to parse the write permissions list")
 		}
 	}
-	if !found2 {
+	if !foundWritePermissions {
 		d.Set("write_permissions", "")
 	}
 
@@ -194,14 +187,12 @@ func resourceMSORoleRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceMSORoleDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
-
 	msoClient := m.(*client.Client)
 	dn := d.Id()
 	err := msoClient.DeletebyId("api/v1/roles/" + dn)
 	if err != nil {
 		return err
 	}
-
 	log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
 
 	d.SetId("")

@@ -16,7 +16,7 @@ func resourceMSOUser() *schema.Resource {
 		Read:   resourceMSOUserRead,
 		Delete: resourceMSOUserDelete,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"username": &schema.Schema{
@@ -78,37 +78,44 @@ func resourceMSOUser() *schema.Resource {
 }
 
 func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Schema: Beginning Creation")
+	log.Printf("[DEBUG] User: Beginning Creation")
 	msoClient := m.(*client.Client)
 
 	var user string
 	if username, ok := d.GetOk("username"); ok {
 		user = username.(string)
 	}
+
 	var userPassword string
 	if password, ok := d.GetOk("user_password"); ok {
 		userPassword = password.(string)
 	}
+
 	var firstName string
 	if firstname, ok := d.GetOk("first_name"); ok {
 		firstName = firstname.(string)
 	}
+
 	var lastName string
 	if lastname, ok := d.GetOk("last_name"); ok {
 		lastName = lastname.(string)
 	}
+
 	var email string
 	if emails, ok := d.GetOk("email"); ok {
 		email = emails.(string)
 	}
+
 	var phone string
 	if phones, ok := d.GetOk("phone"); ok {
 		phone = phones.(string)
 	}
+
 	var accountStatus string
 	if accountstatus, ok := d.GetOk("account_status"); ok {
 		accountStatus = accountstatus.(string)
 	}
+
 	var domain string
 	if Domain, ok := d.GetOk("domain"); ok {
 		domain = Domain.(string)
@@ -116,23 +123,22 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
-		tp := val.(*schema.Set).List()
-		for _, val := range tp {
+		role_list := val.(*schema.Set).List()
+		for _, val := range role_list {
 
-			map1 := make(map[string]interface{})
-			inner := val.(map[string]interface{})
-			if inner["roleid"] != "" {
-				map1["roleId"] = fmt.Sprintf("%v", inner["roleid"])
+			map_roles := make(map[string]interface{})
+			inner_roles := val.(map[string]interface{})
+			if inner_roles["roleid"] != "" {
+				map_roles["roleId"] = fmt.Sprintf("%v", inner_roles["roleid"])
 			}
-			if inner["access_type"] != "" {
-				map1["accessType"] = fmt.Sprintf("%v", inner["access_type"])
+			if inner_roles["access_type"] != "" {
+				map_roles["accessType"] = fmt.Sprintf("%v", inner_roles["access_type"])
 			}
-			//map1["sortOrder"], _ =fmt.Sprintf("%v", inner["sort_order"]))
-			roles = append(roles, map1)
+			
+			roles = append(roles, map_roles)
 		}
-		//aAttr.RoundRobin = maplistrr
-	}
-	//roles:= d.Get("roles").(string)
+}
+	
 
 	userApp := models.NewUser("", user, userPassword, firstName, lastName, email, phone, accountStatus, domain, roles)
 	cont, err := msoClient.Save("api/v1/users", userApp)
@@ -142,61 +148,69 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 
 	id := models.StripQuotes(cont.S("id").String())
 	d.SetId(fmt.Sprintf("%v", id))
-	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
+	log.Printf("[DEBUG] %s: User Creation finished successfully", d.Id())
 
 	return resourceMSOUserRead(d, m)
 }
 
 func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Schema: Beginning Creation of resource")
+	log.Printf("[DEBUG] User: Beginning Creation of resource")
 	msoClient := m.(*client.Client)
 	var user string
 	if username, ok := d.GetOk("username"); ok {
 		user = username.(string)
 	}
+
 	var userPassword string
 	if password, ok := d.GetOk("user_password"); ok {
 		userPassword = password.(string)
 	}
+
 	var firstName string
 	if firstname, ok := d.GetOk("first_name"); ok {
 		firstName = firstname.(string)
 	}
+
 	var lastName string
 	if lastname, ok := d.GetOk("last_name"); ok {
 		lastName = lastname.(string)
 	}
+
 	var email string
 	if emails, ok := d.GetOk("email"); ok {
 		email = emails.(string)
 	}
+
 	var phone string
 	if phones, ok := d.GetOk("phone"); ok {
 		phone = phones.(string)
 	}
+
 	var accountStatus string
 	if accountstatus, ok := d.GetOk("account_status"); ok {
 		accountStatus = accountstatus.(string)
 	}
+
 	var domain string
 	if Domain, ok := d.GetOk("domain"); ok {
 		domain = Domain.(string)
 	}
+	
 	roles := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("roles"); ok {
 
-		tp := val.(*schema.Set).List()
-		for _, val := range tp {
+		role_list := val.(*schema.Set).List()
+		for _, val := range role_list {
 
-			map1 := make(map[string]interface{})
-			inner := val.(map[string]interface{})
-			map1["roleId"] = fmt.Sprintf("%v", inner["roleid"])
+			map_role := make(map[string]interface{})
+			inner_role := val.(map[string]interface{})
+			map_role["roleId"] = fmt.Sprintf("%v", inner_role["roleid"])
 
-			if inner["access_type"] != "" {
-				map1["accessType"] = fmt.Sprintf("%v", inner["access_type"])
+			if inner_role["access_type"] != "" {
+				map_role["accessType"] = fmt.Sprintf("%v", inner_role["access_type"])
 			}
 
-			roles = append(roles, map1)
+			roles = append(roles, map_role)
 		}
 
 	}
@@ -263,11 +277,11 @@ func resourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unable to parse the roles list")
 		}
 
-		map1 := make(map[string]interface{})
+		map_role := make(map[string]interface{})
 
-		map1["roleid"] = models.StripQuotes(rolesCont.S("roleId").String())
-		map1["access_type"] = models.StripQuotes(rolesCont.S("accessType").String())
-		roles = append(roles, map1)
+		map_role["roleid"] = models.StripQuotes(rolesCont.S("roleId").String())
+		map_role["access_type"] = models.StripQuotes(rolesCont.S("accessType").String())
+		roles = append(roles, map_role)
 	}
 	d.Set("roles", roles)
 

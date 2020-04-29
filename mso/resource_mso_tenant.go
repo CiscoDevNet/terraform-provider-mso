@@ -82,8 +82,8 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 	site_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("site_associations"); ok {
-		tp := val.(*schema.Set).List()
-		for _, val := range tp {
+		siteList := val.(*schema.Set).List()
+		for _, val := range siteList {
 
 			mapSite := make(map[string]interface{})
 			inner := val.(map[string]interface{})
@@ -96,8 +96,8 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 	user_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("user_associations"); ok {
-		tp := val.(*schema.Set).List()
-		for _, val := range tp {
+		userList := val.(*schema.Set).List()
+		for _, val := range userList {
 
 			mapUser := make(map[string]interface{})
 			inner := val.(map[string]interface{})
@@ -145,8 +145,8 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 	site_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("site_associations"); ok {
 
-		tp := val.(*schema.Set).List()
-		for _, val := range tp {
+		siteList := val.(*schema.Set).List()
+		for _, val := range siteList {
 
 			mapSite := make(map[string]interface{})
 			inner := val.(map[string]interface{})
@@ -158,8 +158,8 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 	user_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("user_associations"); ok {
 
-		tp := val.(*schema.Set).List()
-		for _, val := range tp {
+		userList := val.(*schema.Set).List()
+		for _, val := range userList {
 
 			mapUser := make(map[string]interface{})
 			inner := val.(map[string]interface{})
@@ -197,11 +197,7 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("display_name", models.StripQuotes(con.S("displayName").String()))
 	d.Set("description", models.StripQuotes(con.S("description").String()))
 
-	count1, err := con.ArrayCount("siteAssociations")
-	if err != nil {
-		return fmt.Errorf("No Site Association found")
-	}
-
+	count1, _ := con.ArrayCount("siteAssociations")
 	site_associations := make([]interface{}, 0)
 	for i := 0; i < count1; i++ {
 		sitesCont, err := con.ArrayElement(i, "siteAssociations")
@@ -218,7 +214,7 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 
 	count2, err := con.ArrayCount("userAssociations")
 	if err != nil {
-		return fmt.Errorf("No User Association found")
+		d.Set("user_assocoations", make([]interface{}, 0))
 	}
 
 	user_associations := make([]interface{}, 0)

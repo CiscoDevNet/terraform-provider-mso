@@ -17,11 +17,8 @@ func resourceMSOSchema() *schema.Resource {
 		Read:   resourceMSOSchemaRead,
 		Delete: resourceMSOSchemaDelete,
 
-		// Importer: &schema.ResourceImporter{
-		// 	State: resourceMSOSchemaImport,
-		// },
-
-		SchemaVersion: 1,
+		
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -85,8 +82,6 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaRead(d, m)
-	return nil
-
 }
 
 func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {

@@ -100,11 +100,7 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 	}
 
-	count1, err := dataCon.ArrayCount("siteAssociations")
-	if err != nil {
-		return fmt.Errorf("No Site Association found")
-	}
-
+	count1, _ := dataCon.ArrayCount("siteAssociations")
 	site_associations := make([]interface{}, 0)
 	for i := 0; i < count1; i++ {
 		sitesCont, err := dataCon.ArrayElement(i, "siteAssociations")
@@ -112,18 +108,17 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unable to parse the site associations list")
 		}
 
-		mapSite := make(map[string]interface{})
-		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
-		site_associations = append(site_associations, mapSite)
+		map1 := make(map[string]interface{})
+		map1["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
+		site_associations = append(site_associations, map1)
 	}
 
 	d.Set("site_associations", site_associations)
 
-	count2, err := dataCon.ArrayCount("userAssociations")
+	count2, err := con.ArrayCount("userAssociations")
 	if err != nil {
-		return fmt.Errorf("No User Association found")
+		d.Set("user_assocoations", make([]interface{}, 0))
 	}
-
 	user_associations := make([]interface{}, 0)
 	for i := 0; i < count2; i++ {
 		usersCont, err := dataCon.ArrayElement(i, "userAssociations")
@@ -131,9 +126,9 @@ func datasourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Unable to parse the user associations list")
 		}
 
-		mapUser := make(map[string]interface{})
-		mapUser["user_id"] = models.StripQuotes(usersCont.S("userId").String())
-		user_associations = append(user_associations, mapUser)
+		map1 := make(map[string]interface{})
+		map1["user_id"] = models.StripQuotes(usersCont.S("userId").String())
+		user_associations = append(user_associations, map1)
 	}
 
 	d.Set("user_associations", user_associations)
