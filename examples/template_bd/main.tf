@@ -11,6 +11,17 @@ resource "mso_template_bd" "bridge_domain" {
     name = "testBD"
     display_name = "test"
     vrf_name = "demo"
-    layer2_unknown_unicast = "proxy"
-  
+    layer2_unknown_unicast = "proxy" 
 }
+
+
+data "mso_template_bd" "bd_data" {
+    schema_id = "5ea809672c00003bc40a2799"
+    template_name = "Template1"
+    name = "testBD"
+}
+
+output "demo_bd" {
+  value = data.mso_template_bd.bd_data
+}
+

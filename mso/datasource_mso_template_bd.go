@@ -19,7 +19,7 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 		//     State: resourceMSOSchemaSiteImport,
 		// },
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -76,7 +76,8 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 			},
 			"vrf_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"vrf_schema_id": &schema.Schema{
 				Type:     schema.TypeString,

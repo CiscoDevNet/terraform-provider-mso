@@ -22,7 +22,7 @@ func resourceMSOTemplateBD() *schema.Resource {
 		//     State: resourceMSOSchemaSiteImport,
 		// },
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
