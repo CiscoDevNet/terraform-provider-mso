@@ -53,6 +53,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template":    resourceMSOSchemaTemplate(),
 			"mso_tenant":             resourceMSOTenant(),
 			"mso_schema_template_bd": resourceMSOTemplateBD(),
+			"mso_schema_template_vrf":resourceMSOSchemaTemplateVrf(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -65,6 +66,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template":    datasourceMSOSchemaTemplate(),
 			"mso_tenant":             datasourceMSOTenant(),
 			"mso_schema_template_bd": dataSourceMSOTemplateBD(),
+			"mso_schema_template_vrf":datasourceMSOSchemaTemplateVrf(),
 		},
 
 		ConfigureFunc: configureClient,
