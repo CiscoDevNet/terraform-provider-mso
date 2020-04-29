@@ -220,7 +220,10 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("labels", con.S("labels").Data().([]interface{}))
 	d.Set("urls", con.S("urls").Data().([]interface{}))
 	d.Set("platform", models.StripQuotes(con.S("platform").String()))
-	d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
+
+	if con.Exists("cloudProviders") {
+		d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
+	}
 
 	loc1 := con.S("location").Data()
 	locset := make(map[string]interface{})

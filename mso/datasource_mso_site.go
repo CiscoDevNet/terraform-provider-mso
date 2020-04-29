@@ -70,6 +70,13 @@ func datasourceMSOSite() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
+
+			"cloud_providers": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -98,7 +105,7 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if flag != true {
-		return fmt.Errorf("Sie of specified name not found")
+		return fmt.Errorf("Site of specified name not found")
 	}
 
 	dataCon := con.S("sites").Index(count)
@@ -136,6 +143,10 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 
 	if dataCon.Exists("urls") {
 		d.Set("urls", dataCon.S("urls").Data().([]interface{}))
+	}
+
+	if dataCon.Exists("cloudProviders") {
+		d.Set("cloud_providers", dataCon.S("cloudProviders").Data().([]interface{}))
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

@@ -6,7 +6,7 @@ description: |-
   Manages MSO Schema
 ---
 
-# schema #
+# mso_schema #
 
 Manages MSO Schema
 

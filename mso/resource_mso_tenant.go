@@ -16,6 +16,8 @@ func resourceMSOTenant() *schema.Resource {
 		Read:   resourceMSOTenantRead,
 		Delete: resourceMSOTenantDelete,
 
+		SchemaVersion: version,
+
 		Schema: (map[string]*schema.Schema{
 
 			"name": &schema.Schema{
@@ -93,6 +95,7 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 			site_associations = append(site_associations, mapSite)
 		}
 	}
+	tenantAttr.Sites = site_associations
 
 	user_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("user_associations"); ok {
@@ -107,6 +110,7 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 			user_associations = append(user_associations, mapUser)
 		}
 	}
+	tenantAttr.Users = user_associations
 
 	tenantApp := models.NewTenant(tenantAttr)
 
@@ -154,6 +158,7 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 			site_associations = append(site_associations, mapSite)
 		}
 	}
+	tenantAttr.Sites = site_associations
 
 	user_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("user_associations"); ok {
@@ -167,6 +172,7 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 			user_associations = append(user_associations, mapUser)
 		}
 	}
+	tenantAttr.Users = user_associations
 
 	tenantApp := models.NewTenant(tenantAttr)
 	cont, err := msoClient.Put(fmt.Sprintf("api/v1/tenants/%s", d.Id()), tenantApp)

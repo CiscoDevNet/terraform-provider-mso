@@ -15,7 +15,7 @@ func resourceMSOLabel() *schema.Resource {
 		Read:   resourceMSOLabelRead,
 		Delete: resourceMSOLabelDelete,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"label": &schema.Schema{

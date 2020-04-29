@@ -6,7 +6,7 @@ description: |-
   Manages MSO Tenant
 ---
 
-# schema #
+# mso_tenant #
 
 Manages MSO Tenant
 
@@ -23,9 +23,10 @@ resource "mso_tenant" "tenant1" {
 
 * `name` - (Required) The name of the tenant.
 * `display_name` - (Required) The name of the tenant to be displayed in the web UI.
-
-## Attribute Reference ##
-
 * `description` - (Optional) The description for this tenant.
 * `users` - (Optional) A list of associated users for this tenant.
 * `sites` - (Optional) A list of associated sites for this tenant.
+
+## Attribute Reference ##
+
+No Attributes are Exported.

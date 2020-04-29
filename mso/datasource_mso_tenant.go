@@ -14,7 +14,7 @@ func datasourceMSOTenant() *schema.Resource {
 
 		Read: datasourceMSOTenantRead,
 
-		SchemaVersion: 1,
+		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{

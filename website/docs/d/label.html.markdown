@@ -8,7 +8,7 @@ description: |-
 
 # mso_schema #
 
-Data source for MSO Label 
+Data source for MSO Label
 
 ## Example Usage ##
 
@@ -21,7 +21,6 @@ data "mso_label" "label1" {
 ## Argument Reference ##
 
 * `label` - (Required) name of the label.
-
 
 ## Attribute Reference ##
 
