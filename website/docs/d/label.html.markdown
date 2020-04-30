@@ -6,7 +6,7 @@ description: |-
   Data source for MSO Label
 ---
 
-# mso_schema #
+# mso_label #
 
 Data source for MSO Label
 

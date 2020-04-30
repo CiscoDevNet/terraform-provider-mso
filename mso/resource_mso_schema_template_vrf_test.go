@@ -101,10 +101,9 @@ func testAccCheckMsoSchemaTemplateVrfExists(schemaName string, schemaTemplateVrf
 			return err
 		}
 
-		
 		stvt := SchemaTemplateVrfTest{}
 		stvt.SchemaId = rs1.Primary.ID
-		
+
 		count, err := con.ArrayCount("templates")
 		if err != nil {
 			return err
@@ -153,7 +152,7 @@ func testAccCheckMsoSchemaTemplateVrfDestroy(s *terraform.State) error {
 	if !err1 {
 		return fmt.Errorf("Schema %s not found", "mso_schema.schema1")
 	}
-	
+
 	schemaid := rs1.Primary.ID
 	for _, rs := range s.RootModule().Resources {
 
@@ -198,7 +197,7 @@ func testAccCheckMsoSchemaTemplateVrfDestroy(s *terraform.State) error {
 func testAccCheckMsoSchemaTemplateVrfAttributes(name string, stv *SchemaTemplateVrfTest) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if name != stv.DisplayName {
-			return fmt.Errorf("Bad Schema Template Vrf Name %s",stv.DisplayName)
+			return fmt.Errorf("Bad Schema Template Vrf Name %s", stv.DisplayName)
 		}
 		return nil
 	}

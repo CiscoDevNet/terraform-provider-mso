@@ -185,7 +185,7 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) err
 					d.SetId(currentVrfName)
 					d.Set("name", currentVrfName)
 					if vrfCont.Exists("displayName") {
-					d.Set("display_name", models.StripQuotes(vrfCont.S("displayName").String()))
+						d.Set("display_name", models.StripQuotes(vrfCont.S("displayName").String()))
 					}
 					if vrfCont.Exists("l3MCast") {
 						l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
