@@ -29,8 +29,9 @@ resource "mso_schema_template" "st1" {
 
 }
 resource "mso_tenant" "tenant1" {
-	name = "m3"
-	display_name = "m3"
+	name = "m22"
+	display_name = "m22"
+  description = "sfdgnhjm"
   site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
   user_associations{user_id = "0000ffff0000000000000020"}
 }
