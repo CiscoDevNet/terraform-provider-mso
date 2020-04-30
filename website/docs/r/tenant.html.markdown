@@ -14,8 +14,10 @@ Manages MSO Tenant
 
 ```hcl
 resource "mso_tenant" "tenant1" {
-  name = "mso"
-  display_name = "mso"
+  name = "m3"
+  display_name = "m3"
+  site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
+  user_associations{user_id = "0000ffff0000000000000020"}
 }
 ```
 
@@ -24,9 +26,9 @@ resource "mso_tenant" "tenant1" {
 * `name` - (Required) The name of the tenant.
 * `display_name` - (Required) The name of the tenant to be displayed in the web UI.
 * `description` - (Optional) The description for this tenant.
-* `users` - (Optional) A list of associated users for this tenant.
-* `sites` - (Optional) A list of associated sites for this tenant.
+* `user_associations` - (Optional) A list of associated users for this tenant.
+* `site_association` - (Optional) A list of associated sites for this tenant.
 
 ## Attribute Reference ##
 
-No Attributes are Exported.
+The only Attribute exposed for this resource is `id`. Which is set to the id of tenant created.
