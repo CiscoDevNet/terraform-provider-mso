@@ -138,6 +138,7 @@ output "demo" {
 
 
 
+
 data "mso_schema_template_anp_epg" "sepg1" {
   schema_id = "5c4d5bb72700000401f80948"
   template_name = "Template1"
