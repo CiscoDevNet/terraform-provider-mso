@@ -7,6 +7,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func datasourceMSOSchemaTemplateAnp() *schema.Resource {
@@ -20,21 +21,25 @@ func datasourceMSOSchemaTemplateAnp() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
 	}
