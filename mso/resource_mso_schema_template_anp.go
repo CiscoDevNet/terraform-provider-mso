@@ -1,0 +1,207 @@
+package mso
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/models"
+	"github.com/hashicorp/terraform/helper/schema"
+)
+
+func resourceMSOSchemaTemplateAnp() *schema.Resource {
+	return &schema.Resource{
+		Create: resourceMSOSchemaTemplateAnpCreate,
+		Update: resourceMSOSchemaTemplateAnpUpdate,
+		Read:   resourceMSOSchemaTemplateAnpRead,
+		Delete: resourceMSOSchemaTemplateAnpDelete,
+
+		Schema: (map[string]*schema.Schema{
+
+			"schema_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"template": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"name": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"display_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+		}),
+	}
+}
+
+func resourceMSOSchemaTemplateAnpCreate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] Schema Template Anp: Beginning Creation")
+	msoClient := m.(*client.Client)
+
+	var schemaId string
+	if schema_id, ok := d.GetOk("schema_id"); ok {
+		schemaId = schema_id.(string)
+	}
+
+	var templateName string
+	if template, ok := d.GetOk("template"); ok {
+		templateName = template.(string)
+	}
+
+	var Name string
+	if name, ok := d.GetOk("name"); ok {
+		Name = name.(string)
+	}
+
+	var displayName string
+	if display_name, ok := d.GetOk("display_name"); ok {
+		displayName = display_name.(string)
+	}
+
+	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("add", "/templates/"+templateName+"/anps/-", Name, displayName)
+
+	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	id := models.StripQuotes(cont.S("id").String())
+	d.SetId(fmt.Sprintf("%v", id))
+	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
+
+	return resourceMSOSchemaTemplateAnpRead(d, m)
+}
+
+func resourceMSOSchemaTemplateAnpUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] Schema Template Anp: Beginning Updating")
+	msoClient := m.(*client.Client)
+
+	var schemaId string
+	if schema_id, ok := d.GetOk("schema_id"); ok {
+		schemaId = schema_id.(string)
+	}
+
+	var templateName string
+	if template, ok := d.GetOk("template"); ok {
+		templateName = template.(string)
+	}
+
+	var Name string
+	if name, ok := d.GetOk("name"); ok {
+		Name = name.(string)
+	}
+
+	var displayName string
+	if display_name, ok := d.GetOk("display_name"); ok {
+		displayName = display_name.(string)
+	}
+
+	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("replace", "/templates/"+templateName+"/anps/"+Name, Name, displayName)
+
+	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	id := models.StripQuotes(cont.S("id").String())
+	d.SetId(fmt.Sprintf("%v", id))
+	log.Printf("[DEBUG] %s: Updating finished successfully", d.Id())
+
+	return resourceMSOSchemaTemplateAnpRead(d, m)
+}
+
+func resourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
+	msoClient := m.(*client.Client)
+	schemaId := d.Get("schema_id").(string)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return err
+	}
+
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return fmt.Errorf("No Template found")
+	}
+
+	templateName := d.Get("template").(string)
+	anpName := d.Get("name").(string)
+	found := false
+
+	for i := 0; i < count; i++ {
+
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return err
+		}
+		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
+
+		if currentTemplateName == templateName {
+			d.Set("template", currentTemplateName)
+			anpCount, err := tempCont.ArrayCount("anps")
+
+			if err != nil {
+				return fmt.Errorf("No Anp found")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+
+				if err != nil {
+					return err
+				}
+				currentAnpName := models.StripQuotes(anpCont.S("name").String())
+				log.Println("currentanpname", currentAnpName)
+				if currentAnpName == anpName {
+					log.Println("found correct anpname")
+					d.SetId(currentAnpName)
+					d.Set("name", currentAnpName)
+					if anpCont.Exists("displayName") {
+						d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
+					}
+					found = true
+					break
+				}
+			}
+		}
+		if found {
+			break
+		}
+	}
+	if !found {
+		d.SetId("")
+		d.Set("name", "")
+		d.Set("display_name", "")
+	}
+	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
+	return nil
+}
+
+func resourceMSOSchemaTemplateAnpDelete(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
+	msoClient := m.(*client.Client)
+	schemaId := d.Get("schema_id").(string)
+	template := d.Get("template").(string)
+	name := d.Get("name").(string)
+	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("remove", "/templates/"+template+"/anps/"+name, "", "")
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
+
+	d.SetId("")
+	return nil
+}
