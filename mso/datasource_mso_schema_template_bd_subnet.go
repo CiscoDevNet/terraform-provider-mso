@@ -40,9 +40,10 @@ func dataSourceMSOTemplateSubnetBD() *schema.Resource {
 			},
 
 			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"scope": &schema.Schema{

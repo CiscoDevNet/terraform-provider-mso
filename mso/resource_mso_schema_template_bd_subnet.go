@@ -43,8 +43,9 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 			},
 
 			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -52,14 +53,14 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 				Computed: true,
 			},
 			"scope": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"shared": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeBool,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,

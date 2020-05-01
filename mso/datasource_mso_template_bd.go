@@ -160,15 +160,27 @@ func dataSourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
 					d.SetId(apiBD)
+					log.Printf("Unique BD %v", bdCont)
 					d.Set("name", apiBD)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
-					d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
-					d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
-					d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
-					d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+					if bdCont.Exists("intersiteBumTrafficAllow") {
+						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
+					}
+
+					if bdCont.Exists("optimize_wan_bandwidth") {
+						d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
+					}
+
+					if bdCont.Exists("layer3_multicast") {
+						d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
+					}
+
+					if bdCont.Exists("layer2_stretch") {
+						d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+					}
 
 					vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -184,6 +196,12 @@ func dataSourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 						if bdCont.Exists("dhcpLabel", "dhcpOptionLabel") {
 							dhcpPolMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "name").String())
 							dhcpPolMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "version").String())
+							if dhcpPolMap["dhcp_option_policy_name"] == "{}" {
+								dhcpPolMap["dhcp_option_policy_name"] = nil
+							}
+							if dhcpPolMap["dhcp_option_policy_version"] == "{}" {
+								dhcpPolMap["dhcp_option_policy_version"] = nil
+							}
 						}
 						d.Set("dhcp_policy", dhcpPolMap)
 					} else {

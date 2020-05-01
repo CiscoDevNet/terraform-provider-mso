@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -79,8 +80,9 @@ func resourceMSOTemplateBD() *schema.Resource {
 				Computed: true,
 			},
 			"vrf_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"vrf_schema_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -104,7 +106,7 @@ func resourceMSOTemplateBD() *schema.Resource {
 							Computed: true,
 						},
 						"version": &schema.Schema{
-							Type:     schema.TypeString,
+							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
@@ -114,7 +116,7 @@ func resourceMSOTemplateBD() *schema.Resource {
 							Computed: true,
 						},
 						"dhcp_option_policy_version": &schema.Schema{
-							Type:     schema.TypeString,
+							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
@@ -166,8 +168,14 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	var dhcpPolMap map[string]interface{}
 	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
 		dhcp_policy := tempVar.(map[string]interface{})
+		dhcpPolMap = make(map[string]interface{})
+		log.Printf("Uniqueee string %v", dhcp_policy)
 		dhcpPolMap["name"] = dhcp_policy["name"]
-		dhcpPolMap["version"] = dhcp_policy["version"]
+		version, err := strconv.Atoi(dhcp_policy["version"].(string))
+		if err != nil {
+			return err
+		}
+		dhcpPolMap["version"] = version
 
 		optionName := dhcp_policy["dhcp_option_policy_name"]
 		optionVersion := dhcp_policy["dhcp_option_policy_version"]
@@ -175,7 +183,11 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 			if optionVersion != nil {
 				dhcpOptionMap := make(map[string]interface{})
 				dhcpOptionMap["name"] = optionName
-				dhcpOptionMap["version"] = optionVersion
+				ver, err := strconv.Atoi(optionVersion.(string))
+				if err != nil {
+					return err
+				}
+				dhcpOptionMap["version"] = ver
 				dhcpPolMap["dhcpOptionLabel"] = dhcpOptionMap
 			} else {
 				return fmt.Errorf("dhcp_option_policy_version is required with dhcp_option_policy_name")
@@ -243,10 +255,21 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
-					d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
-					d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
-					d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
-					d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+					if bdCont.Exists("intersiteBumTrafficAllow") {
+						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
+					}
+
+					if bdCont.Exists("optimize_wan_bandwidth") {
+						d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
+					}
+
+					if bdCont.Exists("layer3_multicast") {
+						d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
+					}
+
+					if bdCont.Exists("layer2_stretch") {
+						d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+					}
 
 					vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -262,6 +285,12 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 						if bdCont.Exists("dhcpLabel", "dhcpOptionLabel") {
 							dhcpPolMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "name").String())
 							dhcpPolMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "version").String())
+							if dhcpPolMap["dhcp_option_policy_name"] == "{}" {
+								dhcpPolMap["dhcp_option_policy_name"] = nil
+							}
+							if dhcpPolMap["dhcp_option_policy_version"] == "{}" {
+								dhcpPolMap["dhcp_option_policy_version"] = nil
+							}
 						}
 						d.Set("dhcp_policy", dhcpPolMap)
 					} else {
@@ -326,8 +355,13 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	var dhcpPolMap map[string]interface{}
 	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
 		dhcp_policy := tempVar.(map[string]interface{})
+		dhcpPolMap = make(map[string]interface{})
 		dhcpPolMap["name"] = dhcp_policy["name"]
-		dhcpPolMap["version"] = dhcp_policy["version"]
+		version, err := strconv.Atoi(dhcp_policy["version"].(string))
+		if err != nil {
+			return err
+		}
+		dhcpPolMap["version"] = version
 
 		optionName := dhcp_policy["dhcp_option_policy_name"]
 		optionVersion := dhcp_policy["dhcp_option_policy_version"]
@@ -335,7 +369,11 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 			if optionVersion != nil {
 				dhcpOptionMap := make(map[string]interface{})
 				dhcpOptionMap["name"] = optionName
-				dhcpOptionMap["version"] = optionVersion
+				ver, err := strconv.Atoi(optionVersion.(string))
+				if err != nil {
+					return err
+				}
+				dhcpOptionMap["version"] = ver
 				dhcpPolMap["dhcpOptionLabel"] = dhcpOptionMap
 			} else {
 				return fmt.Errorf("dhcp_option_policy_version is required with dhcp_option_policy_name")
