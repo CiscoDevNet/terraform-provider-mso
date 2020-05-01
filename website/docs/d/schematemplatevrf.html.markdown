@@ -18,7 +18,6 @@ data "mso_schema_template_vrf" "vrf1" {
    template="Template1"
    name= "vrf98"
  }
-}
 ```
 
 ## Argument Reference ##
