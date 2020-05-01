@@ -5,12 +5,12 @@ provider "mso" {
   insecure = true
 }
 
-resource "mso_schema" "s01" {
-  name = "Shah"
-  template_name = "template99"
-  tenant_id = "5ea7e44b2c00007ebb0a2781"
+# resource "mso_schema" "s01" {
+#   name = "Shah"
+#   template_name = "template99"
+#   tenant_id = "5ea7e44b2c00007ebb0a2781"
   
-}
+# }
 
 # data "mso_schema_template" "st10" {
 #   name = "Template101"
@@ -21,20 +21,20 @@ resource "mso_schema" "s01" {
 #   value = "${data.mso_schema_template.st10}"
 # }
 
-resource "mso_schema_template" "st1" {
-  schema_id = "${mso_schema.s01.id}"
-  name = "Temp200"
-  display_name = "Temp845"
-  tenant_id = "5c4d9f3d2700007e01f80949" 
+# resource "mso_schema_template" "st1" {
+#   schema_id = "${mso_schema.s01.id}"
+#   name = "Temp200"
+#   display_name = "Temp845"
+#   tenant_id = "5c4d9f3d2700007e01f80949" 
 
-}
-resource "mso_tenant" "tenant1" {
-	name = "m22"
-	display_name = "m22"
-  description = "sfdgnhjm"
-  site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
-  user_associations{user_id = "0000ffff0000000000000020"}
-}
+# }
+# resource "mso_tenant" "tenant1" {
+# 	name = "m22"
+# 	display_name = "m22"
+#   description = "sfdgnhjm"
+#   site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
+#   user_associations{user_id = "0000ffff0000000000000020"}
+# }
 # resource "mso_schema_template" "st1" {
 #   schema_id = "${mso_schema.s01.id}"
 #   name = "Temp200"
@@ -52,9 +52,9 @@ resource "mso_tenant" "tenant1" {
 #   display_name = "Campus-Integration"
 # }
 
-output "demo1" {
-  value = "${data.mso_tenant.schema1}"
-}
+# output "demo1" {
+#   value = "${data.mso_tenant.schema1}"
+# }
 # output "demo1" {
 #   value = "${data.mso_tenant.schema1.id}"
 # }
@@ -75,17 +75,17 @@ output "demo1" {
 #   value = "${data.mso_site.schema10.id}"
 # }
 
-resource "mso_schema_template_bd_subnet" "bdsub1" {
-  schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
-  bd_name = "testBD"
-  ip = "10.26.17.0/8"
-  scope = "public"
-  shared = false
-  no_default_gateway = true
-  querier = true
+# resource "mso_schema_template_bd_subnet" "bdsub1" {
+#   schema_id = "5ea809672c00003bc40a2799"
+#   template_name = "Template1"
+#   bd_name = "testBD"
+#   ip = "10.26.17.0/8"
+#   scope = "public"
+#   shared = false
+#   no_default_gateway = true
+#   querier = true
   
-}
+# }
 
 # data "mso_schema_template_bd_subnet" "sbd10" {
 #   schema_id = "5ea809672c00003bc40a2799"
@@ -112,6 +112,32 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
   intersite_multicaste_source = false
   preferred_group = false
 }
+resource "mso_schema_template_anp_epg_contract" "contract1" {
+  schema_id = "5c6c16d7270000c710f8094d"
+  template_name = "Template1"
+  anp_name = "WoS-Cloud-Only-2"
+  epg_name = "DB"
+  contract_name = "Internet-access"
+  relationship_type = "provider"
+  
+}
+
+data "mso_schema_template_anp_epg_contract" "contract10" {
+  schema_id = "5c6c16d7270000c710f8094d"
+  template_name = "Template1"
+  anp_name = "WoS-Cloud-Only-2"
+  epg_name = "DB"
+  contract_name = "Web2-to-DB3"
+  
+}
+
+output "demo" {
+  value = "${data.mso_schema_template_anp_epg_contract.contract10}"
+}
+
+
+
+
 
 data "mso_schema_template_anp_epg" "sepg1" {
   schema_id = "5c4d5bb72700000401f80948"
