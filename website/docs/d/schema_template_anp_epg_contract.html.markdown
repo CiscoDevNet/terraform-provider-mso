@@ -28,12 +28,12 @@ data "mso_schema_template_anp_epg_contract" "contract" {
 * `template_name` - (Required) Template name of ANP EPG .
 * `anp_name` - (Required) Name of the Application Network Profile.
 * `epg_name` - (Required) Name of the Endpoint Group.
+* `relationship_type` - (Optional) Relationship Type of the ANP EPG Contract on MSO UI.
+* `contract_name` - (Required) Name of the contract.
 
 
 
 ## Attribute Reference ##
-* `relationship_type` - (Optional) Relationship Type of the ANP EPG Contract on MSO UI.
-* `contract_name` - (Required) Name of the contract.
 * `contract_schema_id` - (Optional) SchemaID associated with the contract.
 * `contract_template_name` - (Optional) Template Name associated with the contract.
 
