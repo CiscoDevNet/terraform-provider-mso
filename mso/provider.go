@@ -45,6 +45,7 @@ func Provider() terraform.ResourceProvider {
 
 		ResourcesMap: map[string]*schema.Resource{
 <<<<<<< HEAD
+<<<<<<< HEAD
 			"mso_schema":                    resourceMSOSchema(),
 			"mso_schema_site":               resourceMSOSchemaSite(),
 			"mso_site":                      resourceMSOSite(),
@@ -91,6 +92,24 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
+=======
+			"mso_schema":                           resourceMSOSchema(),
+			"mso_schema_site":                      resourceMSOSchemaSite(),
+			"mso_site":                             resourceMSOSite(),
+			"mso_role":                             resourceMSORole(),
+			"mso_user":                             resourceMSOUser(),
+			"mso_label":                            resourceMSOLabel(),
+			"mso_schema_template":                  resourceMSOSchemaTemplate(),
+			"mso_tenant":                           resourceMSOTenant(),
+			"mso_schema_template_bd":               resourceMSOTemplateBD(),
+			"mso_schema_template_vrf":              resourceMSOSchemaTemplateVrf(),
+			"mso_schema_template_bd_subnet":        resourceMSOTemplateBDSubnet(),
+			"mso_schema_template_anp":              resourceMSOSchemaTemplateAnp(),
+			"mso_schema_template_anp_epg_contract": resourceMSOTemplateAnpEpgContract(),
+		},
+
+		DataSourcesMap: map[string]*schema.Resource{
+>>>>>>> 141e77e10f4b455fdb111599bd43a923bae1066b
 			"mso_schema":                           datasourceMSOSchema(),
 			"mso_schema_site":                      datasourceMSOSchemaSite(),
 			"mso_site":                             datasourceMSOSite(),
@@ -104,7 +123,10 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_bd_subnet":        dataSourceMSOTemplateSubnetBD(),
 			"mso_schema_template_anp":              datasourceMSOSchemaTemplateAnp(),
 			"mso_schema_template_anp_epg_contract": dataSourceMSOTemplateAnpEpgContract(),
+<<<<<<< HEAD
 >>>>>>> Changes made according to review comments
+=======
+>>>>>>> 141e77e10f4b455fdb111599bd43a923bae1066b
 		},
 
 		ConfigureFunc: configureClient,
