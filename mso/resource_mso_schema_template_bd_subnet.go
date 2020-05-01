@@ -58,9 +58,8 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"shared": &schema.Schema{
-				Type:         schema.TypeBool,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeBool,
+				Required: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
