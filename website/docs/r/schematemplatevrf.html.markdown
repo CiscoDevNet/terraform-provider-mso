@@ -20,7 +20,6 @@ Manages MSO Resource Schema Template Vrf
 		display_name="vz1"
 		layer3_multicast=false
 	  }
-}
 ```
 
 ## Argument Reference ##
