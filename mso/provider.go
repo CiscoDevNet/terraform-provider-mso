@@ -73,8 +73,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_vrf":              datasourceMSOSchemaTemplateVrf(),
 			"mso_schema_template_bd_subnet":        dataSourceMSOTemplateSubnetBD(),
 			"mso_schema_template_anp":              datasourceMSOSchemaTemplateAnp(),
-			"mso_schema_template_anp_epg_contract": dataSourceMSOTemplateAnpEpgContract(),
 			"mso_schema_template_anp_epg":          datasourceMSOSchemaTemplateAnpEpg(),
+			"mso_schema_template_anp_epg_contract": dataSourceMSOTemplateAnpEpgContract(),
 		},
 
 		ConfigureFunc: configureClient,
