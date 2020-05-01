@@ -186,8 +186,12 @@ func resourceMSOTemplateBDSubnetRead(d *schema.ResourceData, m interface{}) erro
 							d.Set("scope", models.StripQuotes(subnetsCont.S("scope").String()))
 							d.Set("description", models.StripQuotes(subnetsCont.S("description").String()))
 							d.Set("shared", subnetsCont.S("shared").Data().(bool))
-							d.Set("no_default_gateway", subnetsCont.S("noDefaultGateway").Data().(bool))
-							d.Set("querier", subnetsCont.S("querier").Data().(bool))
+							if dataCon.Exists("noDefaultGateway") {
+								d.Set("no_default_gateway", dataCon.S("noDefaultGateway").Data().(bool))
+							}
+							if dataCon.Exists("querier") {
+								d.Set("querier", dataCon.S("querier").Data().(bool))
+							}
 							found = true
 						}
 
