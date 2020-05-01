@@ -436,6 +436,7 @@ func resourceMSOTemplateBDDelete(d *schema.ResourceData, m interface{}) error {
 	var dhcpPolMap map[string]interface{}
 	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
 		dhcp_policy := tempVar.(map[string]interface{})
+		dhcpPolMap := make(map[string]interface{})
 		dhcpPolMap["name"] = dhcp_policy["name"]
 		dhcpPolMap["version"] = dhcp_policy["version"]
 
@@ -468,6 +469,5 @@ func resourceMSOTemplateBDDelete(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	d.SetId("")
-	return resourceMSOTemplateBDRead(d, m)
 	return nil
 }
