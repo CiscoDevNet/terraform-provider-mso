@@ -56,6 +56,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_vrf":       resourceMSOSchemaTemplateVrf(),
 			"mso_schema_template_bd_subnet": resourceMSOTemplateBDSubnet(),
 			"mso_schema_template_anp":       resourceMSOSchemaTemplateAnp(),
+			"mso_schema_template_anp_epg":   resourceMSOSchemaTemplateAnpEpg(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -71,6 +72,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_vrf":       datasourceMSOSchemaTemplateVrf(),
 			"mso_schema_template_bd_subnet": dataSourceMSOTemplateSubnetBD(),
 			"mso_schema_template_anp":       datasourceMSOSchemaTemplateAnp(),
+			"mso_schema_template_anp_epg":   datasourceMSOSchemaTemplateAnpEpg(),
 		},
 
 		ConfigureFunc: configureClient,
