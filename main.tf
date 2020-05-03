@@ -135,10 +135,6 @@ output "demo" {
   value = "${data.mso_schema_template_anp_epg_contract.contract10}"
 }
 
-
-
-
-
 data "mso_schema_template_anp_epg" "sepg1" {
   schema_id = "5c4d5bb72700000401f80948"
   template_name = "Template1"
@@ -149,4 +145,29 @@ data "mso_schema_template_anp_epg" "sepg1" {
 
 output "demo" {
   value = "${data.mso_schema_template_anp_epg.sepg1}"
+}
+
+resource "mso_schema_template_contract" "template_contract" {
+  schema_id = "5c4d5bb72700000401f80948"
+  template_name = "Template1"
+  contract_name = "C1"
+  display_name = "C1"
+  filter_type = "bothWay"
+  scope = "context"
+  filter_relationships = {
+    # filter_schema_id = "5ea809672c00003bc40a2799"
+    # filter_template_name = "Template1"
+    filter_name = "filter1"
+  }
+  directives = ["none"]
+}
+
+data "mso_schema_template_contract" "scontract1" {
+  schema_id = "5c4d5bb72700000401f80948"
+  template_name = "Template1"
+  contract_name = "c1"
+  
+}
+output "demo" {
+  value = "${data.mso_schema_template_contract.scontract1}"
 }
