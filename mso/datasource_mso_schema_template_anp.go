@@ -19,26 +19,26 @@ func datasourceMSOSchemaTemplateAnp() *schema.Resource {
 		Schema: (map[string]*schema.Schema{
 
 			"schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"display_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
