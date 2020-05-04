@@ -30,10 +30,8 @@ data "mso_schema_template_anp_epg_subnet" "subnet1" {
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group.
 * `ip` - (Required) Ip Address of Subnet.
-* `scope` - (Optional) Scope of Subnet.
-* `shared` - (Optional) Whether the subnet should be shared or not.
-
 
 ## Attribute Reference ##
 
-No attributes are exported.
+* `scope` - (Optional) Scope of Subnet.
+* `shared` - (Optional) Whether the subnet should be shared or not.
