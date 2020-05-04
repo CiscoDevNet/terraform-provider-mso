@@ -99,75 +99,22 @@ provider "mso" {
 #   value = "${data.mso_schema_template_bd_subnet.sbd10}"
 # }
 
-resource "mso_schema_template_anp_epg" "anp_epg" {
-  schema_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
-  anp_name = "ANP"
-  name = "mso_epg1"
-  bd_name = "BD1"
-  vrf_name = "DEVNET-VRF"
-  display_name = "mso_epg1"
-  useg_epg = true
-  intra_epg = "unenforced"
-  intersite_multicaste_source = false
-  preferred_group = false
-}
-resource "mso_schema_template_anp_epg_contract" "contract1" {
+# 
+
+resource "mso_schema_template_l3out" "template_l3out" {
   schema_id = "5c6c16d7270000c710f8094d"
   template_name = "Template1"
-  anp_name = "WoS-Cloud-Only-2"
-  epg_name = "DB"
-  contract_name = "Internet-access"
-  relationship_type = "provider"
-  
+  l3out_name = "l3out1"
+  display_name = "l3out1"
+  vrf_name = "vrf2"
 }
 
-data "mso_schema_template_anp_epg_contract" "contract10" {
+data "mso_schema_template_l3out" "sl3out1" {
   schema_id = "5c6c16d7270000c710f8094d"
   template_name = "Template1"
-  anp_name = "WoS-Cloud-Only-2"
-  epg_name = "DB"
-  contract_name = "Web2-to-DB3"
-  
-}
-
-output "demo" {
-  value = "${data.mso_schema_template_anp_epg_contract.contract10}"
-}
-
-data "mso_schema_template_anp_epg" "sepg1" {
-  schema_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
-  anp_name = "ANP"
-  name = "mso_epg1"
-
-}
-
-output "demo" {
-  value = "${data.mso_schema_template_anp_epg.sepg1}"
-}
-
-resource "mso_schema_template_contract" "template_contract" {
-  schema_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
-  contract_name = "C1"
-  display_name = "C1"
-  filter_type = "bothWay"
-  scope = "context"
-  filter_relationships = {
-    # filter_schema_id = "5ea809672c00003bc40a2799"
-    # filter_template_name = "Template1"
-    filter_name = "filter1"
-  }
-  directives = ["none"]
-}
-
-data "mso_schema_template_contract" "scontract1" {
-  schema_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
-  contract_name = "c1"
+  l3out_name = "Internet_L3Out"
   
 }
 output "demo" {
-  value = "${data.mso_schema_template_contract.scontract1}"
+  value = "${data.mso_schema_template_l3out.sl3out1}"
 }

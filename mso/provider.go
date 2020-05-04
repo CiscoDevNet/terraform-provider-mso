@@ -60,6 +60,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_anp_epg_contract": resourceMSOTemplateAnpEpgContract(),
 			"mso_schema_template_contract":         resourceMSOTemplateContract(),
 			"mso_schema_template_anp_epg_subnet":   resourceMSOSchemaTemplateAnpEpgSubnet(),
+			"mso_schema_template_l3out":            resourceMSOTemplateL3out(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -79,6 +80,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_anp_epg_contract": dataSourceMSOTemplateAnpEpgContract(),
 			"mso_schema_template_contract":         dataSourceMSOTemplateContract(),
 			"mso_schema_template_anp_epg_subnet":   dataSourceMSOSchemaTemplateAnpEpgSubnet(),
+			"mso_schema_template_l3out":            dataSourceMSOTemplateL3out(),
 		},
 
 		ConfigureFunc: configureClient,

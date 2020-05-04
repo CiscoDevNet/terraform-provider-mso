@@ -19,49 +19,48 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 		Schema: (map[string]*schema.Schema{
 
 			"schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"anp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"epg_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"scope": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				
 			},
 		}),
 	}
