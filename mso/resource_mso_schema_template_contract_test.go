@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -105,24 +104,19 @@ func testAccCheckMSOSchemaTemplateContractExists(contractName string, tc *Templa
 			apiTemplateName := models.StripQuotes(tempCont.S("name").String())
 			if apiTemplateName == "Template1" {
 				contractCount, err := tempCont.ArrayCount("contracts")
-				log.Print("___________________________________________________________________")
 				if err != nil {
 					return fmt.Errorf("Unable to get Contract list")
 				}
-				log.Print("-----------------------------------------------------------------")
 				for j := 0; j < contractCount; j++ {
 					contractCont, err := tempCont.ArrayElement(j, "contracts")
 					if err != nil {
 						return err
 					}
-					log.Print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 					apiContract := models.StripQuotes(contractCont.S("name").String())
-					log.Print("****************************************", apiContract)
 					if apiContract == "C1" {
 						tp.display_name = models.StripQuotes(contractCont.S("displayName").String())
 						tp.filter_type = models.StripQuotes(contractCont.S("filterType").String())
 						tp.scope = models.StripQuotes(contractCont.S("scope").String())
-						log.Print("=================================================================")
 
 						found = true
 						break

@@ -34,8 +34,6 @@ resource "mso_schema_template_contract" "template_contract" {
 * `schema_id` - (Required) SchemaID under which you want to deploy Contract.
 * `template_name` - (Required) Template where Contract to be created.
 * `contract_name` - (Required) The name of the contract to manage.
-* `contract_schema_id` - (Optional) The schemaID that defines the referenced Contract.
-* `contract_schema_template` - (Optional) The Template name that defines the referenced Contract.
 * `display_name` - (Optional) Display Name of the contract on the MSO UI.
 * `filter_type` - (Optional) The type of filters defined in this contract. Allowed values are `bothWay` and `oneWay`. Default to `bothWay`
 * `scope` - (Optional) The scope of the contract.

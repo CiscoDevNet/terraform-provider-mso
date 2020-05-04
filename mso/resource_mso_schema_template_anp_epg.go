@@ -45,21 +45,6 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"epg_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"epg_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"epg_anp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -133,7 +118,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epg_schema_id, epg_template_name, epg_anp_name string
+	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
@@ -170,22 +155,6 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 		bd_template_name = templateName
 	}
 
-	if tempVar, ok := d.GetOk("epg_schema_id"); ok {
-		epg_schema_id = tempVar.(string)
-	} else {
-		epg_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("epg_template_name"); ok {
-		epg_template_name = tempVar.(string)
-	} else {
-		epg_template_name = templateName
-	}
-	if tempVar, ok := d.GetOk("epg_anp_name"); ok {
-		epg_anp_name = tempVar.(string)
-	} else {
-		epg_anp_name = anpName
-	}
-
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
@@ -196,14 +165,8 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	bdRefMap["templateName"] = bd_template_name
 	bdRefMap["bdName"] = bdName
 
-	epgRefMap := make(map[string]interface{})
-	epgRefMap["schemaId"] = epg_schema_id
-	epgRefMap["templateName"] = epg_template_name
-	epgRefMap["anpName"] = epg_anp_name
-	epgRefMap["epgName"] = Name
-
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/-", templateName, anpName)
-	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap, epgRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -286,14 +249,6 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 							d.Set("bd_schema_id", match_bd[1])
 							d.Set("bd_template_name", match_bd[2])
 
-							epgRef := models.StripQuotes(epgCont.S("epgRef").String())
-							re_epg := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)/epgs/(.*)")
-							match_epg := re_epg.FindStringSubmatch(epgRef)
-							d.Set("epg_name", match_epg[4])
-							d.Set("epg_schema_id", match_epg[1])
-							d.Set("epg_template_name", match_epg[2])
-							d.Set("epg_anp_name", match_epg[3])
-
 							found = true
 							break
 						}
@@ -324,7 +279,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epg_schema_id, epg_template_name, epg_anp_name string
+	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
@@ -360,22 +315,6 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 		bd_template_name = templateName
 	}
 
-	if tempVar, ok := d.GetOk("epg_schema_id"); ok {
-		epg_schema_id = tempVar.(string)
-	} else {
-		epg_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("epg_template_name"); ok {
-		epg_template_name = tempVar.(string)
-	} else {
-		epg_template_name = templateName
-	}
-	if tempVar, ok := d.GetOk("epg_anp_name"); ok {
-		epg_anp_name = tempVar.(string)
-	} else {
-		epg_anp_name = anpName
-	}
-
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
@@ -386,14 +325,8 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdRefMap["templateName"] = bd_template_name
 	bdRefMap["bdName"] = bdName
 
-	epgRefMap := make(map[string]interface{})
-	epgRefMap["schemaId"] = epg_schema_id
-	epgRefMap["templateName"] = epg_template_name
-	epgRefMap["epgName"] = Name
-	epgRefMap["anpName"] = epg_anp_name
-
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap, epgRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -415,7 +348,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epg_schema_id, epg_template_name, epg_anp_name string
+	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
@@ -451,22 +384,6 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 		bd_template_name = templateName
 	}
 
-	if tempVar, ok := d.GetOk("epg_schema_id"); ok {
-		epg_schema_id = tempVar.(string)
-	} else {
-		epg_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("epg_template_name"); ok {
-		epg_template_name = tempVar.(string)
-	} else {
-		epg_template_name = templateName
-	}
-	if tempVar, ok := d.GetOk("epg_anp_name"); ok {
-		epg_anp_name = tempVar.(string)
-	} else {
-		epg_anp_name = anpName
-	}
-
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
@@ -477,14 +394,8 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	bdRefMap["templateName"] = bd_template_name
 	bdRefMap["bdName"] = bdName
 
-	epgRefMap := make(map[string]interface{})
-	epgRefMap["schemaId"] = epg_schema_id
-	epgRefMap["templateName"] = epg_template_name
-	epgRefMap["anpName"] = epg_anp_name
-	epgRefMap["epgName"] = Name
-
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap, epgRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 

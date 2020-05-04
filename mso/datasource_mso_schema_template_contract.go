@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -36,16 +35,6 @@ func dataSourceMSOTemplateContract() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"contract_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"contract_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
 			},
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -141,13 +130,6 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 					d.Set("display_name", models.StripQuotes(contractCont.S("displayName").String()))
 					d.Set("filter_type", models.StripQuotes(contractCont.S("filterType").String()))
 					d.Set("scope", models.StripQuotes(contractCont.S("scope").String()))
-
-					contractRef := models.StripQuotes(contractCont.S("contractRef").String())
-					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-					match := re.FindStringSubmatch(contractRef)
-					d.Set("contract_name", match[3])
-					d.Set("contract_schema_id", match[1])
-					d.Set("contract_template_name", match[2])
 
 					count, _ := contractCont.ArrayCount("filterRelationships")
 					filterMap := make(map[string]interface{})

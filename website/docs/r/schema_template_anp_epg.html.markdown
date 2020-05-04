@@ -34,9 +34,6 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 * `template_name` - (Required) Template where Anp Epg to be created.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `name` - (Required) Name of Endpoint Group to manage.
-* `epg_schema_id` - (Optional) The schemaID that defines the referenced Epg.
-* `epg_template_name` - (Optional) The template that defines the referenced Epg.
-* `epg_anp_name` - (Optional) The anp that defines the referenced Epg.
 * `bd_name` - (Required) Name of Bridge Domain to associate with.
 * `bd_schema_id` - (Opional) The schemaID that defines the referenced BD.
 * `bd_template_name` - (Optional) The template that defines the referenced BD.
