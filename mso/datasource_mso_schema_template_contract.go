@@ -150,7 +150,6 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 					d.Set("contract_template_name", match[2])
 
 					count, _ := contractCont.ArrayCount("filterRelationships")
-					// filter_relationships := make([]interface{}, 0)
 					filterMap := make(map[string]interface{})
 					for i := 0; i < count; i++ {
 						filterCont, err := contractCont.ArrayElement(i, "filterRelationships")
@@ -159,19 +158,13 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 						}
 
 						d.Set("directives", filterCont.S("directives").Data().([]interface{}))
-
 						filRef := filterCont.S("filterRef").Data()
-
 						split := strings.Split(filRef.(string), "/")
 
 						filterMap["filter_schema_id"] = fmt.Sprintf("%s", split[2])
 						filterMap["filter_template_name"] = fmt.Sprintf("%s", split[4])
 						filterMap["filter_name"] = fmt.Sprintf("%s", split[6])
-
-						// filter_relationships = append(filter_relationships, filterMap)
 					}
-
-					log.Print("...............................", filterMap)
 					d.Set("filter_relationships", filterMap)
 
 					found = true
