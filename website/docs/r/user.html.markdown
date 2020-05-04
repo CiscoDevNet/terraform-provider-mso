@@ -23,7 +23,9 @@ resource "mso_user" "user1" {
   account_status="active"
   roles{
     roleid="0000ffff0000000000000031"
+  }
 }
+
 
 ```
 

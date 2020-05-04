@@ -40,9 +40,10 @@ func dataSourceMSOTemplateSubnetBD() *schema.Resource {
 			},
 
 			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"scope": &schema.Schema{
@@ -136,8 +137,12 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 							d.Set("scope", models.StripQuotes(dataCon.S("scope").String()))
 							d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 							d.Set("shared", dataCon.S("shared").Data().(bool))
-							d.Set("no_default_gateway", dataCon.S("noDefaultGateway").Data().(bool))
-							d.Set("querier", dataCon.S("querier").Data().(bool))
+							if dataCon.Exists("noDefaultGateway") {
+								d.Set("no_default_gateway", dataCon.S("noDefaultGateway").Data().(bool))
+							}
+							if dataCon.Exists("querier") {
+								d.Set("querier", dataCon.S("querier").Data().(bool))
+							}
 							found = true
 							break
 						}

@@ -43,8 +43,9 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 			},
 
 			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -52,14 +53,13 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 				Computed: true,
 			},
 			"scope": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Required: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -185,8 +185,12 @@ func resourceMSOTemplateBDSubnetRead(d *schema.ResourceData, m interface{}) erro
 							d.Set("scope", models.StripQuotes(subnetsCont.S("scope").String()))
 							d.Set("description", models.StripQuotes(subnetsCont.S("description").String()))
 							d.Set("shared", subnetsCont.S("shared").Data().(bool))
-							d.Set("no_default_gateway", subnetsCont.S("noDefaultGateway").Data().(bool))
-							d.Set("querier", subnetsCont.S("querier").Data().(bool))
+							if subnetsCont.Exists("noDefaultGateway") {
+								d.Set("no_default_gateway", subnetsCont.S("noDefaultGateway").Data().(bool))
+							}
+							if subnetsCont.Exists("querier") {
+								d.Set("querier", subnetsCont.S("querier").Data().(bool))
+							}
 							found = true
 						}
 
