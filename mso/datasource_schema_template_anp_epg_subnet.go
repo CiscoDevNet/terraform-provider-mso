@@ -173,7 +173,7 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("The parameters inserted are not valid")
+		return fmt.Errorf("The ANP EPG Subnet is not found")
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

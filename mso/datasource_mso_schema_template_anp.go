@@ -103,7 +103,7 @@ func datasourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) e
 	}
 	if !found {
 		d.SetId("")
-	    return fmt.Errorf("The parameters inserted are not valid")
+	    return fmt.Errorf("The ANP is not found")
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

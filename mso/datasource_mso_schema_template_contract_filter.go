@@ -276,6 +276,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 
 	if !found {
 		d.SetId("")
+		return fmt.Errorf("The Contract Filter is not found")
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
