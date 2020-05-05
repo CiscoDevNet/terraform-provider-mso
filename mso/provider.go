@@ -63,6 +63,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_l3out":            resourceMSOTemplateL3out(),
 			"mso_schema_template_externalepg":      resourceMSOTemplateExtenalepg(),
 			"mso_schema_template_contract_filter":  resourceMSOTemplateContractFilter(),
+			"mso_schema_template_externalepg_contract":resourceMSOTemplateExternalEpgContract(),
 			
 		},
 
@@ -86,6 +87,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_l3out":            dataSourceMSOTemplateL3out(),
 			"mso_schema_template_externalepg":      dataSourceMSOTemplateExternalepg(),
 			"mso_schema_template_contract_filter":  dataSourceMSOTemplateContractFilter(),
+			"mso_schema_template_externalepg_contract":dataSourceMSOTemplateExternalEpgContract(),
+	
 		},
 
 		ConfigureFunc: configureClient,
