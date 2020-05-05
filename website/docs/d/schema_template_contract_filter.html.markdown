@@ -38,14 +38,14 @@ data "mso_schema_template_contract_filter" "filter1" {
 * `filter_template_name` - (Optional) The template name in which the filter is located.
 * `filter_name` - (Optional) The filter to associate with this contract.
 * `directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
-* `filter_relationships_procon` - (Optional) Map to provide Filter Relationships Provider to Consumer.
-* `procon_schema_id` - (Optional) The schemaId in which the filter is located.
-* `procon_template_name` - (Optional) The template name in which the filter is located.
-* `procon_name` - (Optional) The filter to associate with this contract.
-* `procon_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
-* `filter_relationships_conpro` - (Optional) Map to provide Filter Relationships Consumer to Provider.
-* `conpro_schema_id` - (Optional) The schemaId in which the filter is located.
-* `conpro_template_name` - (Optional) The template name in which the filter is located.
-* `conpro_name` - (Optional) The filter to associate with this contract.
-* `conpro_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships_provider_to_consumer` - (Optional) Map to provide Filter Relationships Provider to Consumer.
+* `provider_to_consumer_schema_id` - (Optional) The schemaId in which the filter is located.
+* `provider_to_consumer_template_name` - (Optional) The template name in which the filter is located.
+* `provider_to_consumer_name` - (Optional) The filter to associate with this contract.
+* `provider_to_consumer_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships_consumer_to_provider` - (Optional) Map to provide Filter Relationships Consumer to Provider.
+* `consumer_to_provider_schema_id` - (Optional) The schemaId in which the filter is located.
+* `consumer_to_provider_template_name` - (Optional) The template name in which the filter is located.
+* `consumer_to_provider_name` - (Optional) The filter to associate with this contract.
+* `consumer_to_provider_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
  

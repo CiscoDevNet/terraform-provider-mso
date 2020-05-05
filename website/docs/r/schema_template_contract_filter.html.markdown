@@ -20,18 +20,18 @@ resource "mso_schema_template_contract_filter" "filter1" {
   display_name = "c200"
   filter_type = "bothWay"
   scope = "context"
- filter_relationships_procon = {
-   procon_schema_id = "5c4d5bb72700000401f80948"
-   procon_template_name = "Template1"
-    procon_name = "mAny"
+  filter_relationships_provider_to_consumer = {
+   provider_to_consumer_schema_id = "5c4d5bb72700000401f80948"
+   provider_to_consumer_template_name = "Template1"
+   provider_to_consumer_name = "many"
   }
-  procon_directives = ["log","none","log"]
-    filter_relationships_conpro = {
-     conpro_schema_id = "5c4d5bb72700000401f80948"
-     conpro_template_name = "Template1"
-    conpro_name = "MAnysf"
+  provider_to_consumer_directives = ["log","none","log"]
+  filter_relationships_consumer_to_provider = {
+    consumer_to_provider_schema_id = "5c4d5bb72700000401f80948"
+    consumer_to_provider_template_name = "Template1"
+    consumer_to_provider_name = "many"
   }
-  conpro_directives = ["log","none"]
+  consumer_to_provider_directives = ["log","none"]
  
 }
 ```
@@ -51,16 +51,16 @@ resource "mso_schema_template_contract_filter" "filter1" {
 * `filter_template_name` - (Optional) The template name in which the filter is located.
 * `filter_name` - (Required) The filter to associate with this contract.
 * `directives` - (Required) A list of filter directives. Allowed values are `log` and `none`.
-* `filter_relationships_procon` - (Required) Map to provide Filter Relationships Provider to Consumer.
-* `procon_schema_id` - (Optional) The schemaId in which the filter is located.
-* `procon_template_name` - (Optional) The template name in which the filter is located.
-* `procon_name` - (Required) The filter to associate with this contract.
-* `procon_directives` - (Required) A list of filter directives. Allowed values are `log` and `none`.
-* `filter_relationships_conpro` - (Required) Map to provide Filter Relationships Consumer to Provider.
-* `conpro_schema_id` - (Optional) The schemaId in which the filter is located.
-* `conpro_template_name` - (Optional) The template name in which the filter is located.
-* `conpro_name` - (Required) The filter to associate with this contract.
-* `conpro_directives` - (Required) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships_provider_to_consumer` - (Required) Map to provide Filter Relationships Provider to Consumer.
+* `provider_to_consumer_schema_id` - (Optional) The schemaId in which the filter is located.
+* `provider_to_consumer_template_name` - (Optional) The template name in which the filter is located.
+* `provider_to_consumer_name` - (Required) The filter to associate with this contract.
+* `provider_to_consumer_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships_consumer_to_provider` - (Required) Map to provide Filter Relationships Consumer to Provider.
+* `consumer_to_provider_schema_id` - (Optional) The schemaId in which the filter is located.
+* `consumer_to_provider_template_name` - (Optional) The template name in which the filter is located.
+* `consumer_to_provider_name` - (Required) The filter to associate with this contract.
+* `consumer_to_provider_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
 
 ## Attribute Reference ##
 

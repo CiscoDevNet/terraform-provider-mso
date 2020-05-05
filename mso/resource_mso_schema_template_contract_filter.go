@@ -229,7 +229,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 			if tempVar1, ok := d.GetOk("provider_to_consumer_directives"); ok {
 				filterProConMap["directives"] = tempVar1
 			}else{
-			    return fmt.Errorf("Provider to Consumer is mandatory to pass if Provider to Consumer Filter Relationships is passed")
+			    return fmt.Errorf("Provider to Consumer Directives is mandatory to pass if Provider to Consumer Filter Relationships is passed")
 			}
 
 		} else {
@@ -263,7 +263,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 			if tempVar1, ok := d.GetOk("consumer_to_provider_directives"); ok {
 				filterConProMap["directives"] = tempVar1
 			}else{
-			    return fmt.Errorf("Consumer to Provider is mandatory to pass if Consumer to Provider Filter Relationships is passed")
+			    return fmt.Errorf("Consumer to Provider Directives is mandatory to pass if Consumer to Provider Filter Relationships is passed")
 			}
 
 		} else {
@@ -495,7 +495,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 		if tempVar1, ok := d.GetOk("provider_to_consumer_directives"); ok {
 			filterProConMap["directives"] = tempVar1
 		}else{
-			return fmt.Errorf("Provider to Consumer is mandatory to pass if Provider to Consumer Filter Relationships is passed")
+			return fmt.Errorf("Provider to Consumer Directives is mandatory to pass if Provider to Consumer Filter Relationships is passed")
 		}
 
 	} else {
@@ -529,7 +529,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 		if tempVar1, ok := d.GetOk("consumer_to_provider_directives"); ok {
 			filterConProMap["directives"] = tempVar1
 		}else{
-			return fmt.Errorf("Consumer to Provider is mandatory to pass if Consumer to Provider Filter Relationships is passed")
+			return fmt.Errorf("Consumer to Provider Directives is mandatory to pass if Consumer to Provider Filter Relationships is passed")
 		}
 
 	} else {
