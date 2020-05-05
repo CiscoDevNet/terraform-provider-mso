@@ -119,20 +119,24 @@ provider "mso" {
 #   value = "${data.mso_schema_template_l3out.sl3out1}"
 # }
 
-
 # resource "mso_schema_template_anp_epg" "anp_epg" {
-#   schema_id = "5c4d5bb72700000401f80948"
-#   template_name = "Template1"
-#   anp_name = "ANP"
-#   name = "mso_epg1"
-#   bd_name = "BD1"
-#   vrf_name = "DEVNET-VRF"
-#   display_name = "mso_epg1"
-#   useg_epg = true
-#   intra_epg = "unenforced"
-#   intersite_multicaste_source = false
-#   preferred_group = false
-# }
+#  schema_id = "5eafca7d2c000052860a2902"
+#  template_name = "stemplate1"
+#  anp_name = "sanp1"
+#  name = "anpepg111"
+#  bd_name = "testBD"
+#  vrf_name = "vrf1"
+#  display_name = "anpepg111"
+#  useg_epg = true
+#  intra_epg = "enforced"
+#  intersite_multicaste_source = true
+#  preferred_group = true
+#  bd_template_name = "stemplate1"
+#  vrf_schema_id = "5eafeb792c0000a18e0a2900"
+#  bd_schema_id = "5eafeb792c0000a18e0a2900"
+#  vrf_template_name = "stemplate1"
+
+# } 
 
 # resource "mso_schema_template_contract" "template_contract" {
 #   schema_id = "5c4d5bb72700000401f80948"
@@ -149,6 +153,15 @@ provider "mso" {
 #   directives = ["none"]
 # }
 
+data "mso_schema_template_contract" "contract1" {
+  schema_id = "5c6c16d7270000c710f8094d"
+  template_name = "template1"
+  contract_name = "web2-to-DB2"
+} 
+output "demo" {
+  value = "${data.mso_schema_template_contract.contract1}"
+}
+
 # resource "mso_schema_template_externalepg" "template_externalepg" {
 #   schema_id = "5ea809672c00003bc40a2799"
 #   template_name = "Template1"
@@ -157,12 +170,12 @@ provider "mso" {
 #   vrf_name = "vrf1"
 # }
 
-data "mso_schema_template_externalepg" "externalEpg" {
-  schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
-  externalepg_name = "UntitledExternalEPG1"
-}
+# data "mso_schema_template_externalepg" "externalEpg" {
+#   schema_id = "5ea809672c00003bc40a2799"
+#   template_name = "Template1"
+#   externalepg_name = "UntitledExternalEPG1"
+# }
 
-output "demo" {
-  value = "${data.mso_schema_template_externalepg.externalEpg}"
-}
+# output "demo" {
+#   value = "${data.mso_schema_template_externalepg.externalEpg}"
+# }
