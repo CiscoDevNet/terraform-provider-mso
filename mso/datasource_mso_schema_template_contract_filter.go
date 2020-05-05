@@ -37,16 +37,7 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"contract_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"contract_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
+			
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -93,22 +84,22 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"filter_relationships_procon": {
+			"filter_relationships_provider_to_consumer": {
 				Type: schema.TypeMap,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
-						"procon_schema_id": &schema.Schema{
+						"provider_to_consumer_schema_id": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"procon_template_name": &schema.Schema{
+						"provider_to_consumer_template_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"procon_name": &schema.Schema{
+						"provider_to_consumer_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -116,27 +107,27 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				},
 				Optional: true,
 			},
-			"procon_directives": {
+			"provider_to_consumer_directives": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
-			"filter_relationships_conpro": {
+			"filter_relationships_consumer_to_provider": {
 				Type: schema.TypeMap,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
-						"conpro_schema_id": &schema.Schema{
+						"consumer_to_provider_schema_id": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"conpro_template_name": &schema.Schema{
+						"consumer_to_provider_template_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"conpro_name": &schema.Schema{
+						"consumer_to_provider_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -144,7 +135,7 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				},
 				Optional: true,
 			},
-			"conpro_directives": {
+			"consumer_to_provider_directives": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
@@ -202,8 +193,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 					match := re.FindStringSubmatch(contractRef)
 					d.Set("contract_name", match[3])
-					d.Set("contract_schema_id", match[1])
-					d.Set("contract_template_name", match[2])
+			
 
 					if contractCont.Exists("filterRelationships") {
 						count, _ := contractCont.ArrayCount("filterRelationships")
@@ -239,18 +229,18 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 								return fmt.Errorf("Unable to parse the filter Relationships Provider to Consumer list")
 							}
 							if filterCont.Exists("directives") {
-								d.Set("procon_directives", filterCont.S("directives").Data().([]interface{}))
+								d.Set("provider_to_consumer_directives", filterCont.S("directives").Data().([]interface{}))
 							}
 							if filterCont.Exists("filterRef") {
 								filRef := filterCont.S("filterRef").Data()
 								split := strings.Split(filRef.(string), "/")
 
-								filterMap["procon_schema_id"] = fmt.Sprintf("%s", split[2])
-								filterMap["procon_template_name"] = fmt.Sprintf("%s", split[4])
-								filterMap["procon_name"] = fmt.Sprintf("%s", split[6])
+								filterMap["provider_to_consumer_schema_id"] = fmt.Sprintf("%s", split[2])
+								filterMap["provider_to_consumer_template_name"] = fmt.Sprintf("%s", split[4])
+								filterMap["provider_to_consumer_name"] = fmt.Sprintf("%s", split[6])
 							}
 						}
-						d.Set("filter_relationships_procon", filterMap)
+						d.Set("filter_relationships_provider_to_consumer", filterMap)
 					}
 
 					if contractCont.Exists("filterRelationshipsConsumerToProvider") {
@@ -263,18 +253,18 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 								return fmt.Errorf("Unable to parse the filter Relationships Consumer to Provider list")
 							}
 							if filterCont.Exists("directives") {
-								d.Set("conpro_directives", filterCont.S("directives").Data().([]interface{}))
+								d.Set("consumer_to_provider_directives", filterCont.S("directives").Data().([]interface{}))
 							}
 							if filterCont.Exists("filterRef") {
 								filRef := filterCont.S("filterRef").Data()
 								split := strings.Split(filRef.(string), "/")
 								
-								filterMap["conpro_schema_id"] = fmt.Sprintf("%s", split[2])
-								filterMap["conpro_template_name"] = fmt.Sprintf("%s", split[4])
-								filterMap["conpro_name"] = fmt.Sprintf("%s", split[6])
+								filterMap["consumer_to_provider_schema_id"] = fmt.Sprintf("%s", split[2])
+								filterMap["consumer_to_provider_template_name"] = fmt.Sprintf("%s", split[4])
+								filterMap["consumer_to_provider_name"] = fmt.Sprintf("%s", split[6])
 							}
 						}
-						d.Set("filter_relationships_conpro", filterMap)
+						d.Set("filter_relationships_consumer_to_provider", filterMap)
 					}
 
 					found = true

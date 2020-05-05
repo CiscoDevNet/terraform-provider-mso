@@ -40,16 +40,7 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"contract_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"contract_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
+			
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -95,22 +86,22 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
-			"filter_relationships_procon": {
+			"filter_relationships_provider_to_consumer": {
 				Type: schema.TypeMap,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
-						"procon_schema_id": &schema.Schema{
+						"provider_to_consumer_schema_id": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"procon_template_name": &schema.Schema{
+						"provider_to_consumer_template_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"procon_name": &schema.Schema{
+						"provider_to_consumer_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
@@ -118,27 +109,27 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 				},
 				Required: true,
 			},
-			"procon_directives": {
+			"provider_to_consumer_directives": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Required: true,
+				Optional: true,
 			},
-			"filter_relationships_conpro": {
+			"filter_relationships_consumer_to_provider": {
 				Type: schema.TypeMap,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
-						"conpro_schema_id": &schema.Schema{
+						"consumer_to_provider_schema_id": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"conpro_template_name": &schema.Schema{
+						"consumer_to_provider_template_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"conpro_name": &schema.Schema{
+						"consumer_to_provider_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
@@ -146,10 +137,10 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 				},
 				Required: true,
 			},
-			"conpro_directives": {
+			"consumer_to_provider_directives": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Required: true,
+				Optional: true,
 			},
 		}),
 	}
@@ -174,7 +165,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 		}
 	} else {
 
-		var scope, filter_type, contract_schema_id, contract_template_name string
+		var scope, filter_type string
 
 		if tempVar, ok := d.GetOk("scope"); ok {
 			scope = tempVar.(string)
@@ -183,23 +174,8 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 			filter_type = tempVar.(string)
 		}
 
-		if tempVar, ok := d.GetOk("contract_schema_id"); ok {
-			contract_schema_id = tempVar.(string)
-		} else {
-			contract_schema_id = schemaID
-		}
-		if tempVar, ok := d.GetOk("contract_template_name"); ok {
-			contract_template_name = tempVar.(string)
-		} else {
-			contract_template_name = templateName
-		}
-
-		contractRefMap := make(map[string]interface{})
-		contractRefMap["schemaId"] = contract_schema_id
-		contractRefMap["templateName"] = contract_template_name
-		contractRefMap["contractName"] = contractName
-
-		filter := make([]interface{}, 0)
+	
+        filter := make([]interface{}, 0)
 		filterMap := make(map[string]interface{})
 		if tempVar, ok := d.GetOk("filter_relationships"); ok {
 			filter_relationships := tempVar.(map[string]interface{})
@@ -230,28 +206,30 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 	
 		filterProCon := make([]interface{}, 0)
 		filterProConMap := make(map[string]interface{})
-		if tempVar, ok := d.GetOk("filter_relationships_procon"); ok {
+		if tempVar, ok := d.GetOk("filter_relationships_provider_to_consumer"); ok {
 			filter_relationships := tempVar.(map[string]interface{})
 
 			filterRefMap := make(map[string]interface{})
 		
-			if filter_relationships["procon_schema_id"] != nil {
-				filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["procon_schema_id"])
+			if filter_relationships["provider_to_consumer_schema_id"] != nil {
+				filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_schema_id"])
 			} else {
 				filterRefMap["schemaId"] = schemaID
 			}
 		
-			if filter_relationships["procon_template_name"] != nil {
-				filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["procon_template_name"])
+			if filter_relationships["provider_to_consumer_template_name"] != nil {
+				filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_template_name"])
 			} else {
 				filterRefMap["templateName"] = templateName
 			}
 
-			filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["procon_name"])
+			filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_name"])
 			
 			filterProConMap["filterRef"] = filterRefMap
-			if tempVar1, ok := d.GetOk("procon_directives"); ok {
+			if tempVar1, ok := d.GetOk("provider_to_consumer_directives"); ok {
 				filterProConMap["directives"] = tempVar1
+			}else{
+			    return fmt.Errorf("Provider to Consumer is mandatory to pass if Provider to Consumer Filter Relationships is passed")
 			}
 
 		} else {
@@ -262,28 +240,30 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 
 		filterConPro := make([]interface{}, 0)
 		filterConProMap := make(map[string]interface{})
-		if tempVar, ok := d.GetOk("filter_relationships_conpro"); ok {
+		if tempVar, ok := d.GetOk("filter_relationships_consumer_to_provider"); ok {
 			filter_relationships := tempVar.(map[string]interface{})
 
 			filterRefMap := make(map[string]interface{})
 
-			if filter_relationships["conpro_schema_id"] != nil {
-				filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["conpro_schema_id"])
+			if filter_relationships["consumer_to_provider_schema_id"] != nil {
+				filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["consumer_to_provider_schema_id"])
 			} else {
 				filterRefMap["schemaId"] = schemaID
 			}
 
-			if filter_relationships["conpro_template_name"] != nil {
-				filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["conpro_template_name"])
+			if filter_relationships["consumer_to_provider_template_name"] != nil {
+				filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["consumer_to_provider_template_name"])
 			} else {
 				filterRefMap["templateName"] = templateName
 			}
 
-			filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["conpro_name"])
+			filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["consumer_to_provider_name"])
 
 			filterConProMap["filterRef"] = filterRefMap
-			if tempVar1, ok := d.GetOk("conpro_directives"); ok {
+			if tempVar1, ok := d.GetOk("consumer_to_provider_directives"); ok {
 				filterConProMap["directives"] = tempVar1
+			}else{
+			    return fmt.Errorf("Consumer to Provider is mandatory to pass if Consumer to Provider Filter Relationships is passed")
 			}
 
 		} else {
@@ -292,7 +272,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 		filterConPro = append(filterConPro, filterConProMap)
 
 		path := fmt.Sprintf("/templates/%s/contracts/-", templateName)
-		contractStruct := models.NewTemplateContractFilter("add", path, contractName, displayName, scope, filter_type, contractRefMap, filter, filterProCon, filterConPro)
+		contractStruct := models.NewTemplateContractFilter("add", path, contractName, displayName, scope, filter_type, filter, filterProCon, filterConPro)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
 
@@ -352,8 +332,7 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 					match := re.FindStringSubmatch(contractRef)
 					d.Set("contract_name", match[3])
-					d.Set("contract_schema_id", match[1])
-					d.Set("contract_template_name", match[2])
+					
 
 					if contractCont.Exists("filterRelationships") {
 						count, _ := contractCont.ArrayCount("filterRelationships")
@@ -389,18 +368,18 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 								return fmt.Errorf("Unable to parse the filter Relationships Provider to Consumer list")
 							}
 							if filterCont.Exists("directives") {
-								d.Set("procon_directives", filterCont.S("directives").Data().([]interface{}))
+								d.Set("provider_to_consumer_directives", filterCont.S("directives").Data().([]interface{}))
 							}
 							if filterCont.Exists("filterRef") {
 								filRef := filterCont.S("filterRef").Data()
 								split := strings.Split(filRef.(string), "/")
 								
-								filterMap["procon_schema_id"] = fmt.Sprintf("%s", split[2])
-								filterMap["procon_template_name"] = fmt.Sprintf("%s", split[4])
-								filterMap["procon_name"] = fmt.Sprintf("%s", split[6])
+								filterMap["provider_to_consumer_schema_id"] = fmt.Sprintf("%s", split[2])
+								filterMap["provider_to_consumer_template_name"] = fmt.Sprintf("%s", split[4])
+								filterMap["provider_to_consumer_name"] = fmt.Sprintf("%s", split[6])
 							}
 						}
-						d.Set("filter_relationships_procon", filterMap)
+						d.Set("filter_relationships_provider_to_consumer", filterMap)
 					}
 
 					if contractCont.Exists("filterRelationshipsConsumerToProvider") {
@@ -413,18 +392,18 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 								return fmt.Errorf("Unable to parse the filter Relationships Consumer to Provider list")
 							}
 							if filterCont.Exists("directives") {
-								d.Set("conpro_directives", filterCont.S("directives").Data().([]interface{}))
+								d.Set("consumer_to_provider_directives", filterCont.S("directives").Data().([]interface{}))
 							}
 							if filterCont.Exists("filterRef") {
 								filRef := filterCont.S("filterRef").Data()
 								split := strings.Split(filRef.(string), "/")
 
-								filterMap["conpro_schema_id"] = fmt.Sprintf("%s", split[2])
-								filterMap["conpro_template_name"] = fmt.Sprintf("%s", split[4])
-								filterMap["conpro_name"] = fmt.Sprintf("%s", split[6])
+								filterMap["consumer_to_provider_schema_id"] = fmt.Sprintf("%s", split[2])
+								filterMap["consumer_to_provider_template_name"] = fmt.Sprintf("%s", split[4])
+								filterMap["consumer_to_provider_name"] = fmt.Sprintf("%s", split[6])
 							}
 						}
-						d.Set("filter_relationships_conpro", filterMap)
+						d.Set("filter_relationships_consumer_to_provider", filterMap)
 					}
 
 					found = true
@@ -452,7 +431,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	contractName := d.Get("contract_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var scope, filter_type, contract_schema_id, contract_template_name string
+	var scope, filter_type string
 
 	if tempVar, ok := d.GetOk("scope"); ok {
 		scope = tempVar.(string)
@@ -460,22 +439,6 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	if tempVar, ok := d.GetOk("filter_type"); ok {
 		filter_type = tempVar.(string)
 	}
-
-	if tempVar, ok := d.GetOk("contract_schema_id"); ok {
-		contract_schema_id = tempVar.(string)
-	} else {
-		contract_schema_id = schemaID
-	}
-	if tempVar, ok := d.GetOk("contract_template_name"); ok {
-		contract_template_name = tempVar.(string)
-	} else {
-		contract_template_name = templateName
-	}
-
-	contractRefMap := make(map[string]interface{})
-	contractRefMap["schemaId"] = contract_schema_id
-	contractRefMap["templateName"] = contract_template_name
-	contractRefMap["contractName"] = contractName
 
 	filter := make([]interface{}, 0)
 	filterMap := make(map[string]interface{})
@@ -509,28 +472,30 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 
 	filterProCon := make([]interface{}, 0)
 	filterProConMap := make(map[string]interface{})
-	if tempVar, ok := d.GetOk("filter_relationships_procon"); ok {
+	if tempVar, ok := d.GetOk("filter_relationships_provider_to_consumer"); ok {
 		filter_relationships := tempVar.(map[string]interface{})
 
 		filterRefMap := make(map[string]interface{})
 		
-		if filter_relationships["procon_schema_id"] != nil {
-			filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["procon_schema_id"])
+		if filter_relationships["provider_to_consumer_schema_id"] != nil {
+			filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_schema_id"])
 		} else {
 			filterRefMap["schemaId"] = schemaID
 		}
 		
-		if filter_relationships["procon_template_name"] != nil {
-			filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["procon_template_name"])
+		if filter_relationships["provider_to_consumer_template_name"] != nil {
+			filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_template_name"])
 		} else {
 			filterRefMap["templateName"] = templateName
 		}
 
-		filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["procon_name"])
+		filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_name"])
 
 		filterProConMap["filterRef"] = filterRefMap
-		if tempVar1, ok := d.GetOk("procon_directives"); ok {
+		if tempVar1, ok := d.GetOk("provider_to_consumer_directives"); ok {
 			filterProConMap["directives"] = tempVar1
+		}else{
+			return fmt.Errorf("Provider to Consumer is mandatory to pass if Provider to Consumer Filter Relationships is passed")
 		}
 
 	} else {
@@ -541,28 +506,30 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 
 	filterConPro := make([]interface{}, 0)
 	filterConProMap := make(map[string]interface{})
-	if tempVar, ok := d.GetOk("filter_relationships_conpro"); ok {
+	if tempVar, ok := d.GetOk("filter_relationships_consumer_to_provider"); ok {
 		filter_relationships := tempVar.(map[string]interface{})
 
 		filterRefMap := make(map[string]interface{})
 
-		if filter_relationships["conpro_schema_id"] != nil {
-			filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["conpro_schema_id"])
+		if filter_relationships["consumer_to_provider_schema_id"] != nil {
+			filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["consumer_to_provider_schema_id"])
 		} else {
 			filterRefMap["schemaId"] = schemaID
 		}
 
-		if filter_relationships["conpro_template_name"] != nil {
-			filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["conpro_template_name"])
+		if filter_relationships["consumer_to_provider_template_name"] != nil {
+			filterRefMap["templateName"] = fmt.Sprintf("%v", filter_relationships["consumer_to_provider_template_name"])
 		} else {
 			filterRefMap["templateName"] = templateName
 		}
 
-		filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["conpro_name"])
+		filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["consumer_to_provider_name"])
 
 		filterConProMap["filterRef"] = filterRefMap
-		if tempVar1, ok := d.GetOk("conpro_directives"); ok {
+		if tempVar1, ok := d.GetOk("consumer_to_provider_directives"); ok {
 			filterConProMap["directives"] = tempVar1
+		}else{
+			return fmt.Errorf("Consumer to Provider is mandatory to pass if Consumer to Provider Filter Relationships is passed")
 		}
 
 	} else {
@@ -571,7 +538,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	filterConPro = append(filterConPro, filterConProMap)
 
 	path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
-	contractStruct := models.NewTemplateContractFilter("replace", path, contractName, displayName, scope, filter_type, contractRefMap, filter, filterProCon, filterConPro)
+	contractStruct := models.NewTemplateContractFilter("replace", path, contractName, displayName, scope, filter_type, filter, filterProCon, filterConPro)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
 
@@ -590,7 +557,7 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 	contractName := d.Get("contract_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var scope, filter_type, contract_schema_id, contract_template_name string
+	var scope, filter_type string
 
 	if tempVar, ok := d.GetOk("scope"); ok {
 		scope = tempVar.(string)
@@ -599,23 +566,7 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 		filter_type = tempVar.(string)
 	}
 
-	if tempVar, ok := d.GetOk("contract_schema_id"); ok {
-		contract_schema_id = tempVar.(string)
-	} else {
-		contract_schema_id = schemaID
-	}
-	if tempVar, ok := d.GetOk("contract_template_name"); ok {
-		contract_template_name = tempVar.(string)
-	} else {
-		contract_template_name = templateName
-	}
-
-	contractRefMap := make(map[string]interface{})
-	contractRefMap["schemaId"] = contract_schema_id
-	contractRefMap["templateName"] = contract_template_name
-	contractRefMap["contractName"] = contractName
-
-	filter := make([]interface{}, 0)
+ 	filter := make([]interface{}, 0)
 	filterMap := make(map[string]interface{})
 	if tempVar, ok := d.GetOk("filter_relationships"); ok {
 		filter_relationships := tempVar.(map[string]interface{})
@@ -647,7 +598,7 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 	filter = append(filter, filterMap)
 
 	path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
-	contractStruct := models.NewTemplateContractFilter("remove", path, contractName, displayName, scope, filter_type, contractRefMap, filter, nil, nil)
+	contractStruct := models.NewTemplateContractFilter("remove", path, contractName, displayName, scope, filter_type, filter, nil, nil)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
 
