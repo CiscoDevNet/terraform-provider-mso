@@ -161,7 +161,7 @@ func testAccCheckMSOSchemaTemplateL3outDestroy(s *terraform.State) error {
 							}
 							apiL3out := models.StripQuotes(l3outCont.S("name").String())
 							if apiL3out == "l3out1" {
-								return fmt.Errorf("template bridge domain still exists.")
+								return fmt.Errorf("template L3Out still exists.")
 							}
 						}
 					}

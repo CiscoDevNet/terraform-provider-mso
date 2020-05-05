@@ -42,21 +42,6 @@ func datasourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"epg_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"epg_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"epg_anp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -190,14 +175,6 @@ func dataSourceMSOTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) erro
 							d.Set("bd_name", match_bd[3])
 							d.Set("bd_schema_id", match_bd[1])
 							d.Set("bd_template_name", match_bd[2])
-
-							epgRef := models.StripQuotes(epgCont.S("epgRef").String())
-							re_epg := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)/epgs/(.*)")
-							match_epg := re_epg.FindStringSubmatch(epgRef)
-							d.Set("epg_name", match_epg[4])
-							d.Set("epg_schema_id", match_epg[1])
-							d.Set("epg_template_name", match_epg[2])
-							d.Set("epg_anp_name", match_epg[3])
 
 							found = true
 							break
