@@ -6,7 +6,7 @@ description: |-
   Manages MSO Schema Template External Endpoint Group.
 ---
 
-# mso_schema_template_external-epg #
+# mso_schema_template_externalepg #
 
 Manages MSO Schema Template External Endpoint Group.
 
