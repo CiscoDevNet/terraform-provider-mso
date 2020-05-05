@@ -6,7 +6,7 @@ description: |-
   MSO Schema Template External Endpoint Group Data source.
 ---
 
-# mso_schema_template_external-epg #
+# mso_schema_template_externalepg #
 
 MSO Schema Template External Endpoint Group Data source.
 
