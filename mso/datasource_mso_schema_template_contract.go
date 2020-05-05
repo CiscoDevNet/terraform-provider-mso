@@ -156,7 +156,7 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 		}
 	}
 	if !found {
-		d.SetId("")
+		return fmt.Errorf("Unable to find the Contract %s", stateContract)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
