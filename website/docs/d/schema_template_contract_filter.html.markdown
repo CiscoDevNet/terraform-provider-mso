@@ -34,18 +34,18 @@ data "mso_schema_template_contract_filter" "filter1" {
 * `filter_type` - (Optional) The type of filters defined in this contract. Allowed values are `bothWay` and `oneWay`. Default to `bothWay`
 * `scope` - (Optional) The scope of the contract.
 * `filter_relationships` - (Optional) Map to provide Filter Relationships.
-* `filter_schema_id` - (Optional) The schemaId in which the filter is located.
-* `filter_template_name` - (Optional) The template name in which the filter is located.
-* `filter_name` - (Optional) The filter to associate with this contract.
-* `directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships.filter_schema_id` - (Optional) The schemaId in which the filter is located.
+* `filter_relationships.filter_template_name` - (Optional) The template name in which the filter is located.
+* `filter_relationships.filter_name` - (Optional) The filter to associate with this contract.
+* `directives` - (Optional) It is required if filter_relationships is passed, otherwise not required. A list of filter directives. Allowed values are `log` and `none`.
 * `filter_relationships_provider_to_consumer` - (Optional) Map to provide Filter Relationships Provider to Consumer.
-* `provider_to_consumer_schema_id` - (Optional) The schemaId in which the filter is located.
-* `provider_to_consumer_template_name` - (Optional) The template name in which the filter is located.
-* `provider_to_consumer_name` - (Optional) The filter to associate with this contract.
-* `provider_to_consumer_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships_provider_to_consumer.provider_to_consumer_schema_id` - (Optional) The schemaId in which the filter is located.
+* `filter_relationships_provider_to_consumer.provider_to_consumer_template_name` - (Optional) The template name in which the filter is located.
+* `filter_relationships_provider_to_consumer.provider_to_consumer_name` - (Optional) The filter to associate with this contract.
+* `provider_to_consumer_directives` - (Optional) It is required if filter_relationships_provider_to_consumer is passed, otherwise not required. A list of filter directives. Allowed values are `log` and `none`.
 * `filter_relationships_consumer_to_provider` - (Optional) Map to provide Filter Relationships Consumer to Provider.
-* `consumer_to_provider_schema_id` - (Optional) The schemaId in which the filter is located.
-* `consumer_to_provider_template_name` - (Optional) The template name in which the filter is located.
-* `consumer_to_provider_name` - (Optional) The filter to associate with this contract.
-* `consumer_to_provider_directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `filter_relationships_consumer_to_provider.consumer_to_provider_schema_id` - (Optional) The schemaId in which the filter is located.
+* `filter_relationships_consumer_to_provider.consumer_to_provider_template_name` - (Optional) The template name in which the filter is located.
+* `filter_relationships_consumer_to_provider.consumer_to_provider_name` - (Optional) The filter to associate with this contract.
+* `consumer_to_provider_directives` - (Optional) It is required if filter_relationships_consumer_to_provider is passed, otherwise not required. A list of filter directives. Allowed values are `log` and `none`.
  
