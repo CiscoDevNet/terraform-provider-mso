@@ -210,6 +210,7 @@ func dataSourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interf
 	}
 	if !found {
 		d.SetId("")
+		return fmt.Errorf("Unable to find the filter entry")
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
