@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -155,9 +154,7 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 							d.Set("schema_id", schemaId)
 							d.Set("template_name", apiTemplate)
 							d.Set("externalepg_name", apiExternalepg)
-							ip := models.StripQuotes(subnetsCont.S("ip").String())
-							idSubnet := strings.Split(ip, "/")
-							d.SetId(idSubnet[0])
+							d.SetId(apiIP)
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
 							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
 							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
@@ -217,7 +214,7 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	if err != nil {
 		return err
 	}
-	index, err := getIndex(cont, templateName, extenalepgName, IP)
+	index, err := getIndex(cont, templateName, extenalepgName, d.Id())
 	if err != nil {
 		return err
 	}
@@ -230,7 +227,6 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	externalepgStruct := models.NewTemplateExternalEpgSubnet("replace", path, IP, Name, Scope, Aggregate)
 
 	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
-
 	if errs != nil {
 		return errs
 	}
@@ -265,7 +261,7 @@ func resourceMSOTemplateExtenalepgSubnetDelete(d *schema.ResourceData, m interfa
 	if err != nil {
 		return err
 	}
-	index, err := getIndex(cont, templateName, extenalepgName, IP)
+	index, err := getIndex(cont, templateName, extenalepgName, d.Id())
 	if err != nil {
 		return err
 	}
@@ -299,7 +295,6 @@ func getIndex(cont *container.Container, templateName, extenalepgName, ip string
 			return index, err
 		}
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
 		if apiTemplate == templateName {
 			externalepgCount, err := tempCont.ArrayCount("externalEpgs")
 			if err != nil {
@@ -314,7 +309,7 @@ func getIndex(cont *container.Container, templateName, extenalepgName, ip string
 				if apiExternalepg == extenalepgName {
 					subnetCount, err := externalepgCont.ArrayCount("subnets")
 					if err != nil {
-						return index, fmt.Errorf("Unable to get subnets list")
+						return index, fmt.Errorf("unable to get subnets list")
 					}
 					for k := 0; k < subnetCount; k++ {
 						subnetsCont, err := externalepgCont.ArrayElement(k, "subnets")
