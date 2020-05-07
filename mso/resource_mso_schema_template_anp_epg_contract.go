@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -27,21 +29,18 @@ func resourceMSOTemplateAnpEpgContract() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -104,10 +103,11 @@ func resourceMSOTemplateAnpEpgContractCreate(d *schema.ResourceData, m interface
 	contractRefMap["schemaId"] = contract_schemaid
 	contractRefMap["templateName"] = contract_templatename
 	contractRefMap["contractName"] = contractName
+
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/-", templateName, anpName, epgName)
 	bdStruct := models.NewTemplateAnpEpgContract("add", path, contractRefMap, relationship_type)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 	if err != nil {
 		return err
 	}
@@ -189,9 +189,7 @@ func resourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface{}
 									break
 								}
 							}
-
 						}
-
 					}
 				}
 			}
@@ -237,12 +235,27 @@ func resourceMSOTemplateAnpEpgContractUpdate(d *schema.ResourceData, m interface
 	contractRefMap["schemaId"] = contract_schemaid
 	contractRefMap["templateName"] = contract_templatename
 	contractRefMap["contractName"] = contractName
-	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/%s", templateName, anpName, epgName, contractName)
-	crefStruct := models.NewTemplateAnpEpgContract("replace", path, contractRefMap, relationship_type)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), crefStruct)
 
+	id := d.Id()
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
+	}
+	index, err := fetchindex(cont, templateName, anpName, epgName, id, relationship_type)
+	if err != nil {
+		return err
+	}
+	if index == -1 {
+		fmt.Errorf("The given contract id is not found")
+	}
+	indexs := strconv.Itoa(index)
+
+	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/%s", templateName, anpName, epgName, indexs)
+	crefStruct := models.NewTemplateAnpEpgContract("replace", path, contractRefMap, relationship_type)
+
+	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), crefStruct)
+	if errs != nil {
+		return errs
 	}
 	return resourceMSOTemplateAnpEpgContractRead(d, m)
 }
@@ -277,14 +290,115 @@ func resourceMSOTemplateAnpEpgContractDelete(d *schema.ResourceData, m interface
 	contractRefMap["schemaId"] = contract_schemaid
 	contractRefMap["templateName"] = contract_templatename
 	contractRefMap["contractName"] = contractName
-	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/%s", templateName, anpName, epgName, contractName)
-	crefStruct := models.NewTemplateAnpEpgContract("remove", path, contractRefMap, relationship_type)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), crefStruct)
 
+	id := d.Id()
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
 	}
+	index, err := fetchindex(cont, templateName, anpName, epgName, id, relationship_type)
+	if err != nil {
+		return err
+	}
+	if index == -1 {
+		fmt.Errorf("The given contract id is not found")
+	}
+	indexs := strconv.Itoa(index)
+
+	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/%s", templateName, anpName, epgName, indexs)
+	crefStruct := models.NewTemplateAnpEpgContract("remove", path, contractRefMap, relationship_type)
+
+	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), crefStruct)
+	if errs != nil {
+		return errs
+	}
 	d.SetId("")
 	return resourceMSOTemplateAnpEpgContractRead(d, m)
-	return nil
+}
+
+func fetchindex(cont *container.Container, templateName, anpName, epgName, contractName, relationship_type string) (int, error) {
+	found := false
+	index := -1
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return index, fmt.Errorf("No Template found")
+	}
+	for i := 0; i < count; i++ {
+
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return index, err
+		}
+		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
+
+		if currentTemplateName == templateName {
+			anpCount, err := tempCont.ArrayCount("anps")
+
+			if err != nil {
+				return index, fmt.Errorf("No Anp found")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+
+				if err != nil {
+					return index, err
+				}
+				currentAnpName := models.StripQuotes(anpCont.S("name").String())
+				log.Println("currentanpname", currentAnpName)
+				if currentAnpName == anpName {
+					log.Println("found correct anpname")
+
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return index, fmt.Errorf("No Epg found")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return index, err
+						}
+						currentEpgName := models.StripQuotes(epgCont.S("name").String())
+						log.Println("currentepgname", currentEpgName)
+						if currentEpgName == epgName {
+							log.Println("found correct epgname")
+
+							contractCount, err := epgCont.ArrayCount("contractRelationships")
+							if err != nil {
+								return index, fmt.Errorf("No contractRelationships found")
+							}
+							for s := 0; s < contractCount; s++ {
+								contractCont, err := epgCont.ArrayElement(s, "contractRelationships")
+								if err != nil {
+									return index, err
+								}
+								contractRef := models.StripQuotes(contractCont.S("contractRef").String())
+								apiRelationshipType := models.StripQuotes(contractCont.S("relationshipType").String())
+								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+								match := re.FindStringSubmatch(contractRef)
+								apiContract := match[3]
+								if apiContract == contractName && apiRelationshipType == relationship_type {
+									log.Println("found correct name")
+									index = s
+									found = true
+									break
+								}
+							}
+						}
+						if found {
+							break
+						}
+					}
+				}
+				if found {
+					break
+				}
+			}
+
+		}
+		if found {
+			break
+		}
+	}
+	return index, nil
+
 }

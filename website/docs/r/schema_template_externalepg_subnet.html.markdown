@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_external_epg_subnet"
 sidebar_current: "docs-mso-resource-schema_template_external_epg_subnet"
 description: |-
-  Manages MSO Schema Template Bridge Domain Subnet.
+  Manages MSO Schema Template External EPG Subnet.
 ---
 
 # mso_schema_template_external_epg_subnet #
 
-Manages MSO Schema Template Bridge Domain Subnet.
+Manages MSO Schema Template External EPG Subnet.
 
 ## Example Usage ##
 

@@ -159,12 +159,12 @@ func resourceMSOSchemaTemplateFilterEntryCreate(d *schema.ResourceData, m interf
 		entryMap["sourceTo"] = sourceTo
 	}
 	if tempVar, ok := d.GetOk("destination_from"); ok {
-	    destinationFrom = tempVar.(string)
+		destinationFrom = tempVar.(string)
 		entryMap["destinationFrom"] = destinationFrom
 
 	}
 	if tempVar, ok := d.GetOk("destination_to"); ok {
-	    destinationTo = tempVar.(string)
+		destinationTo = tempVar.(string)
 		entryMap["destinationTo"] = destinationTo
 	}
 	if tempVar, ok := d.GetOk("match_only_fragments"); ok {
@@ -176,7 +176,7 @@ func resourceMSOSchemaTemplateFilterEntryCreate(d *schema.ResourceData, m interf
 		entryMap["stateful"] = stateful
 	}
 	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
-        tcpSessionRules = tempVar.([]interface{})
+		tcpSessionRules = tempVar.([]interface{})
 		entryMap["tcpSessionRules"] = tcpSessionRules
 	}
 	entries = append(entries, entryMap)
@@ -200,21 +200,21 @@ func resourceMSOSchemaTemplateFilterEntryCreate(d *schema.ResourceData, m interf
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
 		if apiTemplate == stateTemplate {
-			
+
 			filterCount, err := tempCont.ArrayCount("filters")
 			if err != nil {
 				return fmt.Errorf("Unable to get Filter list")
 			}
-		
+
 			for j := 0; j < filterCount; j++ {
 				filterCont, err := tempCont.ArrayElement(j, "filters")
 				if err != nil {
 					return err
 				}
 				apiFilterName := models.StripQuotes(filterCont.S("name").String())
-				
+
 				if apiFilterName == filterName {
-					
+
 					foundFilter = true
 					entriesCount, err := filterCont.ArrayCount("entries")
 					if err == nil {
@@ -404,10 +404,10 @@ func resourceMSOSchemaTemplateFilterEntryUpdate(d *schema.ResourceData, m interf
 
 	}
 	if tempVar, ok := d.GetOk("destination_from"); ok {
-	   destinationFrom = tempVar.(string)
-    }
+		destinationFrom = tempVar.(string)
+	}
 	if tempVar, ok := d.GetOk("destination_to"); ok {
-	
+
 		destinationTo = tempVar.(string)
 	}
 	if tempVar, ok := d.GetOk("match_only_fragments"); ok {
@@ -419,9 +419,9 @@ func resourceMSOSchemaTemplateFilterEntryUpdate(d *schema.ResourceData, m interf
 
 	}
 	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
-		
+
 		tcpSessionRules = tempVar.([]interface{})
-	
+
 	}
 
 	pathf := fmt.Sprintf("/templates/%s/filters/%s/entries/%s", stateTemplate, filterName, entryName)
@@ -494,7 +494,7 @@ func resourceMSOSchemaTemplateFilterEntryDelete(d *schema.ResourceData, m interf
 		entryMap["stateful"] = stateful
 	}
 	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
-		
+
 		tcpSessionRules = tempVar.([]interface{})
 		entryMap["tcpSessionRules"] = tcpSessionRules
 	}

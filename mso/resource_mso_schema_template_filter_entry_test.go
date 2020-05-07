@@ -95,7 +95,7 @@ func testAccCheckMSOSchemaTemplateFilterEntryExists(bdName string, ss *TemplateF
 		if err != nil {
 			return err
 		}
-		
+
 		count, err := cont.ArrayCount("templates")
 		if err != nil {
 			return fmt.Errorf("No Template found")

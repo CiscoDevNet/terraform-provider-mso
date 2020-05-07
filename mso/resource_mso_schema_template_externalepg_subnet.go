@@ -222,7 +222,6 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 		return err
 	}
 	if index == -1 {
-		log.Print("3333333333333333333333333333", d.Id())
 		fmt.Errorf("The given subnet ip is not found")
 	}
 	indexs := strconv.Itoa(index)
@@ -230,7 +229,6 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/subnets/%s", templateName, extenalepgName, indexs)
 	externalepgStruct := models.NewTemplateExternalEpgSubnet("replace", path, IP, Name, Scope, Aggregate)
 
-	log.Print("#######################################", externalepgStruct)
 	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 
 	if errs != nil {

@@ -37,7 +37,7 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			
+
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -193,7 +193,6 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 					match := re.FindStringSubmatch(contractRef)
 					d.Set("contract_name", match[3])
-			
 
 					if contractCont.Exists("filterRelationships") {
 						count, _ := contractCont.ArrayCount("filterRelationships")
@@ -258,7 +257,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 							if filterCont.Exists("filterRef") {
 								filRef := filterCont.S("filterRef").Data()
 								split := strings.Split(filRef.(string), "/")
-								
+
 								filterMap["consumer_to_provider_schema_id"] = fmt.Sprintf("%s", split[2])
 								filterMap["consumer_to_provider_template_name"] = fmt.Sprintf("%s", split[4])
 								filterMap["consumer_to_provider_name"] = fmt.Sprintf("%s", split[6])

@@ -112,19 +112,19 @@ func testAccCheckMSOSchemaTemplateContractFilterExists(contractName string, tc *
 			apiTemplateName := models.StripQuotes(tempCont.S("name").String())
 			if apiTemplateName == "Template1" {
 				contractCount, err := tempCont.ArrayCount("contracts")
-				
+
 				if err != nil {
 					return fmt.Errorf("Unable to get Contract list")
 				}
-				
+
 				for j := 0; j < contractCount; j++ {
 					contractCont, err := tempCont.ArrayElement(j, "contracts")
 					if err != nil {
 						return err
 					}
-					
+
 					apiContract := models.StripQuotes(contractCont.S("name").String())
-					
+
 					if apiContract == "C300" {
 						tp.display_name = models.StripQuotes(contractCont.S("displayName").String())
 						tp.filter_type = models.StripQuotes(contractCont.S("filterType").String())
@@ -145,7 +145,6 @@ func testAccCheckMSOSchemaTemplateContractFilterExists(contractName string, tc *
 								}
 							}
 						}
-						
 
 						found = true
 						break
