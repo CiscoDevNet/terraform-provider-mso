@@ -32,7 +32,7 @@ data "mso_schema_template_contract" "scontract1" {
 * `filter_type` - (Optional) The type of filters defined in this contract. Allowed values are `bothWay` and `oneWay`. Default to `bothWay`
 * `scope` - (Optional) The scope of the contract.
 * `filter_relationships` - (Optional) Map to provide Filter Relationships.
-* `filter_schema_id` - (Optional) The schemaId in which the filter is located.
-* `filter_template_name` - (Optional) The template name in which the filter is located.
-* `filter_name` - (Optional) The filter to associate with this contract.
+* `filter_schema_id.filter_relationships` - (Optional) The schemaId in which the filter is located.
+* `filter_template_name.filter_relationships` - (Optional) The template name in which the filter is located.
+* `filter_name.filter_relationships` - (Required) The filter to associate with this contract.
 * `directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
