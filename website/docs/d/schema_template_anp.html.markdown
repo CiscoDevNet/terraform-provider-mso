@@ -18,7 +18,6 @@ data "mso_schema_template_anp" "anp2" {
   template= "template99"
   name = "anp123"
 }
-}
 ```
 
 ## Argument Reference ##
