@@ -153,14 +153,14 @@ provider "mso" {
 #   directives = ["none"]
 # }
 
-data "mso_schema_template_contract" "contract1" {
-  schema_id = "5c6c16d7270000c710f8094d"
-  template_name = "template1"
-  contract_name = "web2-to-DB2"
-} 
-output "demo" {
-  value = "${data.mso_schema_template_contract.contract1}"
-}
+# data "mso_schema_template_contract" "contract1" {
+#   schema_id = "5c6c16d7270000c710f8094d"
+#   template_name = "template1"
+#   contract_name = "web2-to-DB2"
+# } 
+# output "demo" {
+#   value = "${data.mso_schema_template_contract.contract1}"
+# }
 
 # resource "mso_schema_template_externalepg" "template_externalepg" {
 #   schema_id = "5ea809672c00003bc40a2799"
@@ -179,3 +179,23 @@ output "demo" {
 # output "demo" {
 #   value = "${data.mso_schema_template_externalepg.externalEpg}"
 # }
+
+resource "mso_schema_template_externalepg_subnet" "subnet1" {
+  schema_id = "5ea809672c00003bc40a2799"
+  template_name = "Template1"
+  externalepg_name =  "UntitledExternalEPG1"
+  ip = "10.101.100.0/0"
+  name = "sddfgbany"
+  scope = ["shared-rtctrl", "export-rtctrl"]
+  aggregate = ["shared-rtctrl", "export-rtctrl"]
+}
+data "mso_schema_template_externalepg_subnet" "subnet1" {
+  schema_id = "5c6c16d7270000c710f8094d"
+  template_name = "Template1"
+  externalepg_name = "Internet"
+  ip = "30.1.1.0/24"
+}
+
+output "demo" {
+  value = "${data.mso_schema_template_externalepg_subnet.subnet1}"
+}

@@ -3,7 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
-	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -11,9 +11,10 @@ import (
 	"github.com/hashicorp/terraform/helper/validation"
 )
 
-func dataSourceMSOTemplateExternalepg() *schema.Resource {
+func dataSourceMSOTemplateExternalEpgSubnet() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceMSOTemplateExternalepgRead,
+
+		Read: dataSourceMSOTemplateExternalEpgSubnetRead,
 
 		SchemaVersion: version,
 
@@ -36,32 +37,33 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"display_name": &schema.Schema{
+			"ip": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"vrf_name": &schema.Schema{
+			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"vrf_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
+			"scope": &schema.Schema{
+				Type:     schema.TypeList,
 				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
-			"vrf_template_name": &schema.Schema{
-				Type:     schema.TypeString,
+			"aggregate": &schema.Schema{
+				Type:     schema.TypeList,
 				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
 		}),
 	}
 }
 
-func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{}) error {
+func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
@@ -79,6 +81,8 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateExternalepg := d.Get("externalepg_name")
+	stateIP := d.Get("ip")
+
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -98,28 +102,46 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 				}
 				apiExternalepg := models.StripQuotes(externalepgCont.S("name").String())
 				if apiExternalepg == stateExternalepg {
-					d.SetId(apiExternalepg)
-					d.Set("externalepg_name", apiExternalepg)
-					d.Set("schema_id", schemaId)
-					d.Set("template_name", apiTemplate)
-					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
+					subnetCount, err := externalepgCont.ArrayCount("subnets")
+					if err != nil {
+						return fmt.Errorf("Unable to get subnets list")
+					}
+					for k := 0; k < subnetCount; k++ {
+						subnetsCont, err := externalepgCont.ArrayElement(k, "subnets")
+						if err != nil {
+							return err
+						}
+						apiIP := models.StripQuotes(subnetsCont.S("ip").String())
+						if apiIP == stateIP {
+							d.Set("schema_id", schemaId)
+							d.Set("template_name", apiTemplate)
+							d.Set("externalepg_name", apiExternalepg)
+							ip := models.StripQuotes(subnetsCont.S("ip").String())
+							idSubnet := strings.Split(ip, "/")
+							d.SetId(idSubnet[0])
+							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
+							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
+							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
+							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
 
-					vrfRef := models.StripQuotes(externalepgCont.S("vrfRef").String())
-					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
-					match := re.FindStringSubmatch(vrfRef)
-					d.Set("vrf_name", match[3])
-					d.Set("vrf_schema_id", match[1])
-					d.Set("vrf_template_name", match[2])
-
-					found = true
+							found = true
+							break
+						}
+					}
+				}
+				if found {
 					break
 				}
 			}
 		}
+		if found {
+			break
+		}
 	}
 
 	if !found {
-		return fmt.Errorf("Unable to find the External Epg %s", stateExternalepg)
+		d.SetId("")
+		return fmt.Errorf("External Epg Subnet Not Found")
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
