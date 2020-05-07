@@ -288,7 +288,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 				}
 				apiContract := models.StripQuotes(contractCont.S("name").String())
 				if apiContract == contractName {
-				   foundContract = true
+					foundContract = true
 					path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
 					contractStruct := models.NewTemplateContractFilter("replace", path, contractName, displayName, scope, filter_type, filter, filterProCon, filterConPro)
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
@@ -505,7 +505,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 		filter_relationships := tempVar.(map[string]interface{})
 
 		filterRefMap := make(map[string]interface{})
-	    if filter_relationships["provider_to_consumer_schema_id"] != nil {
+		if filter_relationships["provider_to_consumer_schema_id"] != nil {
 			filterRefMap["schemaId"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_schema_id"])
 		} else {
 			filterRefMap["schemaId"] = schemaID
@@ -520,7 +520,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 		filterRefMap["filterName"] = fmt.Sprintf("%v", filter_relationships["provider_to_consumer_name"])
 
 		filterProConMap["filterRef"] = filterRefMap
-		
+
 		if tempVar1, ok := d.GetOk("provider_to_consumer_directives"); ok {
 			filterProConMap["directives"] = tempVar1
 		} else {
@@ -530,7 +530,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	} else {
 		filterProConMap = nil
 	}
-	
+
 	filterProCon = append(filterProCon, filterProConMap)
 
 	filterConPro := make([]interface{}, 0)

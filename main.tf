@@ -180,22 +180,32 @@ provider "mso" {
 #   value = "${data.mso_schema_template_externalepg.externalEpg}"
 # }
 
-resource "mso_schema_template_externalepg_subnet" "subnet1" {
-  schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
-  externalepg_name =  "UntitledExternalEPG1"
-  ip = "10.101.100.0/0"
-  name = "sddfgbany"
-  scope = ["shared-rtctrl", "export-rtctrl"]
-  aggregate = ["shared-rtctrl", "export-rtctrl"]
-}
-data "mso_schema_template_externalepg_subnet" "subnet1" {
-  schema_id = "5c6c16d7270000c710f8094d"
-  template_name = "Template1"
-  externalepg_name = "Internet"
-  ip = "30.1.1.0/24"
-}
+# resource "mso_schema_template_externalepg_subnet" "subnet1" {
+#   schema_id = "5ea809672c00003bc40a2799"
+#   template_name = "Template1"
+#   externalepg_name =  "UntitledExternalEPG1"
+#   ip = "10.101.100.0/0"
+#   name = "sddfgbany"
+#   scope = ["shared-rtctrl", "export-rtctrl"]
+#   aggregate = ["shared-rtctrl", "export-rtctrl"]
+# }
+# data "mso_schema_template_externalepg_subnet" "subnet1" {
+#   schema_id = "5c6c16d7270000c710f8094d"
+#   template_name = "Template1"
+#   externalepg_name = "Internet"
+#   ip = "30.1.1.0/24"
+# }
 
-output "demo" {
-  value = "${data.mso_schema_template_externalepg_subnet.subnet1}"
+# output "demo" {
+#   value = "${data.mso_schema_template_externalepg_subnet.subnet1}"
+# }
+
+resource "mso_schema_template_anp_epg_contract" "contract1" {
+  schema_id = "5e2dd7112c00005db60a268b"
+  template_name = "Template1"
+  anp_name = "ANP-Financial"
+  epg_name = "Web"
+  contract_name = "Web-to-Internet-Financial"
+  relationship_type = "provider"
+  
 }

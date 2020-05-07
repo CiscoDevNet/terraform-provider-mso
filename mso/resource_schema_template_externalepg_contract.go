@@ -127,7 +127,7 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
-		  return err
+			return err
 		}
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
@@ -140,7 +140,7 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 			for j := 0; j < epgCount; j++ {
 				epgCont, err := tempCont.ArrayElement(j, "externalEpgs")
 				if err != nil {
-				    return err
+					return err
 				}
 				apiEpg := models.StripQuotes(epgCont.S("name").String())
 				if apiEpg == stateEPG {
@@ -152,7 +152,7 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 					for k := 0; k < contractCount; k++ {
 						contractCont, err := epgCont.ArrayElement(k, "contractRelationships")
 						if err != nil {
-						    return err
+							return err
 						}
 						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
@@ -220,7 +220,7 @@ func resourceMSOTemplateExternalEpgContractUpdate(d *schema.ResourceData, m inte
 	if index == -1 {
 		return fmt.Errorf("The given External Epg Contract is not found")
 	}
-	
+
 	indexs := strconv.Itoa(index)
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%s", templateName, epgName, indexs)
@@ -251,7 +251,7 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 	if err != nil {
 		return err
 	}
-	
+
 	indexs := strconv.Itoa(index)
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%s", templateName, epgName, indexs)

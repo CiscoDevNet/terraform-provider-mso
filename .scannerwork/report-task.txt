@@ -1,0 +1,6 @@
+projectKey=TPM
+serverUrl=http://10.0.1.58:9000
+serverVersion=7.4.0.18908
+dashboardUrl=http://10.0.1.58:9000/dashboard?id=TPM
+ceTaskId=AXHQXIHTu3Dz0QbcZR86
+ceTaskUrl=http://10.0.1.58:9000/api/ce/task?id=AXHQXIHTu3Dz0QbcZR86

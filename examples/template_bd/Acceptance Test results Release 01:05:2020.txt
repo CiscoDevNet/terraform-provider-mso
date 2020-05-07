@@ -1,0 +1,106 @@
+==> Checking that code complies with gofmt requirements...
+TF_ACC=1 go test $(go list ./... |grep -v 'vendor') -v  -timeout 120m
+?   	github.com/ciscoecosystem/terraform-provider-mso	[no test files]
+
+Provider Tests: 
+Test file: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/provider_test.go
+
+=== RUN   TestProvider
+--- PASS: TestProvider (0.00s)
+=== RUN   TestProvider_impl
+--- PASS: TestProvider_impl (0.00s)
+
+Resource: mso_label
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_label_test.go
+Output:
+
+=== RUN   TestAccMSOLabel_Basic
+--- PASS: TestAccMSOLabel_Basic (6.28s)
+
+Resource: mso_role
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_role_test.go
+Output:
+
+=== RUN   TestAccMSORole_Basic
+--- PASS: TestAccMSORole_Basic (6.72s)
+=== RUN   TestAccMSORole_Update
+--- PASS: TestAccMSORole_Update (9.13s)
+
+Resource: mso_schema_site
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_schema_site_test.go
+Output:
+
+=== RUN   TestAccMSOSchemaSite_Basic
+--- PASS: TestAccMSOSchemaSite_Basic (9.26s)
+
+Resource: mso_schema_template_bd_subnet
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_schema_template_bd_subnet_test.go
+Output:
+
+=== RUN   TestAccMSOSchemaTemplateBDSubnet_Basic
+--- PASS: TestAccMSOSchemaTemplateBDSubnet_Basic (5.42s)
+=== RUN   TestAccMSOSchemaTemplateBDSubnet_Update
+--- PASS: TestAccMSOSchemaTemplateBDSubnet_Update (10.64s)
+
+Resource: mso_schema_template
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_schema_template_test.go
+Output:
+
+=== RUN   TestAccMSOSchemaTemplate_Basic
+--- PASS: TestAccMSOSchemaTemplate_Basic (9.41s)
+=== RUN   TestAccMSOSchemaTemplate_Update
+--- PASS: TestAccMSOSchemaTemplate_Update (15.83s)
+
+Resource: mso_schema_template_vrf
+Test File:
+Output: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_schema_template_vrf_test.go
+
+=== RUN   TestAccSchemaTemplateVrf_Basic
+--- PASS: TestAccSchemaTemplateVrf_Basic (9.58s)
+=== RUN   TestAccMsoSchemaTemplateVrf_Update
+--- PASS: TestAccMsoSchemaTemplateVrf_Update (16.34s)
+
+Resource: mso_schema
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_schema_test.go
+Output:
+
+=== RUN   TestAccMSOSchema_Basic
+--- PASS: TestAccMSOSchema_Basic (5.57s)
+=== RUN   TestAccMSOSchema_Update
+--- PASS: TestAccMSOSchema_Update (7.88s)
+
+Resource: mso_site
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_site_test.go
+Output:
+
+=== RUN   TestAccSite_Basic
+--- PASS: TestAccSite_Basic (0.85s)
+=== RUN   TestAccMsoSite_Update
+--- PASS: TestAccMsoSite_Update (0.81s) 
+
+Resource: mso_schema_template_bd
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_template_bd_test.go
+Output:
+
+=== RUN   TestAccMSOSchemaTemplateBD_Basic
+--- PASS: TestAccMSOSchemaTemplateBD_Basic (5.52s)
+=== RUN   TestAccMSOSchemaTemplateBD_Update
+--- PASS: TestAccMSOSchemaTemplateBD_Update (10.34s)
+
+Resource: mso_tenant
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_tenant_test.go
+Output:
+
+=== RUN   TestAccTenant_Basic
+--- PASS: TestAccTenant_Basic (5.52s)
+=== RUN   TestAccMsoTenant_Update
+--- PASS: TestAccMsoTenant_Update (9.84s)
+
+Resource: mso_user
+Test File: https://github.com/ciscoecosystem/terraform-provider-mso/blob/release-01/05/2020/mso/resource_mso_user_test.go
+Output:
+
+=== RUN   TestAccMSOUser_Basic
+--- PASS: TestAccMSOUser_Basic (4.81s)
+=== RUN   TestAccMSOUser_Update
+--- PASS: TestAccMSOUser_Update (8.83s)
