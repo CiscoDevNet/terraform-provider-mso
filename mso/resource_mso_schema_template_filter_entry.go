@@ -258,7 +258,7 @@ func resourceMSOSchemaTemplateFilterEntryCreate(d *schema.ResourceData, m interf
 }
 
 func resourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning Read")
+	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
 
