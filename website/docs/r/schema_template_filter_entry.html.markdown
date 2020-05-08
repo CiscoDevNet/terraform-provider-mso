@@ -37,6 +37,7 @@ resource "mso_schema_template_filter_entry" "filter_entry" {
 * `entry_name` - (Required) The name of the entry.
 * `display_name` - (Required) The name of the filter as displayed on the MSO UI.
 * `entry_display_name` - (Required) The name of the entry as displayed on the MSO UI.
+* `entry_description` - (Optional) Description of the entry created.
 * `ether_type` - (Optional) The ethernet type to use for this filter entry. Allowed Values:  arp, fcoe, ip, ipv4, ipv6, mac-security, mpls-unicast, trill, unspecified 
 * `ip_protocol` - (Optional) The IP protocol to use for this filter entry. Allowed Values:  eigrp, egp, icmp, icmpv6, igmp, igp, l2tp, ospfigp, pim, tcp, udp, unspecified 
 * `tcp_session_rules` - (Optional) A list of TCP session rules. Allowed Values : acknowledgement, established, finish, synchronize, reset, unspecified 

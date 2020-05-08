@@ -33,6 +33,7 @@ data "mso_schema_template_filter_entry" "filter_entry" {
 ## Attribute Reference ##
 * `display_name` - (Optional) The name of the filter as displayed on the MSO UI.
 * `entry_display_name` - (Optional) The name of the entry as displayed on the MSO UI.
+* `entry_description` - (Optional) The description of entry.
 * `ether_type` - (Optional) The ethernet type to use for this filter entry.
 * `ip_protocol` - (Optional) The IP protocol to use for this filter entry.
 * `tcp_session_rules` - (Optional) A list of TCP session rules.
