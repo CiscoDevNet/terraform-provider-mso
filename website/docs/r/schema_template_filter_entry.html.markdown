@@ -46,8 +46,8 @@ resource "mso_schema_template_filter_entry" "filter_entry" {
 * `destination_from` - (Optional) The destination port range from.
 * `destination_to` - (Optional) The destination port range to.
 * `arp_flag` - (Optional) The ARP flag to use for this filter entry. Allowed Values: reply, request, unspecified
-* `stateful` - (Optional) Whether this filter entry is stateful. Default Value is false.
-* `match_only_fragments` - (Optional) Whether this filter entry only matches fragments.. Default Value is false.
+* `stateful` - (Optional) Whether this filter entry is stateful. Allowed Values: true or false.
+* `match_only_fragments` - (Optional) Whether this filter entry only matches fragments. Allowed Values: true or false.
 
 
 ## Attribute Reference ##
