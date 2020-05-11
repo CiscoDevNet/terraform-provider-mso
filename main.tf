@@ -200,12 +200,33 @@ provider "mso" {
 #   value = "${data.mso_schema_template_externalepg_subnet.subnet1}"
 # }
 
-resource "mso_schema_template_anp_epg_contract" "contract1" {
-  schema_id = "5e2dd7112c00005db60a268b"
-  template_name = "Template1"
-  anp_name = "ANP-Financial"
-  epg_name = "Web"
-  contract_name = "Web-to-Internet-Financial"
-  relationship_type = "provider"
+# resource "mso_schema_template_anp_epg_contract" "contract1" {
+  # schema_id = "5e2dd7112c00005db60a268b"
+  # template_name = "Template1"
+  # anp_name = "ANP-Financial"
+  # epg_name = "Web"
+#   contract_name = "Web-to-Internet-Financial"
+#   relationship_type = "provider"
   
+# }
+
+resource "mso_schema_site_anp_epg" "site_anp_epg" {
+  schema_id = "5c4d9fca270000a101f8094a"
+  template_name = "Template1"
+  site_id = "5c7c95d9510000cf01c1ee3d"
+  anp_name = "ANP"
+  epg_name = "DB"
 }
+
+data "mso_schema_site_anp_epg" "anpEpg" {
+  schema_id = "5c4d5bb72700000401f80948"
+  template_name = "Template1"
+  site_id = "5c7c95b25100008f01c1ee3c"
+  anp_name = "ANP"
+  epg_name = "DB"
+}
+output "demo" {
+  value = "${data.mso_schema_site_anp_epg.anpEpg}"
+}
+
+
