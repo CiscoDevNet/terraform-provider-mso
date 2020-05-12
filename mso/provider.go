@@ -68,7 +68,11 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_externalepg_subnet":   resourceMSOTemplateExtenalepgSubnet(),
 			"mso_schema_site_anp":                      resourceMSOSchemaSiteAnp(),
 			"mso_schema_site_anp_epg":                  resourceMSOSchemaSiteAnpEpg(),
+<<<<<<< HEAD
 			"mso_schema_site_anp_epg_staticleaf":       resourceMSOSchemaSiteAnpEpgStaticleaf(),
+=======
+			"mso_schema_site_anp_epg_static_port":      resourceMSOSchemaSiteAnpEpgStaticPort(),
+>>>>>>> Static Port files completed
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -96,7 +100,11 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_externalepg_subnet":   dataSourceMSOTemplateExternalEpgSubnet(),
 			"mso_schema_site_anp":                      dataSourceMSOSchemaSiteAnp(),
 			"mso_schema_site_anp_epg":                  dataSourceMSOSchemaSiteAnpEpg(),
+<<<<<<< HEAD
 			"mso_schema_site_anp_epg_staticleaf":       dataSourceMSOSchemaSiteAnpEpgStaticleaf(),
+=======
+			"mso_schema_site_anp_epg_static_port":      datasourceMSOSchemaSiteAnpEpgStaticPort(),
+>>>>>>> Static Port files completed
 		},
 
 		ConfigureFunc: configureClient,

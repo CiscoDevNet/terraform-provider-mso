@@ -210,23 +210,57 @@ provider "mso" {
   
 # }
 
-resource "mso_schema_site_anp_epg" "site_anp_epg" {
-  schema_id = "5c4d9fca270000a101f8094a"
-  template_name = "Template1"
-  site_id = "5c7c95d9510000cf01c1ee3d"
-  anp_name = "ANP"
-  epg_name = "DB"
-}
+# resource "mso_schema_site_anp_epg" "site_anp_epg" {
+#   schema_id = "5c4d9fca270000a101f8094a"
+#   template_name = "Template1"
+#   site_id = "5c7c95d9510000cf01c1ee3d"
+#   anp_name = "ANP"
+#   epg_name = "DB"
+# }
 
-data "mso_schema_site_anp_epg" "anpEpg" {
+# data "mso_schema_site_anp_epg" "anpEpg" {
+#   schema_id = "5c4d5bb72700000401f80948"
+#   template_name = "Template1"
+#   site_id = "5c7c95b25100008f01c1ee3c"
+#   anp_name = "ANP"
+#   epg_name = "DB"
+# }
+# output "demo" {
+#   value = "${data.mso_schema_site_anp_epg.anpEpg}"
+# }
+
+
+resource "mso_schema_site_anp_epg_static_port" "port1" {
   schema_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
   site_id = "5c7c95b25100008f01c1ee3c"
+  template_name = "Template1"
   anp_name = "ANP"
   epg_name = "DB"
-}
-output "demo" {
-  value = "${data.mso_schema_site_anp_epg.anpEpg}"
+  path_type = "port"
+  deployment_immediacy = "lazy"
+  pod = "pod-4"
+  leaf = "106"
+  path = "eth1/10"
+  vlan = 200
+  mode = "untagged"
+
+  
 }
 
+# data "mso_schema_site_anp_epg_static_port" "port1" {
+#  schema_id = "5c4d5bb72700000401f80948"
+#   site_id = "5c7c95b25100008f01c1ee3c"
+#   template_name = "Template1"
+#   anp_name = "ANP"
+#   epg_name = "DB"
+#   path_type = "port"
+#   pod = "pod-6"
+#   leaf = "108"
+#   path = "eth1/10"
+  
+# }
+
+# output "demo" {
+#   value = "${data.mso_schema_site_anp_epg_static_port.port1}"
+# }
 
