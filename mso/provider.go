@@ -69,6 +69,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_anp":                      resourceMSOSchemaSiteAnp(),
 			"mso_schema_site_anp_epg":                  resourceMSOSchemaSiteAnpEpg(),
 			"mso_schema_site_anp_epg_staticleaf":       resourceMSOSchemaSiteAnpEpgStaticleaf(),
+			"mso_schema_site_anp_epg_static_port":      resourceMSOSchemaSiteAnpEpgStaticPort(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -97,6 +98,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_anp":                      dataSourceMSOSchemaSiteAnp(),
 			"mso_schema_site_anp_epg":                  dataSourceMSOSchemaSiteAnpEpg(),
 			"mso_schema_site_anp_epg_staticleaf":       dataSourceMSOSchemaSiteAnpEpgStaticleaf(),
+			"mso_schema_site_anp_epg_static_port":      datasourceMSOSchemaSiteAnpEpgStaticPort(),
 		},
 
 		ConfigureFunc: configureClient,
