@@ -29,32 +29,6 @@ func TestAccMSOSchemaSiteAnp_Basic(t *testing.T) {
 	})
 }
 
-func TestAccMSOSchemaSiteAnp_Update(t *testing.T) {
-	var ss SiteAnp
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckMSOSchemaSiteAnpConfig_basic("Template1"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaSiteAnpExists("mso_schema_site_anp.anp1", &ss),
-					testAccCheckMSOSchemaSiteAnpAttributes("Template1", &ss),
-				),
-			},
-			{
-				Config: testAccCheckMSOSchemaSiteAnpConfig_basic("Template1"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaSiteAnpExists("mso_schema_site_anp.anp1", &ss),
-					testAccCheckMSOSchemaSiteAnpAttributes("Template1", &ss),
-				),
-			},
-		},
-	})
-}
-
 func testAccCheckMSOSchemaSiteAnpConfig_basic(preferred_group string) string {
 	return fmt.Sprintf(`
 	resource "mso_schema_site_anp" "anp1" {

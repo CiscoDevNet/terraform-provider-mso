@@ -15,7 +15,6 @@ func resourceMSOSchemaSiteAnp() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpCreate,
 		Read:   resourceMSOSchemaSiteAnpRead,
-		Update: resourceMSOSchemaSiteAnpUpdate,
 		Delete: resourceMSOSchemaSiteAnpDelete,
 
 		SchemaVersion: version,
@@ -45,16 +44,6 @@ func resourceMSOSchemaSiteAnp() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"anp_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"anp_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
 		}),
 	}
 }
@@ -69,17 +58,8 @@ func resourceMSOSchemaSiteAnpCreate(d *schema.ResourceData, m interface{}) error
 	anpName := d.Get("anp_name").(string)
 
 	var anp_schema_id, anp_template_name string
-
-	if tempVar, ok := d.GetOk("anp_schema_id"); ok {
-		anp_schema_id = tempVar.(string)
-	} else {
-		anp_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("anp_template_name"); ok {
-		anp_template_name = tempVar.(string)
-	} else {
-		anp_template_name = templateName
-	}
+	anp_schema_id = schemaId
+	anp_template_name = templateName
 
 	anpRefMap := make(map[string]interface{})
 	anpRefMap["schemaId"] = anp_schema_id
@@ -123,8 +103,6 @@ func resourceMSOSchemaSiteAnpRead(d *schema.ResourceData, m interface{}) error {
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
 
 		if apiSite == stateSite {
-			d.Set("site_id", apiSite)
-			d.Set("template_name", models.StripQuotes(tempCont.S("templateName").String()))
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
@@ -140,8 +118,9 @@ func resourceMSOSchemaSiteAnpRead(d *schema.ResourceData, m interface{}) error {
 				if match[3] == stateAnp {
 					d.SetId(match[3])
 					d.Set("anp_name", match[3])
-					d.Set("anp_schema_id", match[1])
-					d.Set("anp_template_name", match[2])
+					d.Set("schema_id", match[1])
+					d.Set("template_name", match[2])
+					d.Set("site_id", apiSite)
 					found = true
 					break
 				}
@@ -158,44 +137,6 @@ func resourceMSOSchemaSiteAnpRead(d *schema.ResourceData, m interface{}) error {
 
 }
 
-func resourceMSOSchemaSiteAnpUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Site Anp: Beginning Creation")
-	msoClient := m.(*client.Client)
-
-	schemaId := d.Get("schema_id").(string)
-	siteId := d.Get("site_id").(string)
-	templateName := d.Get("template_name").(string)
-	anpName := d.Get("anp_name").(string)
-
-	var anp_schema_id, anp_template_name string
-
-	if tempVar, ok := d.GetOk("anp_schema_id"); ok {
-		anp_schema_id = tempVar.(string)
-	} else {
-		anp_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("anp_template_name"); ok {
-		anp_template_name = tempVar.(string)
-	} else {
-		anp_template_name = templateName
-	}
-
-	anpRefMap := make(map[string]interface{})
-	anpRefMap["schemaId"] = anp_schema_id
-	anpRefMap["templateName"] = anp_template_name
-	anpRefMap["anpName"] = anpName
-
-	path := fmt.Sprintf("/sites/%s-%s/anps/%s", siteId, templateName, anpName)
-	anpStruct := models.NewSchemaSiteAnp("replace", path, anpRefMap)
-
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
-
-	if err != nil {
-		return err
-	}
-	return resourceMSOSchemaSiteAnpRead(d, m)
-}
-
 func resourceMSOSchemaSiteAnpDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site Anp: Beginning Deletion")
 	msoClient := m.(*client.Client)
@@ -206,18 +147,8 @@ func resourceMSOSchemaSiteAnpDelete(d *schema.ResourceData, m interface{}) error
 	anpName := d.Get("anp_name").(string)
 
 	var anp_schema_id, anp_template_name string
-
-	if tempVar, ok := d.GetOk("anp_schema_id"); ok {
-		anp_schema_id = tempVar.(string)
-	} else {
-		anp_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("anp_template_name"); ok {
-		anp_template_name = tempVar.(string)
-	} else {
-		anp_template_name = templateName
-	}
-
+	anp_schema_id = schemaId
+	anp_template_name = templateName
 	anpRefMap := make(map[string]interface{})
 	anpRefMap["schemaId"] = anp_schema_id
 	anpRefMap["templateName"] = anp_template_name
