@@ -39,16 +39,7 @@ func dataSourceMSOSchemaSiteAnp() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"anp_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"anp_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
+			
 		}),
 	}
 }
@@ -79,8 +70,7 @@ func dataSourceMSOSchemaSiteAnpRead(d *schema.ResourceData, m interface{}) error
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
 
 		if apiSite == stateSite {
-			d.Set("site_id", apiSite)
-			d.Set("template_name", models.StripQuotes(tempCont.S("templateName").String()))
+			
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
@@ -96,8 +86,9 @@ func dataSourceMSOSchemaSiteAnpRead(d *schema.ResourceData, m interface{}) error
 				if match[3] == stateAnp {
 					d.SetId(match[3])
 					d.Set("anp_name", match[3])
-					d.Set("anp_schema_id", match[1])
-					d.Set("anp_template_name", match[2])
+					d.Set("schema_id", match[1])
+					d.Set("template_name", match[2])
+					d.Set("site_id", apiSite)
 					found = true
 					break
 				}
