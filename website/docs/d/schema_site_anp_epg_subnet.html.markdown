@@ -24,15 +24,7 @@ data "mso_schema_site_anp_epg_static_port" "static_port" {
 }
 ```
 
-
-
-
-
-
-
-
-
-  ## Argument Reference ##
+## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Subnet.
 * `site_id` - (Required) SiteID under which you want to deploy Subnet.
