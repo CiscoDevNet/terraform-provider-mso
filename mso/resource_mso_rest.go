@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform/helper/validation"
 )
 
+var HTTP_METHODS = []string{"GET", "PUT", "PATCH", "POST", "DELETE"}
+
 func resourceMSORest() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSORestCreate,
@@ -50,6 +52,10 @@ func resourceMSORestCreate(d *schema.ResourceData, m interface{}) error {
 	} else {
 		method = "POST"
 	}
+
+	if !contains(HTTP_METHODS, method) {
+		return fmt.Errorf("Invalid method %s passed", method)
+	}
 	msoClient := m.(*client.Client)
 	_, err := MakeRestRequest(msoClient, path, method, payload)
 
@@ -74,6 +80,9 @@ func resourceMSORestUpdate(d *schema.ResourceData, m interface{}) error {
 	} else {
 		method = "PATCH"
 	}
+	if !contains(HTTP_METHODS, method) {
+		return fmt.Errorf("Invalid method %s passed", method)
+	}
 	msoClient := m.(*client.Client)
 	_, err := MakeRestRequest(msoClient, path, method, payload)
 
@@ -88,11 +97,13 @@ func resourceMSORestDelete(d *schema.ResourceData, m interface{}) error {
 	var method, path, payload string
 	path = d.Get("path").(string)
 	payload = d.Get("payload").(string)
-
 	if tempVar, ok := d.GetOk("method"); ok {
 		method = tempVar.(string)
 	} else {
 		method = "DELETE"
+	}
+	if !contains(HTTP_METHODS, method) {
+		return fmt.Errorf("Invalid method %s passed", method)
 	}
 	msoClient := m.(*client.Client)
 	_, err := MakeRestRequest(msoClient, path, method, payload)
@@ -125,4 +136,13 @@ func MakeRestRequest(cli *client.Client, path, method, payload string) (*contain
 	respCont, _, err := cli.Do(req)
 
 	return respCont, client.CheckForErrors(respCont, method)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

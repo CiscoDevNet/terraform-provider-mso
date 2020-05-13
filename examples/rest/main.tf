@@ -6,26 +6,20 @@ provider "mso" {
 }
 
 resource "mso_rest" "sample_rest" {
-    path = "/api/v1/schemas"
+    path = "api/v1/schemas/5ebb9f682c0000da45812937"
+    method = "PATCH"
     payload = <<EOF
-{
-  "displayName": "nkauto-rest",
-  "templates": [
-    {
-      "name": "Template1",
-      "tenantId": "5e9d09482c000068500a269a",
-      "displayName": "Template1",
-      "anps": [],
-      "contracts": [],
-      "vrfs": [],
-      "bds": [],
-      "filters": [],
-      "externalEpgs": [],
-      "serviceGraphs": []
+[
+  {
+    "op": "remove",
+    "path": "/templates/Template3",
+    "value": {
+      "name": "Template3",
+      "displayName": "Templat2",
+      "tenantId": "5e9d09482c000068500a269a"
     }
-  ],
-  "sites": []
-}
+  }
+]
 EOF
   
 }
