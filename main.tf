@@ -264,28 +264,28 @@ provider "mso" {
 #   value = "${data.mso_schema_site_anp_epg_static_port.port1}"
 # }
 
-resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
-  schema_id = "5c4d9fca270000a101f8094a"
-  template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "Web"
-  domain_type = "vmmDomain"
-  dn = "VMware-ab"
-  deploy_immediacy = "lazy"
-  resolution_immediacy = "lazy"
-  vlan_encap_mode = "static"
-  allow_micro_segmentation = true
-  switching_mode = "native"
-  switch_type = "default"
-  micro_seg_vlan_type = "vlan"
-  micro_seg_vlan = 46
-  port_encap_vlan_type = "vlan"
-  port_encap_vlan = 45
-  enhanced_lagpolicy_name = "name"
-  enhanced_lagpolicy_dn = "dn"
+# resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
+#   schema_id = "5c4d9fca270000a101f8094a"
+#   template_name = "Template1"
+#   site_id = "5c7c95b25100008f01c1ee3c"
+#   anp_name = "ANP"
+#   epg_name = "Web"
+#   domain_type = "vmmDomain"
+#   dn = "VMware-ab"
+#   deploy_immediacy = "lazy"
+#   resolution_immediacy = "lazy"
+#   vlan_encap_mode = "static"
+#   allow_micro_segmentation = true
+#   switching_mode = "native"
+#   switch_type = "default"
+#   micro_seg_vlan_type = "vlan"
+#   micro_seg_vlan = 46
+#   port_encap_vlan_type = "vlan"
+#   port_encap_vlan = 45
+#   enhanced_lagpolicy_name = "name"
+#   enhanced_lagpolicy_dn = "dn"
 
-}
+# }
 
 # data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 #   schema_id = "5e30c4932c00003e5e0a268e"
@@ -297,4 +297,24 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 # }
 # output "demo" {
 #   value = "${data.mso_schema_site_anp_epg_domain.anpEpgDomain}"
+# }
+
+resource "mso_schema_site_bd_l3out" "bdL3out" {
+  schema_id = "5d5dbf3f2e0000580553ccce"
+  template_name = "Template1"
+  site_id = "5c7c95b25100008f01c1ee3c"
+  bd_name = "WebServer-Finance"
+  l3out_name = "zzz"
+}
+
+
+# data "mso_schema_site_bd_l3out" "bdL3out" {
+#   schema_id = "5d5dbf3f2e0000580553ccce"
+#   template_name = "Template1"
+#   site_id = "5c7c95b25100008f01c1ee3c"
+#   bd_name = "WebServer-Finance"
+#   l3out_name = "ccc"
+# }
+# output "demo" {
+#   value = "${data.mso_schema_site_bd_l3out.bdL3out}"
 # }

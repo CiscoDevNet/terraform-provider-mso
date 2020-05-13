@@ -73,6 +73,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_bd":                       resourceMSOSchemaSiteBd(),
 			"mso_schema_site_anp_epg_subnet":           resourceMSOSchemaSiteAnpEpgSubnet(),
 			"mso_schema_site_anp_epg_domain":           resourceMSOSchemaSiteAnpEpgDomain(),
+			"mso_schema_site_bd_l3out":                 resourceMSOSchemaSiteBdL3out(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -105,7 +106,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_bd":                       dataSourceMSOSchemaSiteBd(),
 			"mso_schema_site_anp_epg_subnet":           datasourceMSOSchemaSiteAnpEpgSubnet(),
 			"mso_schema_site_anp_epg_domain":           dataSourceMSOSchemaSiteAnpEpgDomain(),
-
+			"mso_schema_site_bd_l3out":                 dataSourceMSOSchemaSiteBdL3out(),
 		},
 
 		ConfigureFunc: configureClient,
