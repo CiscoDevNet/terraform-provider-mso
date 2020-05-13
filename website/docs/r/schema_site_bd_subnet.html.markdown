@@ -34,7 +34,7 @@ resource "mso_schema_site_bd_subnet" "sub1" {
 * `bd_name` - (Required) Bd name under which you want to deploy Subnet. The Bd Name Reference should have `l2Stretch` set to `false` to be able to add a subnet.
 * `ip` - (Required) The IP of the Subnet.
 * `template_name` - (Required) Template name under which you want to deploy Subnet.
-* `scope` - (Optional) The scope of the subnet.
+* `scope` - (Optional) The scope of the subnet. Allowed values are `private` and `public`.
 * `shared` - (Optional) Whether this subnet is shared between VRFs.
 * `querier` - (Optional) Whether this subnet is an IGMP querier.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
