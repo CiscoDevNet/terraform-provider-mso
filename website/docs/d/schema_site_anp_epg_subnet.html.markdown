@@ -1,19 +1,19 @@
 ---
 layout: "mso"
-page_title: "MSO: mso_schema_site_anp_epg_static_port"
-sidebar_current: "docs-mso-data-source-schema_site_anp_epg_static_port"
+page_title: "MSO: mso_schema_site_anp_epg_subnet"
+sidebar_current: "docs-mso-data-source-schema_site_anp_epg_subnet"
 description: |-
   Data source for MSO Schema Site ANP EPG Subnet.
 ---
 
-# mso_schema_site_anp_epg_static_port #
+# mso_schema_site_anp_epg_subnet #
 
 Data source for MSO Schema Site ANP EPG Subnet.
 
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_site_anp_epg_static_port" "static_port" {
+data "mso_schema_site_anp_epg_subnet" "subnet1" {
   schema_id = "5c4d5bb72700000401f80948"
   site_id = "5c7c95b25100008f01c1ee3c"
   template_name = "Template1"
