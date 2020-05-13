@@ -24,10 +24,10 @@ data "mso_schema_site_bd" "st10" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Site Bd.
-* `template_name` - (Required) Template where Site Bd to be created.
 * `site_id` - (Required) SiteID under which you want to deploy Bd.
 * `bd_name` - (Required) Name of Site Bd. The name of the Bd should be present in the Bd list of the given `schema_id` and `template_name`
 
 ## Attribute Reference ##
 
+* `template_name` - (Optional) Template where Site Bd to be created.
 * `host` - (Optional) Value to check whether host-based routing is enabled. Default value is `false`.

@@ -25,11 +25,11 @@ data "mso_schema_site_anp_epg" "anpEpg" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg.
-* `template_name` - (Required) Template where Anp Epg to be created.
+
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
 
 ## Attribute Reference ##
 
-No attributes are exported.
+* `template_name` - (Optional) Template where Anp Epg to be created.
