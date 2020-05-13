@@ -299,13 +299,13 @@ provider "mso" {
 #   value = "${data.mso_schema_site_anp_epg_domain.anpEpgDomain}"
 # }
 
-resource "mso_schema_site_bd_l3out" "bdL3out" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  bd_name = "WebServer-Finance"
-  l3out_name = "zzz"
-}
+# resource "mso_schema_site_bd_l3out" "bdL3out" {
+#   schema_id = "5d5dbf3f2e0000580553ccce"
+#   template_name = "Template1"
+#   site_id = "5c7c95b25100008f01c1ee3c"
+#   bd_name = "WebServer-Finance"
+#   l3out_name = "zzz"
+# }
 
 
 # data "mso_schema_site_bd_l3out" "bdL3out" {
@@ -317,4 +317,23 @@ resource "mso_schema_site_bd_l3out" "bdL3out" {
 # }
 # output "demo" {
 #   value = "${data.mso_schema_site_bd_l3out.bdL3out}"
+# }
+
+resource "mso_schema_site_vrf_region" "vrfRegion" {
+  schema_id = "5d5dbf3f2e0000580553ccce"
+  template_name = "Template1"
+  site_id = "5ce2de773700006a008a2678"
+  vrf_name = "Campus"
+  region_name = "region3"
+
+}
+
+# data "mso_schema_site_vrf_region" "vrfRegion" {
+#   schema_id = "5d5dbf3f2e0000580553ccce"
+#   site_id = "5ce2de773700006a008a2678"
+#   vrf_name = "Campus"
+#   region_name = "westus"
+# }
+# output "demo" {
+#   value = "${data.mso_schema_site_vrf_region.vrfRegion}"
 # }
