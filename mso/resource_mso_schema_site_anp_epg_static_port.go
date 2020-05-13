@@ -74,9 +74,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"vlan": &schema.Schema{
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeInt,
+				Required: true,
 			},
 			"deployment_immediacy": &schema.Schema{
 				Type:         schema.TypeString,
