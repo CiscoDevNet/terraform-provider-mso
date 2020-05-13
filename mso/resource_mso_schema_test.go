@@ -62,7 +62,7 @@ func testAccCheckMSOSchemaConfig_basic(name string) string {
 		name          = "nkp1003"
 		template_name = "temp1"
 		tenant_id     = "5e9d09482c000068500a269a"
-	  
+
 	  }
 	`)
 }
@@ -99,7 +99,6 @@ func schemaFromcontainer(con *container.Container) (*SchemaTest, error) {
 	s := SchemaTest{}
 
 	s.Name = models.StripQuotes(con.S("displayName").String())
-	fmt.Printf("Bad Schema Namessssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss %s", s.Name)
 	count, err := con.ArrayCount("templates")
 	if err != nil {
 		return nil, fmt.Errorf("No Template found")

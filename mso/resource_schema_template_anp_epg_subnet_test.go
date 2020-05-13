@@ -60,7 +60,7 @@ func testAccCheckMSOTemplateAnpEpgSubnetConfig_basic(shared bool) string {
 	resource "mso_schema_template_anp_epg_subnet" "subnet1" {
 		schema_id = "5c6c16d7270000c710f8094d"
 		anp_name = "WoS-Cloud-Only-2"
-		epg_name ="EPG4"
+		epg_name ="DB"
 		template = "Template1"
 		ip = "99.101.102.0/8"
 		scope = "private"
@@ -124,7 +124,7 @@ func testAccCheckMSOSchemaTemplateAnpEpgSubnetExists(subnetName string, ss *Subn
 								return err
 							}
 							apiEPG := models.StripQuotes(epgCont.S("name").String())
-							if apiEPG == "EPG4" {
+							if apiEPG == "DB" {
 								tp.EpgName = apiEPG
 
 								subnetCount, err := epgCont.ArrayCount("subnets")
@@ -214,7 +214,7 @@ func testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy(s *terraform.State) error 
 									return err
 								}
 								apiEPG := models.StripQuotes(epgCont.S("name").String())
-								if apiEPG == "EPG4" {
+								if apiEPG == "DB" {
 									subnetCount, err := epgCont.ArrayCount("subnets")
 									if err != nil {
 										return err
@@ -223,7 +223,7 @@ func testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy(s *terraform.State) error 
 									for s := 0; s < subnetCount; s++ {
 										subnetCont, err := epgCont.ArrayElement(s, "subnets")
 										if err != nil {
-											return fmt.Errorf("UNNNNNNNNABLE ")
+											return fmt.Errorf("Unable to find a subnets")
 										}
 										currentIp := models.StripQuotes(subnetCont.S("ip").String())
 
