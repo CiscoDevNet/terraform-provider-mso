@@ -25,9 +25,9 @@ func dataSourceMSOSchemaSiteAnp() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
@@ -39,7 +39,6 @@ func dataSourceMSOSchemaSiteAnp() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			
 		}),
 	}
 }
@@ -70,7 +69,7 @@ func dataSourceMSOSchemaSiteAnpRead(d *schema.ResourceData, m interface{}) error
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
 
 		if apiSite == stateSite {
-			
+
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")

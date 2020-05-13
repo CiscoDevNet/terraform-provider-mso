@@ -26,7 +26,6 @@ data "mso_schema_site_anp_epg_staticleaf" "st10" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg StaticLeaf.
-* `template_name` - (Required) Template where Anp Epg StaticLeaf to be created.
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg StaticLeaf.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
@@ -35,6 +34,7 @@ data "mso_schema_site_anp_epg_staticleaf" "st10" {
 
 ## Attribute Reference ##
 
+* `template_name` - (Optional) Template where Anp Epg StaticLeaf to be created.
 * `port_encap_vlan` - (Optional) The VLAN id of the static leaf.
 
 

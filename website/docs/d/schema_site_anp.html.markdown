@@ -25,10 +25,9 @@ data "mso_schema_site_anp" "st10" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Site Anp.
-* `template_name` - (Required) Template where Site Anp to be created.
 * `site_id` - (Required) SiteID under which you want to deploy Anp.
 * `anp_name` - (Required) Name of Site Anp. The name of the ANP should be present in the ANP list of the given `schema_id` and `template_name`
 
 ## Attribute Reference ##
 
-No attributes are exported
+* `template_name` - (Optional) Template where Site Anp to be created.
