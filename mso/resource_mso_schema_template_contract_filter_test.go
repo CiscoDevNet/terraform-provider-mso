@@ -64,19 +64,19 @@ func testAccCheckMSOTemplateContractFilterConfig_basic(filter_type string) strin
 							display_name = "C300"
 							filter_type = "bothWay"
 							scope = "context"
-							filter_relationships_procon = {
-						   procon_schema_id = "5c4d5bb72700000401f80948"
-						   procon_template_name = "Template1"
-							procon_name = "%s"
+							filter_relationships_provider_to_consumer = {
+							provider_to_consumer_schema_id = "5c4d5bb72700000401f80948"
+							provider_to_consumer_template_name = "Template1"
+							provider_to_consumer_name = "%s"
 							}
-							procon_directives = ["log","none","log"]
-							filter_relationships_conpro = {
-							    conpro_schema_id = "5c4d5bb72700000401f80948"
-                              conpro_template_name = "Template1"
-							 conpro_name = "Many"
+							provider_to_consumer_directives = ["log","none","log"]
+							filter_relationships_consumer_to_provider = {
+							    consumer_to_provider_schema_id = "5c4d5bb72700000401f80948"
+								consumer_to_provider_template_name = "Template1"
+								consumer_to_provider_name = "Many"
 							}
-							conpro_directives = ["log","none"]
-						   
+							consumer_to_provider_directives = ["log","none"]
+
 						  }
 					`, filter_type)
 }

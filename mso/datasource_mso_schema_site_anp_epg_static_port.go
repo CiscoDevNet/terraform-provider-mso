@@ -33,10 +33,9 @@ func datasourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,

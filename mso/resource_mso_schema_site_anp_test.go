@@ -36,7 +36,7 @@ func testAccCheckMSOSchemaSiteAnpConfig_basic(preferred_group string) string {
 		anp_name = "AP1234"
 		template_name = "Template1"
 		site_id = "5c7c95d9510000cf01c1ee3d"
-		anp_schema_id = "5c6c16d7270000c710f8094d"
+		
 	  }`)
 }
 
