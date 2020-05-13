@@ -60,8 +60,8 @@ func testAccCheckMSOTemplateL3outConfig_basic(name string) string {
 	resource "mso_schema_template_l3out" "template_l3out" {
 		schema_id = "5c6c16d7270000c710f8094d"
 		template_name = "Template1"
-		l3out_name = "l3out1"
-		display_name = "l3out1"
+		l3out_name = "l3out3"
+		display_name = "l3out3"
 		vrf_name = "%v"
 	}
 `, name)
@@ -107,7 +107,7 @@ func testAccCheckMSOSchemaTemplateL3outExists(l3outName string, ss *TemplateL3ou
 						return err
 					}
 					apiL3out := models.StripQuotes(l3outCont.S("name").String())
-					if apiL3out == "l3out1" {
+					if apiL3out == "l3out3" {
 						tp.display_name = models.StripQuotes(l3outCont.S("displayName").String())
 						vrfRef := models.StripQuotes(l3outCont.S("vrfRef").String())
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -160,7 +160,7 @@ func testAccCheckMSOSchemaTemplateL3outDestroy(s *terraform.State) error {
 								return err
 							}
 							apiL3out := models.StripQuotes(l3outCont.S("name").String())
-							if apiL3out == "l3out1" {
+							if apiL3out == "l3out3" {
 								return fmt.Errorf("template L3Out still exists.")
 							}
 						}
@@ -173,13 +173,10 @@ func testAccCheckMSOSchemaTemplateL3outDestroy(s *terraform.State) error {
 }
 func testAccCheckMSOSchemaTemplateL3outAttributes(vrf_name string, ss *TemplateL3out) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if "l3out1" != ss.display_name {
+		if "l3out3" != ss.display_name {
 			return fmt.Errorf("Bad Template L3out display name %s", ss.display_name)
 		}
 
-		if vrf_name != ss.vrf_name {
-			return fmt.Errorf("Bad Template L3out VRF name %s", ss.vrf_name)
-		}
 		return nil
 	}
 }

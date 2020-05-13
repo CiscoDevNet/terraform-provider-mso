@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -58,15 +57,15 @@ func TestAccMSOSchemaTemplateBDSubnet_Update(t *testing.T) {
 func testAccCheckMSOTemplateBDSubnetConfig_basic(shared bool) string {
 	return fmt.Sprintf(`
  resource "mso_schema_template_bd_subnet" "subnet" {
-  schema_id = "5ea809672c00003bc40a2799"
+  schema_id = "5d5dbf3f2e0000580553ccce"
   template_name = "Template1"
-  bd_name = "testBD"
-  ip = "11.1.1.0/8"
+  bd_name = "bd1"
+  ip = "13.1.1.0/8"
   scope = "private"
   shared = %v
   no_default_gateway = true
   querier = true
-  
+
 }
 `, shared)
 }
@@ -83,7 +82,7 @@ func testAccCheckMSOSchemaTemplateBDSubnetExists(bdName string, ss *TemplateBDSu
 			return fmt.Errorf("No Subnet id was set")
 		}
 
-		cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
+		cont, err := client.GetViaURL("api/v1/schemas/5d5dbf3f2e0000580553ccce")
 		if err != nil {
 			return err
 		}
@@ -111,7 +110,7 @@ func testAccCheckMSOSchemaTemplateBDSubnetExists(bdName string, ss *TemplateBDSu
 						return err
 					}
 					apiBD := models.StripQuotes(bdCont.S("name").String())
-					if apiBD == "testBD" {
+					if apiBD == "bd1" {
 						bdsubnetCount, err := bdCont.ArrayCount("subnets")
 						if err != nil {
 							return fmt.Errorf("Unable to get BD subnet list")
@@ -122,8 +121,8 @@ func testAccCheckMSOSchemaTemplateBDSubnetExists(bdName string, ss *TemplateBDSu
 								return err
 							}
 							apiIP := models.StripQuotes(subnetCont.S("ip").String())
-							if apiIP == "11.1.1.0/8" {
-								log.Println(subnetCont)
+							if apiIP == "13.1.1.0/8" {
+
 								tp.ip = apiIP
 								tp.scope = models.StripQuotes(subnetCont.S("scope").String())
 								tp.shared = subnetCont.S("shared").Data().(bool)
@@ -157,7 +156,7 @@ func testAccCheckMSOSchemaTemplateBDSubnetDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 
 		if rs.Type == "mso_schema_template_bd_subnet" {
-			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
+			cont, err := client.GetViaURL("api/v1/schemas/5d5dbf3f2e0000580553ccce")
 			if err != nil {
 				return nil
 			} else {
@@ -173,16 +172,18 @@ func testAccCheckMSOSchemaTemplateBDSubnetDestroy(s *terraform.State) error {
 					apiTemplateName := models.StripQuotes(tempCont.S("name").String())
 					if apiTemplateName == "Template1" {
 						bdCount, err := tempCont.ArrayCount("bds")
+
 						if err != nil {
 							return fmt.Errorf("Unable to get BD list")
 						}
 						for j := 0; j < bdCount; j++ {
 							bdCont, err := tempCont.ArrayElement(j, "bds")
+
 							if err != nil {
 								return err
 							}
 							apiBD := models.StripQuotes(bdCont.S("name").String())
-							if apiBD == "testBD" {
+							if apiBD == "bd1" {
 								bdsubnetCount, err := bdCont.ArrayCount("subnets")
 								if err != nil {
 									return fmt.Errorf("Unable to get BD subnet list")
@@ -193,7 +194,7 @@ func testAccCheckMSOSchemaTemplateBDSubnetDestroy(s *terraform.State) error {
 										return err
 									}
 									apiIP := models.StripQuotes(subnetCont.S("ip").String())
-									if apiIP == "11.1.1.0/8" {
+									if apiIP == "13.1.1.0/8" {
 										return fmt.Errorf("The BD Subnet still exists")
 									}
 								}
