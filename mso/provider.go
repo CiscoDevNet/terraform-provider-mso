@@ -118,7 +118,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf":                      dataSourceMSOSchemaSiteVrf(),
 			"mso_schema_site_vrf_region":               dataSourceMSOSchemaSiteVrfRegion(),
 			"mso_schema_site_bd_subnet":                dataSourceMSOSchemaSiteBdSubnet(),
-      			"mso_schema_site_vrf_region_cidr_subnet":   dataSourceMSOSchemaSiteVrfRegionCidrSubnet(),
+			"mso_schema_site_vrf_region_cidr_subnet":   dataSourceMSOSchemaSiteVrfRegionCidrSubnet(),
      			"mso_schema_site_vrf_region_cidr":          dataSourceMSOSchemaSiteVrfRegionCidr(),
 
 		},
