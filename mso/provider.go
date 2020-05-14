@@ -79,7 +79,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_bd_subnet":                resourceMSOSchemaSiteBdSubnet(),
 			"mso_rest":                                 resourceMSORest(),
 			"mso_schema_template_deploy":               resourceMSOSchemaTemplateDeploy(),
-      "mso_schema_site_vrf_region_cidr_subnet":   resourceMSOSchemaSiteVrfRegionCidrSubnet(),
+     			"mso_schema_site_vrf_region_cidr_subnet":   resourceMSOSchemaSiteVrfRegionCidrSubnet(),
 			"mso_schema_site_vrf_region_cidr":          resourceMSOSchemaSiteVrfRegionCidr(),
 
 		},
@@ -118,8 +118,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf":                      dataSourceMSOSchemaSiteVrf(),
 			"mso_schema_site_vrf_region":               dataSourceMSOSchemaSiteVrfRegion(),
 			"mso_schema_site_bd_subnet":                dataSourceMSOSchemaSiteBdSubnet(),
-      "mso_schema_site_vrf_region_cidr_subnet":   dataSourceMSOSchemaSiteVrfRegionCidrSubnet(),
-      "mso_schema_site_vrf_region_cidr":          dataSourceMSOSchemaSiteVrfRegionCidr(),
+      			"mso_schema_site_vrf_region_cidr_subnet":   dataSourceMSOSchemaSiteVrfRegionCidrSubnet(),
+     			"mso_schema_site_vrf_region_cidr":          dataSourceMSOSchemaSiteVrfRegionCidr(),
 
 		},
 
