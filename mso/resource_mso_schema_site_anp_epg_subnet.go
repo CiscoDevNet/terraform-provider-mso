@@ -94,6 +94,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 	statesiteId := d.Get("site_id").(string)
 	stateANPName := d.Get("anp_name").(string)
 	stateEpgName := d.Get("epg_name").(string)
+	found := false
 
 	var IP string
 	if ip, ok := d.GetOk("ip"); ok {
@@ -181,12 +182,18 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 							if err != nil {
 								return err
 							}
+							found = true
+							break
 
 						}
 					}
 				}
 			}
 		}
+	}
+
+	if !found {
+		return fmt.Errorf("Cannot create subnet entry as specified parameters not found")
 	}
 
 	return resourceMSOSchemaSiteAnpEpgSubnetRead(d, m)
@@ -313,6 +320,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetUpdate(d *schema.ResourceData, m interface
 	statesiteId := d.Get("site_id").(string)
 	stateANPName := d.Get("anp_name").(string)
 	stateEpgName := d.Get("epg_name").(string)
+	found := false
 
 	var IP string
 	if ip, ok := d.GetOk("ip"); ok {
@@ -412,6 +420,8 @@ func resourceMSOSchemaSiteAnpEpgSubnetUpdate(d *schema.ResourceData, m interface
 									if err != nil {
 										return err
 									}
+									found = true
+									break
 								}
 
 							}
@@ -420,6 +430,9 @@ func resourceMSOSchemaSiteAnpEpgSubnetUpdate(d *schema.ResourceData, m interface
 				}
 			}
 		}
+	}
+	if !found {
+		return fmt.Errorf("Subnet entry cannot be updated as specified parameters not found")
 	}
 
 	return resourceMSOSchemaSiteAnpEpgSubnetRead(d, m)

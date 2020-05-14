@@ -338,3 +338,15 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 # output "demo" {
 #   value = "${data.mso_schema_site_vrf_region.vrfRegion}"
 # }
+
+resource "mso_schema_site_anp_epg_subnet" "subnet1" {
+  schema_id = "5c4d5bb72700000401f80948"
+  site_id = "5c4d5bb72700000401f80948"
+  template_name = "Template1"
+  anp_name = "ANP"
+  epg_name = "DB"
+  ip = "10.0.7.0/8"
+  scope = "private"
+  shared = false
+  
+}
