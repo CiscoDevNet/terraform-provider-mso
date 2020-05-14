@@ -264,28 +264,28 @@ provider "mso" {
 #   value = "${data.mso_schema_site_anp_epg_static_port.port1}"
 # }
 
-resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
-  schema_id = "5c4d9fca270000a101f8094a"
-  template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "Web"
-  domain_type = "vmmDomain"
-  dn = "VMware-abcd"
-  deploy_immediacy = "immediate"
-  resolution_immediacy = "immediate"
-  vlan_encap_mode = "static"
-  allow_micro_segmentation = false
-  switching_mode = "native"
-  switch_type = "default"
-  micro_seg_vlan_type = "vlan"
-  micro_seg_vlan = 46
-  port_encap_vlan_type = "vlan"
-  port_encap_vlan = 45
-  enhanced_lagpolicy_name = "name"
-  enhanced_lagpolicy_dn = "dn"
+# resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
+#   schema_id = "5c4d9fca270000a101f8094a"
+#   template_name = "Template1"
+#   site_id = "5c7c95b25100008f01c1ee3c"
+#   anp_name = "ANP"
+#   epg_name = "Web"
+#   domain_type = "vmmDomain"
+#   dn = "VMware-abcd"
+#   deploy_immediacy = "immediate"
+#   resolution_immediacy = "immediate"
+#   vlan_encap_mode = "static"
+#   allow_micro_segmentation = false
+#   switching_mode = "native"
+#   switch_type = "default"
+#   micro_seg_vlan_type = "vlan"
+#   micro_seg_vlan = 46
+#   port_encap_vlan_type = "vlan"
+#   port_encap_vlan = 45
+#   enhanced_lagpolicy_name = "name"
+#   enhanced_lagpolicy_dn = "dn"
 
-}
+# }
 
 # data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 #   schema_id = "5c4d9fca270000a101f8094a"
@@ -339,14 +339,35 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 #   value = "${data.mso_schema_site_vrf_region.vrfRegion}"
 # }
 
-resource "mso_schema_site_anp_epg_subnet" "subnet1" {
-  schema_id = "5c4d5bb72700000401f80948"
-  site_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
-  anp_name = "ANP"
-  epg_name = "DB"
-  ip = "10.0.7.0/8"
-  scope = "private"
-  shared = false
+# resource "mso_schema_site_anp_epg_subnet" "subnet1" {
+#   schema_id = "5c4d5bb72700000401f80948"
+#   site_id = "5c4d5bb72700000401f80948"
+#   template_name = "Template1"
+#   anp_name = "ANP"
+#   epg_name = "DB"
+#   ip = "10.0.7.0/8"
+#   scope = "private"
+#   shared = false
   
+# }
+
+resource "mso_schema_site_vrf_region_cidr" "vrfRegionCidr" {
+  schema_id = "5d5dbf3f2e0000580553ccce"
+  template_name = "Template1"
+  site_id = "5ce2de773700006a008a2678"
+  vrf_name = "Campus"
+  region_name = "region1"
+  ip = "2.2.2.2/2"
+  primary = false
+
+}
+data "mso_schema_site_vrf_region_cidr" "vrfRegionCidr" {
+  schema_id = "5d5dbf3f2e0000580553ccce"
+  site_id = "5ce2de773700006a008a2678"
+  vrf_name = "Campus"
+  region_name = "westus"
+  ip = "192.168.241.0/24"
+}
+output "demo" {
+  value = "${data.mso_schema_site_vrf_region_cidr.vrfRegionCidr}"
 }
