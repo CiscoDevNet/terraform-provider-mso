@@ -169,22 +169,20 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 		DN = ""
 	}
 
+	vmmDomainPropertiesRefMap := make(map[string]interface{})
 	d.SetId(DN)
 	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
 		}
+		if TempVar, ok := d.GetOk("micro_seg_vlan"); ok {
+			microSegVlan = TempVar.(float64)
+		}
 		if TempVar, ok := d.GetOk("port_encap_vlan_type"); ok {
 			portEncapVlanType = TempVar.(string)
 		}
-		if TempVar, ok := d.GetOk("vlan_encap_mode"); ok {
-			vlanEncapMode = TempVar.(string)
-		}
-		if TempVar, ok := d.GetOk("switching_mode"); ok {
-			switchingMode = TempVar.(string)
-		}
-		if TempVar, ok := d.GetOk("switch_type"); ok {
-			switchType = TempVar.(string)
+		if TempVar, ok := d.GetOk("port_encap_vlan"); ok {
+			portEncapVlan = TempVar.(float64)
 		}
 		if TempVar, ok := d.GetOk("enhanced_lagpolicy_name"); ok {
 			enhancedLagpolicyName = TempVar.(string)
@@ -192,42 +190,60 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 		if TempVar, ok := d.GetOk("enhanced_lagpolicy_dn"); ok {
 			enhancedLagpolicyDn = TempVar.(string)
 		}
+
+		vlanEncapMode = "dynamic"
+		if TempVar, ok := d.GetOk("vlan_encap_mode"); ok {
+			vlanEncapMode = TempVar.(string)
+		}
+
+		switchingMode = "native"
+		if TempVar, ok := d.GetOk("switching_mode"); ok {
+			switchingMode = TempVar.(string)
+		}
+
+		switchType = "default"
+		if TempVar, ok := d.GetOk("switch_type"); ok {
+			switchType = TempVar.(string)
+		}
 		if TempVar, ok := d.GetOk("allow_micro_segmentation"); ok {
 			allowMicroSegmentation = TempVar.(bool)
 		}
-		if TempVar, ok := d.GetOk("micro_seg_vlan"); ok {
-			microSegVlan = TempVar.(float64)
+
+		if portEncapVlanType != "" && portEncapVlan != 0 {
+			portEncapVlanRefMap := make(map[string]interface{})
+			portEncapVlanRefMap["vlanType"] = portEncapVlanType
+			portEncapVlanRefMap["vlan"] = portEncapVlan
+
+			vmmDomainPropertiesRefMap["portEncapVlan"] = portEncapVlanRefMap
 		}
-		if TempVar, ok := d.GetOk("port_encap_vlan"); ok {
-			portEncapVlan = TempVar.(float64)
+
+		if microSegVlanType != "" && microSegVlan != 0 {
+			microSegVlanRefMap := make(map[string]interface{})
+			microSegVlanRefMap["vlanType"] = microSegVlanType
+			microSegVlanRefMap["vlan"] = microSegVlan
+
+			vmmDomainPropertiesRefMap["microSegVlan"] = microSegVlanRefMap
 		}
+
+		if enhancedLagpolicyName != "" && enhancedLagpolicyDn != "" {
+			enhancedLagPolRefMap := make(map[string]interface{})
+			enhancedLagPolRefMap["name"] = enhancedLagpolicyName
+			enhancedLagPolRefMap["dn"] = enhancedLagpolicyDn
+
+			epgLagPolRefMap := make(map[string]interface{})
+			epgLagPolRefMap["enhancedLagPol"] = enhancedLagPolRefMap
+
+			vmmDomainPropertiesRefMap["epgLagPol"] = epgLagPolRefMap
+		}
+
+		vmmDomainPropertiesRefMap["allowMicroSegmentation"] = allowMicroSegmentation
+		vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
+		vmmDomainPropertiesRefMap["switchType"] = switchType
+		vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
+
 	} else {
 		log.Print("Passing Blank Value to the Model")
 	}
-
-	portEncapVlanRefMap := make(map[string]interface{})
-	portEncapVlanRefMap["vlanType"] = portEncapVlanType
-	portEncapVlanRefMap["vlan"] = portEncapVlan
-
-	microSegVlanRefMap := make(map[string]interface{})
-	microSegVlanRefMap["vlanType"] = microSegVlanType
-	microSegVlanRefMap["vlan"] = microSegVlan
-
-	enhancedLagPolRefMap := make(map[string]interface{})
-	enhancedLagPolRefMap["name"] = enhancedLagpolicyName
-	enhancedLagPolRefMap["dn"] = enhancedLagpolicyDn
-
-	epgLagPolRefMap := make(map[string]interface{})
-	epgLagPolRefMap["enhancedLagPol"] = enhancedLagPolRefMap
-
-	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	vmmDomainPropertiesRefMap["allowMicroSegmentation"] = allowMicroSegmentation
-	vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
-	vmmDomainPropertiesRefMap["switchType"] = switchType
-	vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
-	vmmDomainPropertiesRefMap["portEncapVlan"] = portEncapVlanRefMap
-	vmmDomainPropertiesRefMap["microSegVlan"] = microSegVlanRefMap
-	vmmDomainPropertiesRefMap["epgLagPol"] = epgLagPolRefMap
 
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/-", siteId, templateName, anpName, epgName)
 	anpEpgDomainStruct := models.NewSchemaSiteAnpEpgDomain("add", path, domainType, DN, deployImmediacy, resolutionImmediacy, vmmDomainPropertiesRefMap)
@@ -260,7 +276,29 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 	found := false
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
-	stateDomain := d.Id()
+	domain := d.Get("dn").(string)
+	domainType := d.Get("domain_type").(string)
+
+	var stateDomain string
+
+	if domainType == "vmmDomain" {
+		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+
+	} else if domainType == "l3ExtDomain" {
+		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
+
+	} else if domainType == "l2ExtDomain" {
+		stateDomain = fmt.Sprintf("uni/l2dom-%s", domain)
+
+	} else if domainType == "physicalDomain" {
+		stateDomain = fmt.Sprintf("uni/phys-%s", domain)
+
+	} else if domainType == "fibreChannel" {
+		stateDomain = fmt.Sprintf("uni/fc-%s", domain)
+
+	} else {
+		stateDomain = ""
+	}
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -311,19 +349,26 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 									return err
 								}
 								apiDomain := models.StripQuotes(domainCont.S("dn").String())
+
 								if apiDomain == stateDomain {
 									d.SetId(apiDomain)
-
-									tempVar := strings.Split(models.StripQuotes(domainCont.S("dn").String()), "/")
-									split := strings.SplitN(tempVar[2], "-", 2)
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
-									d.Set("dn", split[1])
+									d.Set("dn", domain)
 									d.Set("deployment_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
-									d.Set("switching_mode", models.StripQuotes(domainCont.S("switchingMode").String()))
-									d.Set("switch_type", models.StripQuotes(domainCont.S("switchType").String()))
-									d.Set("vlan_encap_mode", models.StripQuotes(domainCont.S("vlanEncapMode").String()))
+
+									if domainCont.Exists("switchingMode") {
+										d.Set("switching_mode", models.StripQuotes(domainCont.S("switchingMode").String()))
+									}
+
+									if domainCont.Exists("switchType") {
+										d.Set("switch_type", models.StripQuotes(domainCont.S("switchType").String()))
+									}
+
+									if domainCont.Exists("vlanEncapMode") {
+										d.Set("vlan_encap_mode", models.StripQuotes(domainCont.S("vlanEncapMode").String()))
+									}
 
 									if domainCont.Exists("allowMicroSegmentation") {
 										d.Set("allow_micro_segmentation", domainCont.S("allowMicroSegmentation").Data().(bool))
@@ -410,6 +455,8 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		DN = ""
 	}
 
+	vmmDomainPropertiesRefMap := make(map[string]interface{})
+	d.SetId(DN)
 	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
@@ -441,33 +488,42 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		if TempVar, ok := d.GetOk("port_encap_vlan"); ok {
 			portEncapVlan = TempVar.(float64)
 		}
+
+		if portEncapVlanType != "" && portEncapVlan != 0 {
+			portEncapVlanRefMap := make(map[string]interface{})
+			portEncapVlanRefMap["vlanType"] = portEncapVlanType
+			portEncapVlanRefMap["vlan"] = portEncapVlan
+
+			vmmDomainPropertiesRefMap["portEncapVlan"] = portEncapVlanRefMap
+		}
+
+		if microSegVlanType != "" && microSegVlan != 0 {
+			microSegVlanRefMap := make(map[string]interface{})
+			microSegVlanRefMap["vlanType"] = microSegVlanType
+			microSegVlanRefMap["vlan"] = microSegVlan
+
+			vmmDomainPropertiesRefMap["microSegVlan"] = microSegVlanRefMap
+		}
+
+		if enhancedLagpolicyName != "" && enhancedLagpolicyDn != "" {
+			enhancedLagPolRefMap := make(map[string]interface{})
+			enhancedLagPolRefMap["name"] = enhancedLagpolicyName
+			enhancedLagPolRefMap["dn"] = enhancedLagpolicyDn
+
+			epgLagPolRefMap := make(map[string]interface{})
+			epgLagPolRefMap["enhancedLagPol"] = enhancedLagPolRefMap
+
+			vmmDomainPropertiesRefMap["epgLagPol"] = epgLagPolRefMap
+		}
+
+		vmmDomainPropertiesRefMap["allowMicroSegmentation"] = allowMicroSegmentation
+		vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
+		vmmDomainPropertiesRefMap["switchType"] = switchType
+		vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
+
 	} else {
 		log.Print("Passing Blank Value to the Model")
 	}
-
-	portEncapVlanRefMap := make(map[string]interface{})
-	portEncapVlanRefMap["vlanType"] = portEncapVlanType
-	portEncapVlanRefMap["vlan"] = portEncapVlan
-
-	microSegVlanRefMap := make(map[string]interface{})
-	microSegVlanRefMap["vlanType"] = microSegVlanType
-	microSegVlanRefMap["vlan"] = microSegVlan
-
-	enhancedLagPolRefMap := make(map[string]interface{})
-	enhancedLagPolRefMap["name"] = enhancedLagpolicyName
-	enhancedLagPolRefMap["dn"] = enhancedLagpolicyDn
-
-	epgLagPolRefMap := make(map[string]interface{})
-	epgLagPolRefMap["enhancedLagPol"] = enhancedLagPolRefMap
-
-	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	vmmDomainPropertiesRefMap["allowMicroSegmentation"] = allowMicroSegmentation
-	vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
-	vmmDomainPropertiesRefMap["switchType"] = switchType
-	vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
-	vmmDomainPropertiesRefMap["portEncapVlan"] = portEncapVlanRefMap
-	vmmDomainPropertiesRefMap["microSegVlan"] = microSegVlanRefMap
-	vmmDomainPropertiesRefMap["epgLagPol"] = epgLagPolRefMap
 
 	id := d.Id()
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -531,6 +587,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 		DN = ""
 	}
 
+	vmmDomainPropertiesRefMap := make(map[string]interface{})
 	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
@@ -562,33 +619,42 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 		if TempVar, ok := d.GetOk("port_encap_vlan"); ok {
 			portEncapVlan = TempVar.(float64)
 		}
+
+		if portEncapVlanType != "" && portEncapVlan != 0 {
+			portEncapVlanRefMap := make(map[string]interface{})
+			portEncapVlanRefMap["vlanType"] = portEncapVlanType
+			portEncapVlanRefMap["vlan"] = portEncapVlan
+
+			vmmDomainPropertiesRefMap["portEncapVlan"] = portEncapVlanRefMap
+		}
+
+		if microSegVlanType != "" && microSegVlan != 0 {
+			microSegVlanRefMap := make(map[string]interface{})
+			microSegVlanRefMap["vlanType"] = microSegVlanType
+			microSegVlanRefMap["vlan"] = microSegVlan
+
+			vmmDomainPropertiesRefMap["microSegVlan"] = microSegVlanRefMap
+		}
+
+		if enhancedLagpolicyName != "" && enhancedLagpolicyDn != "" {
+			enhancedLagPolRefMap := make(map[string]interface{})
+			enhancedLagPolRefMap["name"] = enhancedLagpolicyName
+			enhancedLagPolRefMap["dn"] = enhancedLagpolicyDn
+
+			epgLagPolRefMap := make(map[string]interface{})
+			epgLagPolRefMap["enhancedLagPol"] = enhancedLagPolRefMap
+
+			vmmDomainPropertiesRefMap["epgLagPol"] = epgLagPolRefMap
+		}
+
+		vmmDomainPropertiesRefMap["allowMicroSegmentation"] = allowMicroSegmentation
+		vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
+		vmmDomainPropertiesRefMap["switchType"] = switchType
+		vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
+
 	} else {
 		log.Print("Passing Blank Value to the Model")
 	}
-
-	portEncapVlanRefMap := make(map[string]interface{})
-	portEncapVlanRefMap["vlanType"] = portEncapVlanType
-	portEncapVlanRefMap["vlan"] = portEncapVlan
-
-	microSegVlanRefMap := make(map[string]interface{})
-	microSegVlanRefMap["vlanType"] = microSegVlanType
-	microSegVlanRefMap["vlan"] = microSegVlan
-
-	enhancedLagPolRefMap := make(map[string]interface{})
-	enhancedLagPolRefMap["name"] = enhancedLagpolicyName
-	enhancedLagPolRefMap["dn"] = enhancedLagpolicyDn
-
-	epgLagPolRefMap := make(map[string]interface{})
-	epgLagPolRefMap["enhancedLagPol"] = enhancedLagPolRefMap
-
-	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	vmmDomainPropertiesRefMap["allowMicroSegmentation"] = allowMicroSegmentation
-	vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
-	vmmDomainPropertiesRefMap["switchType"] = switchType
-	vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
-	vmmDomainPropertiesRefMap["portEncapVlan"] = portEncapVlanRefMap
-	vmmDomainPropertiesRefMap["microSegVlan"] = microSegVlanRefMap
-	vmmDomainPropertiesRefMap["epgLagPol"] = epgLagPolRefMap
 
 	d.SetId(DN)
 	id := d.Id()

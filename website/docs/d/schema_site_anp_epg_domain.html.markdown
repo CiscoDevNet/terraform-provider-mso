@@ -14,12 +14,13 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups Dom
 
 ```hcl
 data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
-  schema_id = "5e30c4932c00003e5e0a268e"
+  schema_id = "5c4d9fca270000a101f8094a"
   template_name = "Template1"
-  site_id = "5c7c95d9510000cf01c1ee3d"
-  anp_name = "Cloud-First-ANP"
-  epg_name = "DB"
-  dn = "uni/vmmp-VMware/dom-S2-s2"
+  site_id = "5c7c95b25100008f01c1ee3c"
+  anp_name = "ANP"
+  epg_name = "Web"
+  dn = "VMware-ab"
+  domain_type = "vmmDomain"
 }
 ```
 
@@ -31,11 +32,11 @@ data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
 * `dn` - (Required) The domain profile name.
+* `domain_type` - (Required) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannel ]
 
 ## Attribute Reference ##
 
 * `deploy_immediacy` - (Optional) The deployment immediacy of the domain. choices: [ immediate, lazy ]
-* `domain_type` - (Optional) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannel ]
 * `resolution_immediacy` - (Optional) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
 * `vlan_encap_mode` - (Optional) Which VLAN enacap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
 * `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with vmmDomain domain association.
@@ -47,4 +48,3 @@ data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 * `port_encap_vlan` - (Optional) Virtual LAN for port encap. This attribute can only be used with vmmDomain domain association.
 * `enhanced_lagpolicy_name` - (Optional) EPG enhanced lagpolicy name. This attribute can only be used with vmmDomain domain association.
 * `enhanced_lagpolicy_dn` - (Optional) Distinguished name of EPG lagpolicy. This attribute can only be used with vmmDomain domain association.
-

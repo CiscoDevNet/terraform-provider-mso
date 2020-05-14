@@ -56,9 +56,10 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"domain_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"deployment_immediacy": &schema.Schema{
 				Type:     schema.TypeString,
@@ -144,7 +145,29 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 	found := false
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
-	stateDomain := d.Get("dn").(string)
+	domain := d.Get("dn").(string)
+	domainType := d.Get("domain_type").(string)
+
+	var stateDomain string
+
+	if domainType == "vmmDomain" {
+		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+
+	} else if domainType == "l3ExtDomain" {
+		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
+
+	} else if domainType == "l2ExtDomain" {
+		stateDomain = fmt.Sprintf("uni/l2dom-%s", domain)
+
+	} else if domainType == "physicalDomain" {
+		stateDomain = fmt.Sprintf("uni/phys-%s", domain)
+
+	} else if domainType == "fibreChannel" {
+		stateDomain = fmt.Sprintf("uni/fc-%s", domain)
+
+	} else {
+		stateDomain = ""
+	}
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -195,16 +218,26 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 									return err
 								}
 								apiDomain := models.StripQuotes(domainCont.S("dn").String())
+
 								if apiDomain == stateDomain {
 									d.SetId(apiDomain)
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
-									d.Set("dn", models.StripQuotes(domainCont.S("dn").String()))
+									d.Set("dn", domain)
 									d.Set("deployment_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
-									d.Set("switching_mode", models.StripQuotes(domainCont.S("switchingMode").String()))
-									d.Set("switch_type", models.StripQuotes(domainCont.S("switchType").String()))
-									d.Set("vlan_encap_mode", models.StripQuotes(domainCont.S("vlanEncapMode").String()))
+
+									if domainCont.Exists("switchingMode") {
+										d.Set("switching_mode", models.StripQuotes(domainCont.S("switchingMode").String()))
+									}
+
+									if domainCont.Exists("switchType") {
+										d.Set("switch_type", models.StripQuotes(domainCont.S("switchType").String()))
+									}
+
+									if domainCont.Exists("vlanEncapMode") {
+										d.Set("vlan_encap_mode", models.StripQuotes(domainCont.S("vlanEncapMode").String()))
+									}
 
 									if domainCont.Exists("allowMicroSegmentation") {
 										d.Set("allow_micro_segmentation", domainCont.S("allowMicroSegmentation").Data().(bool))
