@@ -170,7 +170,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	}
 
 	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	d.SetId(DN)
+
 	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
@@ -253,6 +253,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 		return err
 	}
 
+	d.SetId(DN)
 	return resourceMSOSchemaSiteAnpEpgDomainRead(d, m)
 }
 
@@ -456,7 +457,6 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	}
 
 	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	d.SetId(DN)
 	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
@@ -656,7 +656,6 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 		log.Print("Passing Blank Value to the Model")
 	}
 
-	d.SetId(DN)
 	id := d.Id()
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
