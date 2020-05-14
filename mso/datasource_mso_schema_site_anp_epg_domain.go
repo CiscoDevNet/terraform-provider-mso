@@ -26,8 +26,7 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
+				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{

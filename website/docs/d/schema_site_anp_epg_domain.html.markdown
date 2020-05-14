@@ -15,7 +15,6 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups Dom
 ```hcl
 data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
   schema_id = "5c4d9fca270000a101f8094a"
-  template_name = "Template1"
   site_id = "5c7c95b25100008f01c1ee3c"
   anp_name = "ANP"
   epg_name = "Web"
@@ -27,7 +26,6 @@ data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg Domain.
-* `template_name` - (Required) Template where Anp Epg Domain to be created.
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg Domain.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
@@ -36,6 +34,7 @@ data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 
 ## Attribute Reference ##
 
+* `template_name` - (Optional) Template where Anp Epg Domain to be created.
 * `deploy_immediacy` - (Optional) The deployment immediacy of the domain. choices: [ immediate, lazy ]
 * `resolution_immediacy` - (Optional) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
 * `vlan_encap_mode` - (Optional) Which VLAN enacap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
