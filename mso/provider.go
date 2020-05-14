@@ -78,6 +78,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf_region":               resourceMSOSchemaSiteVrfRegion(),
 			"mso_schema_site_bd_subnet":                resourceMSOSchemaSiteBdSubnet(),
 			"mso_rest":                                 resourceMSORest(),
+			"mso_schema_template_deploy":               resourceMSOSchemaTemplateDeploy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
