@@ -76,6 +76,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_bd_l3out":                 resourceMSOSchemaSiteBdL3out(),
 			"mso_schema_site_vrf":                      resourceMSOSchemaSiteVrf(),
 			"mso_schema_site_vrf_region":               resourceMSOSchemaSiteVrfRegion(),
+			"mso_schema_site_bd_subnet":                resourceMSOSchemaSiteBdSubnet(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -111,6 +112,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_bd_l3out":                 dataSourceMSOSchemaSiteBdL3out(),
 			"mso_schema_site_vrf":                      dataSourceMSOSchemaSiteVrf(),
 			"mso_schema_site_vrf_region":               dataSourceMSOSchemaSiteVrfRegion(),
+			"mso_schema_site_bd_subnet":                dataSourceMSOSchemaSiteBdSubnet(),
 		},
 
 		ConfigureFunc: configureClient,
