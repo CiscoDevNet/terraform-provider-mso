@@ -319,14 +319,14 @@ provider "mso" {
 #   value = "${data.mso_schema_site_bd_l3out.bdL3out}"
 # }
 
-resource "mso_schema_site_vrf_region" "vrfRegion" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  template_name = "Template1"
-  site_id = "5ce2de773700006a008a2678"
-  vrf_name = "Campus"
-  region_name = "region3"
+# resource "mso_schema_site_vrf_region" "vrfRegion" {
+#   schema_id = "5d5dbf3f2e0000580553ccce"
+#   template_name = "Template1"
+#   site_id = "5ce2de773700006a008a2678"
+#   vrf_name = "Campus"
+#   region_name = "region3"
 
-}
+# }
 
 # data "mso_schema_site_vrf_region" "vrfRegion" {
 #   schema_id = "5d5dbf3f2e0000580553ccce"
@@ -337,3 +337,15 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
 # output "demo" {
 #   value = "${data.mso_schema_site_vrf_region.vrfRegion}"
 # }
+
+resource "mso_schema_site_anp_epg_subnet" "subnet1" {
+  schema_id = "5c4d5bb72700000401f80948"
+  site_id = "5c4d5bb72700000401f80948"
+  template_name = "Template1"
+  anp_name = "ANP"
+  epg_name = "DB"
+  ip = "10.0.7.0/8"
+  scope = "private"
+  shared = false
+  
+}
