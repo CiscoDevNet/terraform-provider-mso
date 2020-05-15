@@ -82,7 +82,6 @@ func resourceMSOSchemaSiteVrfRegionCidrCreate(d *schema.ResourceData, m interfac
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s/cidrs/-", siteId, templateName, vrfName, regionName)
 	VrfRegionCidrStruct := models.NewSchemaSiteVrfRegionCidr("add", path, ip, primary)
 
-	log.Print("___________________________________________________", VrfRegionCidrStruct)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), VrfRegionCidrStruct)
 	if err != nil {
 		return err
