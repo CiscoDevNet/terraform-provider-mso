@@ -234,7 +234,7 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 		IP = ip.(string)
 	}
 
-	var Scope string
+	Scope := "private"
 	if scope, ok := d.GetOk("scope"); ok {
 		Scope = scope.(string)
 	}

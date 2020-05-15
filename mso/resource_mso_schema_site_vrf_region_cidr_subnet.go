@@ -240,19 +240,19 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m inte
 								apiCidr := models.StripQuotes(cidrCont.S("ip").String())
 								log.Println("Current Cidr Ip", apiCidr)
 								if apiCidr == stateCidr {
-								    subnetCount, err := cidrCont.ArrayCount("subnets")
+									subnetCount, err := cidrCont.ArrayCount("subnets")
 									if err != nil {
 										return fmt.Errorf("Unable to get Subnet list")
 									}
 									for m := 0; m < subnetCount; m++ {
 										subnetCont, err := cidrCont.ArrayElement(m, "subnets")
-									    if err != nil {
+										if err != nil {
 											return err
 										}
 										apiIp := models.StripQuotes(subnetCont.S("ip").String())
-										
+
 										if apiIp == stateIp {
-										    d.SetId(apiIp)
+											d.SetId(apiIp)
 											d.Set("ip", apiIp)
 											d.Set("site_id", apiSite)
 											d.Set("template_name", apiTemplate)

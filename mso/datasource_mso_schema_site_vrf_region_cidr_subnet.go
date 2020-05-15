@@ -154,7 +154,7 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 										}
 										apiIp := models.StripQuotes(subnetCont.S("ip").String())
 										if apiIp == stateIp {
-										    d.SetId(apiIp)
+											d.SetId(apiIp)
 											d.Set("ip", apiIp)
 											d.Set("site_id", apiSite)
 											d.Set("template_name", apiTemplate)
