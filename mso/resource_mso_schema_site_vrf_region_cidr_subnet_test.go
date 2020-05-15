@@ -142,14 +142,14 @@ func testAccCheckMSOSchemaSiteVrfRegionCidrSubnetExists(siteVrfRegionName string
 									apiCidr := models.StripQuotes(cidrCont.S("ip").String())
 									log.Println("Current Cidr Ip", apiCidr)
 									if apiCidr == "1.1.1.1/24" {
-								
+
 										subnetCount, err := cidrCont.ArrayCount("subnets")
 										if err != nil {
 											return fmt.Errorf("Unable to get Subnet list")
 										}
 										for m := 0; m < subnetCount; m++ {
 											subnetCont, err := cidrCont.ArrayElement(m, "subnets")
-										
+
 											if err != nil {
 												return err
 											}
@@ -240,14 +240,14 @@ func testAccCheckMSOSchemaSiteVrfRegionCidrSubnetDestroy(s *terraform.State) err
 											apiCidr := models.StripQuotes(cidrCont.S("ip").String())
 											log.Println("Current Cidr Ip", apiCidr)
 											if apiCidr == "1.1.1.1/24" {
-												
+
 												subnetCount, err := cidrCont.ArrayCount("subnets")
 												if err != nil {
 													return fmt.Errorf("Unable to get Subnet list")
 												}
 												for m := 0; m < subnetCount; m++ {
 													subnetCont, err := cidrCont.ArrayElement(m, "subnets")
-											
+
 													if err != nil {
 														return err
 													}

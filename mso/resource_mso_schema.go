@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -63,22 +64,72 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Schema: Beginning Creation")
+	log.Printf("[DEBUG] Schema: Beginning Update")
 	msoClient := m.(*client.Client)
 	name := d.Get("name").(string)
-	templateName := d.Get("template_name").(string)
-	tenandId := d.Get("tenant_id").(string)
+	old, new := d.GetChange("template_name")
 
-	schemaApp := models.NewSchema(d.Id(), name, templateName, tenandId)
+	oldTemplate := old.(string)
+	newTemplate := new.(string)
 
-	cont, err := msoClient.Put(fmt.Sprintf("api/v1/schemas/%s", d.Id()), schemaApp)
+	if d.HasChange("tenant_id") {
+		return fmt.Errorf("Tenant associated with Template cannot be changed.")
+	}
+	schemaNamePayload := fmt.Sprintf(`
+		{ 
+			"op": "replace",
+			"path": "/displayName",
+			"value": "%s"
+		}
+	`, name)
+
+	templateNamePayload := fmt.Sprintf(`
+		{
+			"op": "replace",
+			"path": "/templates/%s/name",
+			"value": "%s"
+		}
+	`, oldTemplate, newTemplate)
+
+	tempDisplayNamePayload := fmt.Sprintf(`
+		{
+			"op": "replace",
+			"path": "/templates/%s/displayName",
+			"value": "%s"
+		}
+	`, newTemplate, newTemplate)
+
+	jsonSchema, err := container.ParseJSON([]byte(schemaNamePayload))
+	jsonTemplate, err := container.ParseJSON([]byte(templateNamePayload))
+	jsonDispl, err := container.ParseJSON([]byte(tempDisplayNamePayload))
+	payloadCon := container.New()
+
+	payloadCon.Array()
+	err = payloadCon.ArrayAppend(jsonSchema.Data())
+	if err != nil {
+		return err
+	}
+	payloadCon.ArrayAppend(jsonTemplate.Data())
+	payloadCon.ArrayAppend(jsonDispl.Data())
+	path := fmt.Sprintf("api/v1/schemas/%s", d.Id())
+
+	req, err := msoClient.MakeRestRequest("PATCH", path, payloadCon, true)
+	if err != nil {
+		return err
+	}
+	cont, _, err := msoClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	err = client.CheckForErrors(cont, "PATCH")
 	if err != nil {
 		return err
 	}
 
 	id := models.StripQuotes(cont.S("id").String())
 	d.SetId(fmt.Sprintf("%v", id))
-	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
+	log.Printf("[DEBUG] %s: Schema Update finished successfully", d.Id())
 
 	return resourceMSOSchemaRead(d, m)
 }
@@ -121,7 +172,6 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	}
 	if !found {
 		d.Set("template_name", "")
-		d.Set("tenant_id", "")
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
