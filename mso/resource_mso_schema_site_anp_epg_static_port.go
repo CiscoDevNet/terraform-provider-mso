@@ -136,70 +136,13 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 	if tempVar, ok := d.GetOk("micro_segvlan"); ok {
 		microsegvlan = tempVar.(int)
 	}
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+
+	portpath := fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/-", statesiteId, stateTemplateName, stateANPName, stateEpgName)
+	staticStruct := models.NewSchemaSiteAnpEpgStaticPort("add", pathsp, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
 	if err != nil {
 		return err
-	}
-	count, err := cont.ArrayCount("sites")
-
-	if err != nil {
-		return fmt.Errorf("No Site found")
-	}
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return err
-		}
-
-		apiSiteId := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplateName := models.StripQuotes(tempCont.S("templateName").String())
-
-		if apiSiteId == statesiteId && apiTemplateName == stateTemplateName {
-
-			anpCount, err := tempCont.ArrayCount("anps")
-			if err != nil {
-				return fmt.Errorf("Unable to get ANP list")
-			}
-
-			for j := 0; j < anpCount; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "anps")
-				if err != nil {
-					return err
-				}
-				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
-				match := re.FindStringSubmatch(anpRef)
-
-				apiANPName := match[3]
-
-				if apiANPName == stateANPName {
-					epgCount, err := anpCont.ArrayCount("epgs")
-					if err != nil {
-						return err
-					}
-					for k := 0; k < epgCount; k++ {
-						epgCont, err1 := anpCont.ArrayElement(k, "epgs")
-						if err1 != nil {
-							return err1
-						}
-						epgRef := models.StripQuotes(epgCont.S("epgRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
-						match := re.FindStringSubmatch(epgRef)
-						apiEpgName := match[3]
-
-						if apiEpgName == stateEpgName {
-							portpath := fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
-							path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/-", apiSiteId, apiTemplateName, apiANPName, apiEpgName)
-							staticStruct := models.NewSchemaSiteAnpEpgStaticPort("add", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
-							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
-							if err != nil {
-								return err
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 	return resourceMSOSchemaSiteAnpEpgStaticPortRead(d, m)
 }
@@ -340,6 +283,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 	if err != nil {
 		return fmt.Errorf("No Sites found")
 	}
+	found := false
 
 	var pathType, pod, leaf, path, deploymentImmediacy, mode string
 	var vlan, microsegvlan int
@@ -424,6 +368,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 									if err != nil {
 										return err
 									}
+									found = true
+									break
 
 								}
 							}
@@ -433,6 +379,9 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 				}
 			}
 		}
+	}
+	if !found {
+		return fmt.Errorf("The specified parameters to update static port entry not found")
 	}
 
 	return resourceMSOSchemaSiteAnpEpgStaticPortRead(d, m)
@@ -455,6 +404,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 	if err != nil {
 		return fmt.Errorf("No Sites found")
 	}
+	found := false
 
 	var pathType, pod, leaf, path, deploymentImmediacy, mode string
 	var vlan, microsegvlan int
@@ -539,6 +489,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 									if err != nil {
 										return err
 									}
+									found = true
+									break
 								}
 							}
 						}
@@ -547,6 +499,9 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 				}
 			}
 		}
+	}
+	if !found {
+		return fmt.Errorf("The specified parameters to delete the static port entry not found")
 	}
 	d.SetId("")
 	return resourceMSOSchemaSiteAnpEpgStaticPortRead(d, m)
