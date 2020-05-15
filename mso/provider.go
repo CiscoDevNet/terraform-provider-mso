@@ -47,7 +47,6 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema":                               resourceMSOSchema(),
 			"mso_schema_site":                          resourceMSOSchemaSite(),
 			"mso_site":                                 resourceMSOSite(),
-			"mso_role":                                 resourceMSORole(),
 			"mso_user":                                 resourceMSOUser(),
 			"mso_label":                                resourceMSOLabel(),
 			"mso_schema_template":                      resourceMSOSchemaTemplate(),
@@ -66,8 +65,6 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_externalepg_contract": resourceMSOTemplateExternalEpgContract(),
 			"mso_schema_template_filter_entry":         resourceMSOSchemaTemplateFilterEntry(),
 			"mso_schema_template_externalepg_subnet":   resourceMSOTemplateExtenalepgSubnet(),
-			"mso_schema_site_anp":                      resourceMSOSchemaSiteAnp(),
-			"mso_schema_site_anp_epg":                  resourceMSOSchemaSiteAnpEpg(),
 			"mso_schema_site_anp_epg_staticleaf":       resourceMSOSchemaSiteAnpEpgStaticleaf(),
 			"mso_schema_site_anp_epg_static_port":      resourceMSOSchemaSiteAnpEpgStaticPort(),
 			"mso_schema_site_bd":                       resourceMSOSchemaSiteBd(),
@@ -79,9 +76,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_bd_subnet":                resourceMSOSchemaSiteBdSubnet(),
 			"mso_rest":                                 resourceMSORest(),
 			"mso_schema_template_deploy":               resourceMSOSchemaTemplateDeploy(),
-     			"mso_schema_site_vrf_region_cidr_subnet":   resourceMSOSchemaSiteVrfRegionCidrSubnet(),
+			"mso_schema_site_vrf_region_cidr_subnet":   resourceMSOSchemaSiteVrfRegionCidrSubnet(),
 			"mso_schema_site_vrf_region_cidr":          resourceMSOSchemaSiteVrfRegionCidr(),
-
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -119,8 +115,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf_region":               dataSourceMSOSchemaSiteVrfRegion(),
 			"mso_schema_site_bd_subnet":                dataSourceMSOSchemaSiteBdSubnet(),
 			"mso_schema_site_vrf_region_cidr_subnet":   dataSourceMSOSchemaSiteVrfRegionCidrSubnet(),
-     			"mso_schema_site_vrf_region_cidr":          dataSourceMSOSchemaSiteVrfRegionCidr(),
-
+			"mso_schema_site_vrf_region_cidr":          dataSourceMSOSchemaSiteVrfRegionCidr(),
 		},
 
 		ConfigureFunc: configureClient,

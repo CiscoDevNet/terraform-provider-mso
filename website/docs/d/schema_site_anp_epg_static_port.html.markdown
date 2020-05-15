@@ -32,6 +32,7 @@ data "mso_schema_site_anp_epg_static_port" "static_port" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Static Port.
 * `site_id` - (Required) SiteID under which you want to deploy Static Port.
+* `template_name` - (Required) Template name under which Static Port is deployed.
 * `anp_name` - (Required) ANP name under which you want to deploy Static Port.
 * `epg_name` - (Required) EPG name under which you want to deploy Static Port.
 * `path_type` - (Required) The type of the static port.
@@ -42,7 +43,6 @@ data "mso_schema_site_anp_epg_static_port" "static_port" {
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) Template name under which Static Port is deployed.
 * `micro_segvlan` - (Optional) The microsegmentation VLAN id of the static port.
 * `mode` - (Optional) The mode of the static port.
 * `deployment_immediacy` - (Optional) The deployment immediacy of the static port.
