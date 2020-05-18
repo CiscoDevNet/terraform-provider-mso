@@ -5,9 +5,9 @@ provider "mso" {
   insecure = true
 }
 
+
 resource "mso_schema" "schema1" {
-  name          = "nkfi"
+  name          = "demo_schema"
   template_name = "tempu"
   tenant_id     = "5eac0d982c00006dae0a28f6"
-
 }
