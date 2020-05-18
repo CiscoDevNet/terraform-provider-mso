@@ -232,14 +232,20 @@ func resourceMSOSchemaSiteAnpEpgStaticPortRead(d *schema.ResourceData, m interfa
 										d.Set("path", statepath)
 									}
 									if portCont.Exists("portEncapVlan") {
-										tempvar, _ := strconv.Atoi(fmt.Sprintf("%v", portCont.S("portEncapVlan")))
+										tempvar, err := strconv.Atoi(fmt.Sprintf("%v", portCont.S("portEncapVlan")))
+										if err != nil {
+											return err
+										}
 										d.Set("vlan", tempvar)
 									}
 									if portCont.Exists("deploymentImmediacy") {
 										d.Set("deployment_immediacy", models.StripQuotes(portCont.S("deploymentImmediacy").String()))
 									}
 									if portCont.Exists("microSegVlan") {
-										tempvar1, _ := strconv.Atoi(fmt.Sprintf("%v", portCont.S("microSegVlan")))
+										tempvar1, err := strconv.Atoi(fmt.Sprintf("%v", portCont.S("microSegVlan")))
+										if err != nil {
+											return err
+										}
 										d.Set("micro_segvlan", tempvar1)
 									}
 									if portCont.Exists("mode") {

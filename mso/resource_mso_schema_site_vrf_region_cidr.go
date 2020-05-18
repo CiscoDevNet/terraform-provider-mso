@@ -203,7 +203,7 @@ func resourceMSOSchemaSiteVrfRegionCidrUpdate(d *schema.ResourceData, m interfac
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given Vrf Region Cidr is not found")
+		return fmt.Errorf("The given Vrf Region Cidr is not found")
 	}
 	indexs := strconv.Itoa(index)
 
@@ -239,7 +239,7 @@ func resourceMSOSchemaSiteVrfRegionCidrDelete(d *schema.ResourceData, m interfac
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given Vrf Region Cidr is not found")
+		return fmt.Errorf("The given Vrf Region Cidr is not found")
 	}
 	indexs := strconv.Itoa(index)
 
