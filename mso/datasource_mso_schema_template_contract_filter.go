@@ -168,9 +168,9 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 								if filterCont.Exists("filterRef") {
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
-					
+
 									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
-								
+
 										d.Set("filter_name", split[6])
 										d.Set("filter_template_name", split[4])
 										d.Set("filter_schema_id", split[2])

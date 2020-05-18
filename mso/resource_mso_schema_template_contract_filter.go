@@ -261,9 +261,9 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 								if filterCont.Exists("filterRef") {
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
-									
+
 									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
-										
+
 										d.Set("filter_name", split[6])
 										d.Set("filter_template_name", split[4])
 										d.Set("filter_schema_id", split[2])
@@ -491,7 +491,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 
 func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Template Contract Filter: Beginning Delete")
-	
+
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
@@ -501,7 +501,6 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 	var stateFilterType string
 	stateFilterType = d.Get("filter_type").(string)
 
-	
 	var filterId, filterTemplate, filterName string
 	if tempVar, ok := d.GetOk("filter_schema_id"); ok {
 		filterId = tempVar.(string)
