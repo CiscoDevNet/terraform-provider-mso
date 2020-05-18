@@ -396,6 +396,9 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 			}
 		}
 	}
+	if !found {
+		return fmt.Errorf("The specified parameters are incorrect for delete operation")
+	}
 	d.SetId("")
 	return nil
 }
