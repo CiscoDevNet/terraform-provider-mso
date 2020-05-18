@@ -289,15 +289,20 @@ func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) er
 							index := k
 							path := fmt.Sprintf("/templates/%s/bds/%s/subnets/%v", apiTemplate, apiBD, index)
 							bdSubnetStruct := models.NewTemplateBDSubnet("replace", path, apiIP, Desc, Scope, Shared, NoDefaultGateway, Querier)
-							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdSubnetStruct)
+							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdSubnetStruct)
 							if err != nil {
 								return err
 							}
+							found = true
+							break
 						}
 					}
 				}
 			}
 		}
+	}
+	if !found {
+		return fmt.Errorf("The specified parameters not found for update operation")
 	}
 	return resourceMSOTemplateBDSubnetRead(d, m)
 }
@@ -378,11 +383,13 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 						if apiIP == stateIP {
 							index := k
 							path := fmt.Sprintf("/templates/%s/bds/%s/subnets/%v", apiTemplate, apiBD, index)
-							bdSubnetStruct := models.NewTemplateBDSubnet("replace", path, apiIP, Desc, Scope, Shared, NoDefaultGateway, Querier)
-							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdSubnetStruct)
+							bdSubnetStruct := models.NewTemplateBDSubnet("remove", path, apiIP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdSubnetStruct)
 							if err != nil {
 								return err
 							}
+							found = true
+							break
 						}
 					}
 				}
