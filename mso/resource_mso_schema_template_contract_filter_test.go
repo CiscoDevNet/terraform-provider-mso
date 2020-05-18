@@ -57,28 +57,14 @@ func TestAccMSOSchemaTemplateContractFilter_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateContractFilterConfig_basic(filter_type string) string {
 	return fmt.Sprintf(`
-						resource "mso_schema_template_contract_filter" "filter1" {
-							schema_id = "5c4d5bb72700000401f80948"
-							template_name = "Template1"
-							contract_name = "C300"
-							display_name = "C300"
-							filter_type = "bothWay"
-							scope = "context"
-							filter_relationships_provider_to_consumer = {
-							provider_to_consumer_schema_id = "5c4d5bb72700000401f80948"
-							provider_to_consumer_template_name = "Template1"
-							provider_to_consumer_name = "%s"
-							}
-							provider_to_consumer_directives = ["log","none","log"]
-							filter_relationships_consumer_to_provider = {
-							    consumer_to_provider_schema_id = "5c4d5bb72700000401f80948"
-								consumer_to_provider_template_name = "Template1"
-								consumer_to_provider_name = "Many"
-							}
-							consumer_to_provider_directives = ["log","none"]
-
-						  }
-					`, filter_type)
+	resource "mso_schema_template_contract_filter" "filter1" {
+		schema_id = "5c4d5bb72700000401f80948"
+		template_name = "Template1"
+		contract_name = "Web-to-DB"
+		filter_type = "provider_to_consumer"
+		filter_name = "filter1"
+		directives = ["none","log"]
+	  }`)
 }
 
 func testAccCheckMSOSchemaTemplateContractFilterExists(contractName string, tc *TemplateContractFilter) resource.TestCheckFunc {
@@ -125,15 +111,11 @@ func testAccCheckMSOSchemaTemplateContractFilterExists(contractName string, tc *
 
 					apiContract := models.StripQuotes(contractCont.S("name").String())
 
-					if apiContract == "C300" {
-						tp.display_name = models.StripQuotes(contractCont.S("displayName").String())
-						tp.filter_type = models.StripQuotes(contractCont.S("filterType").String())
-						tp.scope = models.StripQuotes(contractCont.S("scope").String())
+					if apiContract == "Web-to-DB" {
 						if contractCont.Exists("filterRelationshipsProviderToConsumer") {
-							count, _ := contractCont.ArrayCount("filterRelationshipsProviderToConsumer")
-
-							for i := 0; i < count; i++ {
-								filterCont, err := contractCont.ArrayElement(i, "filterRelationshipsProviderToConsumer")
+							filtercount, _ := contractCont.ArrayCount("filterRelationshipsProviderToConsumer")
+							for k := 0; k < filtercount; k++ {
+								filterCont, err := contractCont.ArrayElement(k, "filterRelationshipsProviderToConsumer")
 								if err != nil {
 									return fmt.Errorf("Unable to parse the filter Relationships Provider to Consumer list")
 								}
@@ -141,14 +123,17 @@ func testAccCheckMSOSchemaTemplateContractFilterExists(contractName string, tc *
 								if filterCont.Exists("filterRef") {
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
-									tp.Name = fmt.Sprintf("%s", split[6])
+
+									if split[6] == "filter1" && split[4] == "Template1" && split[2] == "5c4d5bb72700000401f80948" {
+
+										tp.Name = split[6]
+										tp.filtertype = "provider_to_consumer"
+										found = true
+										break
+									}
 								}
 							}
 						}
-
-						found = true
-						break
-
 					}
 				}
 			}
@@ -179,25 +164,48 @@ func testAccCheckMSOSchemaTemplateContractFilterDestroy(s *terraform.State) erro
 				if err != nil {
 					return fmt.Errorf("No Template found")
 				}
+
 				for i := 0; i < count; i++ {
 					tempCont, err := cont.ArrayElement(i, "templates")
 					if err != nil {
-						return fmt.Errorf("No Template exists")
+						return err
 					}
+
 					apiTemplateName := models.StripQuotes(tempCont.S("name").String())
 					if apiTemplateName == "Template1" {
 						contractCount, err := tempCont.ArrayCount("contracts")
+
 						if err != nil {
 							return fmt.Errorf("Unable to get Contract list")
 						}
+
 						for j := 0; j < contractCount; j++ {
 							contractCont, err := tempCont.ArrayElement(j, "contracts")
 							if err != nil {
 								return err
 							}
+
 							apiContract := models.StripQuotes(contractCont.S("name").String())
-							if apiContract == "C300" {
-								return fmt.Errorf("template contract Filter still exists.")
+
+							if apiContract == "Web-to-DB" {
+								if contractCont.Exists("filterRelationshipsProviderToConsumer") {
+									filtercount, _ := contractCont.ArrayCount("filterRelationshipsProviderToConsumer")
+									for k := 0; k < filtercount; k++ {
+										filterCont, err := contractCont.ArrayElement(k, "filterRelationshipsProviderToConsumer")
+										if err != nil {
+											return fmt.Errorf("Unable to parse the filter Relationships Provider to Consumer list")
+										}
+
+										if filterCont.Exists("filterRef") {
+											filRef := filterCont.S("filterRef").Data()
+											split := strings.Split(filRef.(string), "/")
+
+											if split[6] == "filter1" && split[4] == "Template1" && split[2] == "5c4d5bb72700000401f80948" {
+												return fmt.Errorf("Contract Filter Still exists")
+											}
+										}
+									}
+								}
 							}
 						}
 					}
@@ -209,24 +217,15 @@ func testAccCheckMSOSchemaTemplateContractFilterDestroy(s *terraform.State) erro
 }
 func testAccCheckMSOSchemaTemplateContractFilterAttributes(filter_type string, tc *TemplateContractFilter) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if filter_type != tc.Name {
-			return fmt.Errorf("Bad Template Contract filter_type %v", tc.Name)
+		if "provider_to_consumer" != tc.filtertype {
+			return fmt.Errorf("Bad Template Contract filter_type %v", tc.filtertype)
 		}
 
-		if "C300" != tc.display_name {
-			return fmt.Errorf("Bad Template Contract display name %s", tc.display_name)
-		}
-
-		if "context" != tc.scope {
-			return fmt.Errorf("Bad Template Contract Scope name %s", tc.scope)
-		}
 		return nil
 	}
 }
 
 type TemplateContractFilter struct {
-	display_name string
-	scope        string
-	filter_type  string
-	Name         string
+	filtertype string
+	Name       string
 }
