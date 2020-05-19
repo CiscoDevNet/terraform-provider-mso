@@ -24,7 +24,6 @@ func resourceMSORest() *schema.Resource {
 			"path": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
