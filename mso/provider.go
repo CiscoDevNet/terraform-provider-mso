@@ -78,6 +78,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_deploy":               resourceMSOSchemaTemplateDeploy(),
 			"mso_schema_site_vrf_region_cidr_subnet":   resourceMSOSchemaSiteVrfRegionCidrSubnet(),
 			"mso_schema_site_vrf_region_cidr":          resourceMSOSchemaSiteVrfRegionCidr(),
+			"mso_schema_site_anp":                      resourceMSOSchemaSiteAnp(),
+			"mso_schema_site_anp_epg":                  resourceMSOSchemaSiteAnpEpg(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
