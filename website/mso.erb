@@ -1,249 +1,249 @@
 <% wrap_layout :inner do %>
-    <% content_for :sidebar do %>
-      <div class="docs-sidebar hidden-print affix-top" role="complementary">
-        <ul class="nav docs-sidenav">
-          <li<%= sidebar_current("docs-home") %>>
-          <a href="/docs/providers/index.html">All Providers</a>
-          </li>
-  
-          <li<%= sidebar_current("docs-mso-index") %>>
-          <a href="/docs/providers/mso/index.html">MSO Provider</a>
-          </li>
-  
-  
-          <li<%= sidebar_current("docs-mso-datasource") %>>
-          <a href="#">Data Resources</a>
-              <ul class="nav nav-visible">
-                  <li<%= sidebar_current("docs-mso-data-source-schema") %>>
-                    <a href="/docs/providers/mso/d/schema.html">mso_schema</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site") %>>
-                    <a href="/docs/providers/mso/d/schemasite.html">mso_schema_site</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-site") %>>
-                    <a href="/docs/providers/mso/d/site.html">mso_site</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-role") %>>
-                    <a href="/docs/providers/mso/d/role.html">mso_role</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-user") %>>
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
+        <li<%= sidebar_current("docs-home") %>>
+        <a href="/docs/providers/index.html">All Providers</a>
+        </li>
+
+        <li<%= sidebar_current("docs-mso-index") %>>
+        <a href="/docs/providers/mso/index.html">MSO Provider</a>
+        </li>
+
+
+        <li<%= sidebar_current("docs-mso-datasource") %>>
+        <a href="#">Data Resources</a>
+            <ul class="nav nav-visible">
+                <li<%= sidebar_current("docs-mso-data-source-label") %>>
+                  <a href="/docs/providers/mso/d/label.html">mso_label</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-role") %>>
+                  <a href="/docs/providers/mso/d/role.html">mso_role</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema") %>>
+                  <a href="/docs/providers/mso/d/schema.html">mso_schema</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site") %>>
+                  <a href="/docs/providers/mso/d/schemasite.html">mso_schema_site</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_anp") %>>
+                  <a href="/docs/providers/mso/d/schema_site_anp.html">mso_schema_site_anp</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg") %>>
+                  <a href="/docs/providers/mso/d/schema_site_anp_epg.html">mso_schema_site_anp_epg</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_domain") %>>
+                  <a href="/docs/providers/mso/d/schema_site_anp_epg_domain.html">mso_schema_site_anp_epg_domain</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_staticleaf") %>>
+                  <a href="/docs/providers/mso/d/schema_site_anp_epg_staticleaf.html">mso_schema_site_anp_epg_staticleaf</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_static_port") %>>
+                  <a href="/docs/providers/mso/d/schema_site_anp_epg_static_port.html">mso_schema_site_anp_epg_static_port</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_subnet") %>>
+                  <a href="/docs/providers/mso/d/schema_site_anp_epg_subnet.html">mso_schema_site_anp_epg_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_bd") %>>
+                  <a href="/docs/providers/mso/d/schema_site_bd.html">mso_schema_site_bd</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_bd_l3out") %>>
+                  <a href="/docs/providers/mso/d/schema_site_bd_l3out.html">mso_schema_site_bd_l3out</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_bd_subnet") %>>
+                  <a href="/docs/providers/mso/d/schema_site_bd_subnet.html">mso_schema_site_bd_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf") %>>
+                  <a href="/docs/providers/mso/d/schema_site_vrf.html">mso_schema_site_vrf</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf_region") %>>
+                  <a href="/docs/providers/mso/d/schema_site_vrf_region.html">mso_schema_site_vrf_region</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf_region_cidr") %>>
+                  <a href="/docs/providers/mso/d/schema_site_vrf_region_cidr.html">mso_schema_site_vrf_region_cidr</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf_region_cidr_subnet") %>>
+                  <a href="/docs/providers/mso/d/schema_site_vrf_region_cidr_subnet.html">mso_schema_site_vrf_region_cidr_subnet</a>
+                <li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template") %>>
+                  <a href="/docs/providers/mso/d/schema_template.html">mso_schema_template</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_anp") %>>
+                  <a href="/docs/providers/mso/d/schema_template_anp.html">mso_schema_template_anp</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_anp_epg") %>>
+                  <a href="/docs/providers/mso/d/schema_template_anp_epg.html">mso_schema_template_anp_epg</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_anp_epg_contract") %>>
+                  <a href="/docs/providers/mso/d/schema_template_anp_epg_contract.html">mso_schema_template_anp_epg_contract</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_anp_epg_subnet") %>>
+                  <a href="/docs/providers/mso/d/schema_template_anp_epg_subnet.html">mso_schema_template_anp_epg_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_bd") %>>
+                  <a href="/docs/providers/mso/d/template_bd.html">mso_schema_template_bd</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_bd_subnet") %>>
+                  <a href="/docs/providers/mso/d/schema_template_bd_subnet.html">mso_schema_template_bd_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_contract") %>>
+                  <a href="/docs/providers/mso/d/schema_template_contract.html">mso_schema_template_contract</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_contract_filter") %>>
+                  <a href="/docs/providers/mso/d/schema_template_contract_filter.html">mso_schema_template_contract_filter</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_external-epg") %>>
+                  <a href="/docs/providers/mso/d/schema_template_externalepg.html">mso_schema_template_externalepg</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_external_epg_contract") %>>
+                  <a href="/docs/providers/mso/d/schema_template_externalepg_contract.html">mso_schema_template_externalepg_contract</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_external_epg_subnet") %>>
+                  <a href="/docs/providers/mso/d/schema_template_externalepg_subnet.html">mso_schema_template_externalepg_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_filter_entry") %>>
+                  <a href="/docs/providers/mso/d/schema_template_filter_entry.html">mso_schema_template_filter_entry</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_l3out") %>>
+                  <a href="/docs/providers/mso/d/schema_template_l3out.html">mso_schema_template_l3out</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-schema_template_vrf") %>>
+                  <a href="/docs/providers/mso/d/schematemplatevrf.html">mso_schema_template_vrf</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-site") %>>
+                  <a href="/docs/providers/mso/d/site.html">mso_site</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-data-source-tenant") %>>
+                  <a href="/docs/providers/mso/d/tenant.html">mso_tenant</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-user") %>>
                   <a href="/docs/providers/mso/d/user.html">mso_user</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-label") %>>
-                    <a href="/docs/providers/mso/d/label.html">mso_label</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template") %>>
-                    <a href="/docs/providers/mso/d/schema_template.html">mso_schema_template</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-tenant") %>>
-                    <a href="/docs/providers/mso/d/tenant.html">mso_tenant</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_bd") %>>
-                    <a href="/docs/providers/mso/d/template_bd.html">mso_schema_template_bd</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_vrf") %>>
-                    <a href="/docs/providers/mso/d/schematemplatevrf.html">mso_schema_template_vrf</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_bd_subnet") %>>
-                    <a href="/docs/providers/mso/d/schema_template_bd_subnet.html">mso_schema_template_bd_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_anp_epg_contract") %>>
-                    <a href="/docs/providers/mso/d/schema_template_anp_epg_contract.html">mso_schema_template_anp_epg_contract</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_anp") %>>
-                    <a href="/docs/providers/mso/d/schema_template_anp.html">mso_schema_template_anp</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_anp_epg") %>>
-                    <a href="/docs/providers/mso/d/schema_template_anp_epg.html">mso_schema_template_anp_epg</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_contract") %>>
-                    <a href="/docs/providers/mso/d/schema_template_contract.html">mso_schema_template_contract</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_anp_epg_subnet") %>>
-                    <a href="/docs/providers/mso/d/schema_template_anp_epg_subnet.html">mso_schema_template_anp_epg_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_l3out") %>>
-                    <a href="/docs/providers/mso/d/schema_template_l3out.html">mso_schema_template_l3out</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_external-epg") %>>
-                    <a href="/docs/providers/mso/d/schema_template_externalepg.html">mso_schema_template_externalepg</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_contract_filter") %>>
-                    <a href="/docs/providers/mso/d/schema_template_contract_filter.html">mso_schema_template_contract_filter</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_external_epg_contract") %>>
-                    <a href="/docs/providers/mso/d/schema_template_externalepg_contract.html">mso_schema_template_externalepg_contract</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_filter_entry") %>>
-                    <a href="/docs/providers/mso/d/schema_template_filter_entry.html">mso_schema_template_filter_entry</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_template_external_epg_subnet") %>>
-                    <a href="/docs/providers/mso/d/schema_template_externalepg_subnet.html">mso_schema_template_externalepg_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_anp") %>>
-                    <a href="/docs/providers/mso/d/schema_site_anp.html">mso_schema_site_anp</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg") %>>
-                    <a href="/docs/providers/mso/d/schema_site_anp_epg.html">mso_schema_site_anp_epg</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_staticleaf") %>>
-                    <a href="/docs/providers/mso/d/schema_site_anp_epg_staticleaf.html">mso_schema_site_anp_epg-staticleaf</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_static_port") %>>
-                    <a href="/docs/providers/mso/d/schema_site_anp_epg_static_port.html">mso_schema_site_anp_epg_static_port</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_bd") %>>
-                    <a href="/docs/providers/mso/d/schema_site_bd.html">mso_schema_site_bd</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_subnet") %>>
-                    <a href="/docs/providers/mso/d/schema_site_anp_epg_subnet.html">mso_schema_site_anp_epg_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_anp_epg_domain") %>>
-                    <a href="/docs/providers/mso/d/schema_site_anp_epg_domain.html">mso_schema_site_anp_epg_domain</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_bd_l3out") %>>
-                    <a href="/docs/providers/mso/d/schema_site_bd_l3out.html">mso_schema_site_bd_l3out</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf") %>>
-                    <a href="/docs/providers/mso/d/schema_site_vrf.html">mso_schema_site_vrf</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf_region") %>>
-                    <a href="/docs/providers/mso/d/schema_site_vrf_region.html">mso_schema_site_vrf_region</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_bd_subnet") %>>
-                    <a href="/docs/providers/mso/d/schema_site_bd_subnet.html">mso_schema_site_bd_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf_region_cidr_subnet") %>>
-                    <a href="/docs/providers/mso/d/schema_site_vrf_region_cidr_subnet.html">mso_schema_site_vrf_region_cidr_subnet</a>
-                  <li>
-                  <li<%= sidebar_current("docs-mso-data-source-schema_site_vrf_region_cidr") %>>
-                    <a href="/docs/providers/mso/d/schema_site_vrf_region_cidr.html">mso_schema_site_vrf_region_cidr</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-index") %>>
+                </li>
+                <li<%= sidebar_current("docs-mso-index") %>>
+                  <a href="/docs/providers/mso/index.html">MSO</a>
+                </li>
+            </ul>
+        </li>
+        <li<%= sidebar_current("docs-mso-resource") %>>
+        <a href="#">Resources</a>
+            <ul class="nav nav-visible">
+                <li<%= sidebar_current("docs-mso-resource-label") %>>
+                  <a href="/docs/providers/mso/r/label.html">mso_label</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-rest") %>>
+                  <a href="/docs/providers/mso/r/rest.html">mso_rest</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema") %>>
+                  <a href="/docs/providers/mso/r/schema.html">mso_schema</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site") %>>
+                  <a href="/docs/providers/mso/r/schemasite.html">mso_schema_site</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_anp") %>>
+                  <a href="/docs/providers/mso/r/schema_site_anp.html">mso_schema_site_anp</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg") %>>
+                  <a href="/docs/providers/mso/r/schema_site_anp_epg.html">mso_schema_site_anp_epg</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_domain") %>>
+                  <a href="/docs/providers/mso/r/schema_site_anp_epg_domain.html">mso_schema_site_anp_epg_domain</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_staticleaf") %>>
+                  <a href="/docs/providers/mso/r/schema_site_anp_epg_staticleaf.html">mso_schema_site_anp_epg_staticleaf</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_static_port") %>>
+                  <a href="/docs/providers/mso/r/schema_site_anp_epg_static_port.html">mso_schema_site_anp_epg_static_port</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_subnet") %>>
+                  <a href="/docs/providers/mso/r/schema_site_anp_epg_subnet.html">mso_schema_site_anp_epg_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_bd") %>>
+                  <a href="/docs/providers/mso/r/schema_site_bd.html">mso_schema_site_bd</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_bd_l3out") %>>
+                  <a href="/docs/providers/mso/r/schema_site_bd_l3out.html">mso_schema_site_bd_l3out</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_bd_subnet") %>>
+                   <a href="/docs/providers/mso/r/schema_site_bd_subnet.html">mso_schema_site_bd_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_vrf") %>>
+                   <a href="/docs/providers/mso/r/schema_site_vrf.html">mso_schema_site_vrf</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_vrf_region") %>>
+                   <a href="/docs/providers/mso/r/schema_site_vrf_region.html">mso_schema_site_vrf_region</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_vrf_region_cidr") %>>
+                   <a href="/docs/providers/mso/r/schema_site_vrf_region_cidr.html">mso_schema_site_vrf_region_cidr</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_site_vrf_region_cidr_subnet") %>>
+                   <a href="/docs/providers/mso/r/schema_site_vrf_region_cidr_subnet.html">mso_schema_site_vrf_region_cidr_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template") %>>
+                  <a href="/docs/providers/mso/r/schema_template.html">mso_schema_template</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_anp") %>>
+                  <a href="/docs/providers/mso/r/schema_template_anp.html">mso_schema_template_anp</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_anp_epg") %>>
+                  <a href="/docs/providers/mso/r/schema_template_anp_epg.html">mso_schema_template_anp_epg</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_anp_epg_contract") %>>
+                  <a href="/docs/providers/mso/r/schema_template_anp_epg_contract.html">mso_schema_template_anp_epg_contract</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_anp_epg_subnet") %>>
+                  <a href="/docs/providers/mso/r/schema_template_anp_epg_subnet.html">mso_schema_template_anp_epg_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_bd") %>>
+                  <a href="/docs/providers/mso/r/template_bd.html">mso_schema_template_bd</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_bd_subnet") %>>
+                  <a href="/docs/providers/mso/r/schema_template_bd_subnet.html">mso_schema_template_bd_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_contract") %>>
+                  <a href="/docs/providers/mso/r/schema_template_contract.html">mso_schema_template_contract</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_contract_filter") %>>
+                  <a href="/docs/providers/mso/r/schema_template_contract_filter.html">mso_schema_template_contract_filter</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_deploy") %>>
+                  <a href="/docs/providers/mso/r/schema_template_deploy.html">mso_schema_template_deploy</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_external-epg") %>>
+                  <a href="/docs/providers/mso/r/schema_template_externalepg.html">mso_schema_template_externalepg</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_external_epg_contract") %>>
+                  <a href="/docs/providers/mso/r/schema_template_externalepg_contract.html">mso_schema_template_externalepg_contract</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_external_epg_subnet") %>>
+                  <a href="/docs/providers/mso/r/schema_template_externalepg_subnet.html">mso_schema_template_externalepg_subnet</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_filter_entry") %>>
+                  <a href="/docs/providers/mso/r/schema_template_filter_entry.html">mso_schema_template_filter_entry</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_l3out") %>>
+                  <a href="/docs/providers/mso/r/schema_template_l3out.html">mso_schema_template_l3out</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-schema_template_vrf") %>>
+                  <a href="/docs/providers/mso/r/schematemplatevrf.html">mso_schema_template_vrf</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-site") %>>
+                  <a href="/docs/providers/mso/r/site.html">mso_site</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-tenant") %>>
+                  <a href="/docs/providers/mso/r/tenant.html">mso_tenant</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-resource-user") %>>
+                  <a href="/docs/providers/mso/r/user.html">mso_user</a>
+                </li>
+                <li<%= sidebar_current("docs-mso-index") %>>
                     <a href="/docs/providers/mso/index.html">MSO</a>
-                  </li>
-              </ul>
-          </li>
-          <li<%= sidebar_current("docs-mso-resource") %>>
-          <a href="#">Resources</a>
-              <ul class="nav nav-visible">
-                  <li<%= sidebar_current("docs-mso-resource-schema") %>>
-                    <a href="/docs/providers/mso/r/schema.html">mso_schema</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site") %>>
-                    <a href="/docs/providers/mso/r/schemasite.html">mso_schema_site</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-site") %>>
-                    <a href="/docs/providers/mso/r/site.html">mso_site</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-user") %>>
-                    <a href="/docs/providers/mso/r/user.html">mso_user</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-label") %>>
-                    <a href="/docs/providers/mso/r/label.html">mso_label</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template") %>>
-                    <a href="/docs/providers/mso/r/schema_template.html">mso_schema_template</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-tenant") %>>
-                    <a href="/docs/providers/mso/r/tenant.html">mso_tenant</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_bd") %>>
-                    <a href="/docs/providers/mso/r/template_bd.html">mso_schema_template_bd</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_vrf") %>>
-                    <a href="/docs/providers/mso/r/schematemplatevrf.html">mso_schema_template_vrf</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_bd_subnet") %>>
-                    <a href="/docs/providers/mso/r/schema_template_bd_subnet.html">mso_schema_template_bd_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_anp") %>>
-                    <a href="/docs/providers/mso/r/schema_template_anp.html">mso_schema_template_anp</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_anp_epg") %>>
-                    <a href="/docs/providers/mso/r/schema_template_anp_epg.html">mso_schema_template_anp_epg</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_anp_epg_contract") %>>
-                    <a href="/docs/providers/mso/r/schema_template_anp_epg_contract.html">mso_schema_template_anp_epg_contract</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_contract") %>>
-                    <a href="/docs/providers/mso/r/schema_template_contract.html">mso_schema_template_contract</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_anp_epg_subnet") %>>
-                    <a href="/docs/providers/mso/r/schema_template_anp_epg_subnet.html">mso_schema_template_anp_epg_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_l3out") %>>
-                    <a href="/docs/providers/mso/r/schema_template_l3out.html">mso_schema_template_l3out</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_external-epg") %>>
-                    <a href="/docs/providers/mso/r/schema_template_externalepg.html">mso_schema_template_externalepg</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_contract_filter") %>>
-                    <a href="/docs/providers/mso/r/schema_template_contract_filter.html">mso_schema_template_contract_filter</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_external_epg_contract") %>>
-                    <a href="/docs/providers/mso/r/schema_template_externalepg_contract.html">mso_schema_template_externalepg_contract</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_filter_entry") %>>
-                    <a href="/docs/providers/mso/r/schema_template_filter_entry.html">mso_schema_template_filter_entry</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_external_epg_subnet") %>>
-                    <a href="/docs/providers/mso/r/schema_template_externalepg_subnet.html">mso_schema_template_externalepg_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_anp") %>>
-                    <a href="/docs/providers/mso/r/schema_site_anp.html">mso_schema_site_anp</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg") %>>
-                    <a href="/docs/providers/mso/r/schema_site_anp_epg.html">mso_schema_site_anp_epg</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_staticleaf") %>>
-                    <a href="/docs/providers/mso/r/schema_site_anp_epg_staticleaf.html">mso_schema_site_anp_epg_staticleaf</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_static_port") %>>
-                    <a href="/docs/providers/mso/r/schema_site_anp_epg_static_port.html">mso_schema_site_anp_epg_static_port</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_bd") %>>
-                    <a href="/docs/providers/mso/r/schema_site_bd.html">mso_schema_site_bd</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_subnet") %>>
-                    <a href="/docs/providers/mso/r/schema_site_anp_epg_subnet.html">mso_schema_site_anp_epg_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_anp_epg_domain") %>>
-                    <a href="/docs/providers/mso/r/schema_site_anp_epg_domain.html">mso_schema_site_anp_epg_domain</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_bd_l3out") %>>
-                    <a href="/docs/providers/mso/r/schema_site_bd_l3out.html">mso_schema_site_bd_l3out</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_vrf") %>>
-                     <a href="/docs/providers/mso/r/schema_site_vrf.html">mso_schema_site_vrf</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_vrf_region") %>>
-                     <a href="/docs/providers/mso/r/schema_site_vrf_region.html">mso_schema_site_vrf_region</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_bd_subnet") %>>
-                     <a href="/docs/providers/mso/r/schema_site_bd_subnet.html">mso_schema_site_bd_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-rest") %>>
-                    <a href="/docs/providers/mso/r/rest.html">mso_rest</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_vrf_region_cidr_subnet") %>>
-                     <a href="/docs/providers/mso/r/schema_site_vrf_region_cidr_subnet.html">mso_schema_site_vrf_region_cidr_subnet</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_template_deploy") %>>
-                    <a href="/docs/providers/mso/r/schema_template_deploy.html">mso_schema_template_deploy</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-resource-schema_site_vrf_region_cidr") %>>
-                     <a href="/docs/providers/mso/r/schema_site_vrf_region_cidr.html">mso_schema_site_vrf_region_cidr</a>
-                  </li>
-                  <li<%= sidebar_current("docs-mso-index") %>>
-                      <a href="/docs/providers/mso/index.html">MSO</a>
-                  </li>
-                  
-              </ul>
-          </li>
-        </ul>
-      </div>
-    <% end %>
-  
-    <%= yield %>
-    <% end %>
+                </li>
+                
+            </ul>
+        </li>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= yield %>
+  <% end %>

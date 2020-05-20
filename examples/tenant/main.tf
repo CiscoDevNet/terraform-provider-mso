@@ -11,8 +11,8 @@ resource "mso_tenant" "tenant01" {
   description       = "DemoTenant"
   site_associations{
       site_id = "5c7c95b25100008f01c1ee3c"
-      security_domains=["domain1"]
       }
   user_associations{
-      user_id = "0000ffff0000000000000020"}
+      user_id = "0000ffff0000000000000020"
     }
+}
