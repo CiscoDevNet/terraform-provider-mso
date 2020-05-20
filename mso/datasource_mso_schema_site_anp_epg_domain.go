@@ -161,7 +161,7 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 	} else if domainType == "physicalDomain" {
 		stateDomain = fmt.Sprintf("uni/phys-%s", domain)
 
-	} else if domainType == "fibreChannel" {
+	} else if domainType == "fibreChannelDomain" {
 		stateDomain = fmt.Sprintf("uni/fc-%s", domain)
 
 	} else {

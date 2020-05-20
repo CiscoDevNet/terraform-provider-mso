@@ -162,7 +162,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	} else if domainType == "physicalDomain" {
 		DN = fmt.Sprintf("uni/phys-%s", domainName)
 
-	} else if domainType == "fibreChannel" {
+	} else if domainType == "fibreChannelDomain" {
 		DN = fmt.Sprintf("uni/fc-%s", domainName)
 
 	} else {
@@ -294,7 +294,7 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 	} else if domainType == "physicalDomain" {
 		stateDomain = fmt.Sprintf("uni/phys-%s", domain)
 
-	} else if domainType == "fibreChannel" {
+	} else if domainType == "fibreChannelDomain" {
 		stateDomain = fmt.Sprintf("uni/fc-%s", domain)
 
 	} else {
@@ -449,7 +449,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	} else if domainType == "physicalDomain" {
 		DN = fmt.Sprintf("uni/phys-%s", domainName)
 
-	} else if domainType == "fibreChannel" {
+	} else if domainType == "fibreChannelDomain" {
 		DN = fmt.Sprintf("uni/fc-%s", domainName)
 
 	} else {
@@ -580,7 +580,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	} else if domainType == "physicalDomain" {
 		DN = fmt.Sprintf("uni/phys-%s", domainName)
 
-	} else if domainType == "fibreChannel" {
+	} else if domainType == "fibreChannelDomain" {
 		DN = fmt.Sprintf("uni/fc-%s", domainName)
 
 	} else {
