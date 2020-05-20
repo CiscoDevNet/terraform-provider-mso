@@ -41,10 +41,10 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 * `vrf_schema_id` - (Optional) The schemaID that defines the referenced VRF.
 * `vrf_template_name` - (Optional) The template that defines the referenced VRF.
 * `display_name` - (Optional) The name as displayed on the MSO web interface.
-* `useg_epg` - (Optional) Whether this is a USEG EPG.
+* `useg_epg` - (Optional) Boolean flag to enable or disable whether this is a USEG EPG. Default value is set to false.
 * `intra_epg` - (Optional) Whether intra EPG isolation is enforced. choices: [ enforced, unenforced ]
 * `intersite_multicaste_source` - (Optional) Whether intersite multicast source is enabled.
-* `preferred_group` - (Optional) Whether this EPG is added to preferred group or not.
+* `preferred_group` - (Optional) Boolean flag to enable or disable whether this EPG is added to preferred group.      Default value is set to false.
 
 ## Attribute Reference ##
 
