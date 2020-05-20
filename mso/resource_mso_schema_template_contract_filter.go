@@ -573,7 +573,7 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 						indexfc = countf
 					}
 
-					if indexf <= 1 && indexfp <= 1 && indexfc <= 1 {
+					if indexf+indexfp+indexfc <= 1 {
 						path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
 						contractStruct := models.NewTemplateContractFilter("remove", path, stateFilterType)
 
