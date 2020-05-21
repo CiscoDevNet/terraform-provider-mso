@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -91,31 +92,26 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 
 	schemaId := d.Get("schema_id").(string)
 	stateTemplateName := d.Get("template_name").(string)
-	statesiteId := d.Get("site_id").(string)
+	stateSiteId := d.Get("site_id").(string)
 	stateANPName := d.Get("anp_name").(string)
 	stateEpgName := d.Get("epg_name").(string)
-	found := false
 
 	var IP string
 	if ip, ok := d.GetOk("ip"); ok {
 		IP = ip.(string)
 	}
-
 	var Scope string
 	if scope, ok := d.GetOk("scope"); ok {
 		Scope = scope.(string)
 	}
-
 	var Shared bool
 	if shared, ok := d.GetOk("shared"); ok {
 		Shared = shared.(bool)
 	}
-
 	var NoDefaultGateway bool
 	if ndg, ok := d.GetOk("no_default_gateway"); ok {
 		NoDefaultGateway = ndg.(bool)
 	}
-
 	var Querier bool
 	if qr, ok := d.GetOk("querier"); ok {
 		Querier = qr.(bool)
@@ -124,31 +120,32 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 	if d, ok := d.GetOk("description"); ok {
 		Desc = d.(string)
 	}
+
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
 	count, err := cont.ArrayCount("sites")
-
 	if err != nil {
-		return fmt.Errorf("No Site found")
+		return fmt.Errorf("No Sites found")
 	}
+
+	foundEpg := false
+	foundAnp := false
+
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
 		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		apiSiteId := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplateName := models.StripQuotes(tempCont.S("templateName").String())
-
-		if apiSiteId == statesiteId && apiTemplateName == stateTemplateName {
-
+		if apiSite == stateSiteId && apiTemplate == stateTemplateName {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
-				return fmt.Errorf("Unable to get ANP list")
+				return fmt.Errorf("Unable to get Anp list")
 			}
-
 			for j := 0; j < anpCount; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 				if err != nil {
@@ -157,45 +154,86 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
 				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
 				match := re.FindStringSubmatch(anpRef)
-
-				apiANPName := match[3]
-
-				if apiANPName == stateANPName {
+				if match[3] == stateANPName {
+					foundAnp = true
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
-						return err
+						return fmt.Errorf("Unable to get EPG list")
 					}
 					for k := 0; k < epgCount; k++ {
-						epgCont, err1 := anpCont.ArrayElement(k, "epgs")
-						if err1 != nil {
-							return err1
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return err
 						}
-						epgRef := models.StripQuotes(epgCont.S("epgRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
-						match := re.FindStringSubmatch(epgRef)
-						apiEpgName := match[3]
-
-						if apiEpgName == stateEpgName {
-							path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/subnets/-", statesiteId, stateTemplateName, stateANPName, stateEpgName)
-							AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
-							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), AnpEpgSubnetStruct)
-							if err != nil {
-								return err
-							}
-							found = true
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						split := strings.Split(apiEpgRef, "/")
+						apiEPG := split[8]
+						if apiEPG == stateEpgName {
+							foundEpg = true
 							break
 
 						}
 					}
+					if !foundEpg {
+						log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
+						anpEpgRefMap := make(map[string]interface{})
+						anpEpgRefMap["schemaId"] = schemaId
+						anpEpgRefMap["templateName"] = stateTemplateName
+						anpEpgRefMap["anpName"] = stateANPName
+						anpEpgRefMap["epgName"] = stateEpgName
+
+						pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, stateANPName)
+						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+
+						_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+						if ers != nil {
+							return ers
+						}
+						break
+					}
+				}
+			}
+			if !foundAnp {
+				log.Printf("[DEBUG] Site Anp: Beginning Creation")
+
+				anpRefMap := make(map[string]interface{})
+				anpRefMap["schemaId"] = schemaId
+				anpRefMap["templateName"] = stateTemplateName
+				anpRefMap["anpName"] = stateANPName
+
+				pathAnp := fmt.Sprintf("/sites/%s-%s/anps/-", stateSiteId, stateTemplateName)
+				anpStruct := models.NewSchemaSiteAnp("add", pathAnp, anpRefMap)
+
+				_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+				if err != nil {
+					return err
+				}
+
+				log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
+
+				anpEpgRefMap := make(map[string]interface{})
+				anpEpgRefMap["schemaId"] = schemaId
+				anpEpgRefMap["templateName"] = stateTemplateName
+				anpEpgRefMap["anpName"] = stateANPName
+				anpEpgRefMap["epgName"] = stateEpgName
+
+				pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", stateSiteId, stateTemplateName, stateANPName)
+				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+
+				_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+				if ers != nil {
+					return ers
 				}
 			}
 		}
 	}
 
-	if !found {
-		return fmt.Errorf("Cannot create subnet entry as specified parameters not found")
+	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/subnets/-", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), AnpEpgSubnetStruct)
+	if errs != nil {
+		return errs
 	}
-
 	return resourceMSOSchemaSiteAnpEpgSubnetRead(d, m)
 }
 

@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -104,7 +105,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	statesiteId := d.Get("site_id").(string)
+	stateSiteId := d.Get("site_id").(string)
 	stateTemplateName := d.Get("template_name").(string)
 	stateANPName := d.Get("anp_name").(string)
 	stateEpgName := d.Get("epg_name").(string)
@@ -137,12 +138,119 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 		microsegvlan = tempVar.(int)
 	}
 
-	portpath := fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
-	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/-", statesiteId, stateTemplateName, stateANPName, stateEpgName)
-	staticStruct := models.NewSchemaSiteAnpEpgStaticPort("add", pathsp, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return fmt.Errorf("No Sites found")
+	}
+
+	foundEpg := false
+	foundAnp := false
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
+
+		if apiSite == stateSiteId && apiTemplate == stateTemplateName {
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return err
+				}
+				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
+				match := re.FindStringSubmatch(anpRef)
+				if match[3] == stateANPName {
+					foundAnp = true
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return err
+						}
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						split := strings.Split(apiEpgRef, "/")
+						apiEPG := split[8]
+						if apiEPG == stateEpgName {
+							foundEpg = true
+							break
+
+						}
+					}
+					if !foundEpg {
+						log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
+						anpEpgRefMap := make(map[string]interface{})
+						anpEpgRefMap["schemaId"] = schemaId
+						anpEpgRefMap["templateName"] = stateTemplateName
+						anpEpgRefMap["anpName"] = stateANPName
+						anpEpgRefMap["epgName"] = stateEpgName
+
+						pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, stateANPName)
+						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+
+						_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+						if ers != nil {
+							return ers
+						}
+						break
+					}
+				}
+			}
+			if !foundAnp {
+				log.Printf("[DEBUG] Site Anp: Beginning Creation")
+
+				anpRefMap := make(map[string]interface{})
+				anpRefMap["schemaId"] = schemaId
+				anpRefMap["templateName"] = stateTemplateName
+				anpRefMap["anpName"] = stateANPName
+
+				pathAnp := fmt.Sprintf("/sites/%s-%s/anps/-", stateSiteId, stateTemplateName)
+				anpStruct := models.NewSchemaSiteAnp("add", pathAnp, anpRefMap)
+
+				_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+				if err != nil {
+					return err
+				}
+
+				log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
+
+				anpEpgRefMap := make(map[string]interface{})
+				anpEpgRefMap["schemaId"] = schemaId
+				anpEpgRefMap["templateName"] = stateTemplateName
+				anpEpgRefMap["anpName"] = stateANPName
+				anpEpgRefMap["epgName"] = stateEpgName
+
+				pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", stateSiteId, stateTemplateName, stateANPName)
+				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+
+				_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+				if ers != nil {
+					return ers
+				}
+			}
+		}
+	}
+
+	portpath := fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/-", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	staticStruct := models.NewSchemaSiteAnpEpgStaticPort("add", pathsp, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
+	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
+	if errs != nil {
+		return errs
 	}
 	return resourceMSOSchemaSiteAnpEpgStaticPortRead(d, m)
 }
@@ -277,19 +385,10 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	stateAnp := d.Get("anp_name").(string)
-	stateEpg := d.Get("epg_name").(string)
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
-	if err != nil {
-		return err
-	}
-	count, err := cont.ArrayCount("sites")
-	if err != nil {
-		return fmt.Errorf("No Sites found")
-	}
-	found := false
+	stateSiteId := d.Get("site_id").(string)
+	stateTemplateName := d.Get("template_name").(string)
+	stateANPName := d.Get("anp_name").(string)
+	stateEpgName := d.Get("epg_name").(string)
 
 	var pathType, pod, leaf, path, deploymentImmediacy, mode string
 	var vlan, microsegvlan int
@@ -318,6 +417,18 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 	if tempVar, ok := d.GetOk("micro_segvlan"); ok {
 		microsegvlan = tempVar.(int)
 	}
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return fmt.Errorf("No Sites found")
+	}
+
+	found := false
+
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
@@ -326,7 +437,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
 		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite && apiTemplate == stateTemplate {
+		if apiSite == stateSiteId && apiTemplate == stateTemplateName {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
@@ -339,7 +450,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
 				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
 				match := re.FindStringSubmatch(anpRef)
-				if match[3] == stateAnp {
+				if match[3] == stateANPName {
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return fmt.Errorf("Unable to get EPG list")
@@ -353,7 +464,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
 						match := re.FindStringSubmatch(apiEpgRef)
 						apiEPG := match[3]
-						if apiEPG == stateEpg {
+						if apiEPG == stateEpgName {
 							portCount, err := epgCont.ArrayCount("staticPorts")
 							if err != nil {
 								return fmt.Errorf("Unable to get Static Port list")
@@ -367,7 +478,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 								apiportpath := models.StripQuotes(portCont.S("path").String())
 								if portpath == apiportpath {
 									index := l
-									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSite, stateTemplate, stateAnp, stateEpg, index)
+									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSiteId, stateTemplateName, stateANPName, stateEpgName, index)
 									anpStruct := models.NewSchemaSiteAnpEpgStaticPort("replace", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
 									_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
 
