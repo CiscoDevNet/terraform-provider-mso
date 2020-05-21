@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -78,12 +79,125 @@ func resourceMSOSchemaSiteAnpEpgStaticleafCreate(d *schema.ResourceData, m inter
 	paths := d.Get("path").(string)
 	portEncapVlan := d.Get("port_encap_vlan").(int)
 
+	foundAnp := false
+	foundEpg := false
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return fmt.Errorf("No Sites found")
+	}
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
+
+		if apiSite == siteId && apiTemplate == templateName {
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return err
+				}
+
+				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
+
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
+				match := re.FindStringSubmatch(anpRef)
+
+				if match[3] == anpName {
+
+					foundAnp = true
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return err
+						}
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						split := strings.Split(apiEpgRef, "/")
+						apiEPG := split[8]
+
+						if apiEPG == epgName {
+							foundEpg = true
+							break
+						}
+					}
+
+					if !foundEpg {
+						log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
+						anpEpgRefMap := make(map[string]interface{})
+						anpEpgRefMap["schemaId"] = schemaId
+						anpEpgRefMap["templateName"] = apiTemplate
+						anpEpgRefMap["anpName"] = anpName
+						anpEpgRefMap["epgName"] = epgName
+
+						pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, anpName)
+						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+
+						_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+						if ers != nil {
+							return ers
+						}
+						break
+
+					}
+				}
+			}
+
+			if !foundAnp {
+				log.Printf("[DEBUG] Site Anp: Beginning Creation")
+
+				anpRefMap := make(map[string]interface{})
+				anpRefMap["schemaId"] = schemaId
+				anpRefMap["templateName"] = apiTemplate
+				anpRefMap["anpName"] = anpName
+
+				pathAnp := fmt.Sprintf("/sites/%s-%s/anps/-", apiSite, apiTemplate)
+				anpStruct := models.NewSchemaSiteAnp("add", pathAnp, anpRefMap)
+
+				_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+				if err != nil {
+					return err
+				}
+
+				log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
+				anpEpgRefMap := make(map[string]interface{})
+				anpEpgRefMap["schemaId"] = schemaId
+				anpEpgRefMap["templateName"] = apiTemplate
+				anpEpgRefMap["anpName"] = anpName
+				anpEpgRefMap["epgName"] = epgName
+
+				pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, anpName)
+				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+
+				_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+				if ers != nil {
+					return ers
+				}
+
+			}
+
+		}
+	}
+
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticLeafs/-", siteId, templateName, anpName, epgName)
 	anpEpgStaticStruct := models.NewSchemaSiteAnpEpgStaticleaf("add", path, paths, portEncapVlan)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStaticStruct)
-	if err != nil {
-		return err
+	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStaticStruct)
+	if errs != nil {
+		return errs
 	}
 	return resourceMSOSchemaSiteAnpEpgStaticleafRead(d, m)
 }
