@@ -157,6 +157,8 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 		if err1 != nil {
 			return err1
 		}
+	}else{
+		return fmt.Errorf("Filter Type is not valid")
 	}
 
 	return resourceMSOTemplateContractFilterRead(d, m)
@@ -297,8 +299,9 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 								}
 							}
 						}
+					}else{
+						return fmt.Errorf("Filter Type is not valid")
 					}
-
 				}
 			}
 		}
@@ -477,7 +480,10 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 								}
 							}
 						}
+					}else{
+						return fmt.Errorf("Filter Type is not valid")
 					}
+				
 				}
 			}
 		}
@@ -663,7 +669,10 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 								}
 							}
 						}
+					}else{
+						return fmt.Errorf("Filter Type is not valid")
 					}
+				
 
 				}
 			}
