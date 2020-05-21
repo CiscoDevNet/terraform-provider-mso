@@ -8,8 +8,8 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceMSOTemplateContractFilter() *schema.Resource {
@@ -157,7 +157,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 		if err1 != nil {
 			return err1
 		}
-	}else{
+	} else {
 		return fmt.Errorf("Filter Type is not valid")
 	}
 
@@ -299,7 +299,7 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 								}
 							}
 						}
-					}else{
+					} else {
 						return fmt.Errorf("Filter Type is not valid")
 					}
 				}
@@ -480,10 +480,10 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 								}
 							}
 						}
-					}else{
+					} else {
 						return fmt.Errorf("Filter Type is not valid")
 					}
-				
+
 				}
 			}
 		}
@@ -669,10 +669,9 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 								}
 							}
 						}
-					}else{
+					} else {
 						return fmt.Errorf("Filter Type is not valid")
 					}
-				
 
 				}
 			}
