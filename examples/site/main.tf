@@ -15,5 +15,5 @@ resource "mso_site" "site_test_1" {
  location        = {
     lat = 78.946
     long = 95.623
-                }
+ }
 }
