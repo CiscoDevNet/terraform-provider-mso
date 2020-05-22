@@ -16,7 +16,4 @@ resource "mso_site" "site_test_1" {
     lat = 78.946
     long = 95.623
                 }
- platform        = "demo_platform"
- cloud_providers = ["demo_Cloud_provider"]
-
 }
