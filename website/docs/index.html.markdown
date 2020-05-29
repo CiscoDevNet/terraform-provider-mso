@@ -27,6 +27,7 @@ Example Usage
     password = "password"
     # cisco-mso url
     url      = "https://173.36.219.193/"
+    domain   = "domain-name"
     insecure = true
 }
 
@@ -46,3 +47,4 @@ Following arguments are supported with Cisco MSO terraform provider.
 * `password` - (Required) Password of the user mentioned in username argument. It is required when you want to use token basedauthentication.
 * `url` - (Required) URL for CISCO MSO.
 * `insecure` - (Optional) This determines whether to use insecure HTTP connection or not. Default value is `true`.
+* `domain`- (Optional) Name of domain. Use this parameter to provide domain name in case of using remote user with the Terraform provider. Defaults to `Local`.
