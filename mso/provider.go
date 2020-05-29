@@ -35,6 +35,12 @@ func Provider() terraform.ResourceProvider {
 				Default:     true,
 				Description: "Allow insecure HTTPS client",
 			},
+			"domain": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MSO_DOMAIN", nil),
+				Description: "Domain name for remote user authentication",
+			},
 			"proxy_url": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -131,6 +137,7 @@ func configureClient(d *schema.ResourceData) (interface{}, error) {
 		URL:        d.Get("url").(string),
 		IsInsecure: d.Get("insecure").(bool),
 		ProxyUrl:   d.Get("proxy_url").(string),
+		Domain:     d.Get("domain").(string),
 	}
 
 	if err := config.Valid(); err != nil {
@@ -160,7 +167,7 @@ func (c Config) Valid() error {
 func (c Config) getClient() interface{} {
 	if c.Password != "" {
 
-		return client.GetClient(c.URL, c.Username, client.Password(c.Password), client.Insecure(c.IsInsecure), client.ProxyUrl(c.ProxyUrl))
+		return client.GetClient(c.URL, c.Username, client.Password(c.Password), client.Insecure(c.IsInsecure), client.ProxyUrl(c.ProxyUrl), client.Domain(c.Domain))
 
 	}
 	return nil
@@ -173,4 +180,5 @@ type Config struct {
 	IsInsecure bool
 	ProxyUrl   string
 	URL        string
+	Domain     string
 }
