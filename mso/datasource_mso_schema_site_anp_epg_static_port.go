@@ -84,7 +84,7 @@ func datasourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"micro_segvlan": &schema.Schema{
+			"micro_seg_vlan": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
@@ -191,7 +191,7 @@ func datasourceMSOSchemaSiteAnpEpgStaticPortRead(d *schema.ResourceData, m inter
 									}
 									if portCont.Exists("microSegVlan") {
 										tempvar1, _ := strconv.Atoi(fmt.Sprintf("%v", portCont.S("microSegVlan")))
-										d.Set("micro_segvlan", tempvar1)
+										d.Set("micro_seg_vlan", tempvar1)
 									}
 
 									if portCont.Exists("mode") {
