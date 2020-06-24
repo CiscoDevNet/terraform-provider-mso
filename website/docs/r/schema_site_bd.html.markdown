@@ -18,7 +18,7 @@ resource "mso_schema_site_bd" "bd1" {
   bd_name = "bd4"
   template_name = "Template1"
   site_id = "5c7c95b25100008f01c1ee3c"
-  host = false
+  host_route = false
 }
 ```
 
@@ -28,7 +28,7 @@ resource "mso_schema_site_bd" "bd1" {
 * `template_name` - (Required) Template where Site Bd to be created.
 * `site_id` - (Required) SiteID under which you want to deploy Bd.
 * `bd_name` - (Required) Name of Site Bd. The name of the Bd should be present in the Bd list of the given `schema_id` and `template_name`
-* `host` - (Optional) Value to check whether host-based routing is enabled. Default value is `false`.
+* `host_route` - (Optional) Value to check whether host-based routing is enabled. Default value is `false`.
 
 ## Attribute Reference ##
 

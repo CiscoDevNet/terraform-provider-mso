@@ -42,7 +42,7 @@ func dataSourceMSOSchemaSiteBd() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"host": &schema.Schema{
+			"host_route": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
@@ -95,7 +95,7 @@ func dataSourceMSOSchemaSiteBdRead(d *schema.ResourceData, m interface{}) error 
 					d.Set("template_name", match[2])
 					d.Set("site_id", apiSite)
 					if bdCont.Exists("hostBasedRouting") {
-						d.Set("host", bdCont.S("hostBasedRouting").Data().(bool))
+						d.Set("host_route", bdCont.S("hostBasedRouting").Data().(bool))
 					}
 					found = true
 					break

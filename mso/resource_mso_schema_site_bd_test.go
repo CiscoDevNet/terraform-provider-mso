@@ -61,7 +61,7 @@ func testAccCheckMSOSchemaSiteBdConfig_basic(host bool) string {
 		bd_name = "bd4"
 		template_name = "Template1"
 		site_id = "5c7c95b25100008f01c1ee3c"
-	    host = %v
+	    host_route = %v
 	  }`, host)
 }
 

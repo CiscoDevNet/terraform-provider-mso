@@ -30,4 +30,4 @@ data "mso_schema_site_bd" "st10" {
 ## Attribute Reference ##
 
 * `template_name` - (Optional) Template where Site Bd to be created.
-* `host` - (Optional) Value to check whether host-based routing is enabled. Default value is `false`.
+* `host_route` - (Optional) Value to check whether host-based routing is enabled. Default value is `false`.
