@@ -5,10 +5,10 @@ provider "mso" {
   insecure = true
 }
 
-resource "mso_schema_template_externalepg_subnet" "subnet1" {
+resource "mso_schema_template_external_epg_subnet" "subnet1" {
   schema_id             = "5ea809672c00003bc40a2799"
   template_name         = "Template1"
-  externalepg_name      =  "UntitledExternalEPG1"
+  external_epg_name      =  "UntitledExternalEPG1"
   ip                    = "10.102.100.0/0"
   name                  = "sddfgbany"
   scope                 = ["shared-rtctrl", "export-rtctrl"]

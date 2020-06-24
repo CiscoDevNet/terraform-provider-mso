@@ -1,19 +1,19 @@
 ---
 layout: "mso"
-page_title: "MSO: mso_schema_template_external-epg_contract"
-sidebar_current: "docs-mso-data-source-schema_template_external-epg_contract"
+page_title: "MSO: mso_schema_template_external_epg_contract"
+sidebar_current: "docs-mso-data-source-schema_template_external_epg_contract"
 description: |-
   MSO Schema Template External Endpoint Group Contract Data source.
 ---
 
-# mso_schema_template_externalepg_contract #
+# mso_schema_template_external_epg_contract #
 
 MSO Schema Template External Endpoint Group Contract Data source.
 
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_template_externalepg_contract" "st10" {
+data "mso_schema_template_external_epg_contract" "st10" {
  schema_id = "5ea809672c00003bc40a2799"
   template_name = "Template1"
   contract_name = "contract1006"
