@@ -1,19 +1,19 @@
 ---
 layout: "mso"
-page_title: "MSO: mso_schema_site_anp_epg_staticleaf"
-sidebar_current: "docs-mso-data-source-schema_site_anp_epg_staticleaf"
+page_title: "MSO: mso_schema_site_anp_epg_static_leaf"
+sidebar_current: "docs-mso-data-source-schema_site_anp_epg_static_leaf"
 description: |-
   Data source for MSO Schema Site Application Network Profiles Endpoint Groups StaticLeaf.
 ---
 
-# mso_schema_site_anp_epg_staticleaf #
+# mso_schema_site_anp_epg_static_leaf #
 
 Data source for MSO Schema Site Application Network Profiles Endpoint Groups StaticLeaf.
 
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_site_anp_epg_staticleaf" "st10" {
+data "mso_schema_site_anp_epg_static_leaf" "st10" {
   schema_id = "5c4d9fca270000a101f8094a"
   template_name = "Template1"
   site_id = "5c7c95b25100008f01c1ee3c"
