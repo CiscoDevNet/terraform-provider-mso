@@ -1,22 +1,22 @@
 ---
 layout: "mso"
-page_title: "MSO: mso_schema_template_external-epg"
-sidebar_current: "docs-mso-data-source-schema_template_external-epg"
+page_title: "MSO: mso_schema_template_external_epg"
+sidebar_current: "docs-mso-data-source-schema_template_external_epg"
 description: |-
   MSO Schema Template External Endpoint Group Data source.
 ---
 
-# mso_schema_template_externalepg #
+# mso_schema_template_external_epg #
 
 MSO Schema Template External Endpoint Group Data source.
 
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_template_externalepg" "externalEpg" {
+data "mso_schema_template_external_epg" "externalEpg" {
   schema_id = "5ea809672c00003bc40a2799"
   template_name = "Template1"
-  externalepg_name = "UntitledExternalEPG1"
+  external_epg_name = "UntitledExternalEPG1"
 }
 ```
 
@@ -24,7 +24,7 @@ data "mso_schema_template_externalepg" "externalEpg" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy External-epg.
 * `template_name` - (Required) Template where External-epg to be created.
-* `externalepg_name` - (Required) Name of External-epg.
+* `external_epg_name` - (Required) Name of External-epg.
 
 ## Attribute Reference ##
 

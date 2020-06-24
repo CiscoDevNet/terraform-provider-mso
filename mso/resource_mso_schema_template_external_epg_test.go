@@ -21,7 +21,7 @@ func TestAccMSOSchemaTemplateExternalepg_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateExternalepgConfig_basic("demo"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgExists("mso_schema_template_externalepg.template_externalepg", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgExists("mso_schema_template_external_epg.template_externalepg", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgAttributes("demo", &ss),
 				),
 			},
@@ -40,14 +40,14 @@ func TestAccMSOSchemaTemplateExternalepg_Update(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateExternalepgConfig_basic("demo"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgExists("mso_schema_template_externalepg.template_externalepg", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgExists("mso_schema_template_external_epg.template_externalepg", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgAttributes("demo", &ss),
 				),
 			},
 			{
 				Config: testAccCheckMSOTemplateExternalepgConfig_basic("vrf1"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgExists("mso_schema_template_externalepg.template_externalepg", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgExists("mso_schema_template_external_epg.template_externalepg", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgAttributes("vrf1", &ss),
 				),
 			},
@@ -57,10 +57,10 @@ func TestAccMSOSchemaTemplateExternalepg_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateExternalepgConfig_basic(name string) string {
 	return fmt.Sprintf(`
-	resource "mso_schema_template_externalepg" "template_externalepg" {
+	resource "mso_schema_template_external_epg" "template_externalepg" {
 		schema_id = "5ea809672c00003bc40a2799"
 		template_name = "Template1"
-		externalepg_name = "external_epg12"
+		external_epg_name = "external_epg12"
 		display_name = "external_epg12"
 		vrf_name = "%v"
 	  }
@@ -134,7 +134,7 @@ func testAccCheckMSOSchemaTemplateExternalepgDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
 
-		if rs.Type == "mso_schema_template_externalepg" {
+		if rs.Type == "mso_schema_template_external_epg" {
 			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
 			if err != nil {
 				return nil
