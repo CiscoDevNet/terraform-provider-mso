@@ -92,10 +92,15 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"intersite_multicaste_source": &schema.Schema{
+			"intersite_multicast_source": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
+				Default:  false,
+			},
+			"proxy_arp": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
 			},
 			"preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -119,7 +124,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	displayName := d.Get("display_name").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
-	var uSegEpg, intersiteMulticasteSource, preferredGroup bool
+	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
@@ -127,8 +132,11 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	if useg_epg, ok := d.GetOk("useg_epg"); ok {
 		uSegEpg = useg_epg.(bool)
 	}
-	if intersite_multicaste_source, ok := d.GetOk("intersite_multicaste_source"); ok {
-		intersiteMulticasteSource = intersite_multicaste_source.(bool)
+	if intersite_multicast_source, ok := d.GetOk("intersite_multicast_source"); ok {
+		intersiteMulticasteSource = intersite_multicast_source.(bool)
+	}
+	if proxy_arp, ok := d.GetOk("proxy_arp"); ok {
+		proxyArp = proxy_arp.(bool)
 	}
 	if preferred_group, ok := d.GetOk("preferred_group"); ok {
 		preferredGroup = preferred_group.(bool)
@@ -166,7 +174,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/-", templateName, anpName)
-	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -232,7 +240,12 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
 							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
-							d.Set("intersite_multicaste_source", epgCont.S("proxyArp").Data().(bool))
+							if epgCont.Exists("mCastSource") {
+								d.Set("intersite_multicast_source", epgCont.S("mCastSource").Data().(bool))
+							}
+							if epgCont.Exists("proxyArp") {
+								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
+							}
 							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
 
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
@@ -280,7 +293,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	displayName := d.Get("display_name").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
-	var uSegEpg, intersiteMulticasteSource, preferredGroup bool
+	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
@@ -288,8 +301,11 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	if useg_epg, ok := d.GetOk("useg_epg"); ok {
 		uSegEpg = useg_epg.(bool)
 	}
-	if intersite_multicaste_source, ok := d.GetOk("intersite_multicaste_source"); ok {
-		intersiteMulticasteSource = intersite_multicaste_source.(bool)
+	if intersite_multicast_source, ok := d.GetOk("intersite_multicast_source"); ok {
+		intersiteMulticasteSource = intersite_multicast_source.(bool)
+	}
+	if proxy_arp, ok := d.GetOk("proxy_arp"); ok {
+		proxyArp = proxy_arp.(bool)
 	}
 	if preferred_group, ok := d.GetOk("preferred_group"); ok {
 		preferredGroup = preferred_group.(bool)
@@ -326,7 +342,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -349,7 +365,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	displayName := d.Get("display_name").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
-	var uSegEpg, intersiteMulticasteSource, preferredGroup bool
+	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
@@ -357,8 +373,11 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	if useg_epg, ok := d.GetOk("useg_epg"); ok {
 		uSegEpg = useg_epg.(bool)
 	}
-	if intersite_multicaste_source, ok := d.GetOk("intersite_multicaste_source"); ok {
-		intersiteMulticasteSource = intersite_multicaste_source.(bool)
+	if intersite_multicast_source, ok := d.GetOk("intersite_multicast_source"); ok {
+		intersiteMulticasteSource = intersite_multicast_source.(bool)
+	}
+	if proxy_arp, ok := d.GetOk("proxy_arp"); ok {
+		proxyArp = proxy_arp.(bool)
 	}
 	if preferred_group, ok := d.GetOk("preferred_group"); ok {
 		preferredGroup = preferred_group.(bool)
@@ -395,7 +414,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, vrfRefMap, bdRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 

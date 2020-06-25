@@ -40,5 +40,6 @@ data "mso_schema_template_anp_epg" "sepg10" {
 * `display_name` - (Optional) The name as displayed on the MSO web interface.
 * `useg_epg` - (Optional) Boolean flag to enable or disable whether this is a USEG EPG.
 * `intra_epg` - (Optional) Whether intra EPG isolation is enforced. choices: [ enforced, unenforced ]
-* `intersite_multicaste_source` - (Optional) Whether intersite multicast source is enabled.
+* `intersite_multicast_source` - (Optional) Whether intersite multicast source is enabled. Default to false.
+* `proxy_arp` - (Optional) Whether to enable Proxy ARP or not. (For Forwarding control) Default to false.
 * `preferred_group` - (Optional) Boolean flag to enable or disable whether this EPG is added to preferred group.
