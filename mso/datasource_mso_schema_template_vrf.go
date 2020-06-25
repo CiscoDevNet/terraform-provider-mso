@@ -42,6 +42,11 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+
+			"vzany": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		}),
 	}
 }
@@ -87,6 +92,10 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 					if vrfCont.Exists("l3MCast") {
 						l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
 						d.Set("layer3_multicast", l3Mcast)
+					}
+					if vrfCont.Exists("vzAnyEnabled") {
+						vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
+						d.Set("vzany", vzAnyEnabled)
 					}
 					found = true
 					break

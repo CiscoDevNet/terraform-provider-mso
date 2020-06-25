@@ -71,6 +71,7 @@ func testAccCheckMsoSchemaTemplateVrfConfig_basic(name string) string {
 		name= "vrf982"
 		display_name="%s"
 		layer3_multicast=true
+		vzany=false
 	  }
 	`, name)
 }
@@ -133,6 +134,11 @@ func testAccCheckMsoSchemaTemplateVrfExists(schemaName string, schemaTemplateVrf
 				if vrfCont.Exists("l3MCast") {
 					l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
 					stvt.Layer3Multicast = l3Mcast
+				}
+
+				if vrfCont.Exists("vzAnyEnabled") {
+					vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
+					stvt.VZAny = vzAnyEnabled
 				}
 			}
 		}
@@ -210,4 +216,5 @@ type SchemaTemplateVrfTest struct {
 	Name            string `json:",omitempty"`
 	DisplayName     string `json:",omitempty"`
 	Layer3Multicast bool   `json:",omitempty"`
+	VZAny           bool   `json:",omitempty"`
 }

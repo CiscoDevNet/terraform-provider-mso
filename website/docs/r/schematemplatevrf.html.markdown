@@ -14,12 +14,13 @@ Manages MSO Resource Schema Template Vrf
 
 ```hcl
 	resource "mso_schema_template_vrf" "vrf1" {
-		schema_id= "${mso_schema.schema1.id}"
-		template="temp3"
-		name= "vrf982"
-		display_name="vz1"
-		layer3_multicast=false
-	  }
+		schema_id    	= "${mso_schema.schema1.id}"
+		template	 	= "temp3"
+		name         	= "vrf982"
+		display_name 	= "vz1"
+		layer3_multicast= false
+		vzany 			= false
+	}
 ```
 
 ## Argument Reference ##
@@ -30,6 +31,7 @@ Manages MSO Resource Schema Template Vrf
 * `template` - (Required) template associated with the vrf.
 * `display_name` - (Required) The name as displayed on the MSO web interface.
 * `layer3_multicast` - (Optional) Whether to enable L3 multicast.
+* `vzany` - (Optional) Whether to enable vzany.
 
 
 ## Attribute Reference ##

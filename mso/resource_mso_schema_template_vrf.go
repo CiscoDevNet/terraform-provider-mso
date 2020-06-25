@@ -47,6 +47,12 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"vzany": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -80,7 +86,12 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) e
 		l3m = L3M.(bool)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", "/templates/"+templateName+"/vrfs/-", Name, displayName, l3m)
+	var vzany bool
+	if vzAny, ok := d.GetOk("vzany"); ok {
+		vzany = vzAny.(bool)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", "/templates/"+templateName+"/vrfs/-", Name, displayName, l3m, vzany)
 
 	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -124,7 +135,12 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) e
 		l3m = L3M.(bool)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", "/templates/"+templateName+"/vrfs/"+Name, Name, displayName, l3m)
+	var vzany bool
+	if vzAny, ok := d.GetOk("vzany"); ok {
+		vzany = vzAny.(bool)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", "/templates/"+templateName+"/vrfs/"+Name, Name, displayName, l3m, vzany)
 
 	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -191,6 +207,10 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) err
 						l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
 						d.Set("layer3_multicast", l3Mcast)
 					}
+					if vrfCont.Exists("vzAnyEnabled") {
+						vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
+						d.Set("vzany", vzAnyEnabled)
+					}
 
 					found = true
 					break
@@ -220,7 +240,12 @@ func resourceMSOSchemaTemplateVrfDelete(d *schema.ResourceData, m interface{}) e
 	if L3M, ok := d.GetOk("layer3_multicast"); ok {
 		l3m = L3M.(bool)
 	}
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("remove", "/templates/"+template+"/vrfs/"+name, "", "", l3m)
+
+	var vzany bool
+	if vzAny, ok := d.GetOk("vzany"); ok {
+		vzany = vzAny.(bool)
+	}
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("remove", "/templates/"+template+"/vrfs/"+name, "", "", l3m, vzany)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {

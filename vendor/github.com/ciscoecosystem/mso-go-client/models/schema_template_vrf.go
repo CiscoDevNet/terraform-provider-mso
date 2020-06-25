@@ -1,24 +1,24 @@
 package models
 
 type SchemaTemplateVrf struct {
-	Ops         string `json:",omitempty"`
-	Path         string `json:",omitempty"`
-	Value       map[string]interface{} `json:",omitempty"`
-	
+	Ops   string                 `json:",omitempty"`
+	Path  string                 `json:",omitempty"`
+	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateVrf(ops, path, Name,displayName string,l3m bool) *SchemaSite {
+func NewSchemaTemplateVrf(ops, path, Name, displayName string, l3m, vzany bool) *SchemaSite {
 	var VrfMap map[string]interface{}
-	
-	if ops !="remove" {
+
+	if ops != "remove" {
 		VrfMap = map[string]interface{}{
-			"displayName":     displayName,
-			"name":            Name,
-			"l3MCast":         l3m,
+			"displayName":  displayName,
+			"name":         Name,
+			"l3MCast":      l3m,
+			"vzAnyEnabled": vzany,
 		}
-	}else{
-		
-		VrfMap=nil
+	} else {
+
+		VrfMap = nil
 	}
 
 	return &SchemaSite{
