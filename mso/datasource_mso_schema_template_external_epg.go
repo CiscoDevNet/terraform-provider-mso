@@ -30,7 +30,7 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"externalepg_name": &schema.Schema{
+			"external_epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -78,7 +78,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 	}
 	stateTemplate := d.Get("template_name").(string)
 	found := false
-	stateExternalepg := d.Get("externalepg_name")
+	stateExternalepg := d.Get("external_epg_name")
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -99,7 +99,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 				apiExternalepg := models.StripQuotes(externalepgCont.S("name").String())
 				if apiExternalepg == stateExternalepg {
 					d.SetId(apiExternalepg)
-					d.Set("externalepg_name", apiExternalepg)
+					d.Set("external_epg_name", apiExternalepg)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))

@@ -20,7 +20,7 @@ func TestAccMSOSchemaTemplateExternalepgSubnet_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateExternalepgSubnetConfig_basic("sub1"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgSubnetExists("mso_schema_template_externalepg_subnet.subnet1", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgSubnetExists("mso_schema_template_external_epg_subnet.subnet1", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgSubnetAttributes("sub1", &ss),
 				),
 			},
@@ -39,14 +39,14 @@ func TestAccMSOSchemaTemplateExternalepgSubnet_Update(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateExternalepgSubnetConfig_basic("sub1"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgSubnetExists("mso_schema_template_externalepg_subnet.subnet1", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgSubnetExists("mso_schema_template_external_epg_subnet.subnet1", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgSubnetAttributes("sub1", &ss),
 				),
 			},
 			{
 				Config: testAccCheckMSOTemplateExternalepgSubnetConfig_basic("sub2"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgSubnetExists("mso_schema_template_externalepg_subnet.subnet1", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgSubnetExists("mso_schema_template_external_epg_subnet.subnet1", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgSubnetAttributes("sub2", &ss),
 				),
 			},
@@ -56,10 +56,10 @@ func TestAccMSOSchemaTemplateExternalepgSubnet_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateExternalepgSubnetConfig_basic(name string) string {
 	return fmt.Sprintf(`
-	resource "mso_schema_template_externalepg_subnet" "subnet1" {
+	resource "mso_schema_template_external_epg_subnet" "subnet1" {
 		schema_id = "5ea809672c00003bc40a2799"
 		template_name = "Template1"
-		externalepg_name =  "UntitledExternalEPG1"
+		external_epg_name =  "UntitledExternalEPG1"
 		ip = "10.101.100.0/25"
 		name = "%v"
 		scope = ["shared-rtctrl"]
@@ -145,7 +145,7 @@ func testAccCheckMSOSchemaTemplateExternalepgSubnetDestroy(s *terraform.State) e
 
 	for _, rs := range s.RootModule().Resources {
 
-		if rs.Type == "mso_schema_template_externalepg_subnet" {
+		if rs.Type == "mso_schema_template_external_epg_subnet" {
 			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
 			if err != nil {
 				return nil

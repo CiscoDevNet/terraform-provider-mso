@@ -31,7 +31,7 @@ func dataSourceMSOTemplateExternalEpgSubnet() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"externalepg_name": &schema.Schema{
+			"external_epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -80,7 +80,7 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 	}
 	stateTemplate := d.Get("template_name").(string)
 	found := false
-	stateExternalepg := d.Get("externalepg_name")
+	stateExternalepg := d.Get("external_epg_name")
 	stateIP := d.Get("ip")
 
 	for i := 0; i < count; i++ {
@@ -115,7 +115,7 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 						if apiIP == stateIP {
 							d.Set("schema_id", schemaId)
 							d.Set("template_name", apiTemplate)
-							d.Set("externalepg_name", apiExternalepg)
+							d.Set("external_epg_name", apiExternalepg)
 							ip := models.StripQuotes(subnetsCont.S("ip").String())
 							idSubnet := strings.Split(ip, "/")
 							d.SetId(idSubnet[0])

@@ -5,7 +5,7 @@ provider "mso" {
   insecure = true
 }
 
-resource "mso_schema_site_anp_epg_staticleaf" "foo_schema_site_anp_epg_staticleaf" {
+resource "mso_schema_site_anp_epg_static_leaf" "foo_schema_site_anp_epg_staticleaf" {
   schema_id       = "5c4d9fca270000a101f8094a"
   template_name   = "Template1"
   site_id         = "5c7c95b25100008f01c1ee3c"

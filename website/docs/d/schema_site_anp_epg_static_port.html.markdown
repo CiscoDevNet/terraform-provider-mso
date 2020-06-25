@@ -43,7 +43,7 @@ data "mso_schema_site_anp_epg_static_port" "static_port" {
 
 ## Attribute Reference ##
 
-* `micro_segvlan` - (Optional) The microsegmentation VLAN id of the static port.
+* `micro_seg_vlan` - (Optional) The microsegmentation VLAN id of the static port.
 * `mode` - (Optional) The mode of the static port.
 * `deployment_immediacy` - (Optional) The deployment immediacy of the static port.
 * `vlan` - (Optional) The port encap VLAN id of the static port.

@@ -75,8 +75,8 @@ func testAccCheckMSOSchemaSiteAnpEpgDomainConfig_basic(immediacy string) string 
 		micro_seg_vlan = 46
 		port_encap_vlan_type = "vlan"
 		port_encap_vlan = 45
-		enhanced_lagpolicy_name = "name"
-		enhanced_lagpolicy_dn = "dn"
+		enhanced_lag_policy_name = "name"
+		enhanced_lag_policy_dn = "dn"
 	  
 	  }`, immediacy, immediacy)
 }

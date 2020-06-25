@@ -13,10 +13,10 @@ Data source for MSO Schema Template External EPG Subnet.
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_template_externalepg_subnet" "subnet1" {
+data "mso_schema_template_external_epg_subnet" "subnet1" {
   schema_id = "5c6c16d7270000c710f8094d"
   template_name = "Template1"
-  externalepg_name = "Internet"
+  external_epg_name = "Internet"
   ip = "30.1.1.0/24"
 }
 ```
@@ -25,7 +25,7 @@ data "mso_schema_template_externalepg_subnet" "subnet1" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy External EPG Subnet.
 * `template_name` - (Required) Template where External EPG Subnet to be created.
-* `externalepg_name` - (Required) Name of External EPG.
+* `external_epg_name` - (Required) Name of External EPG.
 * `ip` - (Required) The IP range in CIDR notation.
 
 ## Attribute Reference ##

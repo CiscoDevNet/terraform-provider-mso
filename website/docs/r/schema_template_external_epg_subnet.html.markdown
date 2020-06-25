@@ -13,10 +13,10 @@ Manages MSO Schema Template External EPG Subnet.
 ## Example Usage ##
 
 ```hcl
-resource "mso_schema_template_externalepg_subnet" "subnet1" {
+resource "mso_schema_template_external_epg_subnet" "subnet1" {
   schema_id = "5ea809672c00003bc40a2799"
   template_name = "Template1"
-  externalepg_name =  "UntitledExternalEPG1"
+  external_epg_name =  "UntitledExternalEPG1"
   ip = "10.101.100.0/0"
   name = "sddfgbany"
   scope = ["shared-rtctrl", "export-rtctrl"]
@@ -28,7 +28,7 @@ resource "mso_schema_template_externalepg_subnet" "subnet1" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy External EPG Subnet.
 * `template_name` - (Required) Template where External EPG Subnet to be created.
-* `externalepg_name` - (Required) Name of External EPG.
+* `external_epg_name` - (Required) Name of External EPG.
 * `ip` - (Required) The IP range in CIDR notation.
 * `name` - (Optional) Name of Subnet.
 * `scope` - (Optional) The scope of the subnet. Allowed values are `shared-rtctrl`, `export-rtctrl`, `shared-security`, `import-rtctrl`.

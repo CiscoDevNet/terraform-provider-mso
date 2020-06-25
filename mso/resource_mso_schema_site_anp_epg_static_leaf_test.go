@@ -21,7 +21,7 @@ func TestAccMSOSchemaSiteAnpEpgStaticleaf_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOSchemaSiteAnpEpgStaticleafConfig_basic(),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaSiteAnpEpgStaticleafExists("mso_schema_site_anp_epg_staticleaf.staticleaf1", &ss),
+					testAccCheckMSOSchemaSiteAnpEpgStaticleafExists("mso_schema_site_anp_epg_static_leaf.staticleaf1", &ss),
 					testAccCheckMSOSchemaSiteAnpEpgStaticleafAttributes(&ss),
 				),
 			},
@@ -31,7 +31,7 @@ func TestAccMSOSchemaSiteAnpEpgStaticleaf_Basic(t *testing.T) {
 
 func testAccCheckMSOSchemaSiteAnpEpgStaticleafConfig_basic() string {
 	return fmt.Sprintf(`
-	resource "mso_schema_site_anp_epg_staticleaf" "staticleaf1" {
+	resource "mso_schema_site_anp_epg_static_leaf" "staticleaf1" {
 		schema_id = "5c4d9fca270000a101f8094a"
 		template_name = "Template1"
 		site_id = "5c7c95b25100008f01c1ee3c"
@@ -142,7 +142,7 @@ func testAccCheckMSOSchemaSiteAnpEpgStaticleafDestroy(s *terraform.State) error 
 
 	for _, rs := range s.RootModule().Resources {
 
-		if rs.Type == "mso_schema_site_anp_epg_staticleaf" {
+		if rs.Type == "mso_schema_site_anp_epg_static_leaf" {
 			cont, err := client.GetViaURL("api/v1/schemas/5c4d9fca270000a101f8094a")
 			if err != nil {
 				return err

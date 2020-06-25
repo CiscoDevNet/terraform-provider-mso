@@ -110,12 +110,12 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"enhanced_lagpolicy_name": &schema.Schema{
+			"enhanced_lag_policy_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"enhanced_lagpolicy_dn": &schema.Schema{
+			"enhanced_lag_policy_dn": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -254,8 +254,8 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 
 									if domainCont.Exists("epgLagPol") {
 										if domainCont.Exists("epgLagPol", "enhancedLagPol") {
-											d.Set("enhanced_lagpolicy_name", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "name").String()))
-											d.Set("enhanced_lagpolicy_dn", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "dn").String()))
+											d.Set("enhanced_lag_policy_name", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "name").String()))
+											d.Set("enhanced_lag_policy_dn", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "dn").String()))
 										}
 									}
 									found = true

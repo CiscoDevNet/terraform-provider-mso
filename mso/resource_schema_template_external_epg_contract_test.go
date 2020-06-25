@@ -21,7 +21,7 @@ func TestAccMSOSchemaTemplateExternalepgContract_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateExternalepgContractConfig_basic("provider"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgContractExists("mso_schema_template_externalepg_contract.c1", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgContractExists("mso_schema_template_external_epg_contract.c1", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgContractAttributes("provider", &ss),
 				),
 			},
@@ -40,14 +40,14 @@ func TestAccMSOSchemaTemplateExternalepgContract_Update(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateExternalepgContractConfig_basic("provider"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgContractExists("mso_schema_template_externalepg_contract.c1", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgContractExists("mso_schema_template_external_epg_contract.c1", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgContractAttributes("provider", &ss),
 				),
 			},
 			{
 				Config: testAccCheckMSOTemplateExternalepgContractConfig_basic("consumer"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExternalepgContractExists("mso_schema_template_externalepg_contract.c1", &ss),
+					testAccCheckMSOSchemaTemplateExternalepgContractExists("mso_schema_template_external_epg_contract.c1", &ss),
 					testAccCheckMSOSchemaTemplateExternalepgContractAttributes("consumer", &ss),
 				),
 			},
@@ -57,7 +57,7 @@ func TestAccMSOSchemaTemplateExternalepgContract_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateExternalepgContractConfig_basic(name string) string {
 	return fmt.Sprintf(`
-	resource "mso_schema_template_externalepg_contract" "c1" {
+	resource "mso_schema_template_external_epg_contract" "c1" {
 		schema_id = "5ea809672c00003bc40a2799"
 		template_name = "Template1"
 		contract_name = "contract9999"
@@ -147,7 +147,7 @@ func testAccCheckMSOSchemaTemplateExternalepgContractDestroy(s *terraform.State)
 
 	for _, rs := range s.RootModule().Resources {
 
-		if rs.Type == "mso_schema_template_externalepg" {
+		if rs.Type == "mso_schema_template_external_epg" {
 			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
 			if err != nil {
 				return nil

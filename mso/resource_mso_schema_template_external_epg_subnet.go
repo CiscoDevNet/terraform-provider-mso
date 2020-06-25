@@ -34,7 +34,7 @@ func resourceMSOTemplateExtenalepgSubnet() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"externalepg_name": &schema.Schema{
+			"external_epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -71,7 +71,7 @@ func resourceMSOTemplateExtenalepgSubnetCreate(d *schema.ResourceData, m interfa
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	extenalepgName := d.Get("externalepg_name").(string)
+	extenalepgName := d.Get("external_epg_name").(string)
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string
@@ -118,7 +118,7 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 	}
 	stateTemplate := d.Get("template_name").(string)
 	found := false
-	stateExternalepg := d.Get("externalepg_name")
+	stateExternalepg := d.Get("external_epg_name")
 	stateIP := d.Get("ip")
 
 	for i := 0; i < count; i++ {
@@ -153,7 +153,7 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 						if apiIP == stateIP {
 							d.Set("schema_id", schemaId)
 							d.Set("template_name", apiTemplate)
-							d.Set("externalepg_name", apiExternalepg)
+							d.Set("external_epg_name", apiExternalepg)
 							d.SetId(apiIP)
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
 							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
@@ -191,7 +191,7 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	extenalepgName := d.Get("externalepg_name").(string)
+	extenalepgName := d.Get("external_epg_name").(string)
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string
@@ -238,7 +238,7 @@ func resourceMSOTemplateExtenalepgSubnetDelete(d *schema.ResourceData, m interfa
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	extenalepgName := d.Get("externalepg_name").(string)
+	extenalepgName := d.Get("external_epg_name").(string)
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string

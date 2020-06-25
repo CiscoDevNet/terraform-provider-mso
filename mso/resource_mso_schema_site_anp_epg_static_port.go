@@ -86,7 +86,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"micro_segvlan": &schema.Schema{
+			"micro_seg_vlan": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
@@ -134,7 +134,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 	if tempVar, ok := d.GetOk("vlan"); ok {
 		vlan = tempVar.(int)
 	}
-	if tempVar, ok := d.GetOk("micro_segvlan"); ok {
+	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
 		microsegvlan = tempVar.(int)
 	}
 
@@ -354,7 +354,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortRead(d *schema.ResourceData, m interfa
 										if err != nil {
 											return err
 										}
-										d.Set("micro_segvlan", tempvar1)
+										d.Set("micro_seg_vlan", tempvar1)
 									}
 									if portCont.Exists("mode") {
 										d.Set("mode", models.StripQuotes(portCont.S("mode").String()))
@@ -414,7 +414,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 	if tempVar, ok := d.GetOk("vlan"); ok {
 		vlan = tempVar.(int)
 	}
-	if tempVar, ok := d.GetOk("micro_segvlan"); ok {
+	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
 		microsegvlan = tempVar.(int)
 	}
 
@@ -547,7 +547,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 	if tempVar, ok := d.GetOk("vlan"); ok {
 		vlan = tempVar.(int)
 	}
-	if tempVar, ok := d.GetOk("micro_segvlan"); ok {
+	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
 		microsegvlan = tempVar.(int)
 	}
 	for i := 0; i < count; i++ {

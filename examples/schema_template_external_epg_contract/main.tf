@@ -6,7 +6,7 @@ provider "mso" {
 }
 
 
-resource "mso_schema_template_externalepg_contract" "c1" {
+resource "mso_schema_template_external_epg_contract" "c1" {
   schema_id                 = "5ea809672c00003bc40a2799"
   template_name             = "Template1"
   contract_name             = "contractdemo"
