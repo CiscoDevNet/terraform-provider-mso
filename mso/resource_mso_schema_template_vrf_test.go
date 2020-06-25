@@ -71,6 +71,7 @@ func testAccCheckMsoSchemaTemplateVrfConfig_basic(name string) string {
 		name= "vrf982"
 		display_name="%s"
 		layer3_multicast=true
+		vzany=false
 	  }
 	`, name)
 }
