@@ -6,7 +6,7 @@ type TemplateExternalepg struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateExternalepg(ops, path, name, displayName, externalEpgType string, preferredGroup bool, vrfRef map[string]interface{}, l3outRef map[string]interface{}) *TemplateExternalepg {
+func NewTemplateExternalepg(ops, path, name, displayName, externalEpgType string, preferredGroup bool, vrfRef map[string]interface{}, l3outRef map[string]interface{}, anpRef map[string]interface{}) *TemplateExternalepg {
 	var externalepgMap map[string]interface{}
 	externalepgMap = map[string]interface{}{
 		"name":           name,
@@ -18,6 +18,10 @@ func NewTemplateExternalepg(ops, path, name, displayName, externalEpgType string
 
 	if l3outRef != nil {
 		externalepgMap["l3outRef"] = l3outRef
+	}
+
+	if anpRef != nil {
+		externalepgMap["anpRef"] = anpRef
 	}
 
 	return &TemplateExternalepg{

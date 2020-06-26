@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -56,6 +57,24 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+			},
+			"anp_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"anp_schema_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"anp_template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
 	}
@@ -110,6 +129,18 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 					d.Set("vrf_name", match[3])
 					d.Set("vrf_schema_id", match[1])
 					d.Set("vrf_template_name", match[2])
+
+					anpRef := models.StripQuotes(externalepgCont.S("anpRef").String())
+					if anpRef != "{}" {
+						tokens := strings.Split(anpRef, "/")
+						d.Set("anp_name", tokens[len(tokens)-1])
+						d.Set("anp_schema_id", tokens[len(tokens)-5])
+						d.Set("anp_template_name", tokens[len(tokens)-3])
+					} else {
+						d.Set("anp_name", "")
+						d.Set("anp_schema_id", "")
+						d.Set("anp_template_name", "")
+					}
 
 					found = true
 					break
