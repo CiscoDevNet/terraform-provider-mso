@@ -16,4 +16,5 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
   external_epg_type          = "on-premise"
   l3out_name                 = "nk_l3out"
   include_in_preferred_group = false
+  anp_name                   = "demo"
 }
