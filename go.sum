@@ -44,6 +44,8 @@ github.com/ciscoecosystem/mso-go-client v0.0.3 h1:3LbSPCo/boum5kwpWNHtBl90IreTCe
 github.com/ciscoecosystem/mso-go-client v0.0.3/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/ciscoecosystem/mso-go-client v0.0.4-0.20200625085315-fc8fc37508ab h1:JBtcmmV4eBJ4G7YahMPPx367kZewUOoBZQvMMa86HeQ=
 github.com/ciscoecosystem/mso-go-client v0.0.4-0.20200625085315-fc8fc37508ab/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
+github.com/ciscoecosystem/mso-go-client v0.4.6 h1:niOFz/u+wLftatVQwsVwLMCvbzx8uvghzmDryiUqZlM=
+github.com/ciscoecosystem/mso-go-client v0.4.6/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/ciscoecosystem/mso-go-client v1.0.0 h1:zYt/t0M4LRoR34jCMf9s6/tOjgmPFbIRUpo9d7N0YMo=
 github.com/ciscoecosystem/mso-go-client v1.0.0/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=

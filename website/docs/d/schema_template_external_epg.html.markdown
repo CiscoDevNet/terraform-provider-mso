@@ -32,3 +32,6 @@ data "mso_schema_template_external_epg" "externalEpg" {
 * `vrf_name` - (Optional) The VRF associated to this External-epg. VRF must exist.
 * `vrf_schema_id` - (Optional) SchemaID of VRF. schema_id of External-epg will be used if not provided. Should use this parameter when VRF is in different schema than external-epg.
 * `vrf_template_name` - (Optional) Template Name of VRF. template_name of External-epg will be used if not provided.
+* `anp_name` - (Optional) Name of anp to attach.
+* `anp_schema_id` - (Optional) SchemaId of anp. `schema_id` will be used if not provided.
+* `anp_template_name` - (Optional) Template name of anp. `template_name` will be used if not provided.

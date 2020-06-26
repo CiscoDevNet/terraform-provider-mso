@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -87,6 +88,24 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"anp_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"anp_schema_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"anp_template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
 			"include_in_preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -156,8 +175,30 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 
 	}
 
+	anpRefMap := make(map[string]interface{})
+	if aName, ok := d.GetOk("anp_name"); ok {
+		anpName := aName.(string)
+
+		var anpSchemaID, anpTemplateName string
+		if schID, ok := d.GetOk("anp_schema_id"); ok {
+			anpSchemaID = schID.(string)
+		} else {
+			anpSchemaID = schemaID
+		}
+
+		if tmpName, ok := d.GetOk("anp_template_name"); ok {
+			anpTemplateName = tmpName.(string)
+		} else {
+			anpTemplateName = templateName
+		}
+
+		anpRefMap["schemaId"] = anpSchemaID
+		anpRefMap["templateName"] = anpTemplateName
+		anpRefMap["anpName"] = anpName
+	}
+
 	path := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
-	externalepgStruct := models.NewTemplateExternalepg("add", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap)
+	externalepgStruct := models.NewTemplateExternalepg("add", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 
@@ -234,6 +275,19 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 						d.Set("l3out_schema_id", "")
 						d.Set("l3out_template_name", "")
 					}
+
+					anpRef := models.StripQuotes(externalepgCont.S("anpRef").String())
+					if anpRef != "{}" {
+						tokens := strings.Split(anpRef, "/")
+						d.Set("anp_name", tokens[len(tokens)-1])
+						d.Set("anp_schema_id", tokens[len(tokens)-5])
+						d.Set("anp_template_name", tokens[len(tokens)-3])
+					} else {
+						d.Set("anp_name", "")
+						d.Set("anp_schema_id", "")
+						d.Set("anp_template_name", "")
+					}
+
 					found = true
 					break
 				}
@@ -310,8 +364,30 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 
 	}
 
+	anpRefMap := make(map[string]interface{})
+	if aName, ok := d.GetOk("anp_name"); ok {
+		anpName := aName.(string)
+
+		var anpSchemaID, anpTemplateName string
+		if schID, ok := d.GetOk("anp_schema_id"); ok {
+			anpSchemaID = schID.(string)
+		} else {
+			anpSchemaID = schemaID
+		}
+
+		if tmpName, ok := d.GetOk("anp_template_name"); ok {
+			anpTemplateName = tmpName.(string)
+		} else {
+			anpTemplateName = templateName
+		}
+
+		anpRefMap["schemaId"] = anpSchemaID
+		anpRefMap["templateName"] = anpTemplateName
+		anpRefMap["anpName"] = anpName
+	}
+
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-	externalepgStruct := models.NewTemplateExternalepg("replace", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap)
+	externalepgStruct := models.NewTemplateExternalepg("replace", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 
@@ -380,8 +456,30 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 
 	}
 
+	anpRefMap := make(map[string]interface{})
+	if aName, ok := d.GetOk("anp_name"); ok {
+		anpName := aName.(string)
+
+		var anpSchemaID, anpTemplateName string
+		if schID, ok := d.GetOk("anp_schema_id"); ok {
+			anpSchemaID = schID.(string)
+		} else {
+			anpSchemaID = schemaID
+		}
+
+		if tmpName, ok := d.GetOk("anp_template_name"); ok {
+			anpTemplateName = tmpName.(string)
+		} else {
+			anpTemplateName = templateName
+		}
+
+		anpRefMap["schemaId"] = anpSchemaID
+		anpRefMap["templateName"] = anpTemplateName
+		anpRefMap["anpName"] = anpName
+	}
+
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-	externalepgStruct := models.NewTemplateExternalepg("remove", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap)
+	externalepgStruct := models.NewTemplateExternalepg("remove", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 	if err != nil {
