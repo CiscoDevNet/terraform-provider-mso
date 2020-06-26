@@ -14,11 +14,12 @@ Manages MSO Schema Template External Endpoint Group.
 
 ```hcl
 resource "mso_schema_template_external_epg" "template_externalepg" {
-  schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
+  schema_id         = "5ea809672c00003bc40a2799"
+  template_name     = "Template1"
   external_epg_name = "external_epg12"
-  display_name = "external_epg12"
-  vrf_name = "vrf1"
+  display_name      = "external_epg12"
+  vrf_name          = "vrf1"
+  anp_name          = "demo
 }
 ```
 
@@ -36,6 +37,9 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 * `l3out_name` - (Optional) Name of L3out to attach. Should use this parameter with `external_epg_type` as `on-premise`.
 * `l3out_schema_id` - (Optional) SchemaId of L3out. `schema_id` will be used if not provided. Should use this parameter with `external_epg_type` as `on-premise`.
 * `l3out_template_name` - (Optional) Template name of L3out. `template_name` will be used if not provided. Should use this parameter with `external_epg_type` as `on-premise`.
+* `anp_name` - (Optional) Name of anp to attach.
+* `anp_schema_id` - (Optional) SchemaId of anp. `schema_id` will be used if not provided.
+* `anp_template_name` - (Optional) Template name of anp. `template_name` will be used if not provided.
 
 NOTE: SchemaID and Template Name for VRF and L3out must be same.
 
