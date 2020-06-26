@@ -89,7 +89,12 @@ func datasourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"intersite_multicaste_source": &schema.Schema{
+			"intersite_multicast_source": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"proxy_arp": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
@@ -159,7 +164,12 @@ func dataSourceMSOTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) erro
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
 							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
-							d.Set("intersite_multicaste_source", epgCont.S("proxyArp").Data().(bool))
+							if epgCont.Exists("mCastSource") {
+								d.Set("intersite_multicast_source", epgCont.S("mCastSource").Data().(bool))
+							}
+							if epgCont.Exists("proxyArp") {
+								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
+							}
 							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
 
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())

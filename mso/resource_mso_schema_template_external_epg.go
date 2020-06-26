@@ -60,6 +60,38 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"external_epg_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"on-premise",
+					"cloud",
+				}, false),
+			},
+			"l3out_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"l3out_schema_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"l3out_template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"include_in_preferred_group": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		}),
 	}
 }
@@ -74,6 +106,12 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
+	var extEpgType string
+	if tempVar, ok := d.GetOk("external_epg_type"); ok {
+		extEpgType = tempVar.(string)
+	} else {
+		extEpgType = "on-premise"
+	}
 	var vrf_schema_id, vrf_template_name string
 
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
@@ -87,13 +125,39 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 		vrf_template_name = templateName
 	}
 
+	preferredGroup := d.Get("include_in_preferred_group").(bool)
+
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
+	var l3outRefMap map[string]interface{}
+	if tempVar, ok := d.GetOk("l3out_name"); ok {
+		l3outName := tempVar.(string)
+		var l3outSchemaID, l3outTemplate string
+		if tmpVar, oki := d.GetOk("l3out_schema_id"); oki {
+			l3outSchemaID = tmpVar.(string)
+		} else {
+			l3outSchemaID = schemaID
+		}
+
+		if tpVar, okj := d.GetOk("l3out_template_name"); okj {
+			l3outTemplate = tpVar.(string)
+		} else {
+			l3outTemplate = templateName
+		}
+
+		l3outRefMap = make(map[string]interface{})
+
+		l3outRefMap["schemaId"] = l3outSchemaID
+		l3outRefMap["templateName"] = l3outTemplate
+		l3outRefMap["l3outName"] = l3outName
+
+	}
+
 	path := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
-	externalepgStruct := models.NewTemplateExternalepg("add", path, extenalepgName, displayName, vrfRefMap)
+	externalepgStruct := models.NewTemplateExternalepg("add", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 
@@ -145,6 +209,12 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
+					d.Set("external_epg_type", models.StripQuotes(externalepgCont.S("extEpgType").String()))
+					if externalepgCont.Exists("preferredGroup") {
+						d.Set("include_in_preferred_group", externalepgCont.S("preferredGroup").Data().(bool))
+					} else {
+						d.Set("include_in_preferred_group", false)
+					}
 
 					vrfRef := models.StripQuotes(externalepgCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -152,7 +222,18 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 					d.Set("vrf_name", match[3])
 					d.Set("vrf_schema_id", match[1])
 					d.Set("vrf_template_name", match[2])
-
+					l3outRef := models.StripQuotes(externalepgCont.S("l3outRef").String())
+					if l3outRef != "{}" {
+						reL3out := regexp.MustCompile("/schemas/(.*)/templates/(.*)/l3outs/(.*)")
+						matchL3out := reL3out.FindStringSubmatch(l3outRef)
+						d.Set("l3out_name", matchL3out[3])
+						d.Set("l3out_schema_id", matchL3out[1])
+						d.Set("l3out_template_name", matchL3out[2])
+					} else {
+						d.Set("l3out_name", "")
+						d.Set("l3out_schema_id", "")
+						d.Set("l3out_template_name", "")
+					}
 					found = true
 					break
 				}
@@ -178,6 +259,14 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 	displayName := d.Get("display_name").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
+	preferredGroup := d.Get("include_in_preferred_group").(bool)
+
+	var extEpgType string
+	if tempVar, ok := d.GetOk("external_epg_type"); ok {
+		extEpgType = tempVar.(string)
+	} else {
+		extEpgType = "on-premise"
+	}
 
 	var vrf_schema_id, vrf_template_name string
 
@@ -197,8 +286,32 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
+	var l3outRefMap map[string]interface{}
+	if tempVar, ok := d.GetOk("l3out_name"); ok {
+		l3outName := tempVar.(string)
+		var l3outSchemaID, l3outTemplate string
+		if tmpVar, oki := d.GetOk("l3out_schema_id"); oki {
+			l3outSchemaID = tmpVar.(string)
+		} else {
+			l3outSchemaID = schemaID
+		}
+
+		if tpVar, okj := d.GetOk("l3out_template_name"); okj {
+			l3outTemplate = tpVar.(string)
+		} else {
+			l3outTemplate = templateName
+		}
+
+		l3outRefMap = make(map[string]interface{})
+
+		l3outRefMap["schemaId"] = l3outSchemaID
+		l3outRefMap["templateName"] = l3outTemplate
+		l3outRefMap["l3outName"] = l3outName
+
+	}
+
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-	externalepgStruct := models.NewTemplateExternalepg("replace", path, extenalepgName, displayName, vrfRefMap)
+	externalepgStruct := models.NewTemplateExternalepg("replace", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 
@@ -217,7 +330,14 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 	displayName := d.Get("display_name").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
+	preferredGroup := d.Get("include_in_preferred_group").(bool)
 
+	var extEpgType string
+	if tempVar, ok := d.GetOk("external_epg_type"); ok {
+		extEpgType = tempVar.(string)
+	} else {
+		extEpgType = "on-premise"
+	}
 	var vrf_schema_id, vrf_template_name string
 
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
@@ -236,8 +356,32 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
+	var l3outRefMap map[string]interface{}
+	if tempVar, ok := d.GetOk("l3out_name"); ok {
+		l3outName := tempVar.(string)
+		var l3outSchemaID, l3outTemplate string
+		if tmpVar, oki := d.GetOk("l3out_schema_id"); oki {
+			l3outSchemaID = tmpVar.(string)
+		} else {
+			l3outSchemaID = schemaID
+		}
+
+		if tpVar, okj := d.GetOk("l3out_template_name"); okj {
+			l3outTemplate = tpVar.(string)
+		} else {
+			l3outTemplate = templateName
+		}
+
+		l3outRefMap = make(map[string]interface{})
+
+		l3outRefMap["schemaId"] = l3outSchemaID
+		l3outRefMap["templateName"] = l3outTemplate
+		l3outRefMap["l3outName"] = l3outName
+
+	}
+
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-	externalepgStruct := models.NewTemplateExternalepg("remove", path, extenalepgName, displayName, vrfRefMap)
+	externalepgStruct := models.NewTemplateExternalepg("remove", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 	if err != nil {

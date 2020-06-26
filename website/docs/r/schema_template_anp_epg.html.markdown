@@ -23,7 +23,7 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
   display_name = "mso_epg1"
   useg_epg = true
   intra_epg = "unenforced"
-  intersite_multicaste_source = false
+  intersite_multicast_source = false
   preferred_group = false
 }
 ```
@@ -43,7 +43,8 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 * `display_name` - (Optional) The name as displayed on the MSO web interface.
 * `useg_epg` - (Optional) Boolean flag to enable or disable whether this is a USEG EPG. Default value is set to false.
 * `intra_epg` - (Optional) Whether intra EPG isolation is enforced. choices: [ enforced, unenforced ]
-* `intersite_multicaste_source` - (Optional) Whether intersite multicast source is enabled.
+* `intersite_multicast_source` - (Optional) Whether intersite multicast source is enabled. Default to false.
+* `proxy_arp` - (Optional) Whether to enable Proxy ARP or not. (For Forwarding control) Default to false.
 * `preferred_group` - (Optional) Boolean flag to enable or disable whether this EPG is added to preferred group.      Default value is set to false.
 
 ## Attribute Reference ##
