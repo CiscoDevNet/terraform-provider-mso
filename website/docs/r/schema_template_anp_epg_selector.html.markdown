@@ -40,7 +40,7 @@ resource "mso_schema_template_anp_epg_selector" "check" {
 * `name` - (Required) Name for the selector.
 * `expressions` - (Optional) expressions of Selector.
 * `expressions.key` - (Optional) expression key for the selector.
-* `expressions.operator` - (Optional) expression operator for the selector. value should be from 
+* `expressions.operator` - (Optional) expression operator for the selector. value should be from "equals", "not equals", "in", "not in", "has key", "does not have key".
 * `expressions.value` - (Optional) expression value for the selector.
 
 ## Attribute Reference ##
