@@ -45,6 +45,7 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
 * `deployment_immediacy` - (Required) The deployment immediacy of the static port. Allowed values are `immediate` and `lazy`.
 * `vlan` - (Required) The port encap VLAN id of the static port.
 * `micro_seg_vlan` - (Optional) The microsegmentation VLAN id of the static port.
+* `fex` - (Optional) Fex-id to be used. This parameter will work only with the `path_type` as `port`.
 
 ## Attribute Reference ##
 

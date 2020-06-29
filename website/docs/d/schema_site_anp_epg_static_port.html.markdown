@@ -39,6 +39,7 @@ data "mso_schema_site_anp_epg_static_port" "static_port" {
 * `pod` - (Required) The pod of the static port.
 * `leaf` - (Required) The leaf of the static port.
 * `path` - (Required) The path of the static port.
+* `fex` - (Optional) Fex-id to be used. This parameter will work only with the `path_type` as `port`.
 
 
 ## Attribute Reference ##

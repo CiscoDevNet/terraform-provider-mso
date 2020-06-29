@@ -17,7 +17,8 @@ resource "mso_schema_site_anp_epg_static_port" "foo_schema_site_anp_epg_static_p
   leaf                 = "106"
   path                 = "eth1/11"
   vlan                 = 200
-  micro_seg_vlan        = 3
-  mode                 = "untagged" 
+  micro_seg_vlan       = 3
+  mode                 = "untagged"
+  fex                  = "10"
 }
 
