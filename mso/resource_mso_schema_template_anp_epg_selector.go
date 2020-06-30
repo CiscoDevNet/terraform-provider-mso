@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -112,7 +111,6 @@ func resourceMSOSchemaTemplateAnpEpgSelectorCreate(d *schema.ResourceData, m int
 
 		for _, val := range exps {
 			exp := val.(map[string]interface{})
-			log.Println("check exp ... :", exp)
 
 			expMap := make(map[string]interface{})
 
@@ -124,7 +122,6 @@ func resourceMSOSchemaTemplateAnpEpgSelectorCreate(d *schema.ResourceData, m int
 				expMap["value"] = exp["value"]
 			}
 
-			log.Println("check exp .. :", expMap)
 			expList = append(expList, expMap)
 		}
 	}
@@ -176,7 +173,6 @@ func resourceMSOSchemaTemplateAnpEpgSelectorUpdate(d *schema.ResourceData, m int
 
 		for _, val := range exps {
 			exp := val.(map[string]interface{})
-			log.Println("check exp ... :", exp)
 
 			expMap := make(map[string]interface{})
 
@@ -188,7 +184,6 @@ func resourceMSOSchemaTemplateAnpEpgSelectorUpdate(d *schema.ResourceData, m int
 				expMap["value"] = exp["value"]
 			}
 
-			log.Println("check exp .. :", expMap)
 			expList = append(expList, expMap)
 		}
 	}
@@ -412,9 +407,7 @@ func fetchIndexSelector(cont *container.Container, templateName, anpName, epgNam
 								}
 
 								currentName := models.StripQuotes(subnetCont.S("name").String())
-								log.Println("currentname :", currentName)
 								if currentName == name {
-									log.Println("found correct name")
 									index = s
 									found = true
 									break
