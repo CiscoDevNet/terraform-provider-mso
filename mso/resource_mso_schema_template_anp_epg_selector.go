@@ -62,16 +62,21 @@ func resourceMSOSchemaTemplateAnpEpgSelector() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"key": &schema.Schema{
 							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
+							Required:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 
 						"operator": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"equals",
+								"notEquals",
+								"in",
+								"notIn",
+								"keyExist",
+								"keyNotExist",
+							}, false),
 						},
 
 						"value": &schema.Schema{
@@ -111,15 +116,11 @@ func resourceMSOSchemaTemplateAnpEpgSelectorCreate(d *schema.ResourceData, m int
 
 			expMap := make(map[string]interface{})
 
-			if exp["key"] != "" {
-				expMap["key"] = exp["key"]
-			}
+			expMap["key"] = exp["key"]
 
-			if exp["operator"] != "" {
-				expMap["operator"] = exp["operator"]
-			}
+			expMap["operator"] = exp["operator"]
 
-			if exp["value"] != "" {
+			if exp["value"] != nil {
 				expMap["value"] = exp["value"]
 			}
 
@@ -179,13 +180,9 @@ func resourceMSOSchemaTemplateAnpEpgSelectorUpdate(d *schema.ResourceData, m int
 
 			expMap := make(map[string]interface{})
 
-			if exp["key"] != "" {
-				expMap["key"] = exp["key"]
-			}
+			expMap["key"] = exp["key"]
 
-			if exp["operator"] != "" {
-				expMap["operator"] = exp["operator"]
-			}
+			expMap["operator"] = exp["operator"]
 
 			if exp["value"] != "" {
 				expMap["value"] = exp["value"]
@@ -299,13 +296,9 @@ func resourceMSOSchemaTemplateAnpEpgSelectorRead(d *schema.ResourceData, m inter
 										tp := val.(map[string]interface{})
 										expressionsMap := make(map[string]interface{})
 
-										if tp["key"] != nil {
-											expressionsMap["key"] = tp["key"]
-										}
+										expressionsMap["key"] = tp["key"]
 
-										if tp["operator"] != nil {
-											expressionsMap["operator"] = tp["operator"]
-										}
+										expressionsMap["operator"] = tp["operator"]
 
 										if tp["value"] != nil {
 											expressionsMap["value"] = tp["value"]

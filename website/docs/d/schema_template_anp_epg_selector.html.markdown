@@ -32,5 +32,5 @@ data "mso_schema_template_anp_epg_selector" "read_check" {
 
 * `expressions` - (Optional) expressions of Selector.
 * `expressions.key` - (Optional) expression key for the selector.
-* `expressions.operator` - (Optional) expression operator for the selector. value should be from 
+* `expressions.operator` - (Optional) expression operator for the selector. value should be from "equals", "notEquals", "in", "notIn", "keyExist", "keyNotExist".
 * `expressions.value` - (Optional) expression value for the selector.
