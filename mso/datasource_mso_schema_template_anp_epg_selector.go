@@ -58,10 +58,17 @@ func datasourceMSOSchemaTemplateAnpEpgSelector() *schema.Resource {
 						},
 
 						"operator": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"equals",
+								"notEquals",
+								"in",
+								"notIn",
+								"keyExist",
+								"keyNotExist",
+							}, false),
 						},
 
 						"value": &schema.Schema{
