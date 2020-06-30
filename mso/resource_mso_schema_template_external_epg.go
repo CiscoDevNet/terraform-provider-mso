@@ -195,6 +195,8 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 		anpRefMap["schemaId"] = anpSchemaID
 		anpRefMap["templateName"] = anpTemplateName
 		anpRefMap["anpName"] = anpName
+	} else {
+		anpRefMap = nil
 	}
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
@@ -384,6 +386,8 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 		anpRefMap["schemaId"] = anpSchemaID
 		anpRefMap["templateName"] = anpTemplateName
 		anpRefMap["anpName"] = anpName
+	} else {
+		anpRefMap = nil
 	}
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
@@ -476,6 +480,8 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 		anpRefMap["schemaId"] = anpSchemaID
 		anpRefMap["templateName"] = anpTemplateName
 		anpRefMap["anpName"] = anpName
+	} else {
+		anpRefMap = nil
 	}
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)

@@ -19,7 +19,7 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
   external_epg_name = "external_epg12"
   display_name      = "external_epg12"
   vrf_name          = "vrf1"
-  anp_name          = "demo
+  anp_name          = "demo"
 }
 ```
 
