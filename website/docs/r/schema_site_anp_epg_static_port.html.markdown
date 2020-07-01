@@ -6,7 +6,7 @@ description: |-
   Manages MSO Schema Template Application Network Profiles Endpoint Groups Static Port.
 ---
 
-# mso_schema_template_anp_epg_static_port #
+# mso_schema_site_anp_epg_static_port #
 
 Manages MSO Schema Template Application Network Profiles Endpoint Groups Static Port.
 
@@ -37,7 +37,7 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
 * `template_name` - (Required) Template name under which you want to deploy Static Port.
 * `anp_name` - (Required) ANP name under which you want to deploy Static Port.
 * `epg_name` - (Required) EPG name under which you want to deploy Static Port.
-* `path_type` - (Required) The type of the static port. Allowed value is `port`.
+* `path_type` - (Required) The type of the static port. Allowed values are `port`, `vpc` and `dpc`.
 * `pod` - (Required) The pod of the static port.
 * `leaf` - (Required) The leaf of the static port.
 * `path` - (Required) The path of the static port.
