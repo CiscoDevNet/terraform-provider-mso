@@ -266,7 +266,7 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 					d.Set("vrf_schema_id", match[1])
 					d.Set("vrf_template_name", match[2])
 					l3outRef := models.StripQuotes(externalepgCont.S("l3outRef").String())
-					if l3outRef != "{}" {
+					if l3outRef != "{}" || l3outRef != "" {
 						reL3out := regexp.MustCompile("/schemas/(.*)/templates/(.*)/l3outs/(.*)")
 						matchL3out := reL3out.FindStringSubmatch(l3outRef)
 						d.Set("l3out_name", matchL3out[3])
@@ -279,7 +279,7 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 					}
 
 					anpRef := models.StripQuotes(externalepgCont.S("anpRef").String())
-					if anpRef != "{}" {
+					if anpRef != "{}" || anpRef != "" {
 						tokens := strings.Split(anpRef, "/")
 						d.Set("anp_name", tokens[len(tokens)-1])
 						d.Set("anp_schema_id", tokens[len(tokens)-5])
