@@ -97,6 +97,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"micro_seg_vlan": &schema.Schema{
