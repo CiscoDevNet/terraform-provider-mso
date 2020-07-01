@@ -28,7 +28,7 @@ func (schematemplateanpepgselectorattr *SchemaTemplateAnpEpgSelector) ToMap() (m
 	A(schematemplateanpepgselectorMap, "op", schematemplateanpepgselectorattr.Ops)
 	A(schematemplateanpepgselectorMap, "path", schematemplateanpepgselectorattr.Path)
 	if schematemplateanpepgselectorattr.Value != nil {
-		A(schematemplateanpepgselectorMap, "value", schematemplateanpepgselectorattr.Path)
+		A(schematemplateanpepgselectorMap, "value", schematemplateanpepgselectorattr.Value)
 	}
 
 	return schematemplateanpepgselectorMap, nil

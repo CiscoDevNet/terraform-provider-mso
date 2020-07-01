@@ -39,5 +39,4 @@ resource "mso_schema_template_external_epg_selector" "selector1" {
 
 ## Attribute Reference ##
 
-* `expressions.key` - (Optional) expression key for the selector.
-* `expressions.operator` - (Optional) expression operator for the selector.
+No attributes are exported.
