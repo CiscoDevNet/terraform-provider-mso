@@ -18,7 +18,7 @@ resource "mso_site" "foo_site" {
   username = "admin"
   password = "noir0!234"
   apic_site_id = "102"
-  urls = [ "https://3.208.123.222/" ]
+  urls = [ "https://3.208.123.222" ]
 }
 ```
 

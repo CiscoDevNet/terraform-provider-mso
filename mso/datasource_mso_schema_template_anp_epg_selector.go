@@ -20,7 +20,7 @@ func datasourceMSOSchemaTemplateAnpEpgSelector() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
-			"template": &schema.Schema{
+			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
@@ -90,7 +90,7 @@ func datasourceMSOSchemaTemplateAnpEpgSelectorRead(d *schema.ResourceData, m int
 
 	dn := d.Get("name").(string)
 	schemaID := d.Get("schema_id").(string)
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 
@@ -191,7 +191,7 @@ func datasourceMSOSchemaTemplateAnpEpgSelectorRead(d *schema.ResourceData, m int
 				}
 			}
 			if found {
-				d.Set("template", tempName)
+				d.Set("template_name", tempName)
 				break
 			}
 		}

@@ -13,14 +13,21 @@ Manages MSO Schema Template External Endpoint Group.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_external_epg" "template_externalepg" {
-  schema_id         = "5ea809672c00003bc40a2799"
-  template_name     = "Template1"
-  external_epg_name = "external_epg12"
-  display_name      = "external_epg12"
-  vrf_name          = "vrf1"
-  anp_name          = "demo"
+		schema_id           = "5f043b3b2c0000f47e812a0b"
+		template_name       = "Template1"
+		external_epg_name   = "temp_epg"
+    external_epg_type   = "cloud"
+		display_name        = "temp_epg"
+		vrf_name            = "Myvrf"
+    anp_name            = "ap1"
+    l3out_name          = "temp"
+    site_id             = ["5c7c95d9510000cf01c1ee3d"]
+    selector_name       = "check02"
+    selector_ip         = "12.23.34.45"
 }
+
 ```
 
 ## Argument Reference ##
@@ -40,6 +47,10 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 * `anp_name` - (Optional) Name of anp to attach.
 * `anp_schema_id` - (Optional) SchemaId of anp. `schema_id` will be used if not provided.
 * `anp_template_name` - (Optional) Template name of anp. `template_name` will be used if not provided.
+
+* `site_id` - (Optional) List of ids of sites associated with the schema. Required when `external_epg_type` is "cloud".
+* `selector_name` - (Optional) name of the selector for external epg. Required when `external_epg_type` is "cloud".
+* `selector_ip` - (Optional) ip address for expression in selector. Required when `external_epg_type` is "cloud".
 
 NOTE: SchemaID and Template Name for VRF and L3out must be same.
 

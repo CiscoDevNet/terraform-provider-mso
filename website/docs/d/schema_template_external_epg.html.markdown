@@ -35,3 +35,7 @@ data "mso_schema_template_external_epg" "externalEpg" {
 * `anp_name` - (Optional) Name of anp to attach.
 * `anp_schema_id` - (Optional) SchemaId of anp. `schema_id` will be used if not provided.
 * `anp_template_name` - (Optional) Template name of anp. `template_name` will be used if not provided.
+
+* `site_id` - (Optional) List of ids of sites associated with the schema. Required when `external_epg_type` is "cloud".
+* `selector_name` - (Optional) name of the selector for external epg. Required when `external_epg_type` is "cloud".
+* `selector_ip` - (Optional) ip address for expression in selector. Required when `external_epg_type` is "cloud".

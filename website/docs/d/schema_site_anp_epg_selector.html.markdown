@@ -25,9 +25,9 @@ data "mso_schema_site_anp_epg_selector" "read_check" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg Subnet.
-* `site_id` - (Required) site ID under which you want to deploy Anp Epg Subnet.
-* `template` - (Required) Template under above site id where Anp Epg Subnet to be created.
+* `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg Selector.
+* `site_id` - (Required) site ID under which you want to deploy Anp Epg Selector.
+* `template` - (Required) Template under above site id where Anp Epg Selector to be created.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group.
 * `name` - (Required) Name for the selector.
