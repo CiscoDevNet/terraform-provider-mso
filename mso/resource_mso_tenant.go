@@ -54,7 +54,7 @@ func resourceMSOTenant() *schema.Resource {
 			},
 
 			"site_associations": &schema.Schema{
-				Type: schema.TypeSet,
+				Type: schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"site_id": {
@@ -66,12 +66,93 @@ func resourceMSOTenant() *schema.Resource {
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
+						"vendor": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"aws",
+								"azure",
+							}, false),
+						},
+						"aws_account_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: StringLenValidator(12),
+						},
+						"is_aws_account_trusted": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"aws_access_key_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: StringLenValidator(20),
+						},
+						"aws_secret_key": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: StringLenValidator(40),
+						},
+						"azure_subscription_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"azure_access_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"credentials",
+								"managed",
+							}, false),
+						},
+						"azure_application_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"azure_client_secret": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"azure_active_directory_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
 					},
 				},
 				Optional: true,
 				Computed: true,
 			},
 		}),
+	}
+}
+
+func StringLenValidator(lengt int) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		v, ok := i.(string)
+		if !ok {
+			errors = append(errors, fmt.Errorf("expected type of %s to be string", k))
+			return warnings, errors
+		}
+
+		if len(v) != lengt {
+			errors = append(errors, fmt.Errorf("expected length of %s to be %d , got %d", k, lengt, len(v)))
+		}
+
+		return warnings, errors
 	}
 }
 
@@ -94,7 +175,7 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 	site_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("site_associations"); ok {
-		siteList := val.(*schema.Set).List()
+		siteList := val.([]interface{})
 		for _, val := range siteList {
 
 			mapSite := make(map[string]interface{})
@@ -102,6 +183,91 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 			if inner["site_id"] != "" {
 				mapSite["siteId"] = fmt.Sprintf("%v", inner["site_id"])
 			}
+			if inner["vendor"] != "" {
+				if inner["vendor"] == "aws" {
+
+					awsAccountMap := make(map[string]interface{})
+
+					if inner["aws_account_id"] != "" {
+						awsAccountMap["accountId"] = inner["aws_account_id"]
+						mapSite["cloudAccount"] = inner["aws_account_id"]
+					} else {
+						return fmt.Errorf("aws_account_id is required with vendor = aws")
+					}
+
+					trusted := inner["is_aws_account_trusted"]
+					awsAccountMap["isTrusted"] = trusted.(bool)
+					awsAccountMap["vendor"] = "aws"
+
+					if !(trusted.(bool)) {
+						if inner["aws_access_key_id"] != "" {
+							awsAccountMap["accessKeyId"] = inner["aws_access_key_id"]
+						} else {
+							return fmt.Errorf("aws_access_key_id is required if the AWS account is not trusted.")
+						}
+
+						if inner["aws_secret_key"] != "" {
+							awsAccountMap["secretKey"] = inner["aws_secret_key"]
+						} else {
+							return fmt.Errorf("aws_secret_key is required if the AWS account is not trusted.")
+						}
+					}
+
+					mapSite["awsAccount"] = [...]interface{}{awsAccountMap}
+
+				} else if inner["vendor"] == "azure" {
+					azureAccountMap := make(map[string]interface{})
+					var subscriptionId string
+					if inner["azure_subscription_id"] != "" {
+						subscriptionId = inner["azure_subscription_id"].(string)
+						mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
+					} else {
+						return fmt.Errorf("azure_subscription_id is required when vendor = azure")
+					}
+
+					azureAccessType := inner["azure_access_type"].(string)
+					applicationId := inner["azure_application_id"].(string)
+					clientSecret := inner["azure_client_secret"].(string)
+					activeDirectoryId := inner["azure_active_directory_id"].(string)
+
+					if azureAccessType == "" {
+						azureAccessType = "managed"
+					}
+					cloudSubMap := make(map[string]interface{})
+					if azureAccessType == "managed" {
+						cloudSubMap["cloudSubscriptionId"] = subscriptionId
+						azureAccountMap["cloudSubscription"] = cloudSubMap
+
+					} else if azureAccessType == "credentials" {
+						if applicationId == "" || clientSecret == "" || activeDirectoryId == "" {
+							return fmt.Errorf("azure_application_id, azure_client_secret and azure_active_directory_id are required with azure_access_type = credentials")
+						}
+						cloudSubMap["cloudSubscriptionId"] = subscriptionId
+						cloudSubMap["cloudApplicationId"] = applicationId
+						azureAccountMap["cloudSubscription"] = cloudSubMap
+						cloudApplicationMap := make(map[string]interface{})
+
+						cloudApplicationMap["cloudApplicationId"] = applicationId
+						cloudApplicationMap["secretKey"] = clientSecret
+						cloudApplicationMap["cloudActiveDirectoryId"] = activeDirectoryId
+						cloudApplicationMap["cloudCredentialName"] = "cApicApp"
+
+						azureAccountMap["cloudApplication"] = [...]interface{}{cloudApplicationMap}
+
+						activeDirectoryMap := make(map[string]interface{})
+						activeDirectoryMap["cloudActiveDirectoryId"] = activeDirectoryId
+						activeDirectoryMap["cloudActiveDirectoryName"] = "CiscoINSBUAd"
+
+						azureAccountMap["cloudActiveDirectory"] = [...]interface{}{activeDirectoryMap}
+					}
+					azureAccountMap["securityDomains"] = make([]interface{}, 0)
+					azureAccountMap["vendor"] = "azure"
+					azureAccountMap["accessType"] = azureAccessType
+
+					mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
+				}
+			}
+
 			mapSite["securityDomains"] = make([]interface{}, 0)
 			site_associations = append(site_associations, mapSite)
 		}
@@ -159,13 +325,96 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 
 	site_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("site_associations"); ok {
-		siteList := val.(*schema.Set).List()
+		siteList := val.([]interface{})
 		for _, val := range siteList {
 
 			mapSite := make(map[string]interface{})
 			inner := val.(map[string]interface{})
 			if inner["site_id"] != "" {
 				mapSite["siteId"] = fmt.Sprintf("%v", inner["site_id"])
+			}
+			if inner["vendor"] != "" {
+				if inner["vendor"] == "aws" {
+
+					awsAccountMap := make(map[string]interface{})
+
+					if inner["aws_account_id"] != "" {
+						awsAccountMap["accountId"] = inner["aws_account_id"]
+						mapSite["cloudAccount"] = inner["aws_account_id"]
+					} else {
+						return fmt.Errorf("aws_account_id is required with vendor = aws")
+					}
+
+					trusted := inner["is_aws_account_trusted"]
+					awsAccountMap["isTrusted"] = trusted.(bool)
+					awsAccountMap["vendor"] = "aws"
+
+					if !(trusted.(bool)) {
+						if inner["aws_access_key_id"] != "" {
+							awsAccountMap["accessKeyId"] = inner["aws_access_key_id"]
+						} else {
+							return fmt.Errorf("aws_access_key_id is required if the AWS account is not trusted.")
+						}
+
+						if inner["aws_secret_key"] != "" {
+							awsAccountMap["secretKey"] = inner["aws_secret_key"]
+						} else {
+							return fmt.Errorf("aws_secret_key is required if the AWS account is not trusted.")
+						}
+					}
+
+					mapSite["awsAccount"] = [...]interface{}{awsAccountMap}
+
+				} else if inner["vendor"] == "azure" {
+					azureAccountMap := make(map[string]interface{})
+					var subscriptionId string
+					if inner["azure_subscription_id"] != "" {
+						subscriptionId = inner["azure_subscription_id"].(string)
+						mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
+					} else {
+						return fmt.Errorf("azure_subscription_id is required when vendor = azure")
+					}
+
+					azureAccessType := inner["azure_access_type"].(string)
+					applicationId := inner["azure_application_id"].(string)
+					clientSecret := inner["azure_client_secret"].(string)
+					activeDirectoryId := inner["azure_active_directory_id"].(string)
+					if azureAccessType == "" {
+						azureAccessType = "managed"
+					}
+					cloudSubMap := make(map[string]interface{})
+					if azureAccessType == "managed" {
+						cloudSubMap["cloudSubscriptionId"] = subscriptionId
+						azureAccountMap["cloudSubscription"] = cloudSubMap
+
+					} else if azureAccessType == "credentials" {
+						if applicationId == "" || clientSecret == "" || activeDirectoryId == "" {
+							return fmt.Errorf("azure_application_id, azure_client_secret and azure_active_directory_id are required with azure_access_type = credentials")
+						}
+						cloudSubMap["cloudSubscriptionId"] = subscriptionId
+						cloudSubMap["cloudApplicationId"] = applicationId
+						azureAccountMap["cloudSubscription"] = cloudSubMap
+						cloudApplicationMap := make(map[string]interface{})
+
+						cloudApplicationMap["cloudApplicationId"] = applicationId
+						cloudApplicationMap["secretKey"] = clientSecret
+						cloudApplicationMap["cloudActiveDirectoryId"] = activeDirectoryId
+						cloudApplicationMap["cloudCredentialName"] = "cApicApp"
+
+						azureAccountMap["cloudApplication"] = [...]interface{}{cloudApplicationMap}
+
+						activeDirectoryMap := make(map[string]interface{})
+						activeDirectoryMap["cloudActiveDirectoryId"] = activeDirectoryId
+						activeDirectoryMap["cloudActiveDirectoryName"] = "CiscoINSBUAd"
+
+						azureAccountMap["cloudActiveDirectory"] = [...]interface{}{activeDirectoryMap}
+					}
+					azureAccountMap["securityDomains"] = make([]interface{}, 0)
+					azureAccountMap["vendor"] = "azure"
+					azureAccountMap["accessType"] = azureAccessType
+
+					mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
+				}
 			}
 			mapSite["securityDomains"] = make([]interface{}, 0)
 			site_associations = append(site_associations, mapSite)
@@ -228,6 +477,98 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 		mapSite := make(map[string]interface{})
 		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
 		mapSite["security_domains"] = sitesCont.S("securityDomains").Data().([]interface{})
+		awsCount, err := sitesCont.ArrayCount("awsAccount")
+		if err == nil {
+			if awsCount > 0 {
+				awsCont, err := sitesCont.ArrayElement(0, "awsAccount")
+				if err == nil {
+					mapSite["aws_account_id"] = models.StripQuotes(awsCont.S("accountId").String())
+					if awsCont.Exists("isTrusted") {
+						mapSite["is_aws_account_trusted"] = awsCont.S("isTrusted").Data().(bool)
+					}
+					mapSite["vendor"] = "aws"
+					accessKey := models.StripQuotes(awsCont.S("accessKeyId").String())
+					secretKey := models.StripQuotes(awsCont.S("secretKey").String())
+
+					if accessKey != "{}" {
+						mapSite["aws_access_key_id"] = accessKey
+					}
+
+					if secretKey != "{}" {
+						mapSite["aws_secret_key"] = secretKey
+					}
+
+				} else {
+					log.Printf("Unable to load AWS credentials")
+				}
+			} else {
+				mapSite["aws_account_id"] = ""
+				mapSite["aws_access_key_id"] = ""
+				mapSite["aws_secret_key"] = ""
+				mapSite["is_aws_account_trusted"] = false
+			}
+		} else {
+			log.Printf("Error occurred while loading AWS creds")
+			mapSite["aws_account_id"] = ""
+			mapSite["aws_access_key_id"] = ""
+			mapSite["aws_secret_key"] = ""
+			mapSite["is_aws_account_trusted"] = false
+
+		}
+
+		azureCount, err := sitesCont.ArrayCount("azureAccount")
+
+		if err == nil {
+			if azureCount > 0 {
+				azureCont, err := sitesCont.ArrayElement(0, "azureAccount")
+				if err == nil {
+					mapSite["vendor"] = "azure"
+					mapSite["azure_access_type"] = models.StripQuotes(azureCont.S("accessType").String())
+					mapSite["azure_subscription_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudSubscriptionId").String())
+					if mapSite["azure_access_type"] == "credentials" {
+						mapSite["azure_application_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudApplicationId").String())
+
+						applicationCount, err := azureCont.ArrayCount("cloudApplication")
+						if err == nil {
+							if applicationCount > 0 {
+								appCont, err := azureCont.ArrayElement(0, "cloudApplication")
+								if err == nil {
+									mapSite["azure_client_secret"] = models.StripQuotes(appCont.S("secretKey").String())
+									mapSite["azure_active_directory_id"] = models.StripQuotes(appCont.S("cloudActiveDirectoryId").String())
+								} else {
+									mapSite["azure_client_secret"] = ""
+									mapSite["azure_active_directory_id"] = ""
+								}
+							} else {
+								// Set to empty string
+								mapSite["azure_client_secret"] = ""
+								mapSite["azure_active_directory_id"] = ""
+							}
+						} else {
+							// Set to empty string
+							mapSite["azure_client_secret"] = ""
+							mapSite["azure_active_directory_id"] = ""
+						}
+					}
+				} else {
+					log.Printf("Error ocurred while loading azure credentials")
+					mapSite["azure_client_secret"] = ""
+					mapSite["azure_active_directory_id"] = ""
+					mapSite["azure_access_type"] = ""
+					mapSite["azure_subscription_id"] = ""
+					mapSite["azure_application_id"] = ""
+
+				}
+			}
+		} else {
+			log.Printf("Error occurred while loading count for azureAccount.")
+			mapSite["azure_client_secret"] = ""
+			mapSite["azure_active_directory_id"] = ""
+			mapSite["azure_access_type"] = ""
+			mapSite["azure_subscription_id"] = ""
+			mapSite["azure_application_id"] = ""
+		}
+
 		site_associations = append(site_associations, mapSite)
 	}
 
