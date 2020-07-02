@@ -131,6 +131,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_external_epg_selector": datasourceSchemaTemplateExternalEPGSelector(),
 			"mso_schema_template_anp_epg_useg_attr":     dataSourceMSOSchemaTemplateAnpEpgUsegAttr(),
 		},
+
+		ConfigureFunc: configureClient,
 	}
 }
 
