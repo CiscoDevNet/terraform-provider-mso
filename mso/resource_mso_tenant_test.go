@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccTenant_Basic(t *testing.T) {
+func TestAccMsoTenant_Basic(t *testing.T) {
 	var s TenantTest
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

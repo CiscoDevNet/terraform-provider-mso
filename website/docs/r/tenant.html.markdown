@@ -19,6 +19,47 @@ resource "mso_tenant" "tenant1" {
   site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
   user_associations{user_id = "0000ffff0000000000000020"}
 }
+
+# With AWS Site Association
+resource "mso_tenant" "tenant02" {
+  name         = "TangoCh"
+  display_name = "Tango"
+  description  = "DemoTenant"
+  site_associations {
+    site_id                = "5c7c95b25100008f01c1ee3c"
+    vendor                 = "azure"
+    aws_account_id         = "123456789124"
+    is_aws_account_trusted = false
+    aws_access_key_id      = "AKIAIXCL6LOFME6SUH12"
+    aws_secret_key         = "W1fQMYsGKOeK2cJMAnYSpX6uXVP2BrYL8+5uFt23"
+
+  }
+  user_associations {
+    user_id = "0000ffff0000000000000020"
+  }
+}
+
+# With Azure Site Association
+resource "mso_tenant" "tenant01" {
+  name         = "TangoCh"
+  display_name = "Tango"
+  description  = "DemoTenant"
+  site_associations {
+    site_id                   = "5ce2de773700006a008a2678"
+    vendor                    = "azure"
+    azure_subscription_id     = "subidtf"
+    azure_access_type         = "credentials"
+    azure_application_id      = "appidtf"
+    azure_client_secret       = "clitf"
+    azure_active_directory_id = "adidtf"
+
+
+  }
+  user_associations {
+    user_id = "0000ffff0000000000000020"
+  }
+}
+
 ```
 
 ## Argument Reference ##
@@ -28,6 +69,19 @@ resource "mso_tenant" "tenant1" {
 * `description` - (Optional) The description for this tenant.
 * `user_associations` - (Optional) A list of associated users for this tenant.
 * `site_association` - (Optional) A list of associated sites for this tenant.
+* `site_association.id` - (Optional) Id of site to associate with this Tenant.
+* `site_association.vendor` - (Optional) Name of cloud vendor in the case of Attaching cloud site. Allowed values are `aws` and `azure`.
+* `site_association.aws_account_id` - (Optional) Id of AWS account. It's required when vendor is set to aws. This parameter will only have effect with `vendor` = aws
+* `site_association.is_aws_account_trusted` - (Optional) Boolean flag to indicate whether this account is trusted or not. Trusted account does not require aws_access_key_id and aws_secret_key.
+* `site_association.aws_access_key_id` - (Optional) AWS Access Key Id. It must be provided if the AWS account is not trusted. This parameter will only have effect with `vendor` = aws.
+* `site_association.aws_secret_key` - (Optional) AWS Secret Key Id. It must be provided if the AWS account is not trusted. This parameter will only have effect with `vendor` = aws.
+* `site_association.azure_subscription_id` - (Optional) Azure subscription id. It's required when vendor is set to azure. This parameter will only have effect with `vendor` = azure.
+* `site_association.azure_access_type` - (Optional) Type of Azure Account Configuration. Allowed values are `managed` and `credentials`. Default to `managed`. Other Credentials are not required if azure_access_type is set to managed. This parameter will only have effect with `vendor` = azure.
+* `site_association.azure_application_id` - (Optional) Azure Application Id. It must be provided when azure_access_type to credentials. This parameter will only have effect with `vendor` = azure.
+* `site_association.azure_client_secret` - (Optional) Azure Client Secret. It must be provided when azure_access_type to credentials. This parameter will only have effect with `vendor` = azure.
+* `site_association.azure_active_directory_id` - (Optional) Azure Active Directory Id. It must be provided when azure_access_type to credentials. This parameter will only have effect with `vendor` = azure.
+
+NOTE: Either of AWS or Azure credentials will be used based on whatever is passed in `vendor` argument if both (AWS + Azure) Credentials are provided.
 
 ## Attribute Reference ##
 
