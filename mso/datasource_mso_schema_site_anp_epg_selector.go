@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func datasourceMSOSchemaSiteApnEpgSelector() *schema.Resource {
+func datasourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceSchemaSiteApnEpgSelectorRead,
 

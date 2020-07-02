@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func resourceMSOSchemaSiteApnEpgSelector() *schema.Resource {
+func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceSchemaSiteApnEpgSelectorCreate,
 		Update: resourceSchemaSiteApnEpgSelectorUpdate,
