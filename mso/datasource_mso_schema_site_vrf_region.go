@@ -47,6 +47,84 @@ func dataSourceMSOSchemaSiteVrfRegion() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"vpn_gateway": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"hub_network_enable": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"hub_network": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"tenant_name": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+					},
+				},
+			},
+			"cidr": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cidr_ip": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"primary": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"subnet": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ip": &schema.Schema{
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringLenBetween(1, 1000),
+									},
+									"zone": &schema.Schema{
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringLenBetween(1, 1000),
+									},
+									"usage": &schema.Schema{
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringLenBetween(1, 1000),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}),
 	}
 }
@@ -110,6 +188,49 @@ func dataSourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{})
 						if apiRegion == stateRegion {
 							d.SetId(apiRegion)
 							d.Set("region_name", apiRegion)
+							d.Set("vpn_gateway", regionCont.S("isVpnGatewayRouter").Data().(bool))
+							d.Set("hub_network_enable", regionCont.S("isTGWAttachment").Data().(bool))
+
+							hubMap := make(map[string]interface{})
+							if regionCont.Exists("cloudRsCtxProfileToGatewayRouterP") {
+								temp := regionCont.S("cloudRsCtxProfileToGatewayRouterP").Data().(map[string]interface{})
+
+								hubMap["name"] = temp["name"]
+								hubMap["tenant_name"] = temp["tenantName"]
+
+								d.Set("hub_network", hubMap)
+							} else {
+								d.Set("hub_network", hubMap)
+							}
+
+							cidrList := make([]interface{}, 0, 1)
+							cidrs := regionCont.S("cidrs").Data().([]interface{})
+							for _, tempCidr := range cidrs {
+								cidr := tempCidr.(map[string]interface{})
+
+								cidrMap := make(map[string]interface{})
+								cidrMap["cidr_ip"] = cidr["ip"]
+								cidrMap["primary"] = cidr["primary"]
+
+								subnets := cidr["subnets"].([]interface{})
+								subnetList := make([]interface{}, 0, 1)
+								for _, tempSubnet := range subnets {
+									subnet := tempSubnet.(map[string]interface{})
+
+									subnetMap := make(map[string]interface{})
+									subnetMap["ip"] = subnet["ip"]
+									subnetMap["zone"] = subnet["zone"]
+									if subnet["usage"] != nil {
+										subnetMap["usage"] = subnet["usage"]
+									}
+
+									subnetList = append(subnetList, subnetMap)
+								}
+								cidrMap["subnet"] = subnetList
+
+								cidrList = append(cidrList, cidrMap)
+							}
+							d.Set("cidr", cidrList)
 							found = true
 							break
 						}

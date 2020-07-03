@@ -19,26 +19,61 @@ func TestAccMSOSchemaSiteVrfRegion_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaSiteVrfRegionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMSOSchemaSiteVrfRegionConfig_basic(),
+				Config: testAccCheckMSOSchemaSiteVrfRegionConfig_basic(false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMSOSchemaSiteVrfRegionExists("mso_schema_site_vrf_region.vrfRegion", &ss),
-					testAccCheckMSOSchemaSiteVrfRegionAttributes(&ss),
+					testAccCheckMSOSchemaSiteVrfRegionAttributes(false, &ss),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckMSOSchemaSiteVrfRegionConfig_basic() string {
+func TestAccMSOSchemaSiteVrfRegion_Update(t *testing.T) {
+	var ss SchemaSiteVrfRegion
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMSOSchemaSiteVrfRegionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMSOSchemaSiteVrfRegionConfig_basic(false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMSOSchemaSiteVrfRegionExists("mso_schema_site_vrf_region.vrfRegion", &ss),
+					testAccCheckMSOSchemaSiteVrfRegionAttributes(false, &ss),
+				),
+			},
+			{
+				Config: testAccCheckMSOSchemaSiteVrfRegionConfig_basic(true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMSOSchemaSiteVrfRegionExists("mso_schema_site_vrf_region.vrfRegion", &ss),
+					testAccCheckMSOSchemaSiteVrfRegionAttributes(true, &ss),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckMSOSchemaSiteVrfRegionConfig_basic(vpn bool) string {
 	return fmt.Sprintf(`
 	resource "mso_schema_site_vrf_region" "vrfRegion" {
-		schema_id = "5d5dbf3f2e0000580553ccce"
+		schema_id = "5efd6ea60f00005b0ebbd643"
 		template_name = "Template1"
-		site_id = "5ce2de773700006a008a2678"
-		vrf_name = "Campus"
-		region_name = "region123"
+		site_id = "5efeb3c4190000cc12d05376"
+		vrf_name = "Myvrf"
+		region_name = "us-east-1"
+		vpn_gateway = %v
+		cidr {
+		  cidr_ip = "2.2.2.2/10"
+		  primary = true
+		  subnet {
+			ip = "1.20.30.4"
+			zone = "us-east-1b"
+			usage = "sdfkhsdkf"
+		  }
+		}
 	  }
-	`)
+	`, vpn)
 }
 
 func testAccCheckMSOSchemaSiteVrfRegionExists(siteVrfRegionName string, ss *SchemaSiteVrfRegion) resource.TestCheckFunc {
@@ -53,7 +88,7 @@ func testAccCheckMSOSchemaSiteVrfRegionExists(siteVrfRegionName string, ss *Sche
 			return fmt.Errorf("No Region id was set")
 		}
 
-		cont, errs := client.GetViaURL("api/v1/schemas/5d5dbf3f2e0000580553ccce")
+		cont, errs := client.GetViaURL("api/v1/schemas/5efd6ea60f00005b0ebbd643")
 		if errs != nil {
 			return errs
 		}
@@ -72,7 +107,7 @@ func testAccCheckMSOSchemaSiteVrfRegionExists(siteVrfRegionName string, ss *Sche
 			}
 			apiSite := models.StripQuotes(tempCont.S("siteId").String())
 
-			if apiSite == "5ce2de773700006a008a2678" {
+			if apiSite == "5efeb3c4190000cc12d05376" {
 				vrfCount, err := tempCont.ArrayCount("vrfs")
 				if err != nil {
 					return fmt.Errorf("Unable to get Vrf list")
@@ -85,7 +120,7 @@ func testAccCheckMSOSchemaSiteVrfRegionExists(siteVrfRegionName string, ss *Sche
 					apiVrfRef := models.StripQuotes(vrfCont.S("vrfRef").String())
 					split := strings.Split(apiVrfRef, "/")
 					apiVrf := split[6]
-					if apiVrf == "Campus" {
+					if apiVrf == "Myvrf" {
 
 						regionCount, err := vrfCont.ArrayCount("regions")
 						if err != nil {
@@ -97,11 +132,11 @@ func testAccCheckMSOSchemaSiteVrfRegionExists(siteVrfRegionName string, ss *Sche
 								return err
 							}
 							apiRegion := models.StripQuotes(regionCont.S("name").String())
-							if apiRegion == "region123" {
+							if apiRegion == "us-east-1" {
 								tp.siteId = apiSite
 								tp.vrfName = apiVrf
 								tp.regionName = apiRegion
-
+								tp.VPN = regionCont.S("isVpnGatewayRouter").Data().(bool)
 								found = true
 								break
 							}
@@ -126,7 +161,7 @@ func testAccCheckMSOSchemaSiteVrfRegionDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 
 		if rs.Type == "mso_schema_site_vrf_region" {
-			cont, err := client.GetViaURL("api/v1/schemas/5d5dbf3f2e0000580553ccce")
+			cont, err := client.GetViaURL("api/v1/schemas/5efd6ea60f00005b0ebbd643")
 			if err != nil {
 				return err
 			} else {
@@ -141,7 +176,7 @@ func testAccCheckMSOSchemaSiteVrfRegionDestroy(s *terraform.State) error {
 					}
 					apiSite := models.StripQuotes(tempCont.S("siteId").String())
 
-					if apiSite == "5ce2de773700006a008a2678" {
+					if apiSite == "5efeb3c4190000cc12d05376" {
 						vrfCount, err := tempCont.ArrayCount("vrfs")
 						if err != nil {
 							return fmt.Errorf("Unable to get Vrf list")
@@ -154,7 +189,7 @@ func testAccCheckMSOSchemaSiteVrfRegionDestroy(s *terraform.State) error {
 							apiVrfRef := models.StripQuotes(vrfCont.S("vrfRef").String())
 							split := strings.Split(apiVrfRef, "/")
 							apiVrf := split[6]
-							if apiVrf == "Campus" {
+							if apiVrf == "Myvrf" {
 
 								regionCount, err := vrfCont.ArrayCount("regions")
 								if err != nil {
@@ -166,7 +201,7 @@ func testAccCheckMSOSchemaSiteVrfRegionDestroy(s *terraform.State) error {
 										return err
 									}
 									apiRegion := models.StripQuotes(regionCont.S("name").String())
-									if apiRegion == "region123" {
+									if apiRegion == "us-east-1" {
 										return fmt.Errorf("The Vrf Region still exists")
 									}
 								}
@@ -180,10 +215,13 @@ func testAccCheckMSOSchemaSiteVrfRegionDestroy(s *terraform.State) error {
 	return nil
 
 }
-func testAccCheckMSOSchemaSiteVrfRegionAttributes(ss *SchemaSiteVrfRegion) resource.TestCheckFunc {
+func testAccCheckMSOSchemaSiteVrfRegionAttributes(vpn bool, ss *SchemaSiteVrfRegion) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if "Campus" != ss.vrfName {
+		if "Myvrf" != ss.vrfName {
 			return fmt.Errorf("Bad Vrf name %s", ss.vrfName)
+		}
+		if vpn != ss.VPN {
+			return fmt.Errorf("Bad VPN Gateway name %v", ss.VPN)
 		}
 		return nil
 	}
@@ -193,4 +231,5 @@ type SchemaSiteVrfRegion struct {
 	siteId     string
 	vrfName    string
 	regionName string
+	VPN        bool
 }

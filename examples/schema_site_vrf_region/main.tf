@@ -1,14 +1,29 @@
 provider "mso" {
-  username = "admin"
-  password = "ins3965!ins3965!"
-  url      = "https://173.36.219.193/"
+  username = "terraform_github_ci"
+  password = "Crest@123456"
+  url      = "https://173.36.219.66/"
   insecure = true
 }
 
-resource "mso_schema_site_vrf_region" "foo_schema_site_vrf_region" {
-  schema_id     = "5d5dbf3f2e0000580553ccce"
+resource "mso_schema_site_vrf_region" "vrfRegion" {
+  schema_id = "5efd6ea60f00005b0ebbd643"
   template_name = "Template1"
-  site_id       = "5ce2de773700006a008a2678"
-  vrf_name      = "Campus"
-  region_name   = "foo_region"
+  site_id = "5efeb3c4190000cc12d05376"
+  vrf_name = "Myvrf"
+  region_name = "us-east-1"
+  vpn_gateway = true
+  hub_network_enable = true
+  hub_network = {
+    name = "hub-fualt"
+    tenant_name = "infra"
+  }
+  cidr {
+    cidr_ip = "2.2.2.2/10"
+    primary = true
+    subnet {
+      ip = "1.20.30.4"
+      zone = "us-east-1b"
+      usage = "sdfkhsdkf"
+    }
+  }
 }
