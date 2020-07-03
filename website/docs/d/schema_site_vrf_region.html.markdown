@@ -33,15 +33,19 @@ data "mso_schema_site_vrf_region" "vrfRegion" {
 ## Attribute Reference ##
 
 * `template_name` - (Optional) Template where Vrf Region to be created.
+
 * `cidr` - (Optional) CIDR to set into region
 * `cidr.cidr_ip` - (Optional) Ip address for cidr.
 * `cidr.primary` - (Optional) primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
+
 * `cidr.subnet` - (Optional) subnets to associate with cidr.
 * `cidr.subnet.ip` - (Optional) ip address for subnet.
 * `cidr.subnet.zone` - (Optional) zone for the subnet.
 * `cidr.subnet.usage` - (Optional) usage information of particular subnet.
+
 * `vpn_gateway` - (Optional) VPN gateway flag.
-* `hub_network_enable` - (Optional) Hub Network enable flag. To set hub network in region, this attribute should be true.
-* `hub_network` - (Optional) Hub Network to set into the region.
+* `hub_network_enable` - (Optional) Hub Network enable flag. To set hub network in region, this attribute should be true. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
+
+* `hub_network` - (Optional) Hub Network to set into the region. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
 * `hub_network.name` - (Optional) name of the hub network.
 * `hub_network.tenant_name` - (Optional) Tenant name for the hub network.
