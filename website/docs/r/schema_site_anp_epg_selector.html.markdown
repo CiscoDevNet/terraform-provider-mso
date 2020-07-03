@@ -16,7 +16,7 @@ Manages MSO Schema site Application Network Profiles Endpoint Groups Selectors.
 resource "mso_schema_site_anp_epg_selector" "check" {
   schema_id     = "${mso_schema_site_anp_epg.anp_epg.schema_id}"
   site_id       = "${mso_schema_site_anp_epg.anp_epg.site_id}"
-  template      = "${mso_schema_site_anp_epg.anp_epg.template_name}
+  template      = "${mso_schema_site_anp_epg.anp_epg.template_name}"
   anp_name      = "${mso_schema_site_anp_epg.anp_epg.anp_name}"
   epg_name      = "${mso_schema_site_anp_epg.anp_epg.epg_name}"
   name          = "check01"
