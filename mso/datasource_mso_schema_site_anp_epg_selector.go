@@ -216,6 +216,7 @@ func datasourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{
 		d.Set("schema_id", schemaID)
 	} else {
 		d.SetId("")
+		return fmt.Errorf("No Site ANP EPG selector found fot given name")
 	}
 	return nil
 }
