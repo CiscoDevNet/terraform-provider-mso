@@ -90,6 +90,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_external_epg_selector": resourceSchemaTemplateExternalEPGSelector(),
 			"mso_schema_template_anp_epg_useg_attr":     resourceMSOSchemaTemplateAnpEpgUsegAttr(),
 			"mso_schema_site_anp_epg_selector":          resourceMSOSchemaSiteAnpEpgSelector(),
+			"mso_schema_template_vrf_contract":          resourceMSOTemplateVRFContract(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -132,6 +133,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_external_epg_selector": datasourceSchemaTemplateExternalEPGSelector(),
 			"mso_schema_template_anp_epg_useg_attr":     dataSourceMSOSchemaTemplateAnpEpgUsegAttr(),
 			"mso_schema_site_anp_epg_selector":          datasourceMSOSchemaSiteAnpEpgSelector(),
+			"mso_schema_template_vrf_contract":          dataSourceMSOTemplateVRFContract(),
 		},
 
 		ConfigureFunc: configureClient,
