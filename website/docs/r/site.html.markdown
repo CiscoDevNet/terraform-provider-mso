@@ -28,6 +28,8 @@ resource "mso_site" "foo_site" {
 * `username` - (Required) The username for the APICs.
 * `password` - (Required) The password for the APICs.
 * `apic_site_id` - (Required) The site ID of the APICs.
+* `login_domain` - (Optional) Name of login domain. This parameter should be used to authenticate remote user with APIC.
+* `maintenance_mode` - (Optional) Boolean flag to enable/disable Maintenance Mode on the site. This parameter is supported only in MSO version 3.0 or higher.
 * `urls` - (Required) A list of URLs to reference the APICs.
 * `labels` - (Optional) The labels for this site.
 * `locations` - (Optional) Location of the site.

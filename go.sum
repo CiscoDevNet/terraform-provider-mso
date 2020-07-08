@@ -78,6 +78,10 @@ github.com/ciscoecosystem/mso-go-client v1.0.3-0.20200703113753-01379464aafc h1:
 github.com/ciscoecosystem/mso-go-client v1.0.3-0.20200703113753-01379464aafc/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/ciscoecosystem/mso-go-client v1.0.3 h1:L+w9xA/QFnPf/llWEF6qvXz2H8uEcv5InPoQZ26Mg1U=
 github.com/ciscoecosystem/mso-go-client v1.0.3/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
+github.com/ciscoecosystem/mso-go-client v1.0.4-0.20200707062759-c6644b35233e h1:6ApeuoJQFkpRwh4onnvBUHnJ9pTUFNqWF/UnzGaXhJw=
+github.com/ciscoecosystem/mso-go-client v1.0.4-0.20200707062759-c6644b35233e/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
+github.com/ciscoecosystem/mso-go-client v1.0.4-0.20200707090612-4073e1ec43d8 h1:btAhAsg0yZbAZEXgU+R/0I/fVFHc600PwlOBtS1FwuU=
+github.com/ciscoecosystem/mso-go-client v1.0.4-0.20200707090612-4073e1ec43d8/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
