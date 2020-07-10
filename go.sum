@@ -60,6 +60,8 @@ github.com/ciscoecosystem/mso-go-client v0.4.13 h1:U7/ChUeoq1HUlFgMcHQRXb2UtvkdM
 github.com/ciscoecosystem/mso-go-client v0.4.13/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/ciscoecosystem/mso-go-client v0.4.14 h1:ATpgAZdsEIUxunRNpLl5bbbkmrQBczmt4M8jzgIoVlg=
 github.com/ciscoecosystem/mso-go-client v0.4.14/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
+github.com/ciscoecosystem/mso-go-client v0.4.22 h1:oz+nfZbrT4S75h6GBkoEDkWVtGvvkDZV1pA9w8DCEGU=
+github.com/ciscoecosystem/mso-go-client v0.4.22/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/ciscoecosystem/mso-go-client v1.0.0 h1:zYt/t0M4LRoR34jCMf9s6/tOjgmPFbIRUpo9d7N0YMo=
 github.com/ciscoecosystem/mso-go-client v1.0.0/go.mod h1:ffy+aqN7Zo7GZC8e0pSt+Kbc32wjqkc+zDD42Ug0lWw=
 github.com/ciscoecosystem/mso-go-client v1.0.1 h1:xREoPHB+9xWUQqhEPuWhBv4NkMk5/ezHx3Z6czNBoR4=
