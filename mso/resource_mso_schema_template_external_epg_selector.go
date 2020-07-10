@@ -25,7 +25,7 @@ func resourceSchemaTemplateExternalEPGSelector() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
-			"template": &schema.Schema{
+			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -85,7 +85,7 @@ func resourceSchemaTemplateExternalEPGSelectorCreate(d *schema.ResourceData, m i
 
 	schemaID := d.Get("schema_id").(string)
 
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 
 	extrnalEPGName := d.Get("external_epg_name").(string)
 
@@ -142,7 +142,7 @@ func resourceSchemaTemplateExternalEPGSelectorUpdate(d *schema.ResourceData, m i
 
 	schemaID := d.Get("schema_id").(string)
 
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 
 	externalEpgName := d.Get("external_epg_name").(string)
 
@@ -197,7 +197,7 @@ func resourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m int
 
 	dn := d.Id()
 	schemaID := d.Get("schema_id").(string)
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 	externalEpgName := d.Get("external_epg_name").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
@@ -273,7 +273,7 @@ func resourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m int
 			}
 		}
 		if found {
-			d.Set("template", tempName)
+			d.Set("template_name", tempName)
 			break
 		}
 	}
@@ -292,7 +292,7 @@ func resourceSchemaTemplateExternalEPGSelectorDelete(d *schema.ResourceData, m i
 
 	schemaID := d.Get("schema_id").(string)
 
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 
 	externalEpgName := d.Get("external_epg_name").(string)
 

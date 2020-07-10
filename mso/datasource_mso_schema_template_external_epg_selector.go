@@ -81,7 +81,7 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 	found := false
 
 	schemaID := d.Get("schema_id").(string)
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 	externalEpgName := d.Get("external_epg_name").(string)
 	name := d.Get("name").(string)
 
@@ -158,7 +158,7 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 			}
 		}
 		if found {
-			d.Set("template", tempName)
+			d.Set("template_name", tempName)
 			break
 		}
 	}

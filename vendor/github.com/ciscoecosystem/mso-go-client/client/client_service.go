@@ -100,15 +100,19 @@ func (c *Client) DeletebyId(url string) error {
 	return nil
 }
 
-func (c *Client) PatchbyID(endpoint string, obj models.Model) (*container.Container, error) {
+func (c *Client) PatchbyID(endpoint string, objList ...models.Model) (*container.Container, error) {
 
-	jsonPayload, err := c.PrepareModel(obj)
 	contJs := container.New()
 	contJs.Array()
-	contJs.ArrayAppend(jsonPayload.Data())
-	if err != nil {
-		return nil, err
+	for _, obj := range objList {
+		jsonPayload, err := c.PrepareModel(obj)
+		if err != nil {
+			return nil, err
+		}
+		contJs.ArrayAppend(jsonPayload.Data())
+
 	}
+
 	req, err := c.MakeRestRequest("PATCH", endpoint, contJs, true)
 	if err != nil {
 		return nil, err

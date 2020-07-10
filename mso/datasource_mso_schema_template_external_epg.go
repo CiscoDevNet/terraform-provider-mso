@@ -76,6 +76,24 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"site_id": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"selector_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"selector_ip": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
 		}),
 	}
 }
@@ -140,6 +158,21 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 						d.Set("anp_name", "")
 						d.Set("anp_schema_id", "")
 						d.Set("anp_template_name", "")
+					}
+
+					epgType := d.Get("external_epg_type").(string)
+					if epgType == "cloud" {
+						selList := externalepgCont.S("selectors").Data().([]interface{})
+
+						selector := selList[0].(map[string]interface{})
+						d.Set("selector_name", selector["name"])
+						expList := selector["expressions"].([]interface{})
+						exp := expList[0].(map[string]interface{})
+						d.Set("selector_ip", exp["value"])
+					} else {
+						d.Set("site_id", make([]interface{}, 0, 1))
+						d.Set("selector_name", "")
+						d.Set("selector_ip", "")
 					}
 
 					found = true

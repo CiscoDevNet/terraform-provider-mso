@@ -58,7 +58,7 @@ func testAccCheckMSOTemplateAnpEpgSelectorConfig_basic(key string) string {
 	return fmt.Sprintf(`
 	resource "mso_schema_template_anp_epg_selector" "selector1" {
 		schema_id = "5ea809672c00003bc40a2799"
-		template = "Template1"
+		template_name = "Template1"
 		anp_name = "ap1"
 		epg_name = "epg1"
 		name = "test_check"
