@@ -215,11 +215,13 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 	}
 
 	if !found {
+
 		d.SetId("")
 		d.Set("name", "")
 		d.Set("operator", "")
 		d.Set("useg_type", "")
 		d.Set("value", "")
+		return fmt.Errorf("Unable to find Schema template anp epg useg attribute %s", name)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

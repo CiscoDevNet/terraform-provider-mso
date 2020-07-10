@@ -45,6 +45,7 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
