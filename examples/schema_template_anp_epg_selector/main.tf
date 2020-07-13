@@ -20,7 +20,7 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 
 resource "mso_schema_template_anp_epg_selector" "check" {
   schema_id = "${mso_schema_template_anp_epg.anp_epg.schema_id}"
-  template = "${mso_schema_template_anp_epg.anp_epg.template_name}"
+  template_name = "${mso_schema_template_anp_epg.anp_epg.template_name}"
   anp_name = "${mso_schema_template_anp_epg.anp_epg.anp_name}"
   epg_name = "${mso_schema_template_anp_epg.anp_epg.name}"
   name = "check01"

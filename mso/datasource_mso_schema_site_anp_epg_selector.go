@@ -22,7 +22,7 @@ func datasourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
-			"template": &schema.Schema{
+			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -101,7 +101,7 @@ func datasourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{
 
 	schemaID := d.Get("schema_id").(string)
 	siteID := d.Get("site_id").(string)
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	name := d.Get("name").(string)
@@ -208,7 +208,7 @@ func datasourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{
 		}
 		if found {
 			d.Set("site_id", siteID)
-			d.Set("template", template)
+			d.Set("template_name", template)
 			break
 		}
 	}

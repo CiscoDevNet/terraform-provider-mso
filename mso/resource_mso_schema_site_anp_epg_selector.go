@@ -26,7 +26,7 @@ func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
-			"template": &schema.Schema{
+			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -108,7 +108,7 @@ func resourceSchemaSiteApnEpgSelectorCreate(d *schema.ResourceData, m interface{
 
 	siteID := d.Get("site_id").(string)
 
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 
 	anpName := d.Get("anp_name").(string)
 
@@ -171,7 +171,7 @@ func resourceSchemaSiteApnEpgSelectorUpdate(d *schema.ResourceData, m interface{
 
 	siteID := d.Get("site_id").(string)
 
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 
 	anpName := d.Get("anp_name").(string)
 
@@ -244,7 +244,7 @@ func resourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{})
 	dn := d.Id()
 	schemaID := d.Get("schema_id").(string)
 	siteID := d.Get("site_id").(string)
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 
@@ -350,7 +350,7 @@ func resourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{})
 		}
 		if found {
 			d.Set("site_id", siteID)
-			d.Set("template", template)
+			d.Set("template_name", template)
 			break
 		}
 	}
@@ -372,7 +372,7 @@ func resourceSchemaSiteApnEpgSelectorDelete(d *schema.ResourceData, m interface{
 
 	siteID := d.Get("site_id").(string)
 
-	template := d.Get("template").(string)
+	template := d.Get("template_name").(string)
 
 	anpName := d.Get("anp_name").(string)
 

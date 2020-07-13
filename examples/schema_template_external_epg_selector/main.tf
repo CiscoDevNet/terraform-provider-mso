@@ -14,7 +14,7 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 
 resource "mso_schema_template_external_epg_selector" "selector1" {
 	schema_id = "${mso_schema_template_external_epg.template_externalepg.schema_id}"
-	template = "${mso_schema_template_external_epg.template_externalepg.template_name}"
+	template_name = "${mso_schema_template_external_epg.template_externalepg.template_name}"
 	external_epg_name = "${mso_schema_template_external_epg.template_externalepg.external_epg_name}"
 	name = "check01"
     expressions {
