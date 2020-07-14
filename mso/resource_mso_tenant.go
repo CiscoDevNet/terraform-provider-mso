@@ -610,5 +610,5 @@ func resourceMSOTenantDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
 
 	d.SetId("")
-	return err
+	return nil
 }
