@@ -37,6 +37,15 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"external_epg_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"on-premise",
+					"cloud",
+				}, false),
+			},
 			"display_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -140,6 +149,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
+					d.Set("external_epg_type", models.StripQuotes(externalepgCont.S("extEpgType").String()))
 
 					vrfRef := models.StripQuotes(externalepgCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
