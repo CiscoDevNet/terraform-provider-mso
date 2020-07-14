@@ -274,10 +274,13 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 			siteExternalepgStruct := models.NewSchemaSiteExternalEpg("add", pathSite, siteEpgMap)
 			structList = append(structList, siteExternalepgStruct)
 		}
+
+		d.Partial(true)
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), structList...)
 		if err != nil {
 			return err
 		}
+		d.Partial(false)
 
 	} else {
 		path := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
@@ -558,10 +561,13 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 			siteExternalepgStruct := models.NewSchemaSiteExternalEpg(op, pathSite, siteEpgMap)
 			structList = append(structList, siteExternalepgStruct)
 		}
+
+		d.Partial(true)
 		_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), structList...)
 		if err1 != nil {
 			return err1
 		}
+		d.Partial(false)
 
 	} else {
 		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
