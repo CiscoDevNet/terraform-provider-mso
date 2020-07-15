@@ -340,8 +340,12 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 						if apiRegion == stateRegion {
 							d.SetId(apiRegion)
 							d.Set("region_name", apiRegion)
-							d.Set("vpn_gateway", regionCont.S("isVpnGatewayRouter").Data().(bool))
-							d.Set("hub_network_enable", regionCont.S("isTGWAttachment").Data().(bool))
+							if regionCont.Exists("isVpnGatewayRouter") {
+								d.Set("vpn_gateway", regionCont.S("isVpnGatewayRouter").Data().(bool))
+							}
+							if regionCont.Exists("isTGWAttachment") {
+								d.Set("hub_network_enable", regionCont.S("isTGWAttachment").Data().(bool))
+							}
 
 							hubMap := make(map[string]interface{})
 							if regionCont.Exists("cloudRsCtxProfileToGatewayRouterP") {
