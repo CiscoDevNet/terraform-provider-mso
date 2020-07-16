@@ -143,8 +143,10 @@ func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interf
 
 	if err != nil {
 		d.SetId(graphName)
+		d.Set("site_nodes", nil)
 		log.Printf("Unable to find sites")
 		return nil
+
 	}
 
 	for i := 0; i < sitesCount; i++ {
