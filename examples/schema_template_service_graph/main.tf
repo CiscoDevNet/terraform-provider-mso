@@ -21,9 +21,9 @@ resource "mso_schema_template_service_graph" "test_sg" {
 
 
 data "mso_schema_template_service_graph" "test_sg" {
-  schema_id          = "5f06a4c40f0000b63dbbd647"
+  schema_id          = "5f0830910e0000a348cff85e"
   template_name      = "Template1"
-  service_graph_name = "sgtf"
-  node_index         = 1
+  service_graph_name = "sgt"
+  node_index         = 2
 
 }

@@ -12,7 +12,7 @@ resource "mso_tenant" "tenant02" {
   description  = "DemoTenant"
   site_associations {
     site_id                = "5c7c95b25100008f01c1ee3c"
-    vendor                 = "azure"
+    vendor                 = "aws"
     aws_account_id         = "123456789124"
     is_aws_account_trusted = false
     aws_access_key_id      = "AKIAIXCL6LOFME6SUH12"
