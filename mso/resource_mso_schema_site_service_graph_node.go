@@ -321,6 +321,8 @@ func resourceMSOSchemaSiteServiceGraphNodeRead(d *schema.ResourceData, m interfa
 		}
 
 		d.Set("site_nodes", siteParams)
+	} else {
+		d.Set("site_nodes", nil)
 	}
 
 	d.SetId(nodeIdSt)
