@@ -55,6 +55,27 @@ func resourceTemplateContractServiceGraph() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
+			"service_graph_schema_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+
+			"service_graph_site_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+
+			"service_graph_template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+
 			"node_relationship": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
@@ -66,9 +87,33 @@ func resourceTemplateContractServiceGraph() *schema.Resource {
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 
+						"provider_connector_bd_schema_id": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+
+						"provider_connector_bd_template_name": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+
 						"consumer_connector_bd_name": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+
+						"consumer_connector_bd_schema_id": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+
+						"consumer_connector_bd_template_name": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 
@@ -143,16 +188,32 @@ func resourceTemplateContractServiceGraphCreate(d *schema.ResourceData, m interf
 	serviceGraph := d.Get("service_graph_name").(string)
 
 	serviceGraphRef := make(map[string]interface{})
-	serviceGraphRef["schemaId"] = schemaID
-	serviceGraphRef["templateName"] = TemplateName
+	if graphSchema, ok := d.GetOk("service_graph_schema_id"); ok {
+		serviceGraphRef["schemaId"] = graphSchema.(string)
+	} else {
+		serviceGraphRef["schemaId"] = schemaID
+	}
+
+	if graphTemp, ok := d.GetOk("service_graph_template_name"); ok {
+		serviceGraphRef["templateName"] = graphTemp.(string)
+	} else {
+		serviceGraphRef["templateName"] = TemplateName
+	}
 	serviceGraphRef["serviceGraphName"] = serviceGraph
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	var graphSiteID string
+	if graphSite, ok := d.GetOk("service_graph_site_id"); ok {
+		graphSiteID = graphSite.(string)
+	} else {
+		graphSiteID = siteID
+	}
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", serviceGraphRef["schemaId"].(string)))
 	if err != nil {
 		return err
 	}
 
-	graphCont, _, err := getTemplateServiceGraph(cont, TemplateName, serviceGraph)
+	graphCont, _, err := getTemplateServiceGraph(cont, serviceGraphRef["templateName"].(string), serviceGraph)
 	if err != nil {
 		return err
 	}
@@ -174,12 +235,12 @@ func resourceTemplateContractServiceGraphCreate(d *schema.ResourceData, m interf
 		tempnodeRef := serviceGraphRef
 		tempnodeRef["serviceNodeName"] = nodeList[i].(string)
 
-		sitegraphCont, _, err := getSiteServiceGraph(cont, schemaID, TemplateName, siteID, serviceGraph)
+		sitegraphCont, _, err := getSiteServiceGraph(cont, tempnodeRef["schemaId"].(string), tempnodeRef["templateName"].(string), graphSiteID, tempnodeRef["serviceGraphName"].(string))
 		if err != nil {
 			return err
 		}
 
-		siteNodeCont, _, err := getSiteServiceNode(sitegraphCont, schemaID, TemplateName, serviceGraph, nodeList[i].(string))
+		siteNodeCont, _, err := getSiteServiceNode(sitegraphCont, tempnodeRef["schemaId"].(string), tempnodeRef["templateName"].(string), tempnodeRef["serviceGraphName"].(string), nodeList[i].(string))
 		if err != nil {
 			return err
 		}
@@ -188,16 +249,34 @@ func resourceTemplateContractServiceGraphCreate(d *schema.ResourceData, m interf
 		tempproConnector := make(map[string]interface{})
 		tempproConnector["connectorType"] = "general"
 		bdRef := make(map[string]interface{})
-		bdRef["schemaId"] = schemaID
-		bdRef["templateName"] = TemplateName
+		if node["provider_connector_bd_schema_id"] != "" {
+			bdRef["schemaId"] = node["provider_connector_bd_schema_id"].(string)
+		} else {
+			bdRef["schemaId"] = schemaID
+		}
+
+		if node["provider_connector_bd_template_name"] != "" {
+			bdRef["templateName"] = node["provider_connector_bd_template_name"].(string)
+		} else {
+			bdRef["templateName"] = TemplateName
+		}
 		bdRef["bdName"] = node["provider_connector_bd_name"].(string)
 		tempproConnector["bdRef"] = bdRef
 
 		tempconConnector := make(map[string]interface{})
 		tempconConnector["connectorType"] = "general"
 		conbdRef := make(map[string]interface{})
-		conbdRef["schemaId"] = schemaID
-		conbdRef["templateName"] = TemplateName
+		if node["consumer_connector_bd_schema_id"] != "" {
+			conbdRef["schemaId"] = node["consumer_connector_bd_schema_id"].(string)
+		} else {
+			conbdRef["schemaId"] = schemaID
+		}
+
+		if node["consumer_connector_bd_template_name"] != "" {
+			conbdRef["templateName"] = node["consumer_connector_bd_template_name"].(string)
+		} else {
+			conbdRef["templateName"] = TemplateName
+		}
 		conbdRef["bdName"] = node["consumer_connector_bd_name"].(string)
 		tempconConnector["bdRef"] = conbdRef
 
@@ -297,16 +376,32 @@ func resourceTemplateContractServiceGraphUpdate(d *schema.ResourceData, m interf
 	serviceGraph := d.Get("service_graph_name").(string)
 
 	serviceGraphRef := make(map[string]interface{})
-	serviceGraphRef["schemaId"] = schemaID
-	serviceGraphRef["templateName"] = TemplateName
+	if graphSchema, ok := d.GetOk("service_graph_schema_id"); ok {
+		serviceGraphRef["schemaId"] = graphSchema.(string)
+	} else {
+		serviceGraphRef["schemaId"] = schemaID
+	}
+
+	if graphTemp, ok := d.GetOk("service_graph_template_name"); ok {
+		serviceGraphRef["templateName"] = graphTemp.(string)
+	} else {
+		serviceGraphRef["templateName"] = TemplateName
+	}
 	serviceGraphRef["serviceGraphName"] = serviceGraph
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	var graphSiteID string
+	if graphSite, ok := d.GetOk("service_graph_site_id"); ok {
+		graphSiteID = graphSite.(string)
+	} else {
+		graphSiteID = siteID
+	}
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", serviceGraphRef["schemaId"].(string)))
 	if err != nil {
 		return err
 	}
 
-	graphCont, _, err := getTemplateServiceGraph(cont, TemplateName, serviceGraph)
+	graphCont, _, err := getTemplateServiceGraph(cont, serviceGraphRef["templateName"].(string), serviceGraph)
 	if err != nil {
 		return err
 	}
@@ -328,12 +423,12 @@ func resourceTemplateContractServiceGraphUpdate(d *schema.ResourceData, m interf
 		tempnodeRef := serviceGraphRef
 		tempnodeRef["serviceNodeName"] = nodeList[i].(string)
 
-		sitegraphCont, _, err := getSiteServiceGraph(cont, schemaID, TemplateName, siteID, serviceGraph)
+		sitegraphCont, _, err := getSiteServiceGraph(cont, tempnodeRef["schemaId"].(string), tempnodeRef["templateName"].(string), graphSiteID, tempnodeRef["serviceGraphName"].(string))
 		if err != nil {
 			return err
 		}
 
-		siteNodeCont, _, err := getSiteServiceNode(sitegraphCont, schemaID, TemplateName, serviceGraph, nodeList[i].(string))
+		siteNodeCont, _, err := getSiteServiceNode(sitegraphCont, tempnodeRef["schemaId"].(string), tempnodeRef["templateName"].(string), tempnodeRef["serviceGraphName"].(string), nodeList[i].(string))
 		if err != nil {
 			return err
 		}
@@ -342,16 +437,34 @@ func resourceTemplateContractServiceGraphUpdate(d *schema.ResourceData, m interf
 		tempproConnector := make(map[string]interface{})
 		tempproConnector["connectorType"] = "general"
 		bdRef := make(map[string]interface{})
-		bdRef["schemaId"] = schemaID
-		bdRef["templateName"] = TemplateName
+		if node["provider_connector_bd_schema_id"] != "" {
+			bdRef["schemaId"] = node["provider_connector_bd_schema_id"].(string)
+		} else {
+			bdRef["schemaId"] = schemaID
+		}
+
+		if node["provider_connector_bd_template_name"] != "" {
+			bdRef["templateName"] = node["provider_connector_bd_template_name"].(string)
+		} else {
+			bdRef["templateName"] = TemplateName
+		}
 		bdRef["bdName"] = node["provider_connector_bd_name"].(string)
 		tempproConnector["bdRef"] = bdRef
 
 		tempconConnector := make(map[string]interface{})
 		tempconConnector["connectorType"] = "general"
 		conbdRef := make(map[string]interface{})
-		conbdRef["schemaId"] = schemaID
-		conbdRef["templateName"] = TemplateName
+		if node["consumer_connector_bd_schema_id"] != "" {
+			conbdRef["schemaId"] = node["consumer_connector_bd_schema_id"].(string)
+		} else {
+			conbdRef["schemaId"] = schemaID
+		}
+
+		if node["consumer_connector_bd_template_name"] != "" {
+			conbdRef["templateName"] = node["consumer_connector_bd_template_name"].(string)
+		} else {
+			conbdRef["templateName"] = TemplateName
+		}
 		conbdRef["bdName"] = node["consumer_connector_bd_name"].(string)
 		tempconConnector["bdRef"] = conbdRef
 
@@ -451,6 +564,43 @@ func resourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interfac
 	contractName := d.Get("contract_name").(string)
 	serviceGraph := d.Get("service_graph_name").(string)
 
+	serviceGraphRef := make(map[string]interface{})
+	if graphSchema, ok := d.GetOk("service_graph_schema_id"); ok {
+		serviceGraphRef["schemaId"] = graphSchema.(string)
+	} else {
+		serviceGraphRef["schemaId"] = schemaID
+	}
+
+	if graphTemp, ok := d.GetOk("service_graph_template_name"); ok {
+		serviceGraphRef["templateName"] = graphTemp.(string)
+	} else {
+		serviceGraphRef["templateName"] = templateName
+	}
+	serviceGraphRef["serviceGraphName"] = serviceGraph
+
+	var graphSiteID string
+	if graphSite, ok := d.GetOk("service_graph_site_id"); ok {
+		graphSiteID = graphSite.(string)
+	} else {
+		graphSiteID = siteID
+	}
+
+	contSite, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", serviceGraphRef["schemaId"].(string)))
+	if err != nil {
+		return err
+	}
+
+	_, _, err = getSiteServiceGraph(contSite, serviceGraphRef["schemaId"].(string), serviceGraphRef["templateName"].(string), graphSiteID, serviceGraphRef["serviceGraphName"].(string))
+	if err == nil {
+		if _, ok := d.GetOk("service_graph_site_id"); ok {
+			d.Set("service_graph_site_id", graphSiteID)
+		} else {
+			d.Set("service_graph_site_id", "")
+		}
+	} else {
+		d.Set("service_graph_site_id", "")
+	}
+
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
@@ -476,7 +626,7 @@ func resourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interfac
 			for j := 0; j < contractCount; j++ {
 				contractCont, err := tempCont.ArrayElement(j, "contracts")
 				if err != nil {
-					fmt.Errorf("Error fetching contract")
+					return fmt.Errorf("Error fetching contract")
 				}
 				conName := models.StripQuotes(contractCont.S("name").String())
 				if conName == contractName {
@@ -489,6 +639,16 @@ func resourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interfac
 						graphRef := models.StripQuotes(graphRelation.S("serviceGraphRef").String())
 						tokens := strings.Split(graphRef, "/")
 						d.Set("service_graph_name", tokens[len(tokens)-1])
+						if _, ok := d.GetOk("service_graph_schema_id"); ok {
+							d.Set("service_graph_schema_id", tokens[len(tokens)-5])
+						} else {
+							d.Set("service_graph_schema_id", "")
+						}
+						if _, ok := d.GetOk("service_graph_template_name"); ok {
+							d.Set("service_graph_template_name", tokens[len(tokens)-5])
+						} else {
+							d.Set("service_graph_template_name", "")
+						}
 
 						nodeCount, err := graphRelation.ArrayCount("serviceNodesRelationship")
 						if err != nil {
@@ -504,13 +664,38 @@ func resourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interfac
 							tokensNode := strings.Split(nodeRef, "/")
 							relationMap["node_name"] = tokensNode[len(tokensNode)-1]
 
+							nodeInterface := d.Get("node_relationship")
+
 							probdRef := models.StripQuotes(node.S("providerConnector", "bdRef").String())
 							probdRefTokens := strings.Split(probdRef, "/")
 							relationMap["provider_connector_bd_name"] = probdRefTokens[len(probdRefTokens)-1]
 
+							if checkNodeAttr(nodeInterface, "provider_connector_bd_schema_id", k) {
+								relationMap["provider_connector_bd_schema_id"] = probdRefTokens[len(probdRefTokens)-5]
+							} else {
+								relationMap["provider_connector_bd_schema_id"] = ""
+							}
+							if checkNodeAttr(nodeInterface, "provider_connector_bd_template_name", k) {
+								relationMap["provider_connector_bd_template_name"] = probdRefTokens[len(probdRefTokens)-3]
+							} else {
+								relationMap["provider_connector_bd_template_name"] = ""
+							}
+
 							conbdRef := models.StripQuotes(node.S("consumerConnector", "bdRef").String())
 							conbdRefTokens := strings.Split(conbdRef, "/")
 							relationMap["consumer_connector_bd_name"] = conbdRefTokens[len(conbdRefTokens)-1]
+
+							if checkNodeAttr(nodeInterface, "consumer_connector_bd_schema_id", k) {
+								relationMap["consumer_connector_bd_schema_id"] = conbdRefTokens[len(conbdRefTokens)-5]
+							} else {
+								relationMap["consumer_connector_bd_schema_id"] = ""
+							}
+
+							if checkNodeAttr(nodeInterface, "consumer_connector_bd_template_name", k) {
+								relationMap["consumer_connector_bd_template_name"] = conbdRefTokens[len(conbdRefTokens)-3]
+							} else {
+								relationMap["consumer_connector_bd_template_name"] = ""
+							}
 
 							temprelationList = append(temprelationList, relationMap)
 						}
@@ -635,7 +820,11 @@ func resourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interfac
 
 			allMap := make(map[string]interface{})
 			allMap["provider_connector_bd_name"] = tempMap["provider_connector_bd_name"]
+			allMap["provider_connector_bd_schema_id"] = tempMap["provider_connector_bd_schema_id"]
+			allMap["provider_connector_bd_template_name"] = tempMap["provider_connector_bd_template_name"]
 			allMap["consumer_connector_bd_name"] = tempMap["consumer_connector_bd_name"]
+			allMap["consumer_connector_bd_schema_id"] = tempMap["consumer_connector_bd_schema_id"]
+			allMap["consumer_connector_bd_template_name"] = tempMap["consumer_connector_bd_template_name"]
 
 			tp := strings.Split(siteMap["provider_connector_cluster_interface"].(string), "/")
 			token := strings.Split(tp[len(tp)-1], "-")
@@ -849,4 +1038,15 @@ func getSiteServiceGraph(cont *container.Container, schemaId, templateName, site
 	}
 
 	return nil, -1, fmt.Errorf("Unable to find site service graph")
+}
+
+func checkNodeAttr(object interface{}, attrName string, index int) bool {
+	objList := object.([]interface{})
+
+	instance := objList[index].(map[string]interface{})
+
+	if instance[attrName] != "" {
+		return true
+	}
+	return false
 }

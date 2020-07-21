@@ -170,7 +170,7 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 			for j := 0; j < contractCount; j++ {
 				contractCont, err := tempCont.ArrayElement(j, "contracts")
 				if err != nil {
-					fmt.Errorf("Error fetching contract")
+					return fmt.Errorf("Error fetching contract")
 				}
 				conName := models.StripQuotes(contractCont.S("name").String())
 				if conName == contractName {
