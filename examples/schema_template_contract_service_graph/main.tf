@@ -12,9 +12,26 @@ resource "mso_schema_template_contract_service_graph" "one" {
   template_name = "Template1"
   contract_name = "UntitledContract1"
   service_graph_name = "sg1"
+  service_graph_schema_id = "5f16a7c62c00006367812a2f"
   node_relationship {
     provider_connector_bd_name = "BD1"
     consumer_connector_bd_name = "BD2"
+    provider_connector_cluster_interface = "test"
+    consumer_connector_cluster_interface = "test"
+    provider_connector_redirect_policy_tenant = "NkAutomation"
+    provider_connector_redirect_policy = "test2"
+    consumer_connector_redirect_policy_tenant = "NkAutomation"
+    consumer_connector_redirect_policy = "test2"
+    provider_subnet_ips = ["1.2.3.4/20"]
+    consumer_subnet_ips = ["1.2.3.4/20"]
+  }
+  node_relationship {
+    provider_connector_bd_name = "CBD2"
+    provider_connector_bd_schema_id = "5f16a7c62c00006367812a2f"
+    provider_connector_bd_template_name = "Template1"
+    consumer_connector_bd_name = "CBD1"
+    consumer_connector_bd_schema_id = "5f16a7c62c00006367812a2f"
+    consumer_connector_bd_template_name = "Template1"
     provider_connector_cluster_interface = "test"
     consumer_connector_cluster_interface = "test"
     provider_connector_redirect_policy_tenant = "NkAutomation"
