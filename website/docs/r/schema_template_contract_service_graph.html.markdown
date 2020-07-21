@@ -29,8 +29,8 @@ resource "mso_schema_template_contract_service_graph" "one" {
     provider_connector_redirect_policy          = "test2"
     consumer_connector_redirect_policy_tenant   = "NkAutomation"
     consumer_connector_redirect_policy          = "test2"
-    provider_subnet_ips = ["1.2.3.4"]
-    consumer_subnet_ips = ["1.2.3.4"]
+    provider_subnet_ips = ["1.2.3.4/10"]
+    consumer_subnet_ips = ["10.20.30.40/20"]
   }
 }
 
@@ -43,7 +43,7 @@ resource "mso_schema_template_contract_service_graph" "one" {
 * `template_name` - (Required) Template where Contract Service Graph to be created.
 * `contract_name` - (Required) The name of the contract to manage. There should be an existing contract with this name.
 * `service_graph_name` - (Required) The name of service graph.
-* `node_relationship` - (Required) Service graph node relationship information.
+* `node_relationship` - (Required) Service graph node relationship information. You have to define this block for every node of service graph.
 * `node_relationship.provider_connector_bd_name` - (Required) bd name for provider connector at template level.
 * `node_relationship.consumer_connector_bd_name` - (Required) bd name for consumer connector at template level.
 * `node_relationship.provider_connector_cluster_interface` - (Required) cluster interface for provider connector to attach with node at site level. 
@@ -52,6 +52,9 @@ resource "mso_schema_template_contract_service_graph" "one" {
 * `node_relationship.provider_connector_redirect_policy` - (Optional) redirection policy for provider connector at site level.
 * `node_relationship.consumer_connector_redirect_policy_tenant` - (Optional) tenant for redirection policy for consumer connector at site level. It is required to set redirection policy for consumer connector.
 * `node_relationship.consumer_connector_redirect_policy` - (Optional) redirection policy for consumer connector at site level.
+* `node_relationship.provider_subnet_ips` - (Optional) subnet ips which will be associated with provider connector at site level. It should be in CIDR format.
+* `node_relationship.consumer_subnet_ips` - (Optional) subnet ips which will be associated with consumer connector at site level. It should be in CIDR format.
+
 
 
 ## Attribute Reference ##

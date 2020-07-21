@@ -44,5 +44,6 @@ data "mso_schema_template_contract_service_graph" "name" {
 * `node_relationship.provider_connector_redirect_policy` - (Optional) redirection policy for provider connector at site level.
 * `node_relationship.consumer_connector_redirect_policy_tenant` - (Optional) tenant for redirection policy for consumer connector at site level. It is required to set redirection policy for consumer connector.
 * `node_relationship.consumer_connector_redirect_policy` - (Optional) redirection policy for consumer connector at site level.
-
+* `node_relationship.provider_subnet_ips` - (Optional) subnet ips which will be associated with provider connector at site level. It should be in CIDR format.
+* `node_relationship.consumer_subnet_ips` - (Optional) subnet ips which will be associated with consumer connector at site level. It should be in CIDR format.
 
