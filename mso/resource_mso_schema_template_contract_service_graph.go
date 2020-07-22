@@ -645,7 +645,7 @@ func resourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interfac
 							d.Set("service_graph_schema_id", "")
 						}
 						if _, ok := d.GetOk("service_graph_template_name"); ok {
-							d.Set("service_graph_template_name", tokens[len(tokens)-5])
+							d.Set("service_graph_template_name", tokens[len(tokens)-3])
 						} else {
 							d.Set("service_graph_template_name", "")
 						}
