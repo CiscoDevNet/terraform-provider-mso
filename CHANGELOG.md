@@ -1,4 +1,10 @@
-## 0.2.0 (Unreleased)
+## 0.1.2 (September 3, 2020)
+
+IMPROVEMENTS:
+
+- Renamed resources for naming consistency.
+- First Terraform Registry release.
+
 ## 0.1.1 (July 22, 2020)
 
 IMPROVEMENTS:
