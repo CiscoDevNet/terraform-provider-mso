@@ -29,7 +29,7 @@ func (t *Auth) estimateExpireTime() int64 {
 
 func (client *Client) InjectAuthenticationHeader(req *http.Request, path string) (*http.Request, error) {
 	log.Printf("[DEBUG] Begin Injection")
-	if client.password != "" || client.AuthToken == nil || !client.AuthToken.IsValid() {
+	if client.AuthToken == nil || !client.AuthToken.IsValid() {
 
 		err := client.Authenticate()
 
