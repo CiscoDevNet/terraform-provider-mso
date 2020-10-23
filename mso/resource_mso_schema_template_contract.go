@@ -156,6 +156,7 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 	if err != nil {
 		return err
 	}
+
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
 		return fmt.Errorf("No Template found")
@@ -192,7 +193,29 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 
 					count, _ := contractCont.ArrayCount("filterRelationships")
 
-					filterMap := make(map[string]interface{})
+					var filterSchema string
+					var filterTemplate string
+					var filterName string
+
+					if tempVar, ok := d.GetOk("filter_relationships"); ok {
+						filter_relationships := tempVar.(map[string]interface{})
+
+						if filter_relationships["filter_schema_id"] != nil {
+							filterSchema = filter_relationships["filter_schema_id"].(string)
+						} else {
+							filterSchema = schemaId
+						}
+
+						if filter_relationships["filter_template_name"] != nil {
+							filterTemplate = filter_relationships["filter_template_name"].(string)
+						} else {
+							filterTemplate = apiTemplate
+						}
+
+						filterName = filter_relationships["filter_name"].(string)
+					}
+
+					flag := false
 					for i := 0; i < count; i++ {
 						filterCont, err := contractCont.ArrayElement(i, "filterRelationships")
 						if err != nil {
@@ -203,12 +226,16 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 						filRef := filterCont.S("filterRef").Data()
 						split := strings.Split(filRef.(string), "/")
 
-						filterMap["filter_schema_id"] = fmt.Sprintf("%s", split[2])
-						filterMap["filter_template_name"] = fmt.Sprintf("%s", split[4])
-						filterMap["filter_name"] = fmt.Sprintf("%s", split[6])
+						if split[2] == filterSchema && split[4] == filterTemplate && split[6] == filterName {
+							flag = true
+						}
 					}
 
-					d.Set("filter_relationships", filterMap)
+					if flag {
+						d.Set("filter_relationships", d.Get("filter_relationships"))
+					} else {
+						d.Set("filter_relationships", make(map[string]interface{}))
+					}
 
 					found = true
 					break

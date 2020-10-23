@@ -36,11 +36,10 @@ func (client *Client) InjectAuthenticationHeader(req *http.Request, path string)
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.AuthToken.Token))
-
-		return req, nil
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.AuthToken.Token))
 
 	return req, nil
 }
