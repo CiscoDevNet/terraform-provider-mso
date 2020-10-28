@@ -1,3 +1,11 @@
+## 0.1.3 (October 28, 2020)
+
+IMPROVEMENTS:
+
+- Enabled the Auth-token sharing between API calls.
+
+BUG FIXES:
+- Fixed an issue with mso_schema_template_contract resource, where wrong filter was being read when there are multiple filters added to the same contract.
 ## 0.1.2 (September 3, 2020)
 
 IMPROVEMENTS:
