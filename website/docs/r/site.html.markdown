@@ -16,9 +16,9 @@ Manages MSO Site
 resource "mso_site" "foo_site" {
   name = "mso"
   username = "admin"
-  password = "noir0!234"
+  password = "dummypass"
   apic_site_id = "102"
-  urls = [ "https://3.208.123.222" ]
+  urls = [ "mso_host" ]
 }
 ```
 
