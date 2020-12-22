@@ -278,7 +278,8 @@ func resourceMSOSchemaSiteExternalEpgSelectorDelete(d *schema.ResourceData, m in
 		return err
 	}
 	if index == -1 {
-		return fmt.Errorf("No Selector found")
+		d.SetId("")
+		return nil
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/externalEpgs/%s/subnets/%v", siteID, templateName, extrEpgName, index)

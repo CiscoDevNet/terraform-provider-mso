@@ -347,7 +347,6 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	found := false
 	stateBD := d.Get("bd_name")
 	stateIP := d.Get("ip")
 	for i := 0; i < count; i++ {
@@ -389,16 +388,12 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 							if err != nil {
 								return err
 							}
-							found = true
 							break
 						}
 					}
 				}
 			}
 		}
-	}
-	if !found {
-		return fmt.Errorf("The specified parameters are incorrect for delete operation")
 	}
 	d.SetId("")
 	return nil

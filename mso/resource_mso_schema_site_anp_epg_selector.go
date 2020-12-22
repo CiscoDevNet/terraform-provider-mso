@@ -414,7 +414,8 @@ func resourceSchemaSiteApnEpgSelectorDelete(d *schema.ResourceData, m interface{
 		return err
 	}
 	if indexGet == -1 {
-		return fmt.Errorf("No selectors found")
+		d.SetId("")
+		return nil
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/selectors/%v", siteID, template, anpName, epgName, indexGet)

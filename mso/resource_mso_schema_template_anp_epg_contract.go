@@ -301,7 +301,8 @@ func resourceMSOTemplateAnpEpgContractDelete(d *schema.ResourceData, m interface
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given contract id is not found")
+		d.SetId("")
+		return nil
 	}
 	indexs := strconv.Itoa(index)
 

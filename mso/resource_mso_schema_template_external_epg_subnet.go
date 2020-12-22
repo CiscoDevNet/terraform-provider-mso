@@ -266,7 +266,8 @@ func resourceMSOTemplateExtenalepgSubnetDelete(d *schema.ResourceData, m interfa
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given subnet ip is not found")
+		d.SetId("")
+		return nil
 	}
 	indexs := strconv.Itoa(index)
 
