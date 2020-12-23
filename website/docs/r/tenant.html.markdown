@@ -69,17 +69,18 @@ resource "mso_tenant" "tenant01" {
 * `description` - (Optional) The description for this tenant.
 * `user_associations` - (Optional) A list of associated users for this tenant.
 * `site_association` - (Optional) A list of associated sites for this tenant.
-* `site_association.id` - (Optional) Id of site to associate with this Tenant.
+* `site_association.site_id` - (Optional) Id of site to associate with this Tenant.
 * `site_association.vendor` - (Optional) Name of cloud vendor in the case of Attaching cloud site. Allowed values are `aws` and `azure`.
 * `site_association.aws_account_id` - (Optional) Id of AWS account. It's required when vendor is set to aws. This parameter will only have effect with `vendor` = aws
 * `site_association.is_aws_account_trusted` - (Optional) Boolean flag to indicate whether this account is trusted or not. Trusted account does not require aws_access_key_id and aws_secret_key.
 * `site_association.aws_access_key_id` - (Optional) AWS Access Key Id. It must be provided if the AWS account is not trusted. This parameter will only have effect with `vendor` = aws.
 * `site_association.aws_secret_key` - (Optional) AWS Secret Key Id. It must be provided if the AWS account is not trusted. This parameter will only have effect with `vendor` = aws.
 * `site_association.azure_subscription_id` - (Optional) Azure subscription id. It's required when vendor is set to azure. This parameter will only have effect with `vendor` = azure.
-* `site_association.azure_access_type` - (Optional) Type of Azure Account Configuration. Allowed values are `managed` and `credentials`. Default to `managed`. Other Credentials are not required if azure_access_type is set to managed. This parameter will only have effect with `vendor` = azure.
+* `site_association.azure_access_type` - (Optional) Type of Azure Account Configuration. Allowed values are `managed`, `shared` and `credentials`. Default to `managed`. Other Credentials are not required if azure_access_type is set to managed. This parameter will only have effect with `vendor` = azure.
 * `site_association.azure_application_id` - (Optional) Azure Application Id. It must be provided when azure_access_type to credentials. This parameter will only have effect with `vendor` = azure.
 * `site_association.azure_client_secret` - (Optional) Azure Client Secret. It must be provided when azure_access_type to credentials. This parameter will only have effect with `vendor` = azure.
 * `site_association.azure_active_directory_id` - (Optional) Azure Active Directory Id. It must be provided when azure_access_type to credentials. This parameter will only have effect with `vendor` = azure.
+* `site_association.azure_shared_account_id` - (Optional) Azure shared account Id. It must be provided when azure_access_type to shared. This parameter will only have effect with `vendor` = azure.
 
 NOTE: Either of AWS or Azure credentials will be used based on whatever is passed in `vendor` argument if both (AWS + Azure) Credentials are provided.
 

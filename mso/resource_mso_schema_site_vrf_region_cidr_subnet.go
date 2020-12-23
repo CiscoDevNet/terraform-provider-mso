@@ -503,6 +503,11 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetDelete(d *schema.ResourceData, m in
 		}
 	}
 
+	if index == -1 {
+		d.SetId("")
+		return nil
+	}
+
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s/cidrs/%v/subnets/%v", siteId, templateName, vrfName, regionName, cindex, index)
 	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("remove", path, ip, zone, usage)
 

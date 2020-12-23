@@ -252,6 +252,11 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 		return err
 	}
 
+	if index == -1 {
+		d.SetId("")
+		return nil
+	}
+
 	indexs := strconv.Itoa(index)
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%s", templateName, epgName, indexs)
@@ -265,7 +270,6 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 	return nil
 }
 func fetchIndexs(cont *container.Container, templateName, epgName, contractName string) (int, error) {
-	found := false
 	index := -1
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
@@ -304,7 +308,6 @@ func fetchIndexs(cont *container.Container, templateName, epgName, contractName 
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
 						if contractName == fmt.Sprintf("%s", split[3]) {
-							found = true
 							index = k
 							break
 						}
@@ -312,9 +315,6 @@ func fetchIndexs(cont *container.Container, templateName, epgName, contractName 
 				}
 			}
 		}
-	}
-	if !found {
-		return index, fmt.Errorf("Unable to Find the external Epg Contract")
 	}
 
 	return index, nil

@@ -574,7 +574,6 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 	if err != nil {
 		return fmt.Errorf("No Sites found")
 	}
-	found := false
 
 	var pathType, pod, leaf, path, deploymentImmediacy, mode, fex string
 	var vlan, microsegvlan int
@@ -670,7 +669,6 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 									if err != nil {
 										return err
 									}
-									found = true
 									break
 								}
 							}
@@ -680,9 +678,6 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 				}
 			}
 		}
-	}
-	if !found {
-		return fmt.Errorf("The specified parameters to delete the static port entry not found")
 	}
 	d.SetId("")
 	return resourceMSOSchemaSiteAnpEpgStaticPortRead(d, m)

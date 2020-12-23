@@ -783,7 +783,8 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given Anp Epg Domain is not found")
+		d.SetId("")
+		return nil
 	}
 	indexs := strconv.Itoa(index)
 

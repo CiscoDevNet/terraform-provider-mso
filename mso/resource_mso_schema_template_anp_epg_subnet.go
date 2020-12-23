@@ -325,7 +325,8 @@ func resourceMSOSchemaTemplateAnpEpgSubnetDelete(d *schema.ResourceData, m inter
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given subnet ip is not found")
+		d.SetId("")
+		return nil
 	}
 	indexs := strconv.Itoa(index)
 	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("remove", "/templates/"+template+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/"+indexs, "", "", false)

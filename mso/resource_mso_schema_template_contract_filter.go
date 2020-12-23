@@ -537,7 +537,6 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 	indexf := 0
 	indexfp := 0
 	indexfc := 0
-	found := false
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
@@ -604,7 +603,6 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
 									if split[6] == filterName && split[4] == filterTemplate && split[2] == filterId {
-										found = true
 										paths := fmt.Sprintf("/templates/%s/contracts/%s/filterRelationships/%v", templateName, contractName, k)
 										contract := models.NewTemplateContractFilterRelationShip("remove", paths, filterRefMap, directives)
 										_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contract)
@@ -628,7 +626,6 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
 									if split[6] == filterName && split[4] == filterTemplate && split[2] == filterId {
-										found = true
 
 										paths := fmt.Sprintf("/templates/%s/contracts/%s/filterRelationshipsProviderToConsumer/%v", templateName, contractName, k)
 										contract := models.NewTemplateContractFilterRelationShip("remove", paths, filterRefMap, directives)
@@ -656,7 +653,6 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
 									if split[6] == filterName && split[4] == filterTemplate && split[2] == filterId {
-										found = true
 										paths := fmt.Sprintf("/templates/%s/contracts/%s/filterRelationshipsConsumerToProvider/%v", templateName, contractName, k)
 										contract := models.NewTemplateContractFilterRelationShip("remove", paths, filterRefMap, directives)
 										_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contract)
@@ -676,9 +672,6 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 				}
 			}
 		}
-	}
-	if !found {
-		return fmt.Errorf("Unable to find given Contract Filter")
 	}
 	return resourceMSOTemplateContractFilterRead(d, m)
 

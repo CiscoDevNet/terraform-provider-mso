@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -111,7 +112,14 @@ func resourceMSOTenant() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{
 								"credentials",
 								"managed",
+								"shared",
 							}, false),
+						},
+						"azure_shared_account_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"azure_application_id": {
 							Type:         schema.TypeString,
@@ -218,30 +226,46 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 				} else if inner["vendor"] == "azure" {
 					azureAccountMap := make(map[string]interface{})
 					var subscriptionId string
-					if inner["azure_subscription_id"] != "" {
-						subscriptionId = inner["azure_subscription_id"].(string)
-						mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
-					} else {
-						return fmt.Errorf("azure_subscription_id is required when vendor = azure")
-					}
 
 					azureAccessType := inner["azure_access_type"].(string)
 					applicationId := inner["azure_application_id"].(string)
 					clientSecret := inner["azure_client_secret"].(string)
 					activeDirectoryId := inner["azure_active_directory_id"].(string)
+					sharedAccID := inner["azure_shared_account_id"].(string)
 
 					if azureAccessType == "" {
 						azureAccessType = "managed"
 					}
 					cloudSubMap := make(map[string]interface{})
 					if azureAccessType == "managed" {
+						if inner["azure_subscription_id"] != "" {
+							subscriptionId = inner["azure_subscription_id"].(string)
+							mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
+						} else {
+							return fmt.Errorf("azure_subscription_id is required when vendor = azure and azure_access_type = managed or credentials")
+						}
+
 						cloudSubMap["cloudSubscriptionId"] = subscriptionId
 						azureAccountMap["cloudSubscription"] = cloudSubMap
+
+						azureAccountMap["securityDomains"] = make([]interface{}, 0)
+						azureAccountMap["vendor"] = "azure"
+						azureAccountMap["accessType"] = azureAccessType
+
+						mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
 
 					} else if azureAccessType == "credentials" {
 						if applicationId == "" || clientSecret == "" || activeDirectoryId == "" {
 							return fmt.Errorf("azure_application_id, azure_client_secret and azure_active_directory_id are required with azure_access_type = credentials")
 						}
+
+						if inner["azure_subscription_id"] != "" {
+							subscriptionId = inner["azure_subscription_id"].(string)
+							mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
+						} else {
+							return fmt.Errorf("azure_subscription_id is required when vendor = azure and azure_access_type = managed or credentials")
+						}
+
 						cloudSubMap["cloudSubscriptionId"] = subscriptionId
 						cloudSubMap["cloudApplicationId"] = applicationId
 						azureAccountMap["cloudSubscription"] = cloudSubMap
@@ -259,12 +283,36 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 						activeDirectoryMap["cloudActiveDirectoryName"] = "CiscoINSBUAd"
 
 						azureAccountMap["cloudActiveDirectory"] = [...]interface{}{activeDirectoryMap}
-					}
-					azureAccountMap["securityDomains"] = make([]interface{}, 0)
-					azureAccountMap["vendor"] = "azure"
-					azureAccountMap["accessType"] = azureAccessType
 
-					mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
+						azureAccountMap["securityDomains"] = make([]interface{}, 0)
+						azureAccountMap["vendor"] = "azure"
+						azureAccountMap["accessType"] = azureAccessType
+
+						mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
+
+					} else if azureAccessType == "shared" {
+						if sharedAccID == "" || inner["site_id"] == "" {
+							return fmt.Errorf("azure_shared_account_id and site_id are required with azure_access_type = shared")
+						}
+						durl := fmt.Sprintf("api/v1/sites/%s/aci/cloud-accounts", inner["site_id"].(string))
+						cont, err := msoClient.GetViaURL(durl)
+						if err != nil {
+							return err
+						}
+
+						count, err := cont.ArrayCount("cloudAccounts")
+						if err != nil {
+							return err
+						}
+
+						for i := 0; i < count; i++ {
+							dn := models.StripQuotes(cont.S("cloudAccounts").Index(i).S("id").String())
+							if dn == sharedAccID {
+								mapSite["cloudAccount"] = models.StripQuotes(cont.S("cloudAccounts").Index(i).S("dn").String())
+								break
+							}
+						}
+					}
 				}
 			}
 
@@ -272,6 +320,7 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 			site_associations = append(site_associations, mapSite)
 		}
 	}
+	log.Println("check .... : ", site_associations)
 	tenantAttr.Sites = site_associations
 
 	user_associations := make([]interface{}, 0, 1)
@@ -368,29 +417,46 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 				} else if inner["vendor"] == "azure" {
 					azureAccountMap := make(map[string]interface{})
 					var subscriptionId string
-					if inner["azure_subscription_id"] != "" {
-						subscriptionId = inner["azure_subscription_id"].(string)
-						mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
-					} else {
-						return fmt.Errorf("azure_subscription_id is required when vendor = azure")
-					}
 
 					azureAccessType := inner["azure_access_type"].(string)
 					applicationId := inner["azure_application_id"].(string)
 					clientSecret := inner["azure_client_secret"].(string)
 					activeDirectoryId := inner["azure_active_directory_id"].(string)
+					sharedAccID := inner["azure_shared_account_id"].(string)
+
 					if azureAccessType == "" {
 						azureAccessType = "managed"
 					}
 					cloudSubMap := make(map[string]interface{})
 					if azureAccessType == "managed" {
+						if inner["azure_subscription_id"] != "" {
+							subscriptionId = inner["azure_subscription_id"].(string)
+							mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
+						} else {
+							return fmt.Errorf("azure_subscription_id is required when vendor = azure and azure_access_type = managed or credentials")
+						}
+
 						cloudSubMap["cloudSubscriptionId"] = subscriptionId
 						azureAccountMap["cloudSubscription"] = cloudSubMap
+
+						azureAccountMap["securityDomains"] = make([]interface{}, 0)
+						azureAccountMap["vendor"] = "azure"
+						azureAccountMap["accessType"] = azureAccessType
+
+						mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
 
 					} else if azureAccessType == "credentials" {
 						if applicationId == "" || clientSecret == "" || activeDirectoryId == "" {
 							return fmt.Errorf("azure_application_id, azure_client_secret and azure_active_directory_id are required with azure_access_type = credentials")
 						}
+
+						if inner["azure_subscription_id"] != "" {
+							subscriptionId = inner["azure_subscription_id"].(string)
+							mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-azure", tenantAttr.Name, subscriptionId)
+						} else {
+							return fmt.Errorf("azure_subscription_id is required when vendor = azure and azure_access_type = managed or credentials")
+						}
+
 						cloudSubMap["cloudSubscriptionId"] = subscriptionId
 						cloudSubMap["cloudApplicationId"] = applicationId
 						azureAccountMap["cloudSubscription"] = cloudSubMap
@@ -408,12 +474,36 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 						activeDirectoryMap["cloudActiveDirectoryName"] = "CiscoINSBUAd"
 
 						azureAccountMap["cloudActiveDirectory"] = [...]interface{}{activeDirectoryMap}
-					}
-					azureAccountMap["securityDomains"] = make([]interface{}, 0)
-					azureAccountMap["vendor"] = "azure"
-					azureAccountMap["accessType"] = azureAccessType
 
-					mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
+						azureAccountMap["securityDomains"] = make([]interface{}, 0)
+						azureAccountMap["vendor"] = "azure"
+						azureAccountMap["accessType"] = azureAccessType
+
+						mapSite["azureAccount"] = [...]interface{}{azureAccountMap}
+
+					} else if azureAccessType == "shared" {
+						if sharedAccID == "" || inner["site_id"] == "" {
+							return fmt.Errorf("azure_shared_account_id and site_id are required with azure_access_type = shared")
+						}
+						durl := fmt.Sprintf("api/v1/sites/%s/aci/cloud-accounts", inner["site_id"].(string))
+						cont, err := msoClient.GetViaURL(durl)
+						if err != nil {
+							return err
+						}
+
+						count, err := cont.ArrayCount("cloudAccounts")
+						if err != nil {
+							return err
+						}
+
+						for i := 0; i < count; i++ {
+							dn := models.StripQuotes(cont.S("cloudAccounts").Index(i).S("id").String())
+							if dn == sharedAccID {
+								mapSite["cloudAccount"] = models.StripQuotes(cont.S("cloudAccounts").Index(i).S("dn").String())
+								break
+							}
+						}
+					}
 				}
 			}
 			mapSite["securityDomains"] = make([]interface{}, 0)
@@ -517,7 +607,6 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 		}
 
 		azureCount, err := sitesCont.ArrayCount("azureAccount")
-
 		if err == nil {
 			if azureCount > 0 {
 				azureCont, err := sitesCont.ArrayElement(0, "azureAccount")
@@ -561,12 +650,27 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 				}
 			}
 		} else {
-			log.Printf("Error occurred while loading count for azureAccount.")
-			mapSite["azure_client_secret"] = ""
-			mapSite["azure_active_directory_id"] = ""
-			mapSite["azure_access_type"] = ""
-			mapSite["azure_subscription_id"] = ""
-			mapSite["azure_application_id"] = ""
+			if sitesCont.Exists("cloudAccount") {
+				mapSite["azure_access_type"] = "shared"
+				cldAcc := strings.Split(models.StripQuotes(sitesCont.S("cloudAccount").String()), "/")
+				accInfo := strings.Split(cldAcc[2], "-")
+
+				mapSite["vendor"] = accInfo[3]
+				mapSite["azure_shared_account_id"] = (accInfo[1])[1 : len(accInfo[1])-1]
+
+				mapSite["azure_client_secret"] = ""
+				mapSite["azure_active_directory_id"] = ""
+				mapSite["azure_subscription_id"] = ""
+				mapSite["azure_application_id"] = ""
+			} else {
+				log.Printf("Error occurred while loading count for azureAccount.")
+				mapSite["azure_client_secret"] = ""
+				mapSite["azure_active_directory_id"] = ""
+				mapSite["azure_access_type"] = ""
+				mapSite["azure_subscription_id"] = ""
+				mapSite["azure_application_id"] = ""
+				mapSite["azure_shared_account_id"] = ""
+			}
 		}
 
 		site_associations = append(site_associations, mapSite)

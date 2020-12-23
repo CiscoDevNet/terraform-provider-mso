@@ -387,7 +387,8 @@ func resourceMSOSchemaSiteAnpEpgStaticleafDelete(d *schema.ResourceData, m inter
 	}
 
 	if index == -1 {
-		return fmt.Errorf("The given staticLeaf is not found")
+		d.SetId("")
+		return nil
 	}
 
 	indexs := strconv.Itoa(index)
