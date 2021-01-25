@@ -1,4 +1,4 @@
-## 0.1.4 (January 25, 2021)
+## 0.1.5 (January 25, 2021)
 
 BUG FIXES:
 - Fixed an issue with mso_tenant resource, where users were not able to attach the On-Prem site to the tenants due to panic error.
