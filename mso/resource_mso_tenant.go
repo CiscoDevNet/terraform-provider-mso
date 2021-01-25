@@ -650,7 +650,7 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 				}
 			}
 		} else {
-			if sitesCont.Exists("cloudAccount") {
+			if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
 				mapSite["azure_access_type"] = "shared"
 				cldAcc := strings.Split(models.StripQuotes(sitesCont.S("cloudAccount").String()), "/")
 				accInfo := strings.Split(cldAcc[2], "-")
