@@ -1,3 +1,8 @@
+## 0.1.4 (January 25, 2021)
+
+BUG FIXES:
+- Fixed an issue with mso_tenant resource, where users were not able to attach the On-Prem site to the tenants due to panic error.
+
 ## 0.1.3 (October 28, 2020)
 
 IMPROVEMENTS:
@@ -6,6 +11,7 @@ IMPROVEMENTS:
 
 BUG FIXES:
 - Fixed an issue with mso_schema_template_contract resource, where wrong filter was being read when there are multiple filters added to the same contract.
+
 ## 0.1.2 (September 3, 2020)
 
 IMPROVEMENTS:
