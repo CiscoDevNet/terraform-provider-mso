@@ -47,6 +47,12 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("MSO_PROXY_URL", nil),
 				Description: "Proxy Server URL with port number",
 			},
+			"platform": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ND_PLATFORM", nil),
+				Description: "MSO domain in Nexus Dashboard",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -157,6 +163,7 @@ func configureClient(d *schema.ResourceData) (interface{}, error) {
 		IsInsecure: d.Get("insecure").(bool),
 		ProxyUrl:   d.Get("proxy_url").(string),
 		Domain:     d.Get("domain").(string),
+		Platform:   d.Get("platform").(string),
 	}
 
 	if err := config.Valid(); err != nil {
@@ -186,7 +193,7 @@ func (c Config) Valid() error {
 func (c Config) getClient() interface{} {
 	if c.Password != "" {
 
-		return client.GetClient(c.URL, c.Username, client.Password(c.Password), client.Insecure(c.IsInsecure), client.ProxyUrl(c.ProxyUrl), client.Domain(c.Domain))
+		return client.GetClient(c.URL, c.Username, client.Password(c.Password), client.Insecure(c.IsInsecure), client.ProxyUrl(c.ProxyUrl), client.Domain(c.Domain), client.Platform(c.Platform))
 
 	}
 	return nil
@@ -200,4 +207,5 @@ type Config struct {
 	ProxyUrl   string
 	URL        string
 	Domain     string
+	Platform   string
 }
