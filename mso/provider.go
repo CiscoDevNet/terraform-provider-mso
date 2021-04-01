@@ -5,6 +5,7 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
@@ -50,8 +51,11 @@ func Provider() terraform.ResourceProvider {
 			"platform": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("ND_PLATFORM", nil),
 				Description: "MSO domain in Nexus Dashboard",
+				ValidateFunc: validation.StringInSlice([]string{
+					"mso",
+					"nd",
+				}, false),
 			},
 		},
 
