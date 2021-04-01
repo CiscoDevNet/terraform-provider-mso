@@ -1,13 +1,22 @@
+terraform {
+  required_providers {
+    mso = {
+      source = "CiscoDevNet/mso"
+    }
+  }
+}
+
 provider "mso" {
   username = "admin"
   password = "ins3965!ins3965!"
   url      = "https://173.36.219.193/"
   insecure = true
+  // platform = "nd"  // use when logging in ND.
 }
 
-
+// create data source
 resource "mso_schema" "schema1" {
   name          = "demo_schema"
   template_name = "tempu"
-  tenant_id     = "5eac0d982c00006dae0a28f6"
+  tenant_id     = "0000ffff0000000000000010"
 }
