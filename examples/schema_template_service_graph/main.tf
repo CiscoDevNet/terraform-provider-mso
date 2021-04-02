@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    mso = {
+      source = "CiscoDevNet/mso"
+    }
+  }
+}
+
 provider "mso" {
   username = "terraform_github_ci"
   password = "Crest@123456"

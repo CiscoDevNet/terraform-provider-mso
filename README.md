@@ -24,6 +24,13 @@ If you are building the provider, follow the instructions to [install it as a pl
 
 ex.
 ```hcl
+terraform {
+  required_providers {
+    mso = {
+      source = "CiscoDevNet/mso"
+    }
+  }
+}
 #configure provider with your cisco mso credentials.
 provider "mso" {
   # cisco-mso user name
@@ -34,6 +41,7 @@ provider "mso" {
   url      = "https://my-cisco-mso.com"
   insecure = true
   proxy_url = "https://proxy_server:proxy_port"
+  platform = "nd"
 }
 
 resource "mso_schema" "schema1" {
