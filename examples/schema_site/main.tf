@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    mso = {
+      source = "CiscoDevNet/mso"
+    }
+  }
+}
+
 provider "mso" {
   username = "admin"
   password = "ins3965!ins3965!"

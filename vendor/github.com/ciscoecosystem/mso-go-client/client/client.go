@@ -32,6 +32,7 @@ type Client struct {
 	insecure   bool
 	proxyUrl   string
 	domain     string
+	platform   string
 }
 
 // singleton implementation of a client
@@ -57,8 +58,13 @@ func ProxyUrl(pUrl string) Option {
 	}
 }
 func Domain(domain string) Option {
-	return func(clinet *Client) {
-		clinet.domain = domain
+	return func(client *Client) {
+		client.domain = domain
+	}
+}
+func Platform(platform string) Option {
+	return func(client *Client) {
+		client.platform = platform
 	}
 }
 func initClient(clientUrl, username string, options ...Option) *Client {

@@ -20,7 +20,14 @@ Example Usage
 ------------
 
  ```hcl
- provider "mso" {
+terraform {
+  required_providers {
+    mso = {
+      source = "CiscoDevNet/mso"
+    }
+  }
+}
+provider "mso" {
     # cisco-mso user name
     username = "admin"
     # cisco-mso password
@@ -29,6 +36,7 @@ Example Usage
     url      = "https://173.36.219.193/"
     domain   = "domain-name"
     insecure = true
+    platform = "nd"
 }
 
 resource "mso_schema" "foo_schema" {
@@ -48,3 +56,4 @@ Following arguments are supported with Cisco MSO terraform provider.
 * `url` - (Required) URL for CISCO MSO.
 * `insecure` - (Optional) This determines whether to use insecure HTTP connection or not. Default value is `true`.
 * `domain`- (Optional) Name of domain. Use this parameter to provide domain name in case of using remote user with the Terraform provider. Defaults to `Local`.
+* `platform`- (Optional) Parameter is used to check the platform from which MSO is accessed. Defaults to `mso`.
