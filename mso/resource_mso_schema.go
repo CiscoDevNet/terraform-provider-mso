@@ -18,6 +18,10 @@ func resourceMSOSchema() *schema.Resource {
 		Read:   resourceMSOSchemaRead,
 		Delete: resourceMSOSchemaDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -61,6 +65,42 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaRead(d, m)
+}
+
+func resourceMSOSchemaImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Schema: Beginning Import")
+	msoClient := m.(*client.Client)
+	con, err := msoClient.GetViaURL("api/v1/schemas/" + d.Id())
+	if err != nil {
+		return nil, err
+	}
+	d.SetId(models.StripQuotes(con.S("id").String()))
+	d.Set("name", models.StripQuotes(con.S("displayName").String()))
+	count, err := con.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	found := false
+	for i := 0; i < count; i++ {
+		tempCont, err := con.ArrayElement(i, "templates")
+
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse the template list")
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+		apiTenant := models.StripQuotes(tempCont.S("tenantId").String())
+		d.Set("template_name", apiTemplate)
+		d.Set("tenant_id", apiTenant)
+		found = true
+		break
+
+	}
+	if !found {
+		d.Set("template_name", "")
+		d.Set("tenant_id", "")
+	}
+	log.Printf("[DEBUG] %s: Schema Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
