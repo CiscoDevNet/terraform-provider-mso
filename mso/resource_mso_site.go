@@ -19,6 +19,10 @@ func resourceMSOSite() *schema.Resource {
 		Read:   resourceMSOSiteRead,
 		Delete: resourceMSOSiteDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSiteImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -103,6 +107,56 @@ func resourceMSOSite() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Site: Beginning Import")
+	msoClient := m.(*client.Client)
+	con, err := msoClient.GetViaURL("api/v1/sites" + d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(models.StripQuotes(con.S("id").String()))
+
+	d.Set("name", models.StripQuotes(con.S("name").String()))
+
+	if con.Exists("username") {
+		d.Set("username", models.StripQuotes(con.S("username").String()))
+	}
+
+	if con.Exists("password") {
+		d.Set("password", models.StripQuotes(con.S("password").String()))
+	}
+
+	if con.Exists("apicSiteId") {
+		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
+	}
+
+	loc1 := con.S("location").Data()
+	locset := make(map[string]interface{})
+	if loc1 != nil {
+		loc := loc1.(map[string]interface{})
+		locset["lat"] = fmt.Sprintf("%v", loc["lat"])
+		locset["long"] = fmt.Sprintf("%v", loc["long"])
+	} else {
+		locset = nil
+	}
+	d.Set("location", locset)
+
+	if con.Exists("labels") {
+		d.Set("labels", con.S("labels").Data().([]interface{}))
+	}
+
+	if con.Exists("urls") {
+		d.Set("urls", con.S("urls").Data().([]interface{}))
+	}
+
+	if con.Exists("cloudProviders") {
+		d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
+	}
+	log.Printf("[DEBUG] %s: Site Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {

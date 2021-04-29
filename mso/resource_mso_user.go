@@ -16,6 +16,10 @@ func resourceMSOUser() *schema.Resource {
 		Read:   resourceMSOUserRead,
 		Delete: resourceMSOUserDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOUserImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -75,6 +79,64 @@ func resourceMSOUser() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOUserImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] User: Beginning Import")
+
+	msoClient := m.(*client.Client)
+	con, err := msoClient.GetViaURL("api/v1/users" + d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(models.StripQuotes(con.S("id").String()))
+	d.Set("username", models.StripQuotes(con.S("username").String()))
+	d.Set("user_password", models.StripQuotes(con.S("password").String()))
+	if con.Exists("firstName") {
+		d.Set("first_name", models.StripQuotes(con.S("firstName").String()))
+	}
+	if con.Exists("lastName") {
+		d.Set("last_name", models.StripQuotes(con.S("lastName").String()))
+	}
+	if con.Exists("emailAddress") {
+		d.Set("email", models.StripQuotes(con.S("emailAddress").String()))
+	}
+	if con.Exists("phoneNumber") {
+		d.Set("phone", models.StripQuotes(con.S("phoneNumber").String()))
+	}
+	if con.Exists("accountStatus") {
+		d.Set("account_status", models.StripQuotes(con.S("accountStatus").String()))
+	}
+	if con.Exists("domain") {
+		d.Set("domain", models.StripQuotes(con.S("domain").String()))
+	}
+
+	count, err := con.ArrayCount("roles")
+
+	if err != nil {
+		return nil, fmt.Errorf("No Roles found")
+	}
+
+	roles := make([]interface{}, 0)
+	for i := 0; i < count; i++ {
+		rolesCont, err := con.ArrayElement(i, "roles")
+
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse the roles list")
+		}
+
+		map1 := make(map[string]interface{})
+
+		map1["roleid"] = models.StripQuotes(rolesCont.S("roleId").String())
+		map1["access_type"] = models.StripQuotes(rolesCont.S("accessType").String())
+		roles = append(roles, map1)
+	}
+
+	d.Set("roles", roles)
+
+	log.Printf("[DEBUG] %s: User Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {

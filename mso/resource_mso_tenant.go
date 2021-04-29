@@ -18,6 +18,10 @@ func resourceMSOTenant() *schema.Resource {
 		Read:   resourceMSOTenantRead,
 		Delete: resourceMSOTenantDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTenantImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -162,6 +166,49 @@ func StringLenValidator(lengt int) schema.SchemaValidateFunc {
 
 		return warnings, errors
 	}
+}
+
+func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Tenant: Beginning Import")
+	msoClient := m.(*client.Client)
+	con, err := msoClient.GetViaURL("api/v1/tenants/" + d.Id())
+	if err != nil {
+		return nil, err
+	}
+	d.SetId(models.StripQuotes(con.S("id").String()))
+	d.Set("name", models.StripQuotes(con.S("name").String()))
+	d.Set("display_name", models.StripQuotes(con.S("displayName").String()))
+	d.Set("description", models.StripQuotes(con.S("description").String()))
+	count1, _ := con.ArrayCount("siteAssociations")
+	site_associations := make([]interface{}, 0)
+	for i := 0; i < count1; i++ {
+		sitesCont, err := con.ArrayElement(i, "siteAssociations")
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse the site associations list")
+		}
+		mapSite := make(map[string]interface{})
+		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
+		mapSite["security_domains"] = sitesCont.S("securityDomains").Data().([]interface{})
+		site_associations = append(site_associations, mapSite)
+	}
+	d.Set("site_associations", site_associations)
+	count2, _ := con.ArrayCount("userAssociations")
+	if err != nil {
+		d.Set("user_assocoations", make([]interface{}, 0))
+	}
+	user_associations := make([]interface{}, 0)
+	for i := 0; i < count2; i++ {
+		usersCont, err := con.ArrayElement(i, "userAssociations")
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse the user associations list")
+		}
+		mapUser := make(map[string]interface{})
+		mapUser["user_id"] = models.StripQuotes(usersCont.S("userId").String())
+		user_associations = append(user_associations, mapUser)
+	}
+	d.Set("user_associations", user_associations)
+	log.Printf("[DEBUG] %s: Tenant Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {

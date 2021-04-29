@@ -15,6 +15,10 @@ func resourceMSOLabel() *schema.Resource {
 		Read:   resourceMSOLabelRead,
 		Delete: resourceMSOLabelDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOLabelImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -31,6 +35,27 @@ func resourceMSOLabel() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOLabelImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Label: Beginning Import")
+
+	msoClient := m.(*client.Client)
+	con, err := msoClient.GetViaURL("api/v1/labels" + d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(models.StripQuotes(con.S("id").String()))
+	if con.Exists("displayName") {
+		d.Set("label", models.StripQuotes(con.S("displayName").String()))
+	}
+	if con.Exists("type") {
+		d.Set("type", models.StripQuotes(con.S("type").String()))
+	}
+
+	log.Printf("[DEBUG] %s: Label Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOLabelCreate(d *schema.ResourceData, m interface{}) error {
