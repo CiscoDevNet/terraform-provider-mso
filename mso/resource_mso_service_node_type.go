@@ -16,6 +16,10 @@ func resourceMSOServiceNodeType() *schema.Resource {
 		Read:   resourceMSOServiceNodeTypeRead,
 		Delete: resourceMSOServiceNodeTypeDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOServiceNodeTypeImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -35,6 +39,48 @@ func resourceMSOServiceNodeType() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOServiceNodeTypeImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Beginning Import %s", d.Id())
+
+	msoClient := m.(*client.Client)
+
+	typeName := d.Id()
+
+	found := false
+
+	cont, err := msoClient.GetViaURL("api/v1/schemas/service-node-types")
+	if err != nil {
+		return nil, err
+	}
+
+	nodesCount, err := cont.ArrayCount("serviceNodeTypes")
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < nodesCount; i++ {
+		nodeCont, err := cont.ArrayElement(i, "serviceNodeTypes")
+		if err != nil {
+			return nil, err
+		}
+
+		apiName := models.StripQuotes(nodeCont.S("name").String())
+
+		if apiName == typeName {
+			d.SetId(models.StripQuotes(nodeCont.S("id").String()))
+			d.Set("name", models.StripQuotes(nodeCont.S("name").String()))
+			d.Set("display_name", models.StripQuotes(nodeCont.S("displayName").String()))
+			found = true
+		}
+	}
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find service node type %s", typeName)
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOServiceNodeTypeCreate(d *schema.ResourceData, m interface{}) error {

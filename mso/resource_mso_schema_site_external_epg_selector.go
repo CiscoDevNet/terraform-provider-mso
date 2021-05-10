@@ -19,6 +19,10 @@ func resourceMSOSchemaSiteExternalEpgSelector() *schema.Resource {
 		Read:   resourceMSOSchemaSiteExternalEpgSelectorRead,
 		Delete: resourceMSOSchemaSiteExternalEpgSelectorDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteExternalEpgSelectorImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
@@ -62,6 +66,97 @@ func resourceMSOSchemaSiteExternalEpgSelector() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceMSOSchemaSiteExternalEpgSelectorImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	dn := get_attribute[8]
+	schemaID := get_attribute[0]
+	siteID := get_attribute[2]
+	templateName := get_attribute[4]
+	externalEpgName := get_attribute[6]
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	if err != nil {
+		return nil, err
+	}
+
+	found := false
+
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < count; i++ {
+		siteCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+
+		currSite := models.StripQuotes(siteCont.S("siteId").String())
+		currTemplate := models.StripQuotes(siteCont.S("templateName").String())
+
+		if currSite == siteID && currTemplate == templateName {
+			extEpgCount, err := siteCont.ArrayCount("externalEpgs")
+			if err != nil {
+				return nil, err
+			}
+
+			for j := 0; j < extEpgCount; j++ {
+				extEpgCont, err := siteCont.ArrayElement(j, "externalEpgs")
+				if err != nil {
+					return nil, err
+				}
+
+				extEpgRef := models.StripQuotes(extEpgCont.S("externalEpgRef").String())
+				tokens := strings.Split(extEpgRef, "/")
+				extEpgName := tokens[len(tokens)-1]
+				if extEpgName == externalEpgName {
+					subnetCount, err := extEpgCont.ArrayCount("subnets")
+					if err != nil {
+						return nil, err
+					}
+
+					for k := 0; k < subnetCount; k++ {
+						subnetCont, err := extEpgCont.ArrayElement(k, "subnets")
+						if err != nil {
+							return nil, err
+						}
+
+						subnetName := models.StripQuotes(subnetCont.S("name").String())
+						if subnetName == dn {
+							found = true
+							d.SetId(dn)
+							d.Set("name", subnetName)
+							d.Set("ip", models.StripQuotes(subnetCont.S("ip").String()))
+							break
+						}
+					}
+				}
+				if found {
+					d.Set("external_epg_name", extEpgName)
+					break
+				}
+			}
+		}
+		if found {
+			d.Set("site_id", siteID)
+			d.Set("template_name", templateName)
+			break
+		}
+	}
+
+	if found {
+		d.Set("schema_id", schemaID)
+	} else {
+		d.SetId("")
+		return nil, fmt.Errorf("Selector of specified name not found")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaSiteExternalEpgSelectorCreate(d *schema.ResourceData, m interface{}) error {

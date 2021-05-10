@@ -2,6 +2,8 @@ package mso
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -16,6 +18,10 @@ func resourceMSOSchemaTemplateAnpEpgSelector() *schema.Resource {
 		Read:   resourceMSOSchemaTemplateAnpEpgSelectorRead,
 		Update: resourceMSOSchemaTemplateAnpEpgSelectorUpdate,
 		Delete: resourceMSOSchemaTemplateAnpEpgSelectorDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateAnpEpgSelectorImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -89,6 +95,122 @@ func resourceMSOSchemaTemplateAnpEpgSelector() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceMSOSchemaTemplateAnpEpgSelectorImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	found := false
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaID := get_attribute[0]
+	dn := get_attribute[8]
+	template := get_attribute[2]
+	anpName := get_attribute[4]
+	epgName := get_attribute[6]
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaID)
+
+	tempCount, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+
+	for i := 0; i < tempCount; i++ {
+		tempcont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+
+		tempName := models.StripQuotes(tempcont.S("name").String())
+		if tempName == template {
+			d.Set("template_name", tempName)
+			anpCount, err := tempcont.ArrayCount("anps")
+			if err != nil {
+				return nil, err
+			}
+
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempcont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+
+				currentanpName := models.StripQuotes(anpCont.S("name").String())
+				if currentanpName == anpName {
+					d.Set("anp_name", anpName)
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, err
+					}
+
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+
+						currentEpgName := models.StripQuotes(epgCont.S("name").String())
+						if currentEpgName == epgName {
+							d.Set("epg_name", epgName)
+							selectorCount, err := epgCont.ArrayCount("selectors")
+							if err != nil {
+								return nil, err
+							}
+
+							for l := 0; l < selectorCount; l++ {
+								selectorCont, err := epgCont.ArrayElement(l, "selectors")
+								if err != nil {
+									return nil, err
+								}
+
+								currSelectorName := models.StripQuotes(selectorCont.S("name").String())
+								if currSelectorName == dn {
+									found = true
+									d.SetId(dn)
+									d.Set("name", currSelectorName)
+									exps := selectorCont.S("expressions").Data().([]interface{})
+
+									expressionsList := make([]interface{}, 0, 1)
+									for _, val := range exps {
+										tp := val.(map[string]interface{})
+										expressionsMap := make(map[string]interface{})
+
+										if tp["key"] != nil {
+											expressionsMap["key"] = tp["key"]
+										}
+
+										if tp["operator"] != nil {
+											expressionsMap["operator"] = tp["operator"]
+										}
+
+										if tp["value"] != nil {
+											expressionsMap["value"] = tp["value"]
+										}
+										expressionsList = append(expressionsList, expressionsMap)
+									}
+									d.Set("expressions", expressionsList)
+									break
+								}
+							}
+
+						}
+					}
+
+				}
+			}
+
+		}
+	}
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("unable to find selector for given name")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaTemplateAnpEpgSelectorCreate(d *schema.ResourceData, m interface{}) error {

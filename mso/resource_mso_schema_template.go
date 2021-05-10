@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,6 +18,10 @@ func resourceMSOSchemaTemplate() *schema.Resource {
 		Read:   resourceMSOSchemaTemplateRead,
 		Update: resourceMSOSchemaTemplateUpdate,
 		Delete: resourceMSOSchemaTemplateDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateImport,
+		},
 
 		SchemaVersion: version,
 
@@ -48,6 +53,43 @@ func resourceMSOSchemaTemplate() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaTemplateImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	get_attribute := strings.Split(d.Id(), "/")
+	msoClient := m.(*client.Client)
+	name := get_attribute[2]
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	data := cont.S("templates").Data().([]interface{})
+	var flag bool
+	var count int
+	for _, info := range data {
+		val := info.(map[string]interface{})
+		if val["name"].(string) == name {
+			flag = true
+			break
+		}
+		count = count + 1
+	}
+
+	if flag != true {
+		return nil, fmt.Errorf("Template of specified name not found")
+	}
+
+	dataCon := cont.S("templates").Index(count)
+	d.SetId(models.StripQuotes(dataCon.S("name").String()))
+	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
+	d.Set("display_name", models.StripQuotes(dataCon.S("displayName").String()))
+	d.Set("tenant_id", models.StripQuotes(dataCon.S("tenantId").String()))
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaTemplateCreate(d *schema.ResourceData, m interface{}) error {

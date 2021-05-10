@@ -19,6 +19,10 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 		Update: resourceMSOTemplateContractFilterUpdate,
 		Delete: resourceMSOTemplateContractFilterDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateContractFilterImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -76,6 +80,146 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOTemplateContractFilterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateContract := get_attribute[4]
+	stateFilterType := get_attribute[8]
+
+	var stateFilterSchema, stateFilterTemplate string
+	stateFilterSchema = get_attribute[0]
+	stateFilterTemplate = get_attribute[2]
+
+	stateName := get_attribute[6]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			contractCount, err := tempCont.ArrayCount("contracts")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get contract list")
+			}
+			for j := 0; j < contractCount; j++ {
+				contractCont, err := tempCont.ArrayElement(j, "contracts")
+				if err != nil {
+					return nil, err
+				}
+				apiContract := models.StripQuotes(contractCont.S("name").String())
+				if apiContract == stateContract {
+					d.SetId(apiContract)
+					d.Set("contract_name", apiContract)
+					d.Set("schema_id", get_attribute[0])
+					d.Set("template_name", apiTemplate)
+					d.Set("filter_type", stateFilterType)
+
+					contractRef := models.StripQuotes(contractCont.S("contractRef").String())
+					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+					match := re.FindStringSubmatch(contractRef)
+					d.Set("contract_name", match[3])
+
+					if stateFilterType == "bothWay" {
+						if contractCont.Exists("filterRelationships") {
+							filtercount, _ := contractCont.ArrayCount("filterRelationships")
+							for k := 0; k < filtercount; k++ {
+								filterCont, err := contractCont.ArrayElement(k, "filterRelationships")
+								if err != nil {
+									return nil, fmt.Errorf("Unable to parse the filter Relationships list")
+								}
+
+								if filterCont.Exists("filterRef") {
+									filRef := filterCont.S("filterRef").Data()
+									split := strings.Split(filRef.(string), "/")
+									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
+										d.Set("filter_name", split[6])
+										d.Set("filter_template_name", split[4])
+										d.Set("filter_schema_id", split[2])
+										d.Set("directives", filterCont.S("directives").Data().([]interface{}))
+										found = true
+										break
+									}
+								}
+							}
+						}
+					} else if stateFilterType == "provider_to_consumer" {
+						if contractCont.Exists("filterRelationshipsProviderToConsumer") {
+							filtercount, _ := contractCont.ArrayCount("filterRelationshipsProviderToConsumer")
+							for k := 0; k < filtercount; k++ {
+								filterCont, err := contractCont.ArrayElement(k, "filterRelationshipsProviderToConsumer")
+								if err != nil {
+									return nil, fmt.Errorf("Unable to parse the filter Relationships Provider to Consumer list")
+								}
+
+								if filterCont.Exists("filterRef") {
+									filRef := filterCont.S("filterRef").Data()
+									split := strings.Split(filRef.(string), "/")
+
+									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
+
+										d.Set("filter_name", split[6])
+										d.Set("filter_template_name", split[4])
+										d.Set("filter_schema_id", split[2])
+										d.Set("directives", filterCont.S("directives").Data().([]interface{}))
+										found = true
+										break
+									}
+								}
+							}
+						}
+					} else if stateFilterType == "consumer_to_provider" {
+						if contractCont.Exists("filterRelationshipsConsumerToProvider") {
+							filtercount, _ := contractCont.ArrayCount("filterRelationshipsConsumerToProvider")
+							for k := 0; k < filtercount; k++ {
+								filterCont, err := contractCont.ArrayElement(k, "filterRelationshipsConsumerToProvider")
+								if err != nil {
+									return nil, fmt.Errorf("Unable to parse the filter Relationships Consumer To Provider list")
+								}
+
+								if filterCont.Exists("filterRef") {
+									filRef := filterCont.S("filterRef").Data()
+									split := strings.Split(filRef.(string), "/")
+									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
+										d.Set("filter_name", split[6])
+										d.Set("filter_template_name", split[4])
+										d.Set("filter_schema_id", split[2])
+										d.Set("directives", filterCont.S("directives").Data().([]interface{}))
+										found = true
+										break
+									}
+								}
+							}
+						}
+					}
+
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find the given Contract Filter")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface{}) error {

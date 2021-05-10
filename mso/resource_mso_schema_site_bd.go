@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,6 +18,10 @@ func resourceMSOSchemaSiteBd() *schema.Resource {
 		Read:   resourceMSOSchemaSiteBdRead,
 		Update: resourceMSOSchemaSiteBdUpdate,
 		Delete: resourceMSOSchemaSiteBdDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteBdImport,
+		},
 
 		SchemaVersion: version,
 
@@ -51,6 +56,66 @@ func resourceMSOSchemaSiteBd() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteBdImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+	stateSite := get_attribute[2]
+	found := false
+	statebd := get_attribute[4]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			bdCount, err := tempCont.ArrayCount("bds")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get bd list")
+			}
+			for j := 0; j < bdCount; j++ {
+				bdCont, err := tempCont.ArrayElement(j, "bds")
+				if err != nil {
+					return nil, err
+				}
+				bdRef := models.StripQuotes(bdCont.S("bdRef").String())
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
+				match := re.FindStringSubmatch(bdRef)
+				if match[3] == statebd {
+					d.SetId(match[3])
+					d.Set("bd_name", match[3])
+					d.Set("schema_id", match[1])
+					d.Set("template_name", match[2])
+					d.Set("site_id", apiSite)
+					if bdCont.Exists("hostBasedRouting") {
+						d.Set("host_route", bdCont.S("hostBasedRouting").Data().(bool))
+					}
+					found = true
+					break
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find the given Schema Site Bd")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaSiteBdCreate(d *schema.ResourceData, m interface{}) error {

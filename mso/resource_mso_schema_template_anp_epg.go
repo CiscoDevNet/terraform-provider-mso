@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,6 +18,10 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 		Read:   resourceMSOSchemaTemplateAnpEpgRead,
 		Update: resourceMSOSchemaTemplateAnpEpgUpdate,
 		Delete: resourceMSOSchemaTemplateAnpEpgDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateAnpEpgImport,
+		},
 
 		SchemaVersion: version,
 
@@ -111,6 +116,104 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 	}
 }
 
+func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateANP := get_attribute[4]
+	stateEPG := get_attribute[6]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			d.Set("template_name", apiTemplate)
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get ANP list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				apiANP := models.StripQuotes(anpCont.S("name").String())
+				if apiANP == stateANP {
+					d.Set("anp_name", apiANP)
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						apiEPG := models.StripQuotes(epgCont.S("name").String())
+						if apiEPG == stateEPG {
+							d.SetId(apiEPG)
+							d.Set("name", apiEPG)
+							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
+							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
+							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
+							if epgCont.Exists("mCastSource") {
+								d.Set("intersite_multicast_source", epgCont.S("mCastSource").Data().(bool))
+							}
+							if epgCont.Exists("proxyArp") {
+								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
+							}
+							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
+
+							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
+							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
+							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
+							d.Set("vrf_name", match_vrf[3])
+							d.Set("vrf_schema_id", match_vrf[1])
+							d.Set("vrf_template_name", match_vrf[2])
+
+							bdRef := models.StripQuotes(epgCont.S("bdRef").String())
+							re_bd := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
+							match_bd := re_bd.FindStringSubmatch(bdRef)
+							d.Set("bd_name", match_bd[3])
+							d.Set("bd_schema_id", match_bd[1])
+							d.Set("bd_template_name", match_bd[2])
+
+							found = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("Unable to find the EPG %s", stateEPG)
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
+}
+
 func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Template Anp Epg: Beginning Creation")
 	msoClient := m.(*client.Client)
@@ -201,8 +304,8 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 	}
 	stateTemplate := d.Get("template_name").(string)
 	found := false
-	stateANP := d.Get("anp_name")
-	stateEPG := d.Get("name")
+	stateANP := d.Get("anp_name").(string)
+	stateEPG := d.Get("name").(string)
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {

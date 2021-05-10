@@ -19,6 +19,10 @@ func resourceMSOSchemaSiteAnpEpgStaticleaf() *schema.Resource {
 		Read:   resourceMSOSchemaSiteAnpEpgStaticleafRead,
 		Delete: resourceMSOSchemaSiteAnpEpgStaticleafDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteAnpEpgStaticleafImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -65,6 +69,109 @@ func resourceMSOSchemaSiteAnpEpgStaticleaf() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteAnpEpgStaticleafImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	import_attribute := regexp.MustCompile("(.*)/path/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+
+	stateSite := get_attribute[2]
+	found := false
+	stateAnp := get_attribute[4]
+	stateEpg := get_attribute[6]
+	statePath := import_split[2]
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				apiAnpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				split := strings.Split(apiAnpRef, "/")
+				apiAnp := split[6]
+				if apiAnp == stateAnp {
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						split := strings.Split(apiEpgRef, "/")
+						apiEPG := split[8]
+						if apiEPG == stateEpg {
+							staticLeafCount, err := epgCont.ArrayCount("staticLeafs")
+							if err != nil {
+								return nil, fmt.Errorf("Unable to get Static Leaf list")
+							}
+							for s := 0; s < staticLeafCount; s++ {
+								staticLeafCont, err := epgCont.ArrayElement(s, "staticLeafs")
+								if err != nil {
+									return nil, err
+								}
+								apiPath := models.StripQuotes(staticLeafCont.S("path").String())
+								if apiPath == statePath {
+									d.SetId(apiPath)
+									d.Set("path", apiPath)
+									d.Set("site_id", apiSite)
+									d.Set("schema_id", split[2])
+									d.Set("template_name", split[4])
+									d.Set("anp_name", split[6])
+									d.Set("epg_name", apiEPG)
+									apiPort, _ := strconv.Atoi(staticLeafCont.S("portEncapVlan").String())
+									d.Set("port_encap_vlan", apiPort)
+									found = true
+									break
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		d.Set("schema_id", "")
+		d.Set("site_id", "")
+		d.Set("template_name", "")
+		d.Set("epg_name", "")
+		d.Set("anp_name", "")
+		d.Set("path", "")
+		return nil, fmt.Errorf("Unable to find the given Anp Epg StaticLeaf")
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOSchemaSiteAnpEpgStaticleafCreate(d *schema.ResourceData, m interface{}) error {

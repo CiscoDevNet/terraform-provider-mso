@@ -2,6 +2,8 @@ package mso
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -16,6 +18,10 @@ func resourceSchemaTemplateExternalEPGSelector() *schema.Resource {
 		Update: resourceSchemaTemplateExternalEPGSelectorUpdate,
 		Read:   resourceSchemaTemplateExternalEPGSelectorRead,
 		Delete: resourceSchemaTemplateExternalEPGSelectorDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceSchemaTemplateExternalEPGSelectorImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -77,6 +83,103 @@ func resourceSchemaTemplateExternalEPGSelector() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceSchemaTemplateExternalEPGSelectorImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	found := false
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	template := get_attribute[2]
+	externalEpgName := get_attribute[4]
+	name := get_attribute[6]
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No templates found")
+	}
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, fmt.Errorf("Error fetching template")
+		}
+
+		tempName := models.StripQuotes(tempCont.S("name").String())
+		if tempName == template {
+			extrEpgCount, err := tempCont.ArrayCount("externalEpgs")
+			if err != nil {
+				return nil, fmt.Errorf("no externalEpgs found")
+			}
+
+			for j := 0; j < extrEpgCount; j++ {
+				extrEpgCont, err := tempCont.ArrayElement(j, "externalEpgs")
+				if err != nil {
+					return nil, fmt.Errorf("Error fetching external Epg")
+				}
+
+				extrEpgName := models.StripQuotes(extrEpgCont.S("name").String())
+				if extrEpgName == externalEpgName {
+					selectorCount, err := extrEpgCont.ArrayCount("selectors")
+					if err != nil {
+						return nil, fmt.Errorf("No selectors found")
+					}
+
+					for k := 0; k < selectorCount; k++ {
+						selectorCont, err := extrEpgCont.ArrayElement(k, "selectors")
+						if err != nil {
+							return nil, fmt.Errorf("Error fetching selector")
+						}
+
+						selectorName := models.StripQuotes(selectorCont.S("name").String())
+						if selectorName == name {
+							d.SetId(get_attribute[6])
+							d.Set("name", selectorName)
+							exps := selectorCont.S("expressions").Data().([]interface{})
+
+							expressionList := make([]interface{}, 0, 1)
+							for _, val := range exps {
+								tp := val.(map[string]interface{})
+								expMap := make(map[string]interface{})
+
+								expMap["key"] = "ipAddress"
+								expMap["operator"] = "equals"
+								if tp["value"] != nil {
+									expMap["value"] = tp["value"]
+								}
+								expressionList = append(expressionList, expMap)
+							}
+							d.Set("expressions", expressionList)
+							found = true
+							break
+						}
+					}
+				}
+				if found {
+					d.Set("external_epg_name", externalEpgName)
+					break
+				}
+			}
+		}
+		if found {
+			d.Set("template_name", tempName)
+			break
+		}
+	}
+	if found {
+		d.Set("schema_id", schemaId)
+	} else {
+		d.SetId("")
+		return nil, fmt.Errorf("External Epg Selector not found for given name")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceSchemaTemplateExternalEPGSelectorCreate(d *schema.ResourceData, m interface{}) error {

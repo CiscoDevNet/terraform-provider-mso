@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -17,6 +18,10 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 		Read:   resourceMSOTemplateBDSubnetRead,
 		Update: resourceMSOTemplateBDSubnetUpdate,
 		Delete: resourceMSOTemplateBDSubnetDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateBDSubnetImport,
+		},
 
 		SchemaVersion: version,
 
@@ -74,6 +79,96 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOTemplateBDSubnetImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No TemplateSubnet found")
+	}
+	stateTemplateSubnet := get_attribute[2]
+	found := false
+	stateBD := get_attribute[4]
+	stateIP := import_split[2]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplateSubnet := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplateSubnet == stateTemplateSubnet {
+			bdCount, err := tempCont.ArrayCount("bds")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get BD list")
+			}
+			for j := 0; j < bdCount; j++ {
+				bdCont, err := tempCont.ArrayElement(j, "bds")
+				if err != nil {
+					return nil, err
+				}
+
+				apiBD := models.StripQuotes(bdCont.S("name").String())
+				if apiBD == stateBD {
+					count1, err := bdCont.ArrayCount("subnets")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get Subnet List")
+					}
+					for k := 0; k < count1; k++ {
+						dataCon, err := bdCont.ArrayElement(k, "subnets")
+						if err != nil {
+							return nil, fmt.Errorf("Unable to parse the subnets list")
+						}
+
+						apiIP := models.StripQuotes(dataCon.S("ip").String())
+						if apiIP == stateIP {
+							log.Println(dataCon)
+							d.Set("schema_id", schemaId)
+							d.Set("template_name", apiTemplateSubnet)
+							d.Set("bd_name", apiBD)
+							ip := models.StripQuotes(dataCon.S("ip").String())
+							idSubnet := strings.Split(ip, "/")
+							d.SetId(idSubnet[0])
+							d.Set("ip", models.StripQuotes(dataCon.S("ip").String()))
+							d.Set("scope", models.StripQuotes(dataCon.S("scope").String()))
+							d.Set("description", models.StripQuotes(dataCon.S("description").String()))
+							d.Set("shared", dataCon.S("shared").Data().(bool))
+							if dataCon.Exists("noDefaultGateway") {
+								d.Set("no_default_gateway", dataCon.S("noDefaultGateway").Data().(bool))
+							}
+							if dataCon.Exists("querier") {
+								d.Set("querier", dataCon.S("querier").Data().(bool))
+							}
+							found = true
+							break
+						}
+
+					}
+				}
+
+			}
+		}
+
+	}
+
+	if !found {
+		return nil, fmt.Errorf("Unable to find the BD Subnet with IP: %s", stateIP)
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOTemplateBDSubnetCreate(d *schema.ResourceData, m interface{}) error {

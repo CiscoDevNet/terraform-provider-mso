@@ -21,6 +21,10 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 		Read:   resourceMSOSchemaSiteAnpEpgDomainRead,
 		Delete: resourceMSOSchemaSiteAnpEpgDomainDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteAnpEpgDomainImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -131,6 +135,168 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+
+	stateSite := get_attribute[2]
+	found := false
+	stateAnp := get_attribute[4]
+	stateEpg := get_attribute[6]
+	domain := get_attribute[8]
+	domainType := get_attribute[10]
+
+	var stateDomain string
+
+	if domainType == "vmmDomain" {
+		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+
+	} else if domainType == "l3ExtDomain" {
+		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
+
+	} else if domainType == "l2ExtDomain" {
+		stateDomain = fmt.Sprintf("uni/l2dom-%s", domain)
+
+	} else if domainType == "physicalDomain" {
+		stateDomain = fmt.Sprintf("uni/phys-%s", domain)
+
+	} else if domainType == "fibreChannelDomain" {
+		stateDomain = fmt.Sprintf("uni/fc-%s", domain)
+
+	} else {
+		stateDomain = ""
+	}
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				apiAnpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				split := strings.Split(apiAnpRef, "/")
+				apiAnp := split[6]
+				if apiAnp == stateAnp {
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						split := strings.Split(apiEpgRef, "/")
+						apiEPG := split[8]
+						if apiEPG == stateEpg {
+							d.Set("schema_id", split[2])
+							d.Set("template_name", split[4])
+							d.Set("anp_name", split[6])
+							d.Set("epg_name", apiEPG)
+
+							domainCount, err := epgCont.ArrayCount("domainAssociations")
+							if err != nil {
+								return nil, fmt.Errorf("Unable to get Domain Associations list")
+							}
+							for l := 0; l < domainCount; l++ {
+								domainCont, err := epgCont.ArrayElement(l, "domainAssociations")
+								if err != nil {
+									return nil, err
+								}
+								apiDomain := models.StripQuotes(domainCont.S("dn").String())
+
+								if apiDomain == stateDomain {
+									d.SetId(apiDomain)
+									d.Set("site_id", apiSite)
+									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
+									d.Set("dn", domain)
+									d.Set("deployment_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
+									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
+
+									if domainCont.Exists("switchingMode") {
+										d.Set("switching_mode", models.StripQuotes(domainCont.S("switchingMode").String()))
+									}
+
+									if domainCont.Exists("switchType") {
+										d.Set("switch_type", models.StripQuotes(domainCont.S("switchType").String()))
+									}
+
+									if domainCont.Exists("vlanEncapMode") {
+										d.Set("vlan_encap_mode", models.StripQuotes(domainCont.S("vlanEncapMode").String()))
+									}
+
+									if domainCont.Exists("allowMicroSegmentation") {
+										d.Set("allow_micro_segmentation", domainCont.S("allowMicroSegmentation").Data().(bool))
+									}
+
+									if domainCont.Exists("portEncapVlan") {
+										d.Set("port_encap_vlan", domainCont.S("portEncapVlan", "vlan").Data().(float64))
+										d.Set("port_encap_vlan_type", models.StripQuotes(domainCont.S("portEncapVlan", "vlanType").String()))
+									}
+
+									if domainCont.Exists("microSegVlan") {
+										d.Set("micro_seg_vlan", domainCont.S("microSegVlan", "vlan").Data().(float64))
+										d.Set("micro_seg_vlan_type", models.StripQuotes(domainCont.S("microSegVlan", "vlanType").String()))
+									}
+
+									if domainCont.Exists("epgLagPol") {
+										if domainCont.Exists("epgLagPol", "enhancedLagPol") {
+											d.Set("enhanced_lag_policy_name", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "name").String()))
+											d.Set("enhanced_lag_policy_dn", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "dn").String()))
+										}
+									}
+									found = true
+									break
+								}
+							}
+						}
+						if found {
+							break
+						}
+					}
+				}
+				if found {
+					break
+				}
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("Unable to find the Site Anp Epg Domain %s", stateDomain)
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface{}) error {
