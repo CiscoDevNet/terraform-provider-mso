@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -17,6 +18,10 @@ func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 		Update: resourceSchemaSiteApnEpgSelectorUpdate,
 		Read:   resourceSchemaSiteApnEpgSelectorRead,
 		Delete: resourceSchemaSiteApnEpgSelectorDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceSchemaSiteApnEpgSelectorImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -97,6 +102,134 @@ func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceSchemaSiteApnEpgSelectorImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	found := false
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaID := get_attribute[0]
+	siteID := get_attribute[2]
+	template := get_attribute[4]
+	anpName := get_attribute[6]
+	epgName := get_attribute[8]
+	name := get_attribute[10]
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	if err != nil {
+		return nil, err
+	}
+
+	siteCount, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+
+	for i := 0; i < siteCount; i++ {
+		siteCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+
+		currentSite := models.StripQuotes(siteCont.S("siteId").String())
+		currentTemp := models.StripQuotes(siteCont.S("templateName").String())
+
+		if currentTemp == template && currentSite == siteID {
+			anpCount, err := siteCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("No Anp found")
+			}
+
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := siteCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+
+				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				tokens := strings.Split(anpRef, "/")
+				currentAnpName := tokens[len(tokens)-1]
+				if currentAnpName == anpName {
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("No Epg found")
+					}
+
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+
+						epgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						tokensEpg := strings.Split(epgRef, "/")
+						currentEpgName := tokensEpg[len(tokensEpg)-1]
+						if currentEpgName == epgName {
+							selectorCount, err := epgCont.ArrayCount("selectors")
+							if err != nil {
+								return nil, fmt.Errorf("No selectors found")
+							}
+
+							for s := 0; s < selectorCount; s++ {
+								selectorCont, err := epgCont.ArrayElement(s, "selectors")
+								if err != nil {
+									return nil, err
+								}
+
+								currentName := models.StripQuotes(selectorCont.S("name").String())
+								if currentName == name {
+									found = true
+									d.SetId(name)
+									d.Set("name", currentName)
+									exps := selectorCont.S("expressions").Data().([]interface{})
+
+									expressionsList := make([]interface{}, 0, 1)
+									for _, val := range exps {
+										tp := val.(map[string]interface{})
+										expressionsMap := make(map[string]interface{})
+
+										expressionsMap["key"] = tp["key"]
+
+										expressionsMap["operator"] = tp["operator"]
+
+										if tp["value"] != nil {
+											expressionsMap["value"] = tp["value"]
+										}
+										expressionsList = append(expressionsList, expressionsMap)
+									}
+									d.Set("expressions", expressionsList)
+									break
+								}
+							}
+						}
+						if found {
+							d.Set("epg_name", epgName)
+							break
+						}
+					}
+				}
+				if found {
+					d.Set("anp_name", anpName)
+					break
+				}
+			}
+
+		}
+		if found {
+			d.Set("site_id", siteID)
+			d.Set("template_name", template)
+			break
+		}
+	}
+	if found {
+		d.Set("schema_id", schemaID)
+	} else {
+		d.SetId("")
+		return nil, fmt.Errorf("No Site ANP EPG selector found for given name")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceSchemaSiteApnEpgSelectorCreate(d *schema.ResourceData, m interface{}) error {

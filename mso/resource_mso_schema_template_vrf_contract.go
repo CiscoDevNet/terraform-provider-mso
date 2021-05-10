@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -22,6 +23,10 @@ func resourceMSOTemplateVRFContract() *schema.Resource {
 		Create: resourceMSOTemplateVRFContractCreate,
 		Read:   resourceMSOTemplateVRFContractRead,
 		Delete: resourceMSOTemplateVRFContractDelete,
+
+		// Importer: &schema.ResourceImporter{
+		// 	State: resourceMSOTemplateVrfContractImport,
+		// },
 
 		SchemaVersion: version,
 
@@ -75,6 +80,91 @@ func resourceMSOTemplateVRFContract() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOTemplateVrfContractImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Schema Template Vrf Contract: Beginning Import")
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	relationshipType := get_attribute[8]
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateVRF := get_attribute[4]
+	stateContract := get_attribute[6]
+
+	var contract_schema_id, contract_template_name string
+	contract_schema_id = schemaId
+	contract_template_name = stateTemplate
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			d.Set("template_name", apiTemplate)
+			vrfCount, err := tempCont.ArrayCount("vrfs")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get VRF list")
+			}
+			for j := 0; j < vrfCount; j++ {
+				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
+				if err != nil {
+					return nil, err
+				}
+				apiVRF := models.StripQuotes(vrfCont.S("name").String())
+				if apiVRF == stateVRF {
+					d.Set("vrf_name", apiVRF)
+					log.Printf("uniiii %v", vrfCont)
+					contractCount, err := vrfCont.ArrayCount(humanToApiType[relationshipType])
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get contract Relationships list")
+					}
+					for k := 0; k < contractCount; k++ {
+						contractCont, err := vrfCont.ArrayElement(k, humanToApiType[relationshipType])
+						if err != nil {
+							return nil, err
+						}
+						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
+						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+						split := re.FindStringSubmatch(contractRef)
+						if contractRef != "{}" && contractRef != "" {
+							if stateContract == fmt.Sprintf("%s", split[3]) && contract_schema_id == fmt.Sprintf("%s", split[1]) && contract_template_name == fmt.Sprintf("%s", split[2]) {
+								d.SetId(fmt.Sprintf("%s", get_attribute[6]))
+								d.Set("contract_name", fmt.Sprintf("%s", split[3]))
+								d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
+								d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
+								d.Set("relationship_type", relationshipType)
+								found = true
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+	}
+
+	log.Printf("[DEBUG] %s: Schema Template Vrf Contract Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOTemplateVRFContractCreate(d *schema.ResourceData, m interface{}) error {

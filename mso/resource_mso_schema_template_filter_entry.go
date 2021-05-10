@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -16,6 +17,10 @@ func resourceMSOSchemaTemplateFilterEntry() *schema.Resource {
 		Read:   resourceMSOSchemaTemplateFilterEntryRead,
 		Update: resourceMSOSchemaTemplateFilterEntryUpdate,
 		Delete: resourceMSOSchemaTemplateFilterEntryDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateFilterEntryImport,
+		},
 
 		SchemaVersion: version,
 
@@ -112,6 +117,110 @@ func resourceMSOSchemaTemplateFilterEntry() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaTemplateFilterEntryImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateFilter := get_attribute[4]
+	stateFilterEntry := get_attribute[6]
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			d.Set("template_name", apiTemplate)
+			anpCount, err := tempCont.ArrayCount("filters")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Filter list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "filters")
+				if err != nil {
+					return nil, err
+				}
+				apiFilter := models.StripQuotes(anpCont.S("name").String())
+				if apiFilter == stateFilter {
+					d.Set("name", apiFilter)
+					d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
+					entriesCount, err := anpCont.ArrayCount("entries")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get Entry list")
+					}
+					for k := 0; k < entriesCount; k++ {
+						entriesCont, err := anpCont.ArrayElement(k, "entries")
+						if err != nil {
+							return nil, err
+						}
+						apiFilterEntry := models.StripQuotes(entriesCont.S("name").String())
+						if apiFilterEntry == stateFilterEntry {
+							d.SetId(apiFilterEntry)
+							d.Set("entry_name", apiFilterEntry)
+							d.Set("entry_display_name", models.StripQuotes(entriesCont.S("displayName").String()))
+							if entriesCont.Exists("descirption") {
+								d.Set("entry_description", models.StripQuotes(entriesCont.S("description").String()))
+							}
+							if entriesCont.Exists("etherType") {
+								d.Set("ether_type", models.StripQuotes(entriesCont.S("etherType").String()))
+							}
+							if entriesCont.Exists("arpFlag") {
+								d.Set("arp_flag", models.StripQuotes(entriesCont.S("arpFlag").String()))
+							}
+							if entriesCont.Exists("ipProtocol") {
+								d.Set("ip_protocol", models.StripQuotes(entriesCont.S("ipProtocol").String()))
+							}
+							if entriesCont.Exists("matchOnlyFragments") {
+								d.Set("match_only_fragments", entriesCont.S("matchOnlyFragments").Data().(bool))
+							}
+							if entriesCont.Exists("stateful") {
+								d.Set("stateful", entriesCont.S("stateful").Data().(bool))
+							}
+							if entriesCont.Exists("sourceFrom") {
+								d.Set("source_from", models.StripQuotes(entriesCont.S("sourceFrom").String()))
+							}
+							if entriesCont.Exists("sourceTo") {
+								d.Set("source_to", models.StripQuotes(entriesCont.S("sourceTo").String()))
+							}
+							if entriesCont.Exists("destinationFrom") {
+								d.Set("destination_from", models.StripQuotes(entriesCont.S("destinationFrom").String()))
+							}
+							if entriesCont.Exists("destinationTo") {
+								d.Set("destination_to", models.StripQuotes(entriesCont.S("destinationTo").String()))
+							}
+							if entriesCont.Exists("tcpSessionRules") {
+								d.Set("tcp_session_rules", entriesCont.S("tcpSessionRules").Data().([]interface{}))
+							}
+							found = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find the filter entry")
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaTemplateFilterEntryCreate(d *schema.ResourceData, m interface{}) error {

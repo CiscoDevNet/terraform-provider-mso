@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -19,6 +20,10 @@ func resourceMSOSchemaSiteVrfRegionCidr() *schema.Resource {
 		Update: resourceMSOSchemaSiteVrfRegionCidrUpdate,
 		Read:   resourceMSOSchemaSiteVrfRegionCidrRead,
 		Delete: resourceMSOSchemaSiteVrfRegionCidrDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteVrfRegionCidrImport,
+		},
 
 		SchemaVersion: version,
 
@@ -65,6 +70,96 @@ func resourceMSOSchemaSiteVrfRegionCidr() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteVrfRegionCidrImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	get_attribute := strings.Split(d.Id(), "/")
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+
+	stateSite := get_attribute[2]
+	found := false
+	stateVrf := get_attribute[4]
+	stateRegion := get_attribute[6]
+	stateIp := import_split[2]
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			vrfCount, err := tempCont.ArrayCount("vrfs")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Vrf list")
+			}
+			for j := 0; j < vrfCount; j++ {
+				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
+				if err != nil {
+					return nil, err
+				}
+				apiVrfRef := models.StripQuotes(vrfCont.S("vrfRef").String())
+				split := strings.Split(apiVrfRef, "/")
+				apiVrf := split[6]
+				if apiVrf == stateVrf {
+					d.Set("site_id", apiSite)
+					d.Set("schema_id", split[2])
+					d.Set("template_name", split[4])
+					d.Set("vrf_name", split[6])
+					regionCount, err := vrfCont.ArrayCount("regions")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get Regions list")
+					}
+					for k := 0; k < regionCount; k++ {
+						regionCont, err := vrfCont.ArrayElement(k, "regions")
+						if err != nil {
+							return nil, err
+						}
+						apiRegion := models.StripQuotes(regionCont.S("name").String())
+						if apiRegion == stateRegion {
+							cidrCount, err := regionCont.ArrayCount("cidrs")
+							if err != nil {
+								return nil, fmt.Errorf("Unable to get Cidr list")
+							}
+							for l := 0; l < cidrCount; l++ {
+								cidrCont, err := regionCont.ArrayElement(l, "cidrs")
+								if err != nil {
+									return nil, err
+								}
+								apiIp := models.StripQuotes(cidrCont.S("ip").String())
+								if apiIp == stateIp {
+									d.SetId(apiIp)
+									d.Set("ip", apiIp)
+									d.Set("primary", cidrCont.S("primary").Data().(bool))
+									found = true
+									break
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("Unable to find the given Vrf Region Cidr")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaSiteVrfRegionCidrCreate(d *schema.ResourceData, m interface{}) error {

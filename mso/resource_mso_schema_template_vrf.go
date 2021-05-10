@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -16,6 +17,10 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 		Update: resourceMSOSchemaTemplateVrfUpdate,
 		Read:   resourceMSOSchemaTemplateVrfRead,
 		Delete: resourceMSOSchemaTemplateVrfDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateVrfImport,
+		},
 
 		Schema: (map[string]*schema.Schema{
 
@@ -55,6 +60,31 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] Schema Template Vrf: Beginning Import")
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	d.Set("template", get_attribute[2])
+	cont_vrf := cont.S("vrf")
+	d.SetId(models.StripQuotes(cont_vrf.S("name").String()))
+	d.Set("name", models.StripQuotes(cont_vrf.S("name").String()))
+	d.Set("display_name", models.StripQuotes(cont_vrf.S("displayName").String()))
+	l3Mcast, _ := strconv.ParseBool(models.StripQuotes(cont_vrf.S("l3MCast").String()))
+	d.Set("layer3_multicast", l3Mcast)
+	vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(cont_vrf.S("vzAnyEnabled").String()))
+	d.Set("vzany", vzAnyEnabled)
+
+	log.Printf("[DEBUG] %s: Schema Template Vrf Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) error {

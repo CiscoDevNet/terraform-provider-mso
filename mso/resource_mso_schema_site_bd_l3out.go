@@ -19,6 +19,10 @@ func resourceMSOSchemaSiteBdL3out() *schema.Resource {
 		Read:   resourceMSOSchemaSiteBdL3outRead,
 		Delete: resourceMSOSchemaSiteBdL3outDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteBdL3outImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -54,6 +58,81 @@ func resourceMSOSchemaSiteBdL3out() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteBdL3outImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+
+	stateSite := get_attribute[2]
+	found := false
+	stateBd := get_attribute[4]
+	stateL3out := get_attribute[6]
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			bdCount, err := tempCont.ArrayCount("bds")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Bd list")
+			}
+			for j := 0; j < bdCount; j++ {
+				bdCont, err := tempCont.ArrayElement(j, "bds")
+				if err != nil {
+					return nil, err
+				}
+				apiBdRef := models.StripQuotes(bdCont.S("bdRef").String())
+				split := strings.Split(apiBdRef, "/")
+				apiBd := split[6]
+				if apiBd == stateBd {
+					d.Set("site_id", apiSite)
+					d.Set("schema_id", split[2])
+					d.Set("template_name", split[4])
+					d.Set("bd_name", split[6])
+					l3outCount, err := bdCont.ArrayCount("l3Outs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get l3Outs list")
+					}
+					for k := 0; k < l3outCount; k++ {
+						l3outCont, err := bdCont.ArrayElement(k, "l3Outs")
+						if err != nil {
+							return nil, err
+						}
+						tempVar := l3outCont.String()
+						apiL3out := strings.Trim(tempVar, "\"")
+						if apiL3out == stateL3out {
+							d.SetId(stateL3out)
+							d.Set("l3out_name", apiL3out)
+							found = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("Unable to find the Site L3out %s", stateL3out)
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOSchemaSiteBdL3outCreate(d *schema.ResourceData, m interface{}) error {

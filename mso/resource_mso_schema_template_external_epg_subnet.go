@@ -3,7 +3,9 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -18,6 +20,10 @@ func resourceMSOTemplateExtenalepgSubnet() *schema.Resource {
 		Read:   resourceMSOTemplateExtenalepgSubnetRead,
 		Update: resourceMSOTemplateExtenalepgSubnetUpdate,
 		Delete: resourceMSOTemplateExtenalepgSubnetDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateExtenalepgSubnetImport,
+		},
 
 		SchemaVersion: version,
 
@@ -64,6 +70,92 @@ func resourceMSOTemplateExtenalepgSubnet() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOTemplateExtenalepgSubnetImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateExternalepg := get_attribute[4]
+	stateIP := import_split[2]
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			externalepgCount, err := tempCont.ArrayCount("externalEpgs")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Externalepg list")
+			}
+			for j := 0; j < externalepgCount; j++ {
+				externalepgCont, err := tempCont.ArrayElement(j, "externalEpgs")
+				if err != nil {
+					return nil, err
+				}
+				apiExternalepg := models.StripQuotes(externalepgCont.S("name").String())
+				if apiExternalepg == stateExternalepg {
+					subnetCount, err := externalepgCont.ArrayCount("subnets")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get subnets list")
+					}
+					for k := 0; k < subnetCount; k++ {
+						subnetsCont, err := externalepgCont.ArrayElement(k, "subnets")
+						if err != nil {
+							return nil, err
+						}
+						apiIP := models.StripQuotes(subnetsCont.S("ip").String())
+						if apiIP == stateIP {
+							d.Set("schema_id", schemaId)
+							d.Set("template_name", apiTemplate)
+							d.Set("external_epg_name", apiExternalepg)
+							ip := models.StripQuotes(subnetsCont.S("ip").String())
+							idSubnet := strings.Split(ip, "/")
+							d.SetId(idSubnet[0])
+							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
+							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
+							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
+							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+
+							found = true
+							break
+						}
+					}
+				}
+				if found {
+					break
+				}
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("External Epg Subnet Not Found")
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOTemplateExtenalepgSubnetCreate(d *schema.ResourceData, m interface{}) error {

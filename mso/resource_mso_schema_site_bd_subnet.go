@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,6 +18,10 @@ func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 		Read:   resourceMSOSchemaSiteBdSubnetRead,
 		Update: resourceMSOSchemaSiteBdSubnetUpdate,
 		Delete: resourceMSOSchemaSiteBdSubnetDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteBdSubnetImport,
+		},
 
 		SchemaVersion: version,
 
@@ -78,6 +83,97 @@ func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteBdSubnetImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+	stateSite := get_attribute[2]
+	found := false
+	stateBd := get_attribute[4]
+	stateIp := import_split[1]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			d.Set("site_id", apiSite)
+			d.Set("template_name", models.StripQuotes(tempCont.S("templateName").String()))
+			bdCount, err := tempCont.ArrayCount("bds")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Bd list")
+			}
+			for j := 0; j < bdCount; j++ {
+				bdCont, err := tempCont.ArrayElement(j, "bds")
+				if err != nil {
+					return nil, err
+				}
+				bdRef := models.StripQuotes(bdCont.S("bdRef").String())
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
+				match := re.FindStringSubmatch(bdRef)
+				if match[3] == stateBd {
+					d.Set("bd_name", match[3])
+					subnetCount, err := bdCont.ArrayCount("subnets")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get Subnet list")
+					}
+					for l := 0; l < subnetCount; l++ {
+						subnetCont, err := bdCont.ArrayElement(l, "subnets")
+						if err != nil {
+							return nil, err
+						}
+						apiIP := models.StripQuotes(subnetCont.S("ip").String())
+						if stateIp == apiIP {
+							d.SetId(apiIP)
+							if subnetCont.Exists("ip") {
+								d.Set("ip", models.StripQuotes(subnetCont.S("ip").String()))
+							}
+							if subnetCont.Exists("description") {
+								d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
+							}
+							if subnetCont.Exists("scope") {
+								d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+							}
+							if subnetCont.Exists("shared") {
+								d.Set("shared", subnetCont.S("shared").Data().(bool))
+							}
+							if subnetCont.Exists("noDefaultGateway") {
+								d.Set("no_default_gateway", subnetCont.S("noDefaultGateway").Data().(bool))
+							}
+							if subnetCont.Exists("querier") {
+								d.Set("querier", subnetCont.S("querier").Data().(bool))
+							}
+							found = true
+							break
+						}
+					}
+				}
+
+			}
+		}
+	}
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find the Site BD Subnet")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaSiteBdSubnetCreate(d *schema.ResourceData, m interface{}) error {

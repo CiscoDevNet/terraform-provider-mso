@@ -19,6 +19,10 @@ func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 		Update: resourceMSOSchemaSiteAnpEpgSubnetUpdate,
 		Delete: resourceMSOSchemaSiteAnpEpgSubnetDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteAnpEpgSubnetImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -84,6 +88,120 @@ func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteAnpEpgSubnetImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+	stateSite := get_attribute[2]
+	found := false
+	stateTemplate := get_attribute[4]
+	stateAnp := get_attribute[6]
+	stateEpg := get_attribute[8]
+	stateIp := import_split[2]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
+
+		if apiSite == stateSite && apiTemplate == stateTemplate {
+			d.Set("site_id", apiSite)
+			d.Set("template_name", apiTemplate)
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
+				match := re.FindStringSubmatch(anpRef)
+				if match[3] == stateAnp {
+					d.Set("anp_name", match[3])
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
+						match := re.FindStringSubmatch(apiEpgRef)
+						apiEPG := match[3]
+						if apiEPG == stateEpg {
+							d.Set("epg_name", apiEPG)
+							subnetCount, err := epgCont.ArrayCount("subnets")
+							if err != nil {
+								return nil, fmt.Errorf("Unable to get Subnet list")
+							}
+							for l := 0; l < subnetCount; l++ {
+								subnetCont, err := epgCont.ArrayElement(l, "subnets")
+								if err != nil {
+									return nil, err
+								}
+								apiIP := models.StripQuotes(subnetCont.S("ip").String())
+								if stateIp == apiIP {
+									d.SetId(apiIP)
+									if subnetCont.Exists("ip") {
+										d.Set("ip", models.StripQuotes(subnetCont.S("ip").String()))
+									}
+									if subnetCont.Exists("description") {
+										d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
+									}
+									if subnetCont.Exists("scope") {
+										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+									}
+									if subnetCont.Exists("shared") {
+										d.Set("shared", subnetCont.S("shared").Data().(bool))
+									}
+									if subnetCont.Exists("noDefaultGateway") {
+										d.Set("no_default_gateway", subnetCont.S("noDefaultGateway").Data().(bool))
+									}
+									if subnetCont.Exists("querier") {
+										d.Set("querier", subnetCont.S("querier").Data().(bool))
+									}
+									found = true
+									break
+								}
+							}
+						}
+
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("The subnet entry with specified ip %s not found", stateIp)
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface{}) error {

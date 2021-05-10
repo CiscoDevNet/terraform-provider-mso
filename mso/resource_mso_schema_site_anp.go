@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -16,6 +17,10 @@ func resourceMSOSchemaSiteAnp() *schema.Resource {
 		Create: resourceMSOSchemaSiteAnpCreate,
 		Read:   resourceMSOSchemaSiteAnpRead,
 		Delete: resourceMSOSchemaSiteAnpDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteAnpImport,
+		},
 
 		SchemaVersion: version,
 
@@ -46,6 +51,66 @@ func resourceMSOSchemaSiteAnp() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteAnpImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+	stateSite := get_attribute[2]
+	found := false
+	stateAnp := get_attribute[4]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
+				match := re.FindStringSubmatch(anpRef)
+				if match[3] == stateAnp {
+					d.SetId(match[3])
+					d.Set("anp_name", match[3])
+					d.Set("schema_id", match[1])
+					d.Set("template_name", match[2])
+					d.Set("site_id", apiSite)
+					found = true
+					break
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find Site Anp %s", stateAnp)
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOSchemaSiteAnpCreate(d *schema.ResourceData, m interface{}) error {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,6 +18,10 @@ func resourceMSOTemplateL3out() *schema.Resource {
 		Read:   resourceMSOTemplateL3outRead,
 		Update: resourceMSOTemplateL3outUpdate,
 		Delete: resourceMSOTemplateL3outDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateL3outImport,
+		},
 
 		SchemaVersion: version,
 
@@ -62,6 +67,70 @@ func resourceMSOTemplateL3out() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOTemplateL3outImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateL3out := get_attribute[4]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			l3outCount, err := tempCont.ArrayCount("intersiteL3outs")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get L3out list")
+			}
+			for j := 0; j < l3outCount; j++ {
+				l3outCont, err := tempCont.ArrayElement(j, "intersiteL3outs")
+				if err != nil {
+					return nil, err
+				}
+				apiL3out := models.StripQuotes(l3outCont.S("name").String())
+				if apiL3out == stateL3out {
+					d.SetId(apiL3out)
+					d.Set("l3out_name", get_attribute[4])
+					d.Set("schema_id", get_attribute[0])
+					d.Set("template_name", apiTemplate)
+					d.Set("display_name", models.StripQuotes(l3outCont.S("displayName").String()))
+
+					vrfRef := models.StripQuotes(l3outCont.S("vrfRef").String())
+					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
+					match := re.FindStringSubmatch(vrfRef)
+					d.Set("vrf_name", match[3])
+					d.Set("vrf_schema_id", match[1])
+					d.Set("vrf_template_name", match[2])
+
+					found = true
+					break
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOTemplateL3outCreate(d *schema.ResourceData, m interface{}) error {

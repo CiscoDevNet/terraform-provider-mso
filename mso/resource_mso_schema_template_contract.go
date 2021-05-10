@@ -18,6 +18,10 @@ func resourceMSOTemplateContract() *schema.Resource {
 		Update: resourceMSOTemplateContractUpdate,
 		Delete: resourceMSOTemplateContractDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateContractImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -84,6 +88,83 @@ func resourceMSOTemplateContract() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOTemplateContractImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+
+	get_attribute := strings.Split(d.Id(), "/")
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateContract := get_attribute[4]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			contractCount, err := tempCont.ArrayCount("contracts")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get contract list")
+			}
+			for j := 0; j < contractCount; j++ {
+				contractCont, err := tempCont.ArrayElement(j, "contracts")
+				if err != nil {
+					return nil, err
+				}
+				apiContract := models.StripQuotes(contractCont.S("name").String())
+				if apiContract == stateContract {
+					d.SetId(get_attribute[4])
+					d.Set("contract_name", apiContract)
+					d.Set("schema_id", get_attribute[0])
+					d.Set("template_name", apiTemplate)
+					d.Set("display_name", models.StripQuotes(contractCont.S("displayName").String()))
+					d.Set("filter_type", models.StripQuotes(contractCont.S("filterType").String()))
+					d.Set("scope", models.StripQuotes(contractCont.S("scope").String()))
+
+					count, _ := contractCont.ArrayCount("filterRelationships")
+					filterMap := make(map[string]interface{})
+					for i := 0; i < count; i++ {
+						filterCont, err := contractCont.ArrayElement(i, "filterRelationships")
+						if err != nil {
+							return nil, fmt.Errorf("Unable to parse the filter Relationships list")
+						}
+
+						d.Set("directives", filterCont.S("directives").Data().([]interface{}))
+						filRef := filterCont.S("filterRef").Data()
+						split := strings.Split(filRef.(string), "/")
+
+						filterMap["filter_schema_id"] = fmt.Sprintf("%s", split[2])
+						filterMap["filter_template_name"] = fmt.Sprintf("%s", split[4])
+						filterMap["filter_name"] = fmt.Sprintf("%s", split[6])
+					}
+					d.Set("filter_relationships", filterMap)
+
+					found = true
+					break
+				}
+			}
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("Unable to find the Contract %s", stateContract)
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOTemplateContractCreate(d *schema.ResourceData, m interface{}) error {

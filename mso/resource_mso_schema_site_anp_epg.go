@@ -17,6 +17,10 @@ func resourceMSOSchemaSiteAnpEpg() *schema.Resource {
 		Read:   resourceMSOSchemaSiteAnpEpgRead,
 		Delete: resourceMSOSchemaSiteAnpEpgDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteAnpEpgImport,
+		},
+
 		SchemaVersion: version,
 
 		Schema: (map[string]*schema.Schema{
@@ -52,6 +56,84 @@ func resourceMSOSchemaSiteAnpEpg() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaSiteAnpEpgImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, fmt.Errorf("No Sites found")
+	}
+
+	stateSite := get_attribute[2]
+	found := false
+	stateAnp := get_attribute[4]
+	stateEpg := get_attribute[6]
+
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, err
+		}
+		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+
+		if apiSite == stateSite {
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get Anp list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				apiAnpRef := models.StripQuotes(anpCont.S("anpRef").String())
+				split := strings.Split(apiAnpRef, "/")
+				apiAnp := split[6]
+				if apiAnp == stateAnp {
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
+						split := strings.Split(apiEpgRef, "/")
+						apiEPG := split[8]
+						if apiEPG == stateEpg {
+							d.SetId(apiEPG)
+							d.Set("site_id", apiSite)
+							d.Set("schema_id", split[2])
+							d.Set("template_name", split[4])
+							d.Set("anp_name", split[6])
+							d.Set("epg_name", apiEPG)
+
+							found = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("Unable to find the Site Anp Epg %s", stateEpg)
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMSOSchemaSiteAnpEpgCreate(d *schema.ResourceData, m interface{}) error {

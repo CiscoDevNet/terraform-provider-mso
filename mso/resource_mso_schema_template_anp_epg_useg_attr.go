@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,6 +18,10 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttr() *schema.Resource {
 		Update: resourceMSOSchemaTemplateAnpEpgUsegAttrUpdate,
 		Read:   resourceMSOSchemaTemplateAnpEpgUsegAttrRead,
 		Delete: resourceMSOSchemaTemplateAnpEpgUsegAttrDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateAnpEpgUsegAttrImport,
+		},
 
 		Schema: (map[string]*schema.Schema{
 
@@ -112,6 +117,135 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttr() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaTemplateAnpEpgUsegAttrImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+
+	templateName := get_attribute[2]
+	anpName := get_attribute[4]
+	epgName := get_attribute[6]
+	name := get_attribute[8]
+	found := false
+
+	for i := 0; i < count; i++ {
+
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
+
+		if currentTemplateName == templateName {
+			d.Set("template_name", currentTemplateName)
+			anpCount, err := tempCont.ArrayCount("anps")
+
+			if err != nil {
+				return nil, fmt.Errorf("No Anp found")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+
+				if err != nil {
+					return nil, err
+				}
+				currentAnpName := models.StripQuotes(anpCont.S("name").String())
+				if currentAnpName == anpName {
+					d.Set("anp_name", currentAnpName)
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("No Epg found")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						currentEpgName := models.StripQuotes(epgCont.S("name").String())
+						if currentEpgName == epgName {
+							d.Set("epg_name", currentEpgName)
+							usegCount, err := epgCont.ArrayCount("uSegAttrs")
+							if err != nil {
+								return nil, fmt.Errorf("No usegAttrs found")
+							}
+							for s := 0; s < usegCount; s++ {
+								usegCont, err := epgCont.ArrayElement(s, "uSegAttrs")
+								if err != nil {
+									return nil, err
+								}
+								currentName := models.StripQuotes(usegCont.S("name").String())
+								if currentName == name {
+									d.SetId(currentName)
+									d.Set("name", currentName)
+									d.Set("operator", models.StripQuotes(usegCont.S("operator").String()))
+									d.Set("useg_type", models.StripQuotes(usegCont.S("type").String()))
+									d.Set("value", models.StripQuotes(usegCont.S("value").String()))
+
+									category := models.StripQuotes(usegCont.S("category").String())
+									desc := models.StripQuotes(usegCont.S("description").String())
+
+									if category != "{}" {
+										d.Set("category", category)
+									} else {
+										d.Set("category", "")
+									}
+
+									if desc != "{}" {
+										d.Set("description", desc)
+									} else {
+										d.Set("description", "")
+									}
+
+									if usegCont.Exists("fvSubnet") {
+										usegSubnet, _ := strconv.ParseBool(models.StripQuotes(usegCont.S("fvSubnet").String()))
+										d.Set("useg_subnet", usegSubnet)
+									}
+
+									found = true
+									break
+								}
+							}
+						}
+
+						if found {
+							break
+						}
+
+					}
+				}
+				if found {
+					break
+				}
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	if !found {
+
+		d.SetId("")
+		d.Set("name", "")
+		d.Set("operator", "")
+		d.Set("useg_type", "")
+		d.Set("value", "")
+		return nil, fmt.Errorf("Unable to find Schema template anp epg useg attribute %s", name)
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaTemplateAnpEpgUsegAttrCreate(d *schema.ResourceData, m interface{}) error {

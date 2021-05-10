@@ -3,7 +3,9 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -18,6 +20,10 @@ func resourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 		Update: resourceMSOSchemaTemplateAnpEpgSubnetUpdate,
 		Read:   resourceMSOSchemaTemplateAnpEpgSubnetRead,
 		Delete: resourceMSOSchemaTemplateAnpEpgSubnetDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaTemplateAnpEpgSubnetImport,
+		},
 
 		Schema: (map[string]*schema.Schema{
 
@@ -66,6 +72,121 @@ func resourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 			},
 		}),
 	}
+}
+
+func resourceMSOSchemaTemplateAnpEpgSubnetImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+	msoClient := m.(*client.Client)
+	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_split := import_attribute.FindStringSubmatch(d.Id())
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	d.Set("schema_id", schemaId)
+	templateName := get_attribute[2]
+	anpName := get_attribute[4]
+	epgName := get_attribute[6]
+	ip := import_split[2]
+	found := false
+
+	for i := 0; i < count; i++ {
+
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
+
+		if currentTemplateName == templateName {
+			d.Set("template", currentTemplateName)
+			anpCount, err := tempCont.ArrayCount("anps")
+
+			if err != nil {
+				return nil, fmt.Errorf("No Anp found")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+
+				if err != nil {
+					return nil, err
+				}
+				currentAnpName := models.StripQuotes(anpCont.S("name").String())
+				log.Println("currentanpname", currentAnpName)
+				if currentAnpName == anpName {
+					log.Println("found correct anpname")
+					d.Set("anp_name", currentAnpName)
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("No Epg found")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						currentEpgName := models.StripQuotes(epgCont.S("name").String())
+						log.Println("currentepgname", currentEpgName)
+						if currentEpgName == epgName {
+							log.Println("found correct epgname")
+							d.Set("epg_name", currentEpgName)
+							subnetCount, err := epgCont.ArrayCount("subnets")
+							if err != nil {
+								return nil, fmt.Errorf("No Subnets found")
+							}
+							for s := 0; s < subnetCount; s++ {
+								subnetCont, err := epgCont.ArrayElement(s, "subnets")
+								if err != nil {
+									return nil, err
+								}
+								currentIp := models.StripQuotes(subnetCont.S("ip").String())
+								log.Println("currentip", currentIp)
+								if currentIp == ip {
+									log.Println("found correct ip")
+									d.SetId(currentIp)
+									d.Set("ip", currentIp)
+									if subnetCont.Exists("scope") {
+										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+									}
+									if subnetCont.Exists("shared") {
+										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))
+										d.Set("shared", shared)
+									}
+
+									found = true
+									break
+								}
+							}
+						}
+
+						if found {
+							break
+						}
+
+					}
+				}
+				if found {
+					break
+				}
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("The ANP EPG Subnet is not found")
+	}
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOSchemaTemplateAnpEpgSubnetCreate(d *schema.ResourceData, m interface{}) error {

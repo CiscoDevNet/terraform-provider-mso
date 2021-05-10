@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -19,6 +20,10 @@ func resourceMSOTemplateAnpEpgContract() *schema.Resource {
 		Read:   resourceMSOTemplateAnpEpgContractRead,
 		Update: resourceMSOTemplateAnpEpgContractUpdate,
 		Delete: resourceMSOTemplateAnpEpgContractDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateAnpEpgContractImport,
+		},
 
 		SchemaVersion: version,
 
@@ -71,6 +76,101 @@ func resourceMSOTemplateAnpEpgContract() *schema.Resource {
 		}),
 	}
 
+}
+
+func resourceMSOTemplateAnpEpgContractImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	stateTemplate := get_attribute[2]
+	found := false
+	stateANP := get_attribute[4]
+	stateEPG := get_attribute[6]
+	stateContract := get_attribute[8]
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+
+		if apiTemplate == stateTemplate {
+			d.Set("template_name", apiTemplate)
+			anpCount, err := tempCont.ArrayCount("anps")
+			if err != nil {
+				return nil, fmt.Errorf("Unable to get ANP list")
+			}
+			for j := 0; j < anpCount; j++ {
+				anpCont, err := tempCont.ArrayElement(j, "anps")
+				if err != nil {
+					return nil, err
+				}
+				apiANP := models.StripQuotes(anpCont.S("name").String())
+				if apiANP == stateANP {
+					d.Set("anp_name", apiANP)
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return nil, fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
+						if err != nil {
+							return nil, err
+						}
+						apiEPG := models.StripQuotes(epgCont.S("name").String())
+						if apiEPG == stateEPG {
+							d.Set("epg_name", apiEPG)
+							crefCount, err := epgCont.ArrayCount("contractRelationships")
+							if err != nil {
+								return nil, fmt.Errorf("Unable to get the contract relationships list")
+							}
+							for l := 0; l < crefCount; l++ {
+								crefCont, err := epgCont.ArrayElement(l, "contractRelationships")
+								if err != nil {
+									return nil, err
+								}
+								contractRef := models.StripQuotes(crefCont.S("contractRef").String())
+								apiRelationshipType := models.StripQuotes(crefCont.S("relationshipType").String())
+								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+								match := re.FindStringSubmatch(contractRef)
+								apiContract := match[3]
+								if apiContract == stateContract {
+									d.SetId(apiContract)
+									d.Set("contract_name", match[3])
+									d.Set("contract_schema_id", match[1])
+									d.Set("contract_template_name", match[2])
+									d.Set("relationship_type", apiRelationshipType)
+									found = true
+									break
+								}
+							}
+
+						}
+
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		d.SetId("")
+		return nil, fmt.Errorf("Unable to find the Contract %s", stateContract)
+	}
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOTemplateAnpEpgContractCreate(d *schema.ResourceData, m interface{}) error {
