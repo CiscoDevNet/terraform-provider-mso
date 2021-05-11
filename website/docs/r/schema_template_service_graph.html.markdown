@@ -43,3 +43,11 @@ resource "mso_schema_template_service_graph" "test_sg" {
 ## Attribute Reference ##
 
 The only Attribute exposed for this resource is `id`. Which is set to the Name of Service Graph created.
+
+## Importing ##
+
+An existing MSO Schema Template Service Graph can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template_service_graph.test_sg {schema_id}/template/{template_name}/serviceGraph/{service_graph_name}/nodeIndex/{node_index}
+```

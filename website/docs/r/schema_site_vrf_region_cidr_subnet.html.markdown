@@ -44,3 +44,11 @@ No attributes are exported.
 
 ## Note ##
 Multiple Subnets with same Ip are allowed, but the operations will take place on the first found Subnet with the given Ip.
+
+## Importing ##
+
+An existing MSO Schema Site Vrf Region Cidr Subnet can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_site_vrf_region_cidr_subnet.sub1 {schema_id}/site/{site_id}/vrf/{vrf_name}/region/{region_name}/cidrIP/{cidr_ip}/subnet/{ip}
+```

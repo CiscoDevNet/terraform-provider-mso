@@ -27,3 +27,11 @@ Manages MSO Label
 ## Attribute Reference ##
 
 No Attributes are Exported.
+
+## Importing ##
+
+An existing MSO Label can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_label.label1 {label_id}
+```

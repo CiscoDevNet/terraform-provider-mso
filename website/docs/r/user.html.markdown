@@ -46,3 +46,11 @@ resource "mso_user" "user1" {
 ## Attribute Reference ##
 
 The only attribute exported with this resource is `id`. Which is set to the id of user associated.
+
+## Importing ##
+
+An existing MSO User can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_user.user1 {user_id}
+```

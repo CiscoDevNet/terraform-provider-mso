@@ -124,10 +124,12 @@ func resourceMSOSchemaTemplateFilterEntryImport(d *schema.ResourceData, m interf
 
 	msoClient := m.(*client.Client)
 	get_attribute := strings.Split(d.Id(), "/")
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return nil, err
 	}
+	d.Set("schema_id", schemaId)
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
 		return nil, fmt.Errorf("No Template found")

@@ -45,3 +45,11 @@ resource "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
 
 The only attribute exported is `id`. Which is set to the name of Useg Attribute.
 
+## Importing ##
+
+An existing MSO Schema Template Application Network Profiles Endpoint Groups Useg Attributes can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template_anp_epg_useg_attr.useg_attrs {schema_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/useg/{name}
+```
+

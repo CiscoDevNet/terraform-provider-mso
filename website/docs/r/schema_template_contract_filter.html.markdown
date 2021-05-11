@@ -38,3 +38,10 @@ resource "mso_schema_template_contract_filter" "filter3" {
 
 No attributes are exported.
 
+## Importing ##
+
+An existing MSO Schema Template Contract Filter can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template_contract_filter.filter3 {schema_id}/template/{template_name}/contract/{contract_name}/filter/{filter_name}/filterType/{filter_type}
+```

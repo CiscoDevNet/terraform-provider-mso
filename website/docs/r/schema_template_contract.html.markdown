@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_contract"
 sidebar_current: "docs-mso-resource-schema_template_contract"
 description: |-
-  Manages MSO Schema Template Bridge Domain.
+  Manages MSO Schema Template Contract.
 ---
 
 # mso_schema_template_contract #
 
-Manages MSO Schema Template Bridge Domain.
+Manages MSO Schema Template Contract.
 
 ## Example Usage ##
 
@@ -46,3 +46,11 @@ resource "mso_schema_template_contract" "template_contract" {
 ## Attribute Reference ##
 
 No attributes are exported.
+
+## Importing ##
+
+An existing MSO Schema Template Contract can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template_contract.template_contract {schema_id}/template/{template_name}/contract/{contract_name}
+```

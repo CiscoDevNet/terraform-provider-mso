@@ -39,5 +39,10 @@ resource "mso_schema_template_vrf_contract" "demovrf01" {
 ## Attribute Reference ##
 The only attribute exported is `id`. Which is set to the name of contract attached.
 
+## Importing ##
 
+An existing MSO Resource Schema Template Vrf Contract can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
+```bash
+terraform import mso_schema_template_vrf_contract.demovrf01 {schema_id}/template/{template_name}/vrf/{vrf_name}/contract/{contract_name}
+```

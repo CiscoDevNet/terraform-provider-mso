@@ -64,7 +64,6 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 
 func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] Schema Template Vrf: Beginning Import")
-
 	msoClient := m.(*client.Client)
 	get_attribute := strings.Split(d.Id(), "/")
 	schemaId := get_attribute[0]
@@ -73,15 +72,57 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) (
 		return nil, err
 	}
 	d.Set("schema_id", schemaId)
-	d.Set("template", get_attribute[2])
-	cont_vrf := cont.S("vrf")
-	d.SetId(models.StripQuotes(cont_vrf.S("name").String()))
-	d.Set("name", models.StripQuotes(cont_vrf.S("name").String()))
-	d.Set("display_name", models.StripQuotes(cont_vrf.S("displayName").String()))
-	l3Mcast, _ := strconv.ParseBool(models.StripQuotes(cont_vrf.S("l3MCast").String()))
-	d.Set("layer3_multicast", l3Mcast)
-	vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(cont_vrf.S("vzAnyEnabled").String()))
-	d.Set("vzany", vzAnyEnabled)
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, fmt.Errorf("No Template found")
+	}
+	templateName := get_attribute[2]
+	vrfName := get_attribute[4]
+	found := false
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, err
+		}
+		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
+		if currentTemplateName == templateName {
+			d.Set("template", currentTemplateName)
+			vrfCount, err := tempCont.ArrayCount("vrfs")
+			if err != nil {
+				return nil, fmt.Errorf("No Vrf found")
+			}
+			for j := 0; j < vrfCount; j++ {
+				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
+				if err != nil {
+					return nil, err
+				}
+				currentVrfName := models.StripQuotes(vrfCont.S("name").String())
+				if currentVrfName == vrfName {
+					d.SetId(currentVrfName)
+					d.Set("name", currentVrfName)
+					d.Set("display_name", models.StripQuotes(vrfCont.S("displayName").String()))
+					if vrfCont.Exists("l3MCast") {
+						l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
+						d.Set("layer3_multicast", l3Mcast)
+					}
+					if vrfCont.Exists("vzAnyEnabled") {
+						vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
+						d.Set("vzany", vzAnyEnabled)
+					}
+					found = true
+					break
+				}
+			}
+		}
+		if found {
+			break
+		}
+	}
+	if !found {
+		d.SetId("")
+		d.Set("name", "")
+		d.Set("display_name", "")
+	}
 
 	log.Printf("[DEBUG] %s: Schema Template Vrf Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil

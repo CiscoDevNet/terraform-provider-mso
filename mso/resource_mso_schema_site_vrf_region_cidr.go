@@ -75,7 +75,7 @@ func resourceMSOSchemaSiteVrfRegionCidr() *schema.Resource {
 func resourceMSOSchemaSiteVrfRegionCidrImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	msoClient := m.(*client.Client)
-	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
+	import_attribute := regexp.MustCompile("(.*)/cidrIP/(.*)")
 	import_split := import_attribute.FindStringSubmatch(d.Id())
 	get_attribute := strings.Split(d.Id(), "/")
 
