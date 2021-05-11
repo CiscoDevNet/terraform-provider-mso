@@ -30,3 +30,11 @@ resource "mso_schema" "foo_schema" {
 ## Attribute Reference ##
 
 The only Attribute exposed for this resource is `id`. Which is set to the id of schema created.
+
+## Importing ##
+
+An existing MSO Schema can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema.schema1 {schema_id}
+```

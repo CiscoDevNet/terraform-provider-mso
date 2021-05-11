@@ -38,5 +38,11 @@ Manages MSO Resource Schema Template Vrf
 
 No attributes are exported.
 
+## Importing ##
 
+An existing MSO Resource Schema Template Vrf can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template_vrf.vrf1 {schema_id}/template/{template}/vrf/{name}
+```
 

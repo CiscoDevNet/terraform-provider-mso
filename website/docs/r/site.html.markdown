@@ -37,3 +37,11 @@ resource "mso_site" "foo_site" {
 ## Attribute Reference ##
 
 No Attributes are Exported.
+
+## Importing ##
+
+An existing MSO Site can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_site.site1 {site_id}
+```

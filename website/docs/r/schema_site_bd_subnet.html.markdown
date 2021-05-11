@@ -44,5 +44,10 @@ resource "mso_schema_site_bd_subnet" "sub1" {
 
 No attributes are exported.
 
+## Importing ##
 
+An existing MSO Schema Site Bridge Domain(BD) Subnet can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
+```bash
+terraform import mso_schema_site_bd_subnet.sub1 {schema_id}/site/{site_id}/bd/{bd_name}/subnet/{ip}
+```

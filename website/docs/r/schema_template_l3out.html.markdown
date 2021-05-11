@@ -35,3 +35,11 @@ resource "mso_schema_template_l3out" "template_l3out" {
 ## Attribute Reference ##
 
 No attributes are exported.
+
+## Importing ##
+
+An existing MSO Schema Template L3Out can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template_l3out.template_l3out {schema_id}/template/{template_name}/l3out/{l3out_name}
+```

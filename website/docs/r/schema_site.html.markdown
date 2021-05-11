@@ -29,3 +29,11 @@ resource "mso_schema_site" "foo_schema_site" {
 ## Attribute Reference ##
 
 The only attribute exported with this resource is `id`. Which is set to the id of schema site associated.
+
+## Importing ##
+
+An existing MSO Schema Site can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_site.site1 {schema_id}/site/{site_name}
+```

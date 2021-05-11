@@ -8,7 +8,7 @@ description: |-
 
 # mso_schema_template #
 
-Manages MSO Schema Site
+Manages MSO Schema Template
 
 ## Example Usage ##
 
@@ -31,3 +31,11 @@ resource "mso_schema_template" "st1" {
 ## Attribute Reference ##
 
 The only attribute exported with this resource is `id`. Which is set to the id of schema template associated.
+
+## Importing ##
+
+An existing MSO Schema Template can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_schema_template.st1 {schema_id}/template/{name}
+```

@@ -87,3 +87,11 @@ NOTE: Either of AWS or Azure credentials will be used based on whatever is passe
 ## Attribute Reference ##
 
 The only Attribute exposed for this resource is `id`. Which is set to the id of tenant created.
+
+## Importing ##
+
+An existing MSO Tenant can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+
+```bash
+terraform import mso_tenant.tenant01 {tenant_id}
+```
