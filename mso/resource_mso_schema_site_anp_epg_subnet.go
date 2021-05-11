@@ -102,6 +102,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetImport(d *schema.ResourceData, m interface
 	if err != nil {
 		return nil, err
 	}
+	d.Set("schema_id", schemaId)
 	count, err := cont.ArrayCount("sites")
 	if err != nil {
 		return nil, fmt.Errorf("No Sites found")

@@ -128,11 +128,12 @@ func resourceMSOSchemaSiteAnpEpgStaticPortImport(d *schema.ResourceData, m inter
 	get_attribute := strings.Split(d.Id(), "/")
 	import_attribute := regexp.MustCompile("(.*)/path/(.*)")
 	import_split := import_attribute.FindStringSubmatch(d.Id())
-	var fex, pathType string
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", get_attribute[0]))
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return nil, err
 	}
+	d.Set("schema_id", schemaId)
 	count, err := cont.ArrayCount("sites")
 	if err != nil {
 		return nil, fmt.Errorf("No Sites found")
@@ -144,13 +145,10 @@ func resourceMSOSchemaSiteAnpEpgStaticPortImport(d *schema.ResourceData, m inter
 	stateEpg := get_attribute[8]
 	statepod := get_attribute[10]
 	stateleaf := get_attribute[12]
+	pathType := get_attribute[14]
+	fex := get_attribute[16]
 	statepath := import_split[2]
-	if tempVar, ok := d.GetOk("fex"); ok {
-		fex = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("path_type"); ok {
-		pathType = tempVar.(string)
-	}
+
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
@@ -213,7 +211,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortImport(d *schema.ResourceData, m inter
 								if portpath == apiportpath && pathType == apiType {
 									d.SetId(apiportpath)
 									if portCont.Exists("type") {
-										d.Set("type", models.StripQuotes(portCont.S("type").String()))
+										d.Set("path_type", models.StripQuotes(portCont.S("type").String()))
 									}
 									if portCont.Exists("path") {
 										d.Set("pod", statepod)
