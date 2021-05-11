@@ -19,7 +19,7 @@ resource "mso_schema_site_anp_epg_static_leaf" "staticleaf1" {
   site_id = "5c7c95b25100008f01c1ee3c"
   anp_name = "ANP"
   epg_name = "Web"
-  path= "topology/pod-1/paths-103/pathep-[eth1/111]"
+  path= "topology/pod-1/node-1001"
   port_encap_vlan = 100
 }
 ```
@@ -44,5 +44,5 @@ No attributes are exported.
 An existing MSO Schema Site Application Network Profiles Endpoint Groups StaticLeaf can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_site_anp_epg_static_leaf.staticleaf1 {schema_id}/site/{site_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/staticLeafPath/{static_leaf_path}
+terraform import mso_schema_site_anp_epg_static_leaf.staticleaf1 {schema_id}/site/{site_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/path/{static_leaf_path}
 ```

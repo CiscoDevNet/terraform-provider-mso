@@ -56,5 +56,5 @@ No attributes are exported.
 An existing MSO Schema Template Application Network Profiles Endpoint Groups Static Port can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_site_anp_epg_static_port.static_port {schema_id}/site/{site_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/staticPortPod/{pod}/staticPortLeaf/{leaf}/staticPortPath/{path}
+terraform import mso_schema_site_anp_epg_static_port.static_port {schema_id}/site/{site_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/staticPortPod/{pod}/staticPortLeaf/{leaf}/pathType/{path_type}/fex/{fex}/path/{path}
 ```
