@@ -29,4 +29,4 @@ data "mso_site" "sample_site" {
 * `apic_site_id` - (Optional) The site ID of the APICs.
 * `urls` - (Optional) A list of URLs to reference the APICs.
 * `labels` - (Optional) The labels for this site.
-* `locations` - (Optional) Location of the site.
+* `location` - (Optional) Location of the site.

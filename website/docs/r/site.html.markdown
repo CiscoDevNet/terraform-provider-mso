@@ -32,7 +32,7 @@ resource "mso_site" "foo_site" {
 * `maintenance_mode` - (Optional) Boolean flag to enable/disable Maintenance Mode on the site. This parameter is supported only in MSO version 3.0 or higher.
 * `urls` - (Required) A list of URLs to reference the APICs.
 * `labels` - (Optional) The labels for this site.
-* `locations` - (Optional) Location of the site.
+* `location` - (Optional) Location of the site.
 
 ## Attribute Reference ##
 
