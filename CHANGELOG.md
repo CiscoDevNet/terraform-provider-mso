@@ -1,3 +1,18 @@
+## 0.2.0 (June 23, 2021)
+
+BUG FIXES:
+- Fix mso_schema_site_anp_epg_static_leaf documentation example
+- Fix mso_site documentation for location attribute (locations -> location)
+
+IMPROVEMENTS:
+- Support of ND authentication (platform = "nd") for MSO v3.2+
+- Updated mso_schema_site and mso_schema_template_vrf resource docs name
+- Updated all terraform examples with required_provider section added in recent Terraform versions
+- Added example of how to use for_each to support multiple static ports
+- Added import capability on all resources
+- Add support for fex ports in mso_schema_site_anp_epg_static_port
+- Cleanup of go.mod and vendor directory
+
 ## 0.1.5 (January 25, 2021)
 
 BUG FIXES:
