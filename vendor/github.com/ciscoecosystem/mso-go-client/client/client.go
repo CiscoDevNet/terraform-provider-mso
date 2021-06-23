@@ -170,13 +170,21 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 func (c *Client) Authenticate() error {
 	method := "POST"
 	path := "/api/v1/auth/login"
+	if c.platform == "nd" {
+		c.domain = "local"
+	}
 	body, err := container.ParseJSON([]byte(fmt.Sprintf(authPayload, c.username, c.password)))
 	if c.domain != "" {
-		domainId, err := c.GetDomainId(c.domain)
-		if err != nil {
-			return err
+
+		if c.platform == "nd" {
+			body.Set(c.domain, "domain")
+		} else {
+			domainId, err := c.GetDomainId(c.domain)
+			if err != nil {
+				return err
+			}
+			body.Set(domainId, "domainId")
 		}
-		body.Set(domainId, "domainId")
 	}
 	if err != nil {
 		return err
