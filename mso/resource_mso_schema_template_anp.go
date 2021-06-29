@@ -239,7 +239,7 @@ func resourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) err
 				log.Println("currentanpname", currentAnpName)
 				if currentAnpName == anpName {
 					log.Println("found correct anpname")
-					d.SetId(currentAnpName)
+					d.SetId(schemaId + "/templates/" + currentTemplateName + "/anps/" + currentAnpName)
 					d.Set("name", currentAnpName)
 					if anpCont.Exists("displayName") {
 						d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
