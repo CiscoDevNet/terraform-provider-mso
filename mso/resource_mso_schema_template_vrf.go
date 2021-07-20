@@ -267,7 +267,7 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) err
 				log.Println("currentvrfname", currentVrfName)
 				if currentVrfName == vrfName {
 					log.Println("found correct vrfname")
-					d.SetId(currentVrfName)
+					d.SetId(schemaId + "/template/" + currentTemplateName + "/vrf/" + currentVrfName)
 					d.Set("name", currentVrfName)
 					if vrfCont.Exists("displayName") {
 						d.Set("display_name", models.StripQuotes(vrfCont.S("displayName").String()))

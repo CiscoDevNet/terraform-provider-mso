@@ -20,9 +20,14 @@ func TestAccMSOSchemaTemplateFilterEntry_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateFilterEntryConfig_basic("unspecified"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateFilterEntryExists("mso_schema_template_filter_entry.filter_entry", &ss),
+					testAccCheckMSOSchemaTemplateFilterEntryExists("mso_schema.schema1", "mso_schema_template_filter_entry.filter_entry", &ss),
 					testAccCheckMSOSchemaTemplateFilterEntryAttributes("unspecified", &ss),
 				),
+			},
+			{
+				ResourceName:      "mso_schema_template_filter_entry.filter_entry",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -39,14 +44,14 @@ func TestAccMSOSchemaTemplateFilterEntry_Update(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateFilterEntryConfig_basic("unspecified"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateFilterEntryExists("mso_schema_template_filter_entry.filter_entry", &ss),
+					testAccCheckMSOSchemaTemplateFilterEntryExists("mso_schema.schema1", "mso_schema_template_filter_entry.filter_entry", &ss),
 					testAccCheckMSOSchemaTemplateFilterEntryAttributes("unspecified", &ss),
 				),
 			},
 			{
 				Config: testAccCheckMSOTemplateFilterEntryConfig_basic("trill"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateFilterEntryExists("mso_schema_template_filter_entry.filter_entry", &ss),
+					testAccCheckMSOSchemaTemplateFilterEntryExists("mso_schema.schema1", "mso_schema_template_filter_entry.filter_entry", &ss),
 					testAccCheckMSOSchemaTemplateFilterEntryAttributes("trill", &ss),
 				),
 			},
@@ -56,42 +61,100 @@ func TestAccMSOSchemaTemplateFilterEntry_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateFilterEntryConfig_basic(ethertype string) string {
 	return fmt.Sprintf(`
+
+	resource "mso_schema" "schema1" {
+		name          = "Schema2"
+		template_name = "Template1"
+		tenant_id     = "5fb5fed8520000452a9e8911"
+	  
+	  }
+
 	resource "mso_schema_template_filter_entry" "filter_entry" {
-		schema_id = "5c6c16d7270000c710f8094d"
+		schema_id = mso_schema.schema1.id
 		template_name = "Template1"
 		name = "Any"
 		display_name="Any"
 		entry_name = "testAcc"
 		entry_display_name="testAcc"
+		entry_description="test1"
 		destination_from="unspecified"
 		destination_to="unspecified"
 		source_from="unspecified"
 		source_to="unspecified"
 		arp_flag="unspecified"
 		ip_protocol="unspecified"
+		match_only_fragments=false
 		tcp_session_rules=[
 			"unspecified"
 		]
-		
-
 		 
 	}
-`)
+
+	resource "mso_schema_template_filter_entry" "filter_entry2" {
+		schema_id = mso_schema.schema1.id
+		template_name = mso_schema_template_filter_entry.filter_entry.template_name
+		name = "One"
+		display_name="One"
+		entry_name = "testAcc2"
+		entry_display_name="testAcc2"
+		entry_description="test2"
+		destination_from="unspecified"
+		destination_to="unspecified"
+		source_from="unspecified"
+		source_to="unspecified"
+		arp_flag="unspecified"
+		ip_protocol="unspecified"
+		match_only_fragments=false
+		ether_type="unspecified"
+		tcp_session_rules=[
+			"unspecified"
+		]
+		 
+	}
+
+	resource "mso_schema_template_filter_entry" "filter_entry3" {
+		schema_id = mso_schema.schema1.id
+		template_name = mso_schema_template_filter_entry.filter_entry2.template_name
+		name = "One"
+		display_name="One"
+		entry_name = "testAcc2"
+		entry_display_name="testAcc2"
+		entry_description="test2"
+		destination_from="unspecified"
+		destination_to="unspecified"
+		source_from="unspecified"
+		source_to="unspecified"
+		arp_flag="unspecified"
+		ip_protocol="unspecified"
+		match_only_fragments=false
+		ether_type="%s"
+		tcp_session_rules=[
+			"unspecified"
+		]
+		 
+	}
+`, ethertype)
 }
 
-func testAccCheckMSOSchemaTemplateFilterEntryExists(bdName string, ss *TemplateFilterEntry) resource.TestCheckFunc {
+func testAccCheckMSOSchemaTemplateFilterEntryExists(schemaName string, filterName string, ss *TemplateFilterEntry) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*client.Client)
-		rs1, err1 := s.RootModule().Resources[bdName]
-
+		rs1, err1 := s.RootModule().Resources[schemaName]
+		rs2, err2 := s.RootModule().Resources[filterName]
 		if !err1 {
-			return fmt.Errorf("Entry %s not found", bdName)
+			return fmt.Errorf("Schema %s not found", schemaName)
+		}
+		if !err2 {
+			return fmt.Errorf("Entry %s not found", filterName)
 		}
 		if rs1.Primary.ID == "" {
 			return fmt.Errorf("No Schema id was set")
 		}
+		if rs2.Primary.ID == "" {
+			return fmt.Errorf("No Filter was set")
+		}
 
-		cont, err := client.GetViaURL("api/v1/schemas/5c6c16d7270000c710f8094d")
+		cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -159,11 +222,14 @@ func testAccCheckMSOSchemaTemplateFilterEntryExists(bdName string, ss *TemplateF
 
 func testAccCheckMSOSchemaTemplateFilterEntryDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*client.Client)
-
+	rs1, err1 := s.RootModule().Resources["mso_schema.schema1"]
+	if !err1 {
+		return fmt.Errorf("Schema %s not found", "mso_schema.schema1")
+	}
 	for _, rs := range s.RootModule().Resources {
 
 		if rs.Type == "mso_schema_template_filter_entry" {
-			cont, err := client.GetViaURL("api/v1/schemas/5c6c16d7270000c710f8094d")
+			cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 			if err != nil {
 				return nil
 			} else {

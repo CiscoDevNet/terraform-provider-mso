@@ -21,9 +21,14 @@ func TestAccMSOSchemaTemplateBD_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateBDConfig_basic("flood"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDExists("mso_schema_template_bd.bridge_domain", &ss),
+					testAccCheckMSOSchemaTemplateBDExists("mso_schema.schema1", "mso_schema_template_bd.bridge_domain", &ss),
 					testAccCheckMSOSchemaTemplateBDAttributes("flood", &ss),
 				),
+			},
+			{
+				ResourceName:      "mso_schema_template_bd.bridge_domain",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -40,14 +45,14 @@ func TestAccMSOSchemaTemplateBD_Update(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateBDConfig_basic("flood"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDExists("mso_schema_template_bd.bridge_domain", &ss),
+					testAccCheckMSOSchemaTemplateBDExists("mso_schema.schema1", "mso_schema_template_bd.bridge_domain", &ss),
 					testAccCheckMSOSchemaTemplateBDAttributes("flood", &ss),
 				),
 			},
 			{
 				Config: testAccCheckMSOTemplateBDConfig_basic("proxy"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDExists("mso_schema_template_bd.bridge_domain", &ss),
+					testAccCheckMSOSchemaTemplateBDExists("mso_schema.schema1", "mso_schema_template_bd.bridge_domain", &ss),
 					testAccCheckMSOSchemaTemplateBDAttributes("proxy", &ss),
 				),
 			},
@@ -57,30 +62,64 @@ func TestAccMSOSchemaTemplateBD_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateBDConfig_basic(unicast string) string {
 	return fmt.Sprintf(`
-	resource "mso_schema_template_bd" "bridge_domain" {
-		schema_id = "5ea809672c00003bc40a2799"
+
+	resource "mso_schema" "schema1" {
+		name          = "Schema2"
 		template_name = "Template1"
-		name = "testAccBD"
-		display_name = "testAcc"
-		vrf_name = "demo"
+		tenant_id     = "5fb5fed8520000452a9e8911"
+	  
+	  }
+
+	  resource "mso_schema_template_vrf" "vrf1" {
+		schema_id=mso_schema.schema1.id
+		template=mso_schema.schema1.template_name
+		name= "VRF"
+		display_name="vrf1"
+		layer3_multicast=true
+		vzany=false
+	  }
+
+	resource "mso_schema_template_bd" "bridge_domain" {
+		schema_id = mso_schema.schema1.id
+		template_name = "Template1"
+		name = "BD"
+		display_name = "bd1"
+		vrf_name = mso_schema_template_vrf.vrf1.name
+		intersite_bum_traffic=true
+		optimize_wan_bandwidth=true
+		layer2_stretch=true
+		layer3_multicast=true
 		layer2_unknown_unicast = "%s" 
+		dhcp_policy ={
+			name="dh"
+			version=1
+			dhcp_option_policy_name="dho"
+			dhcp_option_policy_version=1
+		}
 	}
 `, unicast)
 }
 
-func testAccCheckMSOSchemaTemplateBDExists(bdName string, ss *TemplateBD) resource.TestCheckFunc {
+func testAccCheckMSOSchemaTemplateBDExists(schemaName string, bdName string, ss *TemplateBD) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*client.Client)
-		rs1, err1 := s.RootModule().Resources[bdName]
+		rs1, err1 := s.RootModule().Resources[schemaName]
+		rs2, err2 := s.RootModule().Resources[bdName]
 
 		if !err1 {
+			return fmt.Errorf("Schema %s not found", schemaName)
+		}
+		if !err2 {
 			return fmt.Errorf("BD %s not found", bdName)
 		}
 		if rs1.Primary.ID == "" {
 			return fmt.Errorf("No Schema id was set")
 		}
+		if rs2.Primary.ID == "" {
+			return fmt.Errorf("No BD was set")
+		}
 
-		cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
+		cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -108,7 +147,7 @@ func testAccCheckMSOSchemaTemplateBDExists(bdName string, ss *TemplateBD) resour
 						return err
 					}
 					apiBD := models.StripQuotes(bdCont.S("name").String())
-					if apiBD == "testAccBD" {
+					if apiBD == "BD" {
 						tp.display_name = models.StripQuotes(bdCont.S("displayName").String())
 						tp.layer2_unknown_unicast = models.StripQuotes(bdCont.S("l2UnknownUnicast").String())
 						vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
@@ -136,11 +175,14 @@ func testAccCheckMSOSchemaTemplateBDExists(bdName string, ss *TemplateBD) resour
 
 func testAccCheckMSOSchemaTemplateBDDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*client.Client)
-
+	rs1, err1 := s.RootModule().Resources["mso_schema.schema1"]
+	if !err1 {
+		return fmt.Errorf("Schema %s not found", "mso_schema.schema1")
+	}
 	for _, rs := range s.RootModule().Resources {
 
 		if rs.Type == "mso_schema_template_bd" {
-			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
+			cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 			if err != nil {
 				return nil
 			} else {
@@ -165,7 +207,7 @@ func testAccCheckMSOSchemaTemplateBDDestroy(s *terraform.State) error {
 								return err
 							}
 							apiBD := models.StripQuotes(bdCont.S("name").String())
-							if apiBD == "testAccBD" {
+							if apiBD == "BD" {
 								return fmt.Errorf("template bridge domain still exists.")
 							}
 						}
@@ -183,11 +225,11 @@ func testAccCheckMSOSchemaTemplateBDAttributes(layer2_unknown_unicast string, ss
 			return fmt.Errorf("Bad Template BD layer2_unknown_unicast %s", ss.layer2_unknown_unicast)
 		}
 
-		if "testAcc" != ss.display_name {
+		if "bd1" != ss.display_name {
 			return fmt.Errorf("Bad Template BD display name %s", ss.display_name)
 		}
 
-		if "demo" != ss.vrf_name {
+		if "VRF" != ss.vrf_name {
 			return fmt.Errorf("Bad Template BD VRF name %s", ss.vrf_name)
 		}
 		return nil
