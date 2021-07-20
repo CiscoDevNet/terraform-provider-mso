@@ -30,7 +30,7 @@ resource "mso_site" "site_2" {
   username         = "" # <site username>
   password         = "" # <site pwd>
   apic_site_id     = "106"
-  urls             = ["https://10.10.100.111"] # <site url>
+  urls             = ["https://10.10.10.125"] # <site url>
   location = {
     lat  = 79.946
     long = 96.623
