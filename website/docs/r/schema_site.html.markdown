@@ -14,25 +14,25 @@ Manages MSO Schema Site
 
 ```hcl
 resource "mso_schema_site" "foo_schema_site" {
-  schema_id       =  "${mso_schema.schema1.id}"
-  site_id         =  "${mso_site.site_test_1.id}"
+  schema_id       =  mso_schema.schema1.id
+  site_id         =  mso_site.site_test_1.id
   template_name   =  "template1"
 }
 ```
 NOTE: To add multiple sites, the tenant associated to schema must also be associated to the sites.
 
-## Example usage to add multiple sites to same schema ##
+## Example usage to add multiple sites to the same schema ##
 
 ```hcl
 resource "mso_schema_site" "foo_schema_site" {
-  schema_id       =  "${mso_schema.schema1.id}"
-  site_id         =  "${mso_site.site_test_1.id}"
+  schema_id       =  mso_schema.schema1.id
+  site_id         =  mso_site.site_test_1.id
   template_name   =  "template1"
 }
 
 resource "mso_schema_site" "foo_schema_site_2" {
-  schema_id       =  "${mso_schema.schema1.id}"
-  site_id         =  "${mso_site.site_test_2.id}"
+  schema_id       =  mso_schema.schema1.id
+  site_id         =  mso_site.site_test_2.id
   template_name   =  "template1"
 }
 ```
