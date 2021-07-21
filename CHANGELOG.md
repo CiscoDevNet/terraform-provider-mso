@@ -1,3 +1,9 @@
+## 0.2.1 (July 20, 2021)
+
+BUG FIXES:
+- Added examples and documentations for Multi-Site associations
+- Fix ressources creation and update when PATCH request return 204 No Content
+
 ## 0.2.0 (June 23, 2021)
 
 BUG FIXES:
