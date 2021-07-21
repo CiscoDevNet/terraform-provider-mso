@@ -255,21 +255,12 @@ func resourceMSOSchemaTemplateAnpEpgSelectorCreate(d *schema.ResourceData, m int
 
 	schematemplateanpepgselector := models.NewSchemaTemplateAnpEpgSelector("add", path, schematemplateanpepgselectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schematemplateanpepgselector)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schematemplateanpepgselector)
 	if err != nil {
 		return err
 	}
 
-	index, err := fetchIndexSelector(cont, template, anpName, epgName, name)
-	if err != nil {
-		return err
-	}
-	if index == -1 {
-		d.SetId("")
-		return fmt.Errorf("The given selector name is not found")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	return resourceMSOSchemaTemplateAnpEpgSelectorRead(d, m)
 }
 
@@ -317,22 +308,12 @@ func resourceMSOSchemaTemplateAnpEpgSelectorUpdate(d *schema.ResourceData, m int
 
 	schematemplateanpepgselector := models.NewSchemaTemplateAnpEpgSelector("replace", path, schematemplateanpepgselectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schematemplateanpepgselector)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schematemplateanpepgselector)
 	if err != nil {
 		return err
 	}
 
-	index, err := fetchIndexSelector(cont, template, anpName, epgName, name)
-	if err != nil {
-		return err
-	}
-
-	if index == -1 {
-		d.SetId("")
-		return fmt.Errorf("The given selector name is not found")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	return resourceMSOSchemaTemplateAnpEpgSelectorRead(d, m)
 }
 

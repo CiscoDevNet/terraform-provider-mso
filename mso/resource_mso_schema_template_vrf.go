@@ -164,14 +164,13 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) e
 
 	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", "/templates/"+templateName+"/vrfs/-", Name, displayName, l3m, vzany)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", Name))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateVrfRead(d, m)
@@ -213,14 +212,13 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) e
 
 	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", "/templates/"+templateName+"/vrfs/"+Name, Name, displayName, l3m, vzany)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", Name))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateVrfRead(d, m)

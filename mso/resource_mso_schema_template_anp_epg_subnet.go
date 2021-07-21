@@ -230,14 +230,13 @@ func resourceMSOSchemaTemplateAnpEpgSubnetCreate(d *schema.ResourceData, m inter
 
 	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("add", "/templates/"+templateName+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/-", ip, scope, shared)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", ip))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateAnpEpgSubnetRead(d, m)
@@ -302,14 +301,13 @@ func resourceMSOSchemaTemplateAnpEpgSubnetUpdate(d *schema.ResourceData, m inter
 
 	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("replace", "/templates/"+templateName+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/"+indexs, ip, scope, shared)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", ip))
 	log.Printf("[DEBUG] %s: Updating finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateAnpEpgSubnetRead(d, m)

@@ -127,14 +127,12 @@ func resourceMSOSchemaSiteCreate(d *schema.ResourceData, m interface{}) error {
 
 	schemasite := models.NewSchemaSite("add", "/sites/-", siteId, templateName)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemasite)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemasite)
 	if err != nil {
 		return err
 	}
 
-	id := cont.S("id")
-	log.Println("Id value", id)
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", siteId))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaSiteRead(d, m)
