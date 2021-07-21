@@ -307,14 +307,13 @@ func resourceMSOSchemaTemplateServiceGraphCreate(d *schema.ResourceData, m inter
 
 	// PATCH the payload
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), sitePayload...)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), sitePayload...)
 
 	if err != nil {
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", graphName))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateServiceGraphRead(d, m)
@@ -459,14 +458,13 @@ func resourceMSOSchemaTemplateServiceGraphUpdate(d *schema.ResourceData, m inter
 
 		graphUpdate := models.NewTemplateServiceGraphUpdate("replace", templatePath, desc)
 
-		cont, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), graphUpdate)
+		_, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), graphUpdate)
 
 		if err != nil {
 			return err
 		}
 
-		id := models.StripQuotes(cont.S("id").String())
-		d.SetId(fmt.Sprintf("%v", id))
+		d.SetId(fmt.Sprintf("%v", graphName))
 
 	}
 
@@ -546,14 +544,13 @@ func resourceMSOSchemaTemplateServiceGraphUpdate(d *schema.ResourceData, m inter
 				sitePayload = append(sitePayload, models.NewTemplateServiceGraph("replace", sitePath, siteVarMap))
 
 			}
-			cont, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), sitePayload...)
+			_, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), sitePayload...)
 
 			if err != nil {
 				return err
 			}
 
-			id := models.StripQuotes(cont.S("id").String())
-			d.SetId(fmt.Sprintf("%v", id))
+			d.SetId(fmt.Sprintf("%v", graphName))
 		}
 	}
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())

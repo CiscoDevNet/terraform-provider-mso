@@ -220,20 +220,12 @@ func resourceSchemaTemplateExternalEPGSelectorCreate(d *schema.ResourceData, m i
 
 	schemaTemplateExternalEPGSelector := models.NewSchemaTemplateExternalEPGSelector("add", path, schemaTemplateextrepgSelectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaID), schemaTemplateExternalEPGSelector)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaID), schemaTemplateExternalEPGSelector)
 	if err != nil {
 		return err
 	}
 
-	index, err := checkAvailExternalEpgSelector(cont, template, extrnalEPGName, name)
-	if err != nil {
-		return err
-	}
-	if index == -1 {
-		d.SetId("")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	return resourceSchemaTemplateExternalEPGSelectorRead(d, m)
 }
 
@@ -276,20 +268,12 @@ func resourceSchemaTemplateExternalEPGSelectorUpdate(d *schema.ResourceData, m i
 
 	schemaTemplateExternalEpgSelector := models.NewSchemaTemplateExternalEPGSelector("replace", path, schemaTemplateextrepgSelectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaTemplateExternalEpgSelector)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaTemplateExternalEpgSelector)
 	if err != nil {
 		return err
 	}
 
-	index, err := checkAvailExternalEpgSelector(cont, template, externalEpgName, name)
-	if err != nil {
-		return err
-	}
-	if index == -1 {
-		d.SetId("")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	return resourceSchemaTemplateExternalEPGSelectorRead(d, m)
 }
 

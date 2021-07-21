@@ -17,7 +17,6 @@ import (
 )
 
 const authPayload = `{
-	
 	"username": "%s",
 	"password": "%s"
 }`
@@ -57,16 +56,19 @@ func ProxyUrl(pUrl string) Option {
 		client.proxyUrl = pUrl
 	}
 }
+
 func Domain(domain string) Option {
 	return func(client *Client) {
 		client.domain = domain
 	}
 }
+
 func Platform(platform string) Option {
 	return func(client *Client) {
 		client.platform = platform
 	}
 }
+
 func initClient(clientUrl, username string, options ...Option) *Client {
 	var transport *http.Transport
 	bUrl, err := url.Parse(clientUrl)
@@ -103,6 +105,7 @@ func GetClient(clientUrl, username string, options ...Option) *Client {
 	}
 	return clientImpl
 }
+
 func (c *Client) configProxy(transport *http.Transport) *http.Transport {
 	pUrl, err := url.Parse(c.proxyUrl)
 	if err != nil {
@@ -110,10 +113,9 @@ func (c *Client) configProxy(transport *http.Transport) *http.Transport {
 	}
 	transport.Proxy = http.ProxyURL(pUrl)
 	return transport
-
 }
-func (c *Client) useInsecureHTTPClient(insecure bool) *http.Transport {
 
+func (c *Client) useInsecureHTTPClient(insecure bool) *http.Transport {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			CipherSuites: []uint16{
@@ -131,11 +133,9 @@ func (c *Client) useInsecureHTTPClient(insecure bool) *http.Transport {
 	}
 
 	return transport
-
 }
 
 func (c *Client) MakeRestRequest(method string, path string, body *container.Container, authenticated bool) (*http.Request, error) {
-
 	url, err := url.Parse(path)
 	if err != nil {
 		return nil, err
@@ -249,10 +249,11 @@ func (c *Client) GetDomainId(domain string) (string, error) {
 	}
 	return "", fmt.Errorf("Unable to find domain id for domain %s", domain)
 }
+
 func StrtoInt(s string, startIndex int, bitSize int) (int64, error) {
 	return strconv.ParseInt(s, startIndex, bitSize)
-
 }
+
 func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, error) {
 	log.Printf("[DEBUG] Begining DO method %s", req.URL.String())
 	resp, err := c.httpClient.Do(req)
@@ -266,7 +267,7 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 	bodyStr := string(bodyBytes)
 	resp.Body.Close()
 	log.Printf("\n HTTP response unique string %s %s %s", req.Method, req.URL.String(), bodyStr)
-	if req.Method != "DELETE" {
+	if req.Method != "DELETE" && resp.StatusCode != 204 {
 		obj, err := container.ParseJSON(bodyBytes)
 
 		if err != nil {
@@ -278,7 +279,6 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 	} else {
 		return nil, resp, err
 	}
-
 }
 
 func stripQuotes(word string) string {

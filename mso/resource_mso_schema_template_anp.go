@@ -146,15 +146,13 @@ func resourceMSOSchemaTemplateAnpCreate(d *schema.ResourceData, m interface{}) e
 
 	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("add", "/templates/"+templateName+"/anps/-", Name, displayName)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
-	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
+	log.Printf("[DEBUG] %s: Creation finished successfully", Name)
 
 	return resourceMSOSchemaTemplateAnpRead(d, m)
 }
@@ -185,15 +183,15 @@ func resourceMSOSchemaTemplateAnpUpdate(d *schema.ResourceData, m interface{}) e
 
 	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("replace", "/templates/"+templateName+"/anps/"+Name, Name, displayName)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
+	id := models.StripQuotes(Name)
 	d.SetId(fmt.Sprintf("%v", id))
-	log.Printf("[DEBUG] %s: Updating finished successfully", d.Id())
+	log.Printf("[DEBUG] %s: Updating finished successfully", Name)
 
 	return resourceMSOSchemaTemplateAnpRead(d, m)
 }

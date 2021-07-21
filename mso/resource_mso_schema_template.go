@@ -101,14 +101,12 @@ func resourceMSOSchemaTemplateCreate(d *schema.ResourceData, m interface{}) erro
 
 	schematemplate := models.NewSchemaTemplate("add", "/templates/-", tenantId, Name, displayName)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
 	if err != nil {
 		return err
 	}
 
-	id := cont.S("id")
-	log.Println("Id value", id)
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", Name))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateRead(d, m)
@@ -176,14 +174,12 @@ func resourceMSOSchemaTemplateUpdate(d *schema.ResourceData, m interface{}) erro
 
 		schematemplate := models.NewSchemaTemplate("replace", fmt.Sprintf("/templates/%s", Name), tenantId, Name, displayName)
 
-		cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
+		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
 		if err != nil {
 			return err
 		}
 
-		id := cont.S("id")
-		log.Println("Id value", id)
-		d.SetId(fmt.Sprintf("%v", id))
+		d.SetId(fmt.Sprintf("%v", Name))
 		log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 	}
 

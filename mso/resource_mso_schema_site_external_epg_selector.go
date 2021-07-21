@@ -191,21 +191,12 @@ func resourceMSOSchemaSiteExternalEpgSelectorCreate(d *schema.ResourceData, m in
 
 	schemaSiteExternalEpgSelector := models.NewSchemaSiteExternalEpgSelector("add", path, selectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaSiteExternalEpgSelector)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaSiteExternalEpgSelector)
 	if err != nil {
 		return err
 	}
 
-	index, _, err := checkselector(cont, schemaID, siteID, templateName, externalEpgName, name)
-	if err != nil {
-		return err
-	}
-
-	if index == -1 {
-		d.SetId("")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	log.Printf("[DEBUG] Schema Site External EPG Selector: Creation Completed")
 	return resourceMSOSchemaSiteExternalEpgSelectorRead(d, m)
 }
@@ -243,21 +234,12 @@ func resourceMSOSchemaSiteExternalEpgSelectorUpdate(d *schema.ResourceData, m in
 
 	schemaSiteExternalEpgSelector := models.NewSchemaSiteExternalEpgSelector("replace", path, selectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaSiteExternalEpgSelector)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaSiteExternalEpgSelector)
 	if err != nil {
 		return err
 	}
 
-	index, _, err := checkselector(cont, schemaID, siteID, templateName, externalEpgName, name)
-	if err != nil {
-		return err
-	}
-
-	if index == -1 {
-		d.SetId("")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
 	return resourceMSOSchemaSiteExternalEpgSelectorRead(d, m)
 }

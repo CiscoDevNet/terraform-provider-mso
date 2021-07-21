@@ -277,20 +277,12 @@ func resourceSchemaSiteApnEpgSelectorCreate(d *schema.ResourceData, m interface{
 
 	schemasiteanpepgselector := models.NewSchemaTemplateAnpEpgSelector("add", path, schemasiteanpepgselectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemasiteanpepgselector)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemasiteanpepgselector)
 	if err != nil {
 		return err
 	}
 
-	index, err := checkSchemaSiteApnEpgSelector(cont, siteID, template, anpName, epgName, name)
-	if err != nil {
-		return err
-	}
-	if index == -1 {
-		d.SetId("")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	return resourceSchemaSiteApnEpgSelectorRead(d, m)
 }
 
@@ -353,20 +345,12 @@ func resourceSchemaSiteApnEpgSelectorUpdate(d *schema.ResourceData, m interface{
 
 	schemasiteanpepgselector := models.NewSchemaTemplateAnpEpgSelector("replace", path, schemasiteanpepgselectorMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemasiteanpepgselector)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemasiteanpepgselector)
 	if err != nil {
 		return err
 	}
 
-	index, err := checkSchemaSiteApnEpgSelector(cont, siteID, template, anpName, epgName, name)
-	if err != nil {
-		return err
-	}
-	if index == -1 {
-		d.SetId("")
-	} else {
-		d.SetId(name)
-	}
+	d.SetId(name)
 	return resourceSchemaSiteApnEpgSelectorRead(d, m)
 }
 

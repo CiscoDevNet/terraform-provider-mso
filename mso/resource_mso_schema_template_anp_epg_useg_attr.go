@@ -327,14 +327,13 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttrCreate(d *schema.ResourceData, m int
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/uSegAttrs/-", templateName, anpName, epgName)
 	usegAttrApp := models.NewSchemaTemplateAnpEpgUsegAttr("add", path, usegAttrMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), usegAttrApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), usegAttrApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", name))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateAnpEpgUsegAttrRead(d, m)
@@ -419,14 +418,13 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttrUpdate(d *schema.ResourceData, m int
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/uSegAttrs/%s", templateName, anpName, epgName, name)
 	usegAttrApp := models.NewSchemaTemplateAnpEpgUsegAttr("replace", path, usegAttrMap)
 
-	cont, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), usegAttrApp)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), usegAttrApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	id := models.StripQuotes(cont.S("id").String())
-	d.SetId(fmt.Sprintf("%v", id))
+	d.SetId(fmt.Sprintf("%v", name))
 	log.Printf("[DEBUG] %s: Updating finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateAnpEpgUsegAttrRead(d, m)
