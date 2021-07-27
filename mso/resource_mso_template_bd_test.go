@@ -63,7 +63,7 @@ func TestAccMSOSchemaTemplateBD_Update(t *testing.T) {
 func testAccCheckMSOTemplateBDConfig_basic(unicast string) string {
 	return fmt.Sprintf(`
 
-	resource "mso_schema" "schema1" {
+	 resource "mso_schema" "schema1" {
 		name          = "Schema2"
 		template_name = "Template1"
 		tenant_id     = "5fb5fed8520000452a9e8911"

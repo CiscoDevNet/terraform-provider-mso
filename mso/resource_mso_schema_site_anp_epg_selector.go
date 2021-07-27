@@ -104,18 +104,29 @@ func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 	}
 }
 
+var importReadSchemaID, importReadSiteID, importReadTemplate, importReadANP, importReadEPG string
+
 func resourceSchemaSiteApnEpgSelectorImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	found := false
 	msoClient := m.(*client.Client)
-	get_attribute := strings.Split(d.Id(), "/")
-	schemaID := get_attribute[0]
-	siteID := get_attribute[2]
-	template := get_attribute[4]
-	anpName := get_attribute[6]
-	epgName := get_attribute[8]
-	name := get_attribute[10]
-
+	var schemaID, siteID, template, anpName, epgName, name string
+	if !strings.Contains(d.Id(), "/") {
+		name = d.Id()
+		schemaID = importReadSchemaID
+		siteID = importReadSiteID
+		template = importReadTemplate
+		anpName = importReadANP
+		epgName = importReadEPG
+	} else {
+		get_attribute := strings.Split(d.Id(), "/")
+		schemaID = get_attribute[0]
+		siteID = get_attribute[2]
+		template = get_attribute[4]
+		anpName = get_attribute[6]
+		epgName = get_attribute[8]
+		name = get_attribute[10]
+	}
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return nil, err
@@ -180,7 +191,7 @@ func resourceSchemaSiteApnEpgSelectorImport(d *schema.ResourceData, m interface{
 								currentName := models.StripQuotes(selectorCont.S("name").String())
 								if currentName == name {
 									found = true
-									d.SetId(name)
+									d.SetId(currentName)
 									d.Set("name", currentName)
 									exps := selectorCont.S("expressions").Data().([]interface{})
 
@@ -357,14 +368,17 @@ func resourceSchemaSiteApnEpgSelectorUpdate(d *schema.ResourceData, m interface{
 func resourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{}) error {
 	found := false
 	msoClient := m.(*client.Client)
-
 	dn := d.Id()
 	schemaID := d.Get("schema_id").(string)
 	siteID := d.Get("site_id").(string)
 	template := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
-
+	importReadSchemaID = schemaID
+	importReadSiteID = siteID
+	importReadTemplate = template
+	importReadANP = anpName
+	importReadEPG = epgName
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
@@ -429,7 +443,6 @@ func resourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{})
 								currentName := models.StripQuotes(selectorCont.S("name").String())
 								if currentName == dn {
 									found = true
-									d.SetId(dn)
 									d.Set("name", currentName)
 									exps := selectorCont.S("expressions").Data().([]interface{})
 

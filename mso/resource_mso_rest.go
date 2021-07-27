@@ -37,6 +37,17 @@ func resourceMSORest() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
+			"ignore_on_destroy": &schema.Schema{
+				Type:     schema.TypeBool,
+				Required: true,
+			},
+
+			"schema_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 		}),
 	}
 }
@@ -93,22 +104,26 @@ func resourceMSORestUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceMSORestDelete(d *schema.ResourceData, m interface{}) error {
-	var method, path, payload string
-	path = d.Get("path").(string)
-	payload = d.Get("payload").(string)
-	if tempVar, ok := d.GetOk("method"); ok {
-		method = tempVar.(string)
-	} else {
-		method = "DELETE"
-	}
-	if !contains(HTTP_METHODS, method) {
-		return fmt.Errorf("Invalid method %s passed", method)
-	}
-	msoClient := m.(*client.Client)
-	_, err := MakeRestRequest(msoClient, path, method, payload)
+	var ignore_on_destroy = d.Get("ignore_on_destroy").(bool)
+	if ignore_on_destroy == false {
+		var method, path, payload string
+		path = d.Get("path").(string)
+		payload = d.Get("payload").(string)
+		if tempVar, ok := d.GetOk("method"); ok {
+			method = tempVar.(string)
+		} else {
+			method = "DELETE"
+		}
+		if !contains(HTTP_METHODS, method) {
+			return fmt.Errorf("Invalid method %s passed", method)
+		}
 
-	if err != nil {
-		return err
+		msoClient := m.(*client.Client)
+		_, err := MakeRestRequest(msoClient, path, method, payload)
+
+		if err != nil {
+			return err
+		}
 	}
 	d.SetId("")
 	return nil
