@@ -7,10 +7,9 @@ terraform {
 }
 
 provider "mso" {
-  username = "admin"
-  password = "ins3965!ins3965!"
-  url      = "https://173.36.219.193/"
-  domain   = "Local"
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
+  url      = "" # <MSO URL>
   insecure = true
 }
 

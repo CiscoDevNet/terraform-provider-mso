@@ -7,9 +7,10 @@ terraform {
 }
 
 provider "mso" {
-  username = "admin"
-  password = "ins3965!ins3965!"
-  url      = "https://173.36.219.193/"
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
+  url      = "" # <MSO URL>
+  insecure = true
 }
 
 resource "mso_schema_site_anp_epg" "site_anp_epg" {
