@@ -7,11 +7,10 @@ terraform {
 }
 
 provider "mso" {
-  username = "admin"
-  password = "ins3965!ins3965!"
-  url      = "https://173.36.219.193/"
-#   insecure = true
-#   proxy_url = "https://proxy_server:proxy_port"
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
+  url      = "" # <MSO URL>
+  insecure = true
 }
 
 resource "mso_schema_template_contract_service_graph" "one" {

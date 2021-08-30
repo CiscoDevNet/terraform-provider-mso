@@ -7,9 +7,9 @@ terraform {
 }
 
 provider "mso" {
-  username = "terraform_github_ci"
-  password = "Crest@123456"
-  url      = "https://173.36.219.66/"
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
+  url      = "" # <MSO URL>
   insecure = true
 }
 
