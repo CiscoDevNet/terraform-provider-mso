@@ -3,7 +3,7 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_bd"
 sidebar_current: "docs-mso-data-source-schema_template_bd"
 description: |-
-  MSO Schema Template Bridge Domain Data Source..
+  MSO Schema Template Bridge Domain Data Source.
 ---
 
 # mso_schema_template_bd #
