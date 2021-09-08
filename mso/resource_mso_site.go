@@ -164,6 +164,14 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 	siteAttr := models.SiteAttributes{}
 
+	var apiVersion string
+	platform := d.Get("platform").(string)
+	if platform == "nd" {
+		apiVersion = "v2"
+	} else {
+		apiVersion = "v1"
+	}
+
 	if name, ok := d.GetOk("name"); ok {
 		siteAttr.Name = name.(string)
 	}
@@ -211,7 +219,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 
 	siteApp := models.NewSite(siteAttr)
 
-	cont, err := msoClient.Save("api/v1/sites", siteApp)
+	cont, err := msoClient.Save(fmt.Sprintf("api/%v/sites", apiVersion), siteApp)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -230,6 +238,14 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	siteAttr := models.SiteAttributes{}
+
+	var apiVersion string
+	platform := d.Get("platform").(string)
+	if platform == "nd" {
+		apiVersion = "v2"
+	} else {
+		apiVersion = "v1"
+	}
 
 	if name, ok := d.GetOk("name"); ok {
 		siteAttr.Name = name.(string)
@@ -283,7 +299,7 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	siteAttr.Platform = d.Get("platform").(string)
 	siteApp := models.NewSite(siteAttr)
 
-	cont, err := msoClient.Put(fmt.Sprintf("api/v1/sites/%s", d.Id()), siteApp)
+	cont, err := msoClient.Put(fmt.Sprintf("api/%v/sites/%s", apiVersion, d.Id()), siteApp)
 	if err != nil {
 		return err
 	}
@@ -301,7 +317,15 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 
 	dn := d.Id()
 
-	con, err := msoClient.GetViaURL("api/v1/sites/" + dn)
+	var apiVersion string
+	platform := d.Get("platform").(string)
+	if platform == "nd" {
+		apiVersion = "v2"
+	} else {
+		apiVersion = "v1"
+	}
+
+	con, err := msoClient.GetViaURL(fmt.Sprintf("api/%v/sites/%v", apiVersion, dn))
 	if err != nil {
 		return err
 	}
@@ -350,7 +374,7 @@ func resourceMSOSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	dn := d.Id()
-	err := msoClient.DeletebyId(fmt.Sprintf("api/v1/sites/%v%s", dn, "?force=true"))
+	err := msoClient.DeletebyId(fmt.Sprintf("api/%v/sites/%v%s", apiVersion, dn, "?force=true"))
 	if err != nil {
 		return err
 	}
