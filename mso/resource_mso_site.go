@@ -8,6 +8,7 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -34,12 +35,12 @@ func resourceMSOSite() *schema.Resource {
 
 			"username": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 
 			"password": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 
 			"apic_site_id": &schema.Schema{
@@ -76,7 +77,7 @@ func resourceMSOSite() *schema.Resource {
 
 			"urls": &schema.Schema{
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -164,67 +165,80 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 	siteAttr := models.SiteAttributes{}
 
-	var apiVersion string
-	platform := d.Get("platform").(string)
-	if platform == "nd" {
-		apiVersion = "v2"
-	} else {
-		apiVersion = "v1"
-	}
-
 	if name, ok := d.GetOk("name"); ok {
 		siteAttr.Name = name.(string)
-	}
-
-	if username, ok := d.GetOk("username"); ok {
-		siteAttr.ApicUsername = username.(string)
-	}
-
-	if password, ok := d.GetOk("password"); ok {
-		siteAttr.ApicPassword = password.(string)
 	}
 
 	if apic_site_id, ok := d.GetOk("apic_site_id"); ok {
 		siteAttr.ApicSiteId = apic_site_id.(string)
 	}
 
-	if labels, ok := d.GetOk("labels"); ok {
-		siteAttr.Labels = labels.([]interface{})
-	}
+	var apiVersion string
+	var path string
+	// apic_site_id := d.Get("apic_site_id").(string)
+	platform := msoClient.GetPlatform()
+	log.Printf("[DEBUG] Site: platform is " + platform)
+	if platform == "nd" {
+		apiVersion = "v2"
+		path = fmt.Sprintf("mso/api/%v/sites/manage", apiVersion)
+		siteCont, err := GetSiteViaName(msoClient, siteAttr.Name)
+		if err != nil {
+			return err
+		}
+		data := siteCont.Data().(map[string]interface{})
+		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont id from .Data() %v", data["id"]))
+		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont common .Data() %v", data["common"]))
 
-	if maintMode, ok := d.GetOk("maintenance_mode"); ok {
-		siteAttr.MaintenanceMode = maintMode.(bool)
-	}
+	} else {
+		apiVersion = "v1"
+		path = fmt.Sprintf("api/v1/sites")
 
-	if domain, ok := d.GetOk("login_domain"); ok {
-		domainStr := domain.(string)
-		usrName := d.Get("username").(string)
-		siteAttr.ApicUsername = fmt.Sprintf("apic#%s\\\\%s", domainStr, usrName)
-		siteAttr.Domain = domainStr
-		siteAttr.HasDomain = true
-	}
+		if username, ok := d.GetOk("username"); ok {
+			siteAttr.ApicUsername = username.(string)
+		}
+	
+		if password, ok := d.GetOk("password"); ok {
+			siteAttr.ApicPassword = password.(string)
+		}
 
-	var loc *models.Location
-	if location, ok := d.GetOk("location"); ok {
-		loc = &models.Location{}
-		loc_map := location.(map[string]interface{})
-		loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["lat"]), 64)
-		loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
-		siteAttr.Location = loc
-	}
-
-	if urls, ok := d.GetOk("urls"); ok {
-		siteAttr.Url = urls.([]interface{})
-	}
+		if labels, ok := d.GetOk("labels"); ok {
+			siteAttr.Labels = labels.([]interface{})
+		}
+	
+		if maintMode, ok := d.GetOk("maintenance_mode"); ok {
+			siteAttr.MaintenanceMode = maintMode.(bool)
+		}
+	
+		if domain, ok := d.GetOk("login_domain"); ok {
+			domainStr := domain.(string)
+			usrName := d.Get("username").(string)
+			siteAttr.ApicUsername = fmt.Sprintf("apic#%s\\\\%s", domainStr, usrName)
+			siteAttr.Domain = domainStr
+			siteAttr.HasDomain = true
+		}
+	
+		var loc *models.Location
+		if location, ok := d.GetOk("location"); ok {
+			loc = &models.Location{}
+			loc_map := location.(map[string]interface{})
+			loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["lat"]), 64)
+			loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
+			siteAttr.Location = loc
+		}
+	
+		if urls, ok := d.GetOk("urls"); ok {
+			siteAttr.Url = urls.([]interface{})
+		}
+	}	
 
 	siteApp := models.NewSite(siteAttr)
 
-	cont, err := msoClient.Save(fmt.Sprintf("api/%v/sites", apiVersion), siteApp)
+	cont, err := msoClient.Save(path, siteApp)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-
+	
 	id := models.StripQuotes(cont.S("id").String())
 	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
@@ -239,67 +253,69 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 
 	siteAttr := models.SiteAttributes{}
 
-	var apiVersion string
-	platform := d.Get("platform").(string)
-	if platform == "nd" {
-		apiVersion = "v2"
-	} else {
-		apiVersion = "v1"
-	}
-
 	if name, ok := d.GetOk("name"); ok {
 		siteAttr.Name = name.(string)
-	}
-
-	if username, ok := d.GetOk("username"); ok {
-		siteAttr.ApicUsername = username.(string)
-	}
-
-	if password, ok := d.GetOk("password"); ok {
-		siteAttr.ApicPassword = password.(string)
 	}
 
 	if apic_site_id, ok := d.GetOk("apic_site_id"); ok {
 		siteAttr.ApicSiteId = apic_site_id.(string)
 	}
 
-	if labels, ok := d.GetOk("labels"); ok {
-		siteAttr.Labels = labels.([]interface{})
-	}
+	var apiVersion string
+	var path string
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		apiVersion = "v2"
+		path = fmt.Sprintf("mso/api/%v/sites/manage", apiVersion)
+	} else {
+		apiVersion = "v1"
+		path = "api/v1/sites"
+		if username, ok := d.GetOk("username"); ok {
+			siteAttr.ApicUsername = username.(string)
+		}
+	
+		if password, ok := d.GetOk("password"); ok {
+			siteAttr.ApicPassword = password.(string)
+		}
 
-	if maintMode, ok := d.GetOk("maintenance_mode"); ok {
-		siteAttr.MaintenanceMode = maintMode.(bool)
-	}
+		if labels, ok := d.GetOk("labels"); ok {
+			siteAttr.Labels = labels.([]interface{})
+		}
+	
+		if maintMode, ok := d.GetOk("maintenance_mode"); ok {
+			siteAttr.MaintenanceMode = maintMode.(bool)
+		}
 
-	if domain, ok := d.GetOk("login_domain"); ok {
-		domainStr := domain.(string)
-		usrName := d.Get("username").(string)
-		siteAttr.ApicUsername = fmt.Sprintf("apic#%s\\\\%s", domainStr, usrName)
-		siteAttr.Domain = domainStr
-		siteAttr.HasDomain = true
-	}
+		if domain, ok := d.GetOk("login_domain"); ok {
+			domainStr := domain.(string)
+			usrName := d.Get("username").(string)
+			siteAttr.ApicUsername = fmt.Sprintf("apic#%s\\\\%s", domainStr, usrName)
+			siteAttr.Domain = domainStr
+			siteAttr.HasDomain = true
+		}
 
-	var loc *models.Location
-	if location, ok := d.GetOk("location"); ok {
-		loc = &models.Location{}
-		loc_map := location.(map[string]interface{})
-		loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["lat"]), 64)
-		loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
-		siteAttr.Location = loc
-	}
+		var loc *models.Location
+		if location, ok := d.GetOk("location"); ok {
+			loc = &models.Location{}
+			loc_map := location.(map[string]interface{})
+			loc.Lat, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["lat"]), 64)
+			loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
+			siteAttr.Location = loc
+		}
 
-	if urls, ok := d.GetOk("urls"); ok {
-		siteAttr.Url = urls.([]interface{})
-	}
-
-	if cloudProviders, ok := d.GetOk("cloud_providers"); ok {
-		siteAttr.CloudProviders = cloudProviders.([]interface{})
+		if urls, ok := d.GetOk("urls"); ok {
+			siteAttr.Url = urls.([]interface{})
+		}
+	
+		if cloudProviders, ok := d.GetOk("cloud_providers"); ok {
+			siteAttr.CloudProviders = cloudProviders.([]interface{})
+		}
 	}
 
 	siteAttr.Platform = d.Get("platform").(string)
 	siteApp := models.NewSite(siteAttr)
 
-	cont, err := msoClient.Put(fmt.Sprintf("api/%v/sites/%s", apiVersion, d.Id()), siteApp)
+	cont, err := msoClient.Put(fmt.Sprintf("%v/%s", path, d.Id()), siteApp)
 	if err != nil {
 		return err
 	}
@@ -318,14 +334,17 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	dn := d.Id()
 
 	var apiVersion string
-	platform := d.Get("platform").(string)
+	platform := msoClient.GetPlatform()
+	var path string
 	if platform == "nd" {
 		apiVersion = "v2"
+		path = fmt.Sprintf("mso/api/%v/sites/%v", apiVersion, dn)
 	} else {
 		apiVersion = "v1"
+		path = fmt.Sprintf("api/%v/sites/%v", apiVersion, dn)
 	}
 
-	con, err := msoClient.GetViaURL(fmt.Sprintf("api/%v/sites/%v", apiVersion, dn))
+	con, err := msoClient.GetViaURL(path)
 	if err != nil {
 		return err
 	}
@@ -374,7 +393,17 @@ func resourceMSOSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	dn := d.Id()
-	err := msoClient.DeletebyId(fmt.Sprintf("api/%v/sites/%v%s", apiVersion, dn, "?force=true"))
+	var apiVersion string
+	var path string
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		apiVersion = "v2"
+		path = fmt.Sprintf("mso/api/%v/sites/manage/%v", apiVersion, dn)
+	} else {
+		apiVersion = "v1"
+		path = fmt.Sprintf("api/%v/sites/%v%s", apiVersion, dn, "?force=true")
+	}
+	err := msoClient.DeletebyId(path)
 	if err != nil {
 		return err
 	}
@@ -383,4 +412,31 @@ func resourceMSOSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId("")
 	return err
+}
+
+func GetSiteViaName(msoClient *client.Client, name string) (*container.Container, error) {
+	log.Printf("[DEBUG] start GetSiteViaName name is %v", name)
+	cont, err := msoClient.GetViaURL("mso/api/v2/sites")
+	if err != nil {
+		return nil, err
+	}
+	sitesCount, err := cont.ArrayCount("sites")
+	log.Printf("[DEBUG] sitecounts is %v", sitesCount)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < sitesCount; i++ {
+		siteCont, err := cont.ArrayElement(i, "sites")
+		log.Printf("[DEBUG] sitecont is %v", siteCont)
+		if err != nil {
+			return nil, err
+		}
+		apiName := models.StripQuotes(siteCont.S("common").S("name").String())
+		log.Printf("[DEBUG] apiname is %v", apiName)
+		if apiName == name {
+			return siteCont, nil
+		}
+	}
+	return nil, fmt.Errorf(fmt.Sprintf("Site %v is not a valid Site configured at ND-level. Add Site to ND first.", name))
 }
