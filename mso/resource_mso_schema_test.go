@@ -26,6 +26,11 @@ func TestAccMSOSchema_Basic(t *testing.T) {
 					testAccCheckMSOSchemaAttributes("nkp1003", &s),
 				),
 			},
+			{
+				ResourceName:      "mso_schema.schema1",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -59,12 +64,12 @@ func TestAccMSOSchema_Update(t *testing.T) {
 func testAccCheckMSOSchemaConfig_basic(name string) string {
 	return fmt.Sprintf(`
 	resource "mso_schema" "schema1" {
-		name          = "nkp1003"
+		name          = "%s"
 		template_name = "temp1"
-		tenant_id     = "5e9d09482c000068500a269a"
+		tenant_id     = "5fb5fed8520000452a9e8911"
 
 	  }
-	`)
+	`, name)
 }
 
 func testAccCheckMSOSchemaExists(schemaName string, st *SchemaTest) resource.TestCheckFunc {

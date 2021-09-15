@@ -209,7 +209,7 @@ func resourceMSOTemplateL3outRead(d *schema.ResourceData, m interface{}) error {
 				}
 				apiL3out := models.StripQuotes(l3outCont.S("name").String())
 				if apiL3out == stateL3out {
-					d.SetId(apiL3out)
+					d.SetId(schemaId + "/template/" + apiTemplate + "/l3out/" + apiL3out)
 					d.Set("l3out_name", apiL3out)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)

@@ -175,7 +175,7 @@ func resourceMSOSchemaTemplateFilterEntryImport(d *schema.ResourceData, m interf
 							d.SetId(apiFilterEntry)
 							d.Set("entry_name", apiFilterEntry)
 							d.Set("entry_display_name", models.StripQuotes(entriesCont.S("displayName").String()))
-							if entriesCont.Exists("descirption") {
+							if entriesCont.Exists("description") {
 								d.Set("entry_description", models.StripQuotes(entriesCont.S("description").String()))
 							}
 							if entriesCont.Exists("etherType") {
@@ -421,7 +421,7 @@ func resourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interfac
 						}
 						apiFilterEntry := models.StripQuotes(entriesCont.S("name").String())
 						if apiFilterEntry == stateFilterEntry {
-							d.SetId(apiFilterEntry)
+							d.SetId(schemaId + "/template/" + apiTemplate + "/filter/" + apiFilter + "/filterEntry/" + apiFilterEntry)
 							d.Set("entry_name", apiFilterEntry)
 							d.Set("entry_display_name", models.StripQuotes(entriesCont.S("displayName").String()))
 							if entriesCont.Exists("descirption") {

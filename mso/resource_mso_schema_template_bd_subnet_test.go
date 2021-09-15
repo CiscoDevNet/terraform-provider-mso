@@ -20,9 +20,14 @@ func TestAccMSOSchemaTemplateBDSubnet_Basic(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateBDSubnetConfig_basic(true),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDSubnetExists("mso_schema_template_bd_subnet.subnet", &ss),
+					testAccCheckMSOSchemaTemplateBDSubnetExists("mso_schema.schema1", "mso_schema_template_bd_subnet.subnet", &ss),
 					testAccCheckMSOSchemaTemplateBDSubnetAttributes(true, &ss),
 				),
+			},
+			{
+				ResourceName:      "mso_schema_template_bd_subnet.subnet",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -39,14 +44,14 @@ func TestAccMSOSchemaTemplateBDSubnet_Update(t *testing.T) {
 			{
 				Config: testAccCheckMSOTemplateBDSubnetConfig_basic(true),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDSubnetExists("mso_schema_template_bd_subnet.subnet", &ss),
+					testAccCheckMSOSchemaTemplateBDSubnetExists("mso_schema.schema1", "mso_schema_template_bd_subnet.subnet", &ss),
 					testAccCheckMSOSchemaTemplateBDSubnetAttributes(true, &ss),
 				),
 			},
 			{
 				Config: testAccCheckMSOTemplateBDSubnetConfig_basic(false),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDSubnetExists("mso_schema_template_bd_subnet.subnet", &ss),
+					testAccCheckMSOSchemaTemplateBDSubnetExists("mso_schema.schema1", "mso_schema_template_bd_subnet.subnet", &ss),
 					testAccCheckMSOSchemaTemplateBDSubnetAttributes(false, &ss),
 				),
 			},
@@ -56,33 +61,65 @@ func TestAccMSOSchemaTemplateBDSubnet_Update(t *testing.T) {
 
 func testAccCheckMSOTemplateBDSubnetConfig_basic(shared bool) string {
 	return fmt.Sprintf(`
- resource "mso_schema_template_bd_subnet" "subnet" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  template_name = "Template1"
-  bd_name = "bd1"
-  ip = "13.1.1.0/8"
-  scope = "private"
-  shared = %v
-  no_default_gateway = true
-  querier = true
 
-}
+	resource "mso_schema" "schema1" {
+		name          = "Schema2"
+		template_name = "Template1"
+		tenant_id     = "5fb5fed8520000452a9e8911"
+	  
+	  }
+
+	  resource "mso_schema_template_vrf" "vrf1" {
+		schema_id=mso_schema.schema1.id
+		template=mso_schema.schema1.template_name
+		name= "VRF"
+		display_name="vrf1"
+		layer3_multicast=true
+		vzany=false
+	  }
+
+	resource "mso_schema_template_bd" "bridge_domain" {
+		schema_id = mso_schema.schema1.id
+		template_name = "Template1"
+		name = "BD"
+		display_name = "bd1"
+		layer2_stretch = true
+		intersite_bum_traffic = true
+		vrf_name = mso_schema_template_vrf.vrf1.name
+	}
+	resource "mso_schema_template_bd_subnet" "subnet" {
+		schema_id = mso_schema.schema1.id
+		template_name = "Template1"
+		bd_name = mso_schema_template_bd.bridge_domain.name
+		ip = "13.1.1.0/8"
+		scope = "private"
+		shared = "%t"
+		no_default_gateway = true
+		querier = true
+	}
 `, shared)
 }
 
-func testAccCheckMSOSchemaTemplateBDSubnetExists(bdName string, ss *TemplateBDSubnet) resource.TestCheckFunc {
+func testAccCheckMSOSchemaTemplateBDSubnetExists(schemaName string, bdName string, ss *TemplateBDSubnet) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*client.Client)
-		rs1, err1 := s.RootModule().Resources[bdName]
-
+		rs1, err1 := s.RootModule().Resources[schemaName]
+		rs2, err2 := s.RootModule().Resources[bdName]
+		if rs1.Primary.ID == "" {
+			return fmt.Errorf("No Schema id was set")
+		}
 		if !err1 {
+			return fmt.Errorf("Schema %s not found", schemaName)
+		}
+
+		if !err2 {
 			return fmt.Errorf("BD Subnet %s not found", bdName)
 		}
-		if rs1.Primary.ID == "" {
+		if rs2.Primary.ID == "" {
 			return fmt.Errorf("No Subnet id was set")
 		}
 
-		cont, err := client.GetViaURL("api/v1/schemas/5d5dbf3f2e0000580553ccce")
+		cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -110,7 +147,7 @@ func testAccCheckMSOSchemaTemplateBDSubnetExists(bdName string, ss *TemplateBDSu
 						return err
 					}
 					apiBD := models.StripQuotes(bdCont.S("name").String())
-					if apiBD == "bd1" {
+					if apiBD == "BD" {
 						bdsubnetCount, err := bdCont.ArrayCount("subnets")
 						if err != nil {
 							return fmt.Errorf("Unable to get BD subnet list")
@@ -152,11 +189,15 @@ func testAccCheckMSOSchemaTemplateBDSubnetExists(bdName string, ss *TemplateBDSu
 
 func testAccCheckMSOSchemaTemplateBDSubnetDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*client.Client)
+	rs1, err1 := s.RootModule().Resources["mso_schema.schema1"]
+	if !err1 {
+		return fmt.Errorf("Schema %s not found", "mso_schema.schema1")
+	}
 
 	for _, rs := range s.RootModule().Resources {
 
 		if rs.Type == "mso_schema_template_bd_subnet" {
-			cont, err := client.GetViaURL("api/v1/schemas/5d5dbf3f2e0000580553ccce")
+			cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 			if err != nil {
 				return nil
 			} else {
@@ -183,7 +224,7 @@ func testAccCheckMSOSchemaTemplateBDSubnetDestroy(s *terraform.State) error {
 								return err
 							}
 							apiBD := models.StripQuotes(bdCont.S("name").String())
-							if apiBD == "bd1" {
+							if apiBD == "BD" {
 								bdsubnetCount, err := bdCont.ArrayCount("subnets")
 								if err != nil {
 									return fmt.Errorf("Unable to get BD subnet list")

@@ -2,6 +2,8 @@ package mso
 
 import (
 	"fmt"
+	"log"
+	"regexp"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -10,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccSchemaTemplateAnp_Basic(t *testing.T) {
+func TestAccMSOSchemaTemplateAnp_Create(t *testing.T) {
 	var s SchemaTemplateAnpTest
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -18,17 +20,77 @@ func TestAccSchemaTemplateAnp_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckMsoSchemaTemplateAnpDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMsoSchemaTemplateAnpConfig_basic("test1"),
+				Config: testAccCheckMsoSchemaTemplateAnpConfig_Create("test1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMsoSchemaTemplateAnpExists("mso_schema.schema1", "mso_schema_template_anp.anp1", &s),
 					testAccCheckMsoSchemaTemplateAnpAttributes("test1", &s),
 				),
+			},
+			{
+				//Config:            testSchemaTemplateAnpConfig("anp123"),
+				ResourceName:      "mso_schema_template_anp.anp1",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func TestAccMsoSchemaTemplateAnp_Update(t *testing.T) {
+func TestAccMSOSchemaTemplateAnp_CreateError(t *testing.T) {
+	var s SchemaTemplateAnpTest
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMsoSchemaTemplateAnpDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMsoSchemaTemplateAnpConfig_CreateError("test1"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMsoSchemaTemplateAnpExists("mso_schema.schema1", "mso_schema_template_anp.anp1", &s),
+					testAccCheckMsoSchemaTemplateAnpAttributes("test1", &s),
+				),
+			},
+			{
+				//Config:            testSchemaTemplateAnpConfig("anp123"),
+				ResourceName:      "mso_schema_template_anp.anp1",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccMSOSchemaTemplateAnp_Name(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testViewConfigNameError("test"),
+				ExpectError: regexp.MustCompile("errors during apply: \"Resource Not Found: template with name Template5 not found in List(Template1)\"" + "{}"),
+			},
+		},
+	})
+}
+
+func testViewConfigNameError(name string) string {
+	return fmt.Sprintf(`
+
+	resource "mso_schema" "schema1" {
+		name = "Schema2"
+		template_name = "Template1"
+		tenant_id = "5fb5fed8520000452a9e8911"
+		
+	  }
+	  resource "mso_schema_template_anp" "anp1" {
+		schema_id=mso_schema.schema1.id
+		template= "Template5"
+		name = "anp123"
+		display_name="%s"
+	  }
+	`, name)
+}
+
+func TestAccMSOSchemaTemplateAnp_Update(t *testing.T) {
 	var s SchemaTemplateAnpTest
 
 	resource.Test(t, resource.TestCase{
@@ -37,14 +99,14 @@ func TestAccMsoSchemaTemplateAnp_Update(t *testing.T) {
 		CheckDestroy: testAccCheckMsoSchemaTemplateAnpDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMsoSchemaTemplateAnpConfig_basic("test1"),
+				Config: testAccCheckMsoSchemaTemplateAnpConfig_CreateError("test1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMsoSchemaTemplateAnpExists("mso_schema.schema1", "mso_schema_template_anp.anp1", &s),
 					testAccCheckMsoSchemaTemplateAnpAttributes("test1", &s),
 				),
 			},
 			{
-				Config: testAccCheckMsoSchemaTemplateAnpConfig_basic("test2"),
+				Config: testAccCheckMsoSchemaTemplateAnpConfig_CreateError("test2"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMsoSchemaTemplateAnpExists("mso_schema.schema1", "mso_schema_template_anp.anp1", &s),
 					testAccCheckMsoSchemaTemplateAnpAttributes("test2", &s),
@@ -54,18 +116,80 @@ func TestAccMsoSchemaTemplateAnp_Update(t *testing.T) {
 	})
 }
 
-func testAccCheckMsoSchemaTemplateAnpConfig_basic(name string) string {
+func TestAccMSOSchemaTemplateAnp_UpdateError(t *testing.T) {
+	var s SchemaTemplateAnpTest
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMsoSchemaTemplateAnpDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMsoSchemaTemplateAnpConfig_UpdateError("test1"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMsoSchemaTemplateAnpExists("mso_schema.schema1", "mso_schema_template_anp.anp1", &s),
+					testAccCheckMsoSchemaTemplateAnpAttributes("test1", &s),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckMsoSchemaTemplateAnpConfig_Create(name string) string {
 	return fmt.Sprintf(`
 
 	resource "mso_schema" "schema1" {
-		name = "Shah200"
-		template_name = "template99"
-		tenant_id = "5ea7e44b2c00007ebb0a2781"
+		name = "Schema2"
+		template_name = "Template1"
+		tenant_id = "5fb5fed8520000452a9e8911"
 		
 	  }
 	  resource "mso_schema_template_anp" "anp1" {
-		schema_id="${mso_schema.schema1.id}"
-		template= "template99"
+		schema_id=mso_schema.schema1.id
+		template= "Template1"
+		name = "anp123"
+		display_name="%s"
+	  }
+	`, name)
+}
+
+func testAccCheckMsoSchemaTemplateAnpConfig_CreateError(name string) string {
+	return fmt.Sprintf(`
+
+	resource "mso_schema" "schema1" {
+		name = "Schema2"
+		template_name = "Template1"
+		tenant_id = "5fb5fed8520000452a9e8911"
+		
+	  }
+
+	  resource "mso_schema_template_anp" "anp1" {
+		schema_id=mso_schema.schema1.id
+		template= "Template1"
+		name = "anp123"
+		display_name="%s"
+	  }
+	`, name)
+}
+
+func testAccCheckMsoSchemaTemplateAnpConfig_UpdateError(name string) string {
+	return fmt.Sprintf(`
+
+	resource "mso_schema" "schema1" {
+		name = "Schema2"
+		template_name = "Template1"
+		tenant_id = "5fb5fed8520000452a9e8911"
+		
+	  }
+	  resource "mso_schema_template_anp" "anp1" {
+		schema_id=mso_schema.schema1.id
+		template= "Template1"
+		name = "anp123"
+		display_name="test1"
+	  }
+	  resource "mso_schema_template_anp" "anp2" {
+		schema_id=mso_schema.schema1.id
+		template= "Template1"
 		name = "anp123"
 		display_name="%s"
 	  }
@@ -131,7 +255,7 @@ func testAccCheckMsoSchemaTemplateAnpExists(schemaName string, schemaTemplateAnp
 		}
 
 		stvc := &stvt
-
+		log.Printf(fmt.Sprint(stvt.DisplayName))
 		*stv = *stvc
 		return nil
 	}

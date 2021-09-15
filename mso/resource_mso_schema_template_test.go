@@ -18,11 +18,16 @@ func TestAccMSOSchemaTemplate_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaTemplateDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMSOSchemaTemplateConfig_basic("Temp1"),
+				Config: testAccCheckMSOSchemaTemplateConfig_basic("Temp2"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMSOSchemaTemplateExists("mso_schema.schema1", "mso_schema_template.sample1", &ss),
-					testAccCheckMSOSchemaTemplateAttributes("Temp1", &ss),
+					testAccCheckMSOSchemaTemplateAttributes("Temp2", &ss),
 				),
+			},
+			{
+				ResourceName:      "mso_schema_template.sample1",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -36,17 +41,17 @@ func TestAccMSOSchemaTemplate_Update(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaTemplateDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMSOSchemaTemplateConfig_basic("Temp1"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateExists("mso_schema.schema1", "mso_schema_template.sample1", &ss),
-					testAccCheckMSOSchemaTemplateAttributes("Temp1", &ss),
-				),
-			},
-			{
 				Config: testAccCheckMSOSchemaTemplateConfig_basic("Temp2"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMSOSchemaTemplateExists("mso_schema.schema1", "mso_schema_template.sample1", &ss),
 					testAccCheckMSOSchemaTemplateAttributes("Temp2", &ss),
+				),
+			},
+			{
+				Config: testAccCheckMSOSchemaTemplateConfig_basic("Temp"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMSOSchemaTemplateExists("mso_schema.schema1", "mso_schema_template.sample1", &ss),
+					testAccCheckMSOSchemaTemplateAttributes("Temp", &ss),
 				),
 			},
 		},
@@ -56,17 +61,17 @@ func TestAccMSOSchemaTemplate_Update(t *testing.T) {
 func testAccCheckMSOSchemaTemplateConfig_basic(displayName string) string {
 	return fmt.Sprintf(`
 	resource "mso_schema" "schema1" {
-  name          = "shah2"
-  template_name = "temp3"
-  tenant_id     = "5e9d09482c000068500a269a"
+		name          = "Schema2"
+		template_name = "Template1"
+		tenant_id     = "5fb5fed8520000452a9e8911"
 
 }
 
-resource "mso_schema_template" "sample1" {
-  schema_id = "${mso_schema.schema1.id}"
-  name = "Temp200"
-  display_name = "%v"
-  tenant_id = "5c4d9f3d2700007e01f80949"
+	resource "mso_schema_template" "sample1" {
+		schema_id = mso_schema.schema1.id
+		name = "Template2"
+		display_name = "%v"
+		tenant_id = "5fb5fed8520000452a9e8911"
   
 }`, displayName)
 }
@@ -91,7 +96,7 @@ func testAccCheckMSOSchemaTemplateExists(schemaName string, schemaTemplateName s
 			return fmt.Errorf("No Schema Template id was set")
 		}
 
-		cont, err := client.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", rs1.Primary.ID))
+		cont, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
 		if err != nil {
 			return err
 		}

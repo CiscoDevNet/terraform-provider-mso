@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccSchemaTemplateVrf_Basic(t *testing.T) {
+func TestAccMSOSchemaTemplateVrf_Basic(t *testing.T) {
 	var s SchemaTemplateVrfTest
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -19,17 +19,22 @@ func TestAccSchemaTemplateVrf_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckMsoSchemaTemplateVrfDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("vrf982"),
+				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("VRF1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMsoSchemaTemplateVrfExists("mso_schema.schema1", "mso_schema_template_vrf.vrf1", &s),
-					testAccCheckMsoSchemaTemplateVrfAttributes("vrf982", &s),
+					testAccCheckMsoSchemaTemplateVrfAttributes("VRF1", &s),
 				),
+			},
+			{
+				ResourceName:      "mso_schema_template_vrf.vrf1",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func TestAccMsoSchemaTemplateVrf_Update(t *testing.T) {
+func TestAccMSOSchemaTemplateVrf_Update(t *testing.T) {
 	var s SchemaTemplateVrfTest
 
 	resource.Test(t, resource.TestCase{
@@ -38,17 +43,17 @@ func TestAccMsoSchemaTemplateVrf_Update(t *testing.T) {
 		CheckDestroy: testAccCheckMsoSchemaTemplateVrfDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("vrf982"),
+				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("VRF1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMsoSchemaTemplateVrfExists("mso_schema.schema1", "mso_schema_template_vrf.vrf1", &s),
-					testAccCheckMsoSchemaTemplateVrfAttributes("vrf982", &s),
+					testAccCheckMsoSchemaTemplateVrfAttributes("VRF1", &s),
 				),
 			},
 			{
-				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("vrf983"),
+				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("VRF2"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMsoSchemaTemplateVrfExists("mso_schema.schema1", "mso_schema_template_vrf.vrf1", &s),
-					testAccCheckMsoSchemaTemplateVrfAttributes("vrf983", &s),
+					testAccCheckMsoSchemaTemplateVrfAttributes("VRF2", &s),
 				),
 			},
 		},
@@ -59,16 +64,16 @@ func testAccCheckMsoSchemaTemplateVrfConfig_basic(name string) string {
 	return fmt.Sprintf(`
 
 	resource "mso_schema" "schema1" {
-		name          = "shah8"
-		template_name = "temp5"
-		tenant_id     = "5e9d09482c000068500a269a"
+		name          = "Schema2"
+		template_name = "Template1"
+		tenant_id     = "5fb5fed8520000452a9e8911"
 	  
 	  }
 
 	resource "mso_schema_template_vrf" "vrf1" {
-		schema_id="${mso_schema.schema1.id}"
-		template="temp5"
-		name= "vrf982"
+		schema_id=mso_schema.schema1.id
+		template="Template1"
+		name= "VRF"
 		display_name="%s"
 		layer3_multicast=true
 		vzany=false

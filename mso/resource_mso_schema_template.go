@@ -59,7 +59,6 @@ func resourceMSOSchemaTemplateImport(d *schema.ResourceData, m interface{}) ([]*
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	get_attribute := strings.Split(d.Id(), "/")
 	msoClient := m.(*client.Client)
-	name := get_attribute[2]
 	schemaId := get_attribute[0]
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
@@ -69,6 +68,7 @@ func resourceMSOSchemaTemplateImport(d *schema.ResourceData, m interface{}) ([]*
 	data := cont.S("templates").Data().([]interface{})
 	var flag bool
 	var count int
+	name := get_attribute[2]
 	for _, info := range data {
 		val := info.(map[string]interface{})
 		if val["name"].(string) == name {
@@ -83,7 +83,7 @@ func resourceMSOSchemaTemplateImport(d *schema.ResourceData, m interface{}) ([]*
 	}
 
 	dataCon := cont.S("templates").Index(count)
-	d.SetId(models.StripQuotes(dataCon.S("name").String()))
+	d.SetId(name)
 	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
 	d.Set("display_name", models.StripQuotes(dataCon.S("displayName").String()))
 	d.Set("tenant_id", models.StripQuotes(dataCon.S("tenantId").String()))
@@ -143,7 +143,7 @@ func resourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) error 
 		apiTemplateDisplayName := models.StripQuotes(tempCont.S("displayName").String())
 
 		if apiTenantId == stateTenantId && apiTemplateName == stateTemplateName && apiTemplateDisplayName == stateTemplateDisplayName {
-			d.SetId(apiTemplateName)
+			d.SetId(schemaId + "/templates/" + apiTemplateName)
 			d.Set("tenant_id", apiTenantId)
 			d.Set("name", apiTemplateName)
 			d.Set("display_name", apiTemplateDisplayName)

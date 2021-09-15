@@ -174,15 +174,15 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
 					}
 
-					if bdCont.Exists("optimize_wan_bandwidth") {
+					if bdCont.Exists("optimizeWanBandwidth") {
 						d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
 					}
 
-					if bdCont.Exists("layer3_multicast") {
+					if bdCont.Exists("l3MCast") {
 						d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
 					}
 
-					if bdCont.Exists("layer2_stretch") {
+					if bdCont.Exists("l2Stretch") {
 						d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
 					}
 
@@ -351,7 +351,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 				}
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
-					d.SetId(apiBD)
+					d.SetId(schemaId + "/template/" + apiTemplate + "/bd/" + apiBD)
 					d.Set("name", apiBD)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
