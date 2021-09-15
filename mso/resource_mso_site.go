@@ -178,7 +178,6 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 	var id string
 	apic_site_id := d.Get("apic_site_id").(string)
 	platform := msoClient.GetPlatform()
-	log.Printf("[DEBUG] Site: platform is " + platform)
 	if platform == "nd" {
 		apiVersion = "v2"
 		path = fmt.Sprintf("api/%v/sites/manage", apiVersion)
@@ -187,16 +186,12 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 		data := siteCont.Data().(map[string]interface{})
-		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont id from .Data() %v", data["id"]))
-		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont common .Data() %v", data["common"]))
 
 		if data["id"] == "" {
 			common := data["common"].(map[string]interface{})
 			common["siteId"] = apic_site_id
 			data["common"] = common
-			log.Printf(fmt.Sprintf("[DEBUG] data %v", data))
 			payload, err := container.Consume(data)
-			log.Printf(fmt.Sprintf("[DEBUG] Site:temp %v", payload))
 			req, err := msoClient.MakeRestRequest("POST", path, payload, true)
 			if err != nil {
 				return err
@@ -254,7 +249,6 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 			siteAttr.Url = urls.([]interface{})
 		}
 		siteApp := models.NewSite(siteAttr)
-		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteApp %v", siteApp))
 		cont, err := msoClient.Save(path, siteApp)
 		if err != nil {
 			log.Println(err)
@@ -369,7 +363,6 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] %s: Beginning Read: before d.Set ", d.Id())
 	d.SetId(models.StripQuotes(con.S("id").String()))
 	d.Set("name", models.StripQuotes(con.S("name").String()))
 	d.Set("username", models.StripQuotes(con.S("username").String()))
@@ -442,25 +435,21 @@ func resourceMSOSiteDelete(d *schema.ResourceData, m interface{}) error {
 }
 
 func GetSiteViaName(msoClient *client.Client, name string) (*container.Container, error) {
-	log.Printf("[DEBUG] start GetSiteViaName name is %v", name)
 	cont, err := msoClient.GetViaURL("api/v2/sites")
 	if err != nil {
 		return nil, err
 	}
 	sitesCount, err := cont.ArrayCount("sites")
-	log.Printf("[DEBUG] sitecounts is %v", sitesCount)
 	if err != nil {
 		return nil, err
 	}
 
 	for i := 0; i < sitesCount; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
-		log.Printf("[DEBUG] sitecont is %v", siteCont)
 		if err != nil {
 			return nil, err
 		}
 		apiName := models.StripQuotes(siteCont.S("common").S("name").String())
-		log.Printf("[DEBUG] apiname is %v", apiName)
 		if apiName == name {
 			return siteCont, nil
 		}
