@@ -181,7 +181,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site: platform is " + platform)
 	if platform == "nd" {
 		apiVersion = "v2"
-		path = fmt.Sprintf("mso/api/%v/sites/manage", apiVersion)
+		path = fmt.Sprintf("api/%v/sites/manage", apiVersion)
 		siteCont, err := GetSiteViaName(msoClient, siteAttr.Name)
 		if err != nil {
 			return err
@@ -189,17 +189,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		data := siteCont.Data().(map[string]interface{})
 		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont id from .Data() %v", data["id"]))
 		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont common .Data() %v", data["common"]))
-		// if data["id"] != "" {
-		// 	payload := data
-		// 	log.Printf(fmt.Sprintf("[DEBUG] Site: payload %v", payload))
-		// } else {
-		// 	log.Printf(fmt.Sprintf("[DEBUG] data common name %v", data["common"].(map[string]interface{})))
-		// 	common := data["common"].(map[string]interface{})
-		// 	common["siteId"] = apic_site_id
-		// 	data["common"] = common
-		// 	log.Printf(fmt.Sprintf("[DEBUG] data %v", data))
-		// }
-		// var payload *container.Container
+
 		if data["id"] == "" {
 			common := data["common"].(map[string]interface{})
 			common["siteId"] = apic_site_id
@@ -299,7 +289,7 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 	platform := msoClient.GetPlatform()
 	if platform == "nd" {
 		apiVersion = "v2"
-		path = fmt.Sprintf("mso/api/%v/sites/manage", apiVersion)
+		path = fmt.Sprintf("api/%v/sites/manage", apiVersion)
 	} else {
 		apiVersion = "v1"
 		path = "api/v1/sites"
@@ -368,14 +358,12 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 
 	var apiVersion string
 	platform := msoClient.GetPlatform()
-	var path string
 	if platform == "nd" {
 		apiVersion = "v2"
-		path = fmt.Sprintf("mso/api/%v/sites/%v", apiVersion, dn)
 	} else {
 		apiVersion = "v1"
-		path = fmt.Sprintf("api/%v/sites/%v", apiVersion, dn)
 	}
+	path := fmt.Sprintf("api/%v/sites/%v", apiVersion, dn)
 
 	con, err := msoClient.GetViaURL(path)
 	if err != nil {
@@ -386,11 +374,15 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("name", models.StripQuotes(con.S("name").String()))
 	d.Set("username", models.StripQuotes(con.S("username").String()))
 	d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
-	// d.Set("labels", con.S("labels").Data().([]interface{}))
-	//d.Set("urls", con.S("urls").Data().([]interface{}))
+	if con.Exists("labels") {
+		d.Set("labels", con.S("labels").Data().([]interface{}))
+	}
+	if con.Exists("urls") {
+		d.Set("urls", con.S("urls").Data().([]interface{}))
+	}
 	d.Set("platform", models.StripQuotes(con.S("platform").String()))
 	if con.Exists("cloudProviders") {
-		//d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
+		d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
 	} else {
 		d.Set("cloud_providers", make([]interface{}, 0, 1))
 	}
@@ -407,17 +399,18 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		}
 
 	}
-	loc1 := con.S("location").Data()
-	locset := make(map[string]interface{})
-	if loc1 != nil {
-		loc := loc1.(map[string]interface{})
-		locset["lat"] = fmt.Sprintf("%v", loc["lat"])
-		locset["long"] = fmt.Sprintf("%v", loc["long"])
-	} else {
-		locset = nil
-	}
+	if con.Exists("location") {
+		loc1 := con.S("location").Data()
+		locset := make(map[string]interface{})
+		if loc1 != nil {
+			loc := loc1.(map[string]interface{})
+			locset["lat"] = fmt.Sprintf("%v", loc["lat"])
+			locset["long"] = fmt.Sprintf("%v", loc["long"])
+		} else {
+			locset = nil
+		}
 	d.Set("location", locset)
-
+	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
@@ -432,7 +425,7 @@ func resourceMSOSiteDelete(d *schema.ResourceData, m interface{}) error {
 	platform := msoClient.GetPlatform()
 	if platform == "nd" {
 		apiVersion = "v2"
-		path = fmt.Sprintf("mso/api/%v/sites/manage/%v", apiVersion, dn)
+		path = fmt.Sprintf("api/%v/sites/manage/%v", apiVersion, dn)
 	} else {
 		apiVersion = "v1"
 		path = fmt.Sprintf("api/%v/sites/%v%s", apiVersion, dn, "?force=true")
@@ -450,7 +443,7 @@ func resourceMSOSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 func GetSiteViaName(msoClient *client.Client, name string) (*container.Container, error) {
 	log.Printf("[DEBUG] start GetSiteViaName name is %v", name)
-	cont, err := msoClient.GetViaURL("mso/api/v2/sites")
+	cont, err := msoClient.GetViaURL("api/v2/sites")
 	if err != nil {
 		return nil, err
 	}
