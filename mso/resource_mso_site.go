@@ -175,7 +175,8 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 
 	var apiVersion string
 	var path string
-	// apic_site_id := d.Get("apic_site_id").(string)
+	var id string
+	apic_site_id := d.Get("apic_site_id").(string)
 	platform := msoClient.GetPlatform()
 	log.Printf("[DEBUG] Site: platform is " + platform)
 	if platform == "nd" {
@@ -188,7 +189,40 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		data := siteCont.Data().(map[string]interface{})
 		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont id from .Data() %v", data["id"]))
 		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteCont common .Data() %v", data["common"]))
-
+		// if data["id"] != "" {
+		// 	payload := data
+		// 	log.Printf(fmt.Sprintf("[DEBUG] Site: payload %v", payload))
+		// } else {
+		// 	log.Printf(fmt.Sprintf("[DEBUG] data common name %v", data["common"].(map[string]interface{})))
+		// 	common := data["common"].(map[string]interface{})
+		// 	common["siteId"] = apic_site_id
+		// 	data["common"] = common
+		// 	log.Printf(fmt.Sprintf("[DEBUG] data %v", data))
+		// }
+		// var payload *container.Container
+		if data["id"] == "" {
+			common := data["common"].(map[string]interface{})
+			common["siteId"] = apic_site_id
+			data["common"] = common
+			log.Printf(fmt.Sprintf("[DEBUG] data %v", data))
+			payload, err := container.Consume(data)
+			log.Printf(fmt.Sprintf("[DEBUG] Site:temp %v", payload))
+			req, err := msoClient.MakeRestRequest("POST", path, payload, true)
+			if err != nil {
+				return err
+			}
+			res, _, err := msoClient.Do(req)
+			if err != nil {
+				return err
+			}
+			err = client.CheckForErrors(res, "POST")
+			if err != nil {
+				return err
+			}
+			id = models.StripQuotes(res.S("id").String())
+		} else {
+			id = data["id"].(string)
+		}
 	} else {
 		apiVersion = "v1"
 		path = fmt.Sprintf("api/v1/sites")
@@ -229,17 +263,16 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		if urls, ok := d.GetOk("urls"); ok {
 			siteAttr.Url = urls.([]interface{})
 		}
+		siteApp := models.NewSite(siteAttr)
+		log.Printf(fmt.Sprintf("[DEBUG] Site:get siteApp %v", siteApp))
+		cont, err := msoClient.Save(path, siteApp)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		id = models.StripQuotes(cont.S("id").String())
 	}	
 
-	siteApp := models.NewSite(siteAttr)
-
-	cont, err := msoClient.Save(path, siteApp)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	
-	id := models.StripQuotes(cont.S("id").String())
 	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
@@ -348,15 +381,16 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("[DEBUG] %s: Beginning Read: before d.Set ", d.Id())
 	d.SetId(models.StripQuotes(con.S("id").String()))
 	d.Set("name", models.StripQuotes(con.S("name").String()))
 	d.Set("username", models.StripQuotes(con.S("username").String()))
 	d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
-	d.Set("labels", con.S("labels").Data().([]interface{}))
-	d.Set("urls", con.S("urls").Data().([]interface{}))
+	// d.Set("labels", con.S("labels").Data().([]interface{}))
+	//d.Set("urls", con.S("urls").Data().([]interface{}))
 	d.Set("platform", models.StripQuotes(con.S("platform").String()))
 	if con.Exists("cloudProviders") {
-		d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
+		//d.Set("cloud_providers", con.S("cloudProviders").Data().([]interface{}))
 	} else {
 		d.Set("cloud_providers", make([]interface{}, 0, 1))
 	}
