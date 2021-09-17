@@ -185,13 +185,13 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
-		data := siteCont.Data().(map[string]interface{})
+		siteData := siteCont.Data().(map[string]interface{})
 
-		if data["id"] == "" {
-			common := data["common"].(map[string]interface{})
+		if siteData["id"] == "" {
+			common := siteData["common"].(map[string]interface{})
 			common["siteId"] = apic_site_id
-			data["common"] = common
-			payload, err := container.Consume(data)
+			siteData["common"] = common
+			payload, err := container.Consume(siteData)
 			req, err := msoClient.MakeRestRequest("POST", path, payload, true)
 			if err != nil {
 				return err
@@ -206,7 +206,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 			}
 			id = models.StripQuotes(res.S("id").String())
 		} else {
-			id = data["id"].(string)
+			id = siteData["id"].(string)
 		}
 	} else {
 		apiVersion = "v1"
