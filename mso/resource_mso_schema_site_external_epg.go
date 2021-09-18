@@ -126,6 +126,7 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 
 func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site External EPG: Beginning Creation")
+
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -133,6 +134,12 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 	externalEpgName := d.Get("external_epg_name").(string)
 	templateName := d.Get("template_name").(string)
 	l3outName := d.Get("l3out_name").(string)
+
+	// Get tenant name
+	tenantName, err := GetTenantNameViaTemplateName(msoClient, schemaId, templateName)
+	if err != nil {
+		return err
+	}
 
 	siteEpgMap := make(map[string]interface{})
 
@@ -144,7 +151,7 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 
 	siteEpgMap["l3outRef"] = l3outRefMap
 
-	siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-test_tenant/out-%s", l3outName)
+	siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 
 	var ext_epg_schema_id, ext_epg_template_name string
 	ext_epg_schema_id = schemaId
@@ -159,8 +166,9 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 
 	path := fmt.Sprintf("/sites/%s-%s/externalEpgs/-", siteId, templateName)
 	siteExternalEpgStruct := models.NewSchemaSiteExternalEpg("add", path, siteEpgMap)
+	log.Printf("[DETAILS] %s: ", siteExternalEpgStruct)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
 
 	if err != nil {
 		return err
@@ -330,4 +338,51 @@ func resourceMSOSchemaSiteExternalEpgDelete(d *schema.ResourceData, m interface{
 
 	d.SetId("")
 	return nil
+}
+
+// Gets tenant name by doing the following
+// GET and loop through all the schemas and check if you schema is present ("api/v1/schemas/list-identity")
+// GET and loop through all the templates in your schema and check if your template is present
+// If template present then get tenantId from template contents
+// GET tenant_name from tenantId "api/v1/tenants/{id}"
+func GetTenantNameViaTemplateName(msoClient *client.Client, id string, tempName string) (string, error) {
+	cont, err := msoClient.GetViaURL("api/v1/schemas/list-identity")
+	if err != nil {
+		return "", err
+	}
+	schemaCount, err := cont.ArrayCount("schemas")
+	if err != nil {
+		return "", err
+	}
+
+	for i := 0; i < schemaCount; i++ {
+		schemaCont, err := cont.ArrayElement(i, "schemas")
+		if err != nil {
+			return "", err
+		}
+		schemaId := models.StripQuotes(schemaCont.S("id").String())
+
+		if schemaId == id {
+			allTemplates := schemaCont.S("templates").Data().([]interface{})
+
+			for _, info := range allTemplates {
+				template := info.(map[string]interface{})
+				if tempName == template["name"] {
+					tenantId := template["tenantId"]
+					tenantCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/tenants/%v", tenantId))
+
+					if err != nil {
+						return "", err
+					}
+
+					tenantMap := tenantCont.Data().(map[string]interface{})
+					tenantName := tenantMap["name"].(string)
+					return tenantName, nil
+				}
+
+			}
+		}
+
+	}
+	return "", fmt.Errorf(tempName)
 }

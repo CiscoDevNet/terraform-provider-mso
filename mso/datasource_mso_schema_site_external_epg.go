@@ -51,7 +51,7 @@ func dataSourceMSOSchemaSiteExternalEpg() *schema.Resource {
 	}
 }
 
-func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{}) error {
+func dataSourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)

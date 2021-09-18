@@ -7,41 +7,39 @@ terraform {
 }
 
 provider "mso" {
-  username = "admin"
-  password = "ins3965!"
-  url      = "https://10.23.248.66/"
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
+  url      = "" # <MSO URL>
   insecure = true
   platform = "nd"
 }
 
-// resource "mso_site" "test_site" {
-//   name             = "test_site"
-//   username         = "admin" # <APIC username>
-//   password         = "ins3965!" # <APIC pwd>
-//   apic_site_id     = "105"
-//   urls             = ["https://10.23.248.102/"] # <APIC site url>
-//   location = {
-//     lat  = 78.946
-//     long = 95.623
-//   }
-// }
+resource "mso_site" "test_site" {
+  name             = "test_site"
+  username         = "" # <APIC username>
+  password         = "" # <APIC pwd>
+  apic_site_id     = "105"
+  urls             = ""# <APIC site url>
+  location = {
+    lat  = 78.946
+    long = 95.623
+  }
+}
 
-// resource "mso_tenant" "tenant1" {
-//   name          = "test_tenant"
-//   display_name  = "test_tenant"
-//   description   = "DemoTenant"
-//   site_associations {
-//     site_id     = "60a6a86b2156a10d1cf14095"
-//   }
-// }
+resource "mso_tenant" "tenant1" {
+  name          = "test_tenant"
+  display_name  = "test_tenant"
+  description   = "DemoTenant"
+  site_associations {
+    site_id     = mso_site.test_site.id
+  }
+}
 
 resource "mso_schema" "schema1" {
   name          = "test_schema"
   template_name = "Template1"
-  // tenant_id     = mso_tenant.tenant1.id
-  tenant_id     = "612c7f3e2c0000f863513c87"
+  tenant_id     = mso_tenant.tenant1.id
 }
-
 
 resource "mso_schema_template_vrf" "vrf1" {
   schema_id       = mso_schema.schema1.id
@@ -72,7 +70,7 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 
 resource "mso_schema_site" "schema_site_1" {
   schema_id      = mso_schema.schema1.id
-  site_id        = "60a6a86b2156a10d1cf14095"
+  site_id        = mso_site.test_site.id
   template_name  = mso_schema.schema1.template_name
 }
 
