@@ -86,7 +86,17 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	name := d.Get("name").(string)
-	con, err := msoClient.GetViaURL("api/v1/sites")
+	var apiVersion string
+	var path string
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		apiVersion = "v2"
+		path = fmt.Sprintf("api/%v/sites", apiVersion)
+	} else {
+		apiVersion = "v1"
+		path = "api/v1/sites"
+	}
+	con, err := msoClient.GetViaURL(path)
 	if err != nil {
 		return err
 	}
