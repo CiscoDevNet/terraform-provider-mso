@@ -78,7 +78,7 @@ func testAccCheckMSOSchemaSchemaSiteExternalEpgExists(externalepgName string, ss
 			return fmt.Errorf("No Schema id was set")
 		}
 
-		cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
+		cont, err := client.GetViaURL("api/v1/schemas/{schema_id}")
 		if err != nil {
 			return err
 		}
@@ -133,7 +133,7 @@ func testAccCheckMSOSchemaSchemaSiteExternalEpgDestroy(s *terraform.State) error
 	for _, rs := range s.RootModule().Resources {
 
 		if rs.Type == "mso_schema_template_external_epg" {
-			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
+			cont, err := client.GetViaURL("api/v1/schemas/{schema_id}")
 			if err != nil {
 				return nil
 			} else {
