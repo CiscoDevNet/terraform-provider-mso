@@ -341,8 +341,8 @@ func resourceMSOSchemaSiteExternalEpgDelete(d *schema.ResourceData, m interface{
 }
 
 // Gets tenant name by doing the following
-// GET and loop through all the schemas and check if you schema is present ("api/v1/schemas/list-identity")
-// GET and loop through all the templates in your schema and check if your template is present
+// GET and loop through all the schemas and check if the schema is present ("api/v1/schemas/list-identity")
+// GET and loop through all the templates in the schema and check if the template is present
 // If template present then get tenantId from template contents
 // GET tenant_name from tenantId "api/v1/tenants/{id}"
 func GetTenantNameViaTemplateName(msoClient *client.Client, id string, tempName string) (string, error) {
