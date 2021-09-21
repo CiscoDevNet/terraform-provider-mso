@@ -27,6 +27,7 @@ data "mso_user" "schema10" {
 * `user_password` - (Optional) password of the user. It must contain at least 8 characters in length.
 * `roles` - (Optional) roles given to the user. This attribute is deprecated on ND-based MSO/NDO, use `user_rbac` instead.
 * `roles.roleid` - (Optional) id of roles given to the user. This attribute is deprecated on ND-based MSO/NDO, use `user_rbac` instead.
+* `roles.access_type` - (Optional) access_type of roles given to the user. This attribute is deprecated on ND-based MSO/NDO, use `user_rbac` instead.
 * `user_rbac` - (Optional) roles given to the user.
 * `user_rbac.name` - (Optional) name of roles given to the user.
 * `user_rbac.user_priv` - (Optional) Privilege access given to users (WritePriv, ReadPriv)
@@ -36,4 +37,3 @@ data "mso_user" "schema10" {
 * `phone` - (Optional) phone of the user.
 * `account-status` - (Optional) account status of the user.
 * `domain` - (Optional) domain status of the user.
-* `roles.access_type` - (Optional) access_type of roles given to the user.
