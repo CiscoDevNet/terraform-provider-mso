@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -80,17 +81,33 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	username := d.Get("username").(string)
-	con, err := msoClient.GetViaURL("api/v1/users")
-
+	var path string
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		path = "api/v2/users"
+	} else {
+		path = "api/v1/users"
+	}
+	con, err := msoClient.GetViaURL(path)
 	if err != nil {
 		return err
 	}
-	data := con.S("users").Data().([]interface{})
+
+	var data []interface{}
+	var usernameKey string
+	if platform == "nd" {
+		data = con.Data().([]interface{})
+		usernameKey = "loginID"
+	} else {
+		data = con.S("users").Data().([]interface{})
+		usernameKey = "username"
+	}
+	// data := con.S("users").Data().([]interface{})
 	var flag bool
 	var cnt int
 	for _, info := range data {
 		val := info.(map[string]interface{})
-		if val["username"].(string) == username {
+		if val[usernameKey].(string) == username {
 			flag = true
 			break
 		}
@@ -100,10 +117,15 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("User of specified name not found")
 	}
 
-	dataCon := con.S("users").Index(cnt)
+	var dataCon *container.Container
+	if platform == "nd" {
+		dataCon = con.Index(cnt)
+	} else {
+		dataCon = con.S("users").Index(cnt)
+	}
 
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
-	d.Set("username", models.StripQuotes(dataCon.S("username").String()))
+	d.Set("username", models.StripQuotes(dataCon.S(usernameKey).String()))
 	d.Set("user_password", models.StripQuotes(dataCon.S("password").String()))
 	if dataCon.Exists("firstName") {
 		d.Set("first_name", models.StripQuotes(dataCon.S("firstName").String()))
@@ -124,28 +146,54 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("domain", models.StripQuotes(dataCon.S("domain").String()))
 	}
 
-	count, err := dataCon.ArrayCount("roles")
+	var roles []interface{}
+	var userRbac []interface{}
+	if platform == "nd" {
+		roles = make([]interface{}, 0)
+		userRbac = make([]interface{}, 0)
+		if dataCon.Exists("userRbac") {
+			for name, _ := range dataCon.S("userRbac").Data().(map[string]interface{}) {
+				map1 := make(map[string]interface{})
+				map2 := make(map[string]interface{})
 
-	if err != nil {
-		return fmt.Errorf("No Roles found")
-	}
+				map1["roleid"] = models.StripQuotes(name)
+				map1["access_type"] = models.StripQuotes(dataCon.S("userRbac").S(name).S("userPriv").String())
+				roles = append(roles, map1)
 
-	roles := make([]interface{}, 0)
-	for i := 0; i < count; i++ {
-		rolesCont, err := dataCon.ArrayElement(i, "roles")
+				map2["name"] = models.StripQuotes(name)
+				map2["user_priv"] = models.StripQuotes(dataCon.S("userRbac").S(name).S("userPriv").String())
+				userRbac = append(userRbac, map2)
 
-		if err != nil {
-			return fmt.Errorf("Unable to parse the roles list")
+			}
 		}
 
-		map1 := make(map[string]interface{})
+		d.Set("roles", roles)
+		d.Set("user_rbac", userRbac)
 
-		map1["roleid"] = models.StripQuotes(rolesCont.S("roleId").String())
-		map1["access_type"] = models.StripQuotes(rolesCont.S("accessType").String())
-		roles = append(roles, map1)
+	} else {
+		count, err := dataCon.ArrayCount("roles")
+
+		if err != nil {
+			return fmt.Errorf("No Roles found")
+		}
+
+		roles = make([]interface{}, 0)
+		for i := 0; i < count; i++ {
+			rolesCont, err := dataCon.ArrayElement(i, "roles")
+
+			if err != nil {
+				return fmt.Errorf("Unable to parse the roles list")
+			}
+
+			map1 := make(map[string]interface{})
+
+			map1["roleid"] = models.StripQuotes(rolesCont.S("roleId").String())
+			map1["access_type"] = models.StripQuotes(rolesCont.S("accessType").String())
+			roles = append(roles, map1)
+		}
+
+		d.Set("roles", roles)
 	}
-
-	d.Set("roles", roles)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

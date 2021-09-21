@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -26,6 +27,10 @@ func (c *Client) GetViaURL(endpoint string) (*container.Container, error) {
 	}
 	return obj, CheckForErrors(obj, "GET")
 
+}
+
+func (c *Client) GetPlatform() string {
+	return c.platform
 }
 
 func (c *Client) Put(endpoint string, obj models.Model) (*container.Container, error) {
@@ -91,7 +96,7 @@ func (c *Client) DeletebyId(url string) error {
 	if err1 != nil {
 		return err1
 	}
-	if resp.StatusCode == 204 {
+	if resp.StatusCode == 204 || resp.StatusCode == 200 {
 		return nil
 	} else {
 		return fmt.Errorf("Unable to delete the object")
@@ -113,7 +118,13 @@ func (c *Client) PatchbyID(endpoint string, objList ...models.Model) (*container
 
 	}
 
-	req, err := c.MakeRestRequest("PATCH", endpoint, contJs, true)
+	// URL encoding
+	baseUrl, _ := url.Parse(endpoint)
+	qs := url.Values{}
+	qs.Add("validate", "false")
+	baseUrl.RawQuery = qs.Encode()
+
+	req, err := c.MakeRestRequest("PATCH", baseUrl.String(), contJs, true)
 	if err != nil {
 		return nil, err
 	}
