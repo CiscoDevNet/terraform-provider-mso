@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -99,15 +100,25 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	data := con.S("sites").Data().([]interface{})
+
 	var flag bool
 	var count int
 
 	for _, info := range data {
-		val := info.(map[string]interface{})
-		if val["name"].(string) == name {
-			flag = true
-			break
+		if platform == "nd" {
+			val := info.(map[string]interface{})["common"]
+			if val.(map[string]interface{})["name"].(string) == name {
+				flag = true
+				break
+			}
+		} else {
+			val := info.(map[string]interface{})
+			if val["name"].(string) == name {
+				flag = true
+				break
+			}
 		}
+
 		count = count + 1
 	}
 
@@ -115,45 +126,78 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("Site of specified name not found")
 	}
 
-	dataCon := con.S("sites").Index(count)
-
+	var dataCon *container.Container
+	dataCon = con.S("sites").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 
-	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
+	if platform == "nd" {
+		dataCon_attr := dataCon.S("common")
 
-	if dataCon.Exists("username") {
-		d.Set("username", models.StripQuotes(dataCon.S("username").String()))
-	}
+		d.Set("name", models.StripQuotes(dataCon_attr.S("name").String()))
 
-	if dataCon.Exists("password") {
-		d.Set("password", models.StripQuotes(dataCon.S("password").String()))
-	}
+		if dataCon_attr.Exists("siteId") {
+			d.Set("apic_site_id", models.StripQuotes(dataCon_attr.S("siteId").String()))
+		}
 
-	if dataCon.Exists("apicSiteId") {
-		d.Set("apic_site_id", models.StripQuotes(dataCon.S("apicSiteId").String()))
-	}
+		if dataCon_attr.Exists("urls") {
+			d.Set("urls", dataCon_attr.S("urls").Data().([]interface{}))
+		}
 
-	loc1 := dataCon.S("location").Data()
-	locset := make(map[string]interface{})
-	if loc1 != nil {
-		loc := loc1.(map[string]interface{})
-		locset["lat"] = fmt.Sprintf("%v", loc["lat"])
-		locset["long"] = fmt.Sprintf("%v", loc["long"])
+		if dataCon_attr.Exists("username") {
+			d.Set("username", models.StripQuotes(dataCon_attr.S("username").String()))
+		}
+
+		if dataCon_attr.Exists("latitude") || dataCon_attr.Exists("longitude") {
+			locset := make(map[string]interface{})
+			locset["lat"] = models.StripQuotes(dataCon_attr.S("latitude").String())
+			locset["long"] = models.StripQuotes(dataCon_attr.S("longitude").String())
+			d.Set("location", locset)
+		}
+
+		dataCloud := dataCon.S("apic")
+		if dataCloud.Exists("cApicType") {
+			provider := [1]string{models.StripQuotes(dataCloud.S("cApicType").String())}
+			d.Set("cloud_providers", provider)
+		}
+
 	} else {
-		locset = nil
-	}
-	d.Set("location", locset)
 
-	if dataCon.Exists("labels") {
-		d.Set("labels", dataCon.S("labels").Data().([]interface{}))
-	}
+		d.Set("name", models.StripQuotes(dataCon.S("name").String()))
 
-	if dataCon.Exists("urls") {
-		d.Set("urls", dataCon.S("urls").Data().([]interface{}))
-	}
+		if dataCon.Exists("username") {
+			d.Set("username", models.StripQuotes(dataCon.S("username").String()))
+		}
 
-	if dataCon.Exists("cloudProviders") {
-		d.Set("cloud_providers", dataCon.S("cloudProviders").Data().([]interface{}))
+		if dataCon.Exists("password") {
+			d.Set("password", models.StripQuotes(dataCon.S("password").String()))
+		}
+
+		if dataCon.Exists("apicSiteId") {
+			d.Set("apic_site_id", models.StripQuotes(dataCon.S("apicSiteId").String()))
+		}
+
+		loc1 := dataCon.S("location").Data()
+		locset := make(map[string]interface{})
+		if loc1 != nil {
+			loc := loc1.(map[string]interface{})
+			locset["lat"] = fmt.Sprintf("%v", loc["lat"])
+			locset["long"] = fmt.Sprintf("%v", loc["long"])
+		} else {
+			locset = nil
+		}
+		d.Set("location", locset)
+
+		if dataCon.Exists("labels") {
+			d.Set("labels", dataCon.S("labels").Data().([]interface{}))
+		}
+
+		if dataCon.Exists("urls") {
+			d.Set("urls", dataCon.S("urls").Data().([]interface{}))
+		}
+
+		if dataCon.Exists("cloudProviders") {
+			d.Set("cloud_providers", dataCon.S("cloudProviders").Data().([]interface{}))
+		}
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
