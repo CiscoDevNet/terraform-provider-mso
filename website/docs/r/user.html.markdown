@@ -8,7 +8,10 @@ description: |-
 
 # mso_user #
 
-Manages MSO User
+Manages MSO User.
+
+The mso_user resources is deprecated on ND-based MSO/NDO.
+Use ND provider for manipulating users on ND-based MSO/NDO.
 
 ## Example Usage ##
 

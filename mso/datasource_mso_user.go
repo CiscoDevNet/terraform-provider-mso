@@ -102,7 +102,7 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 		data = con.S("users").Data().([]interface{})
 		usernameKey = "username"
 	}
-	// data := con.S("users").Data().([]interface{})
+
 	var flag bool
 	var cnt int
 	for _, info := range data {
@@ -154,11 +154,12 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 		if dataCon.Exists("userRbac") {
 			for name, _ := range dataCon.S("userRbac").Data().(map[string]interface{}) {
 				map1 := make(map[string]interface{})
-				map2 := make(map[string]interface{})
 
 				map1["roleid"] = models.StripQuotes(name)
 				map1["access_type"] = models.StripQuotes(dataCon.S("userRbac").S(name).S("userPriv").String())
 				roles = append(roles, map1)
+
+				map2 := make(map[string]interface{})
 
 				map2["name"] = models.StripQuotes(name)
 				map2["user_priv"] = models.StripQuotes(dataCon.S("userRbac").S(name).S("userPriv").String())
