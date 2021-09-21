@@ -85,6 +85,10 @@ func resourceMSOUserImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 	log.Printf("[DEBUG] User: Beginning Import")
 
 	msoClient := m.(*client.Client)
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		return nil, fmt.Errorf("The mso_user resources is not supported on ND-based MSO/NDO. Use ND provider for manipulating users on ND-based MSO/NDO.")
+	}
 	con, err := msoClient.GetViaURL("api/v1/users" + d.Id())
 	if err != nil {
 		return nil, err
@@ -142,6 +146,10 @@ func resourceMSOUserImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] User: Beginning Creation")
 	msoClient := m.(*client.Client)
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		return fmt.Errorf("The mso_user resources is not supported on ND-based MSO/NDO. Use ND provider for manipulating users on ND-based MSO/NDO.")
+	}
 
 	var user string
 	if username, ok := d.GetOk("username"); ok {
@@ -217,6 +225,12 @@ func resourceMSOUserCreate(d *schema.ResourceData, m interface{}) error {
 func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] User: Beginning Creation of resource")
 	msoClient := m.(*client.Client)
+
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		return fmt.Errorf("The mso_user resources is not supported on ND-based MSO/NDO. Use ND provider for manipulating users on ND-based MSO/NDO.")
+	}
+
 	var user string
 	if username, ok := d.GetOk("username"); ok {
 		user = username.(string)
@@ -297,6 +311,11 @@ func resourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		return fmt.Errorf("The mso_user resources is not supported on ND-based MSO/NDO. Use ND provider for manipulating users on ND-based MSO/NDO.")
+	}
+
 	dn := d.Id()
 	con, err := msoClient.GetViaURL("api/v1/users/" + dn)
 
@@ -354,6 +373,12 @@ func resourceMSOUserDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 
 	msoClient := m.(*client.Client)
+
+	platform := msoClient.GetPlatform()
+	if platform == "nd" {
+		return fmt.Errorf("The mso_user resources is not supported on ND-based MSO/NDO. Use ND provider for manipulating users on ND-based MSO/NDO.")
+	}
+
 	dn := d.Id()
 	err := msoClient.DeletebyId("api/v1/users/" + dn)
 	if err != nil {
