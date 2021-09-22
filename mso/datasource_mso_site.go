@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -105,18 +104,13 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	var count int
 
 	for _, info := range data {
+		val := info.(map[string]interface{})
 		if platform == "nd" {
-			val := info.(map[string]interface{})["common"]
-			if val.(map[string]interface{})["name"].(string) == name {
-				flag = true
-				break
-			}
-		} else {
-			val := info.(map[string]interface{})
-			if val["name"].(string) == name {
-				flag = true
-				break
-			}
+			val = val["common"].(map[string]interface{})
+		}
+		if val["name"].(string) == name {
+			flag = true
+			break
 		}
 
 		count = count + 1
@@ -126,31 +120,30 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("Site of specified name not found")
 	}
 
-	var dataCon *container.Container
-	dataCon = con.S("sites").Index(count)
+	dataCon := con.S("sites").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 
 	if platform == "nd" {
-		dataCon_attr := dataCon.S("common")
+		dataConAttr := dataCon.S("common")
 
-		d.Set("name", models.StripQuotes(dataCon_attr.S("name").String()))
+		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
 
-		if dataCon_attr.Exists("siteId") {
-			d.Set("apic_site_id", models.StripQuotes(dataCon_attr.S("siteId").String()))
+		if dataConAttr.Exists("siteId") {
+			d.Set("apic_site_id", models.StripQuotes(dataConAttr.S("siteId").String()))
 		}
 
-		if dataCon_attr.Exists("urls") {
-			d.Set("urls", dataCon_attr.S("urls").Data().([]interface{}))
+		if dataConAttr.Exists("urls") {
+			d.Set("urls", dataConAttr.S("urls").Data().([]interface{}))
 		}
 
-		if dataCon_attr.Exists("username") {
-			d.Set("username", models.StripQuotes(dataCon_attr.S("username").String()))
+		if dataConAttr.Exists("username") {
+			d.Set("username", models.StripQuotes(dataConAttr.S("username").String()))
 		}
 
-		if dataCon_attr.Exists("latitude") || dataCon_attr.Exists("longitude") {
+		if dataConAttr.Exists("latitude") || dataConAttr.Exists("longitude") {
 			locset := make(map[string]interface{})
-			locset["lat"] = models.StripQuotes(dataCon_attr.S("latitude").String())
-			locset["long"] = models.StripQuotes(dataCon_attr.S("longitude").String())
+			locset["lat"] = models.StripQuotes(dataConAttr.S("latitude").String())
+			locset["long"] = models.StripQuotes(dataConAttr.S("longitude").String())
 			d.Set("location", locset)
 		}
 
