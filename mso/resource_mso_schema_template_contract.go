@@ -75,11 +75,39 @@ func resourceMSOTemplateContract() *schema.Resource {
 						},
 						"filter_name": &schema.Schema{
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 					},
 				},
-				Required: true,
+				Optional:      true,
+				ConflictsWith: []string{"filter_relationship"},
+				Deprecated:    "use filter_relationship instead",
+			},
+			"filter_relationship": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+
+						"filter_schema_id": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"filter_template_name": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"filter_name": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+					},
+				},
 			},
 			"directives": {
 				Type:     schema.TypeList,
@@ -153,6 +181,19 @@ func resourceMSOTemplateContractImport(d *schema.ResourceData, m interface{}) ([
 					}
 					d.Set("filter_relationships", filterMap)
 
+					filterList := make([]interface{}, 0, 1)
+					filter_relationship := contractCont.S("filter_relationship").Data().([]interface{})
+					for _, tempFilter := range filter_relationship {
+						filterRelationship := tempFilter.(map[string]interface{})
+
+						filterMap := make(map[string]interface{})
+						filterMap["cidr_ip"] = filterRelationship["ip"]
+						filterMap["primary"] = filterRelationship["primary"]
+
+						filterList = append(filterList, filterMap)
+					}
+					d.Set("node_relationship", filterList)
+
 					found = true
 					break
 				}
@@ -215,6 +256,31 @@ func resourceMSOTemplateContractCreate(d *schema.ResourceData, m interface{}) er
 		filterMap = nil
 	}
 	filter = append(filter, filterMap)
+
+	filterList := make([]interface{}, 0, 1)
+	filterRelMap := make(map[string]interface{})
+	filter_relationship := d.Get("filter_relationship").([]interface{})
+	for _, tempFilter := range filter_relationship {
+		filterRelationship := tempFilter.(map[string]interface{})
+
+		filterRefMap := make(map[string]interface{})
+		filterRefMap["schemaId"] = filterRelationship["filter_schema_id"]
+		filterRefMap["templateName"] = filterRelationship["filter_template_name"]
+		filterRefMap["filterName"] = filterRelationship["filter_name"]
+
+		filterRelMap["filterRef"] = filterRefMap
+		if tempVar, ok := d.GetOk("directives"); ok {
+			filterRelMap["directives"] = tempVar
+		}
+
+	}
+	filterList = append(filterList, filterRelMap)
+
+	// var filter_check map[int]string
+	filter_check := filter[0].(map[string]interface{})
+	if filter_check == nil {
+		filter = filterList
+	}
 
 	path := fmt.Sprintf("/templates/%s/contracts/-", templateName)
 	contractStruct := models.NewTemplateContract("add", path, contractName, displayName, scope, filter_type, filter)
