@@ -52,7 +52,7 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
@@ -68,7 +68,7 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 			},
 			"vrf_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
@@ -185,17 +185,20 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
 							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
-							d.Set("vrf_name", match_vrf[3])
-							d.Set("vrf_schema_id", match_vrf[1])
-							d.Set("vrf_template_name", match_vrf[2])
+							if len(match_vrf) == 3 {
+								d.Set("vrf_name", match_vrf[3])
+								d.Set("vrf_schema_id", match_vrf[1])
+								d.Set("vrf_template_name", match_vrf[2])
+							}
 
 							bdRef := models.StripQuotes(epgCont.S("bdRef").String())
 							re_bd := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
 							match_bd := re_bd.FindStringSubmatch(bdRef)
-							d.Set("bd_name", match_bd[3])
-							d.Set("bd_schema_id", match_bd[1])
-							d.Set("bd_template_name", match_bd[2])
-
+							if len(match_bd) == 3 {
+								d.Set("bd_name", match_bd[3])
+								d.Set("bd_schema_id", match_bd[1])
+								d.Set("bd_template_name", match_bd[2])
+							}
 							found = true
 							break
 						}
@@ -354,17 +357,19 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
 							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
-							d.Set("vrf_name", match_vrf[3])
-							d.Set("vrf_schema_id", match_vrf[1])
-							d.Set("vrf_template_name", match_vrf[2])
-
+							if len(match_vrf) == 3 {
+								d.Set("vrf_name", match_vrf[3])
+								d.Set("vrf_schema_id", match_vrf[1])
+								d.Set("vrf_template_name", match_vrf[2])
+							}
 							bdRef := models.StripQuotes(epgCont.S("bdRef").String())
 							re_bd := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
 							match_bd := re_bd.FindStringSubmatch(bdRef)
-							d.Set("bd_name", match_bd[3])
-							d.Set("bd_schema_id", match_bd[1])
-							d.Set("bd_template_name", match_bd[2])
-
+							if len(match_bd) == 3 {
+								d.Set("bd_name", match_bd[3])
+								d.Set("bd_schema_id", match_bd[1])
+								d.Set("bd_template_name", match_bd[2])
+							}
 							found = true
 							break
 						}
