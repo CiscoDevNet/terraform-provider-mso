@@ -181,19 +181,6 @@ func resourceMSOTemplateContractImport(d *schema.ResourceData, m interface{}) ([
 					}
 					d.Set("filter_relationships", filterMap)
 
-					filterList := make([]interface{}, 0, 1)
-					filter_relationship := contractCont.S("filter_relationship").Data().([]interface{})
-					for _, tempFilter := range filter_relationship {
-						filterRelationship := tempFilter.(map[string]interface{})
-
-						filterMap := make(map[string]interface{})
-						filterMap["cidr_ip"] = filterRelationship["ip"]
-						filterMap["primary"] = filterRelationship["primary"]
-
-						filterList = append(filterList, filterMap)
-					}
-					d.Set("node_relationship", filterList)
-
 					found = true
 					break
 				}
@@ -257,26 +244,27 @@ func resourceMSOTemplateContractCreate(d *schema.ResourceData, m interface{}) er
 	}
 	filter = append(filter, filterMap)
 
-	filterList := make([]interface{}, 0, 1)
-	filterRelMap := make(map[string]interface{})
+	var filterList []interface{}
 	filter_relationship := d.Get("filter_relationship").([]interface{})
 	for _, tempFilter := range filter_relationship {
 		filterRelationship := tempFilter.(map[string]interface{})
-
+		filterRelMap := make(map[string]interface{})
 		filterRefMap := make(map[string]interface{})
+
 		filterRefMap["schemaId"] = filterRelationship["filter_schema_id"]
 		filterRefMap["templateName"] = filterRelationship["filter_template_name"]
 		filterRefMap["filterName"] = filterRelationship["filter_name"]
 
 		filterRelMap["filterRef"] = filterRefMap
+
 		if tempVar, ok := d.GetOk("directives"); ok {
 			filterRelMap["directives"] = tempVar
 		}
 
-	}
-	filterList = append(filterList, filterRelMap)
+		filterList = append(filterList, filterRelMap)
 
-	// var filter_check map[int]string
+	}
+
 	filter_check := filter[0].(map[string]interface{})
 	if filter_check == nil {
 		filter = filterList
@@ -379,9 +367,9 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 					}
 
 					if flag {
-						d.Set("filter_relationships", d.Get("filter_relationships"))
+						d.Set("filter_relationship", d.Get("filter_relationship"))
 					} else {
-						d.Set("filter_relationships", make(map[string]interface{}))
+						d.Set("filter_relationship", make(map[string]interface{}))
 					}
 
 					found = true
@@ -448,6 +436,32 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	}
 	filter = append(filter, filterMap)
 
+	var filterList []interface{}
+	filter_relationship := d.Get("filter_relationship").([]interface{})
+	for _, tempFilter := range filter_relationship {
+		filterRelationship := tempFilter.(map[string]interface{})
+		filterRelMap := make(map[string]interface{})
+		filterRefMap := make(map[string]interface{})
+
+		filterRefMap["schemaId"] = filterRelationship["filter_schema_id"]
+		filterRefMap["templateName"] = filterRelationship["filter_template_name"]
+		filterRefMap["filterName"] = filterRelationship["filter_name"]
+
+		filterRelMap["filterRef"] = filterRefMap
+
+		if tempVar, ok := d.GetOk("directives"); ok {
+			filterRelMap["directives"] = tempVar
+		}
+
+		filterList = append(filterList, filterRelMap)
+
+	}
+
+	filter_check := filter[0].(map[string]interface{})
+	if filter_check == nil {
+		filter = filterList
+	}
+
 	path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
 	contractStruct := models.NewTemplateContract("replace", path, contractName, displayName, scope, filter_type, filter)
 
@@ -507,6 +521,32 @@ func resourceMSOTemplateContractDelete(d *schema.ResourceData, m interface{}) er
 		filterMap = nil
 	}
 	filter = append(filter, filterMap)
+
+	var filterList []interface{}
+	filter_relationship := d.Get("filter_relationship").([]interface{})
+	for _, tempFilter := range filter_relationship {
+		filterRelationship := tempFilter.(map[string]interface{})
+		filterRelMap := make(map[string]interface{})
+		filterRefMap := make(map[string]interface{})
+
+		filterRefMap["schemaId"] = filterRelationship["filter_schema_id"]
+		filterRefMap["templateName"] = filterRelationship["filter_template_name"]
+		filterRefMap["filterName"] = filterRelationship["filter_name"]
+
+		filterRelMap["filterRef"] = filterRefMap
+
+		if tempVar, ok := d.GetOk("directives"); ok {
+			filterRelMap["directives"] = tempVar
+		}
+
+		filterList = append(filterList, filterRelMap)
+
+	}
+
+	filter_check := filter[0].(map[string]interface{})
+	if filter_check == nil {
+		filter = filterList
+	}
 
 	path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
 	contractStruct := models.NewTemplateContract("remove", path, contractName, displayName, scope, filter_type, filter)
