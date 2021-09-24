@@ -1,3 +1,14 @@
+## 0.3.0 (September 24, 2021)
+
+BUG FIXES:
+- Fix mso_schema_site_anp_epg Import when VRF or BD is not configured
+
+IMPROVEMENTS:
+- Added new resource mso_schema_site_external_epg
+- Updated mso_user to support MSO/ND platform
+- Updated resource and  datasource mso_site to work with ND-based MSO / NDO
+- Updated mso_schema_template_contract to support multiple filter_relationship and deprecate filter_relationships attribute.
+
 ## 0.2.1 (July 20, 2021)
 
 BUG FIXES:
