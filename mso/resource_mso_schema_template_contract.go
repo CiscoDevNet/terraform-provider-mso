@@ -256,13 +256,11 @@ func resourceMSOTemplateContractCreate(d *schema.ResourceData, m interface{}) er
 		filterRefMap["filterName"] = filterRelationship["filter_name"]
 
 		filterRelMap["filterRef"] = filterRefMap
-
 		if tempVar, ok := d.GetOk("directives"); ok {
 			filterRelMap["directives"] = tempVar
 		}
 
 		filterList = append(filterList, filterRelMap)
-
 	}
 
 	filter_check := filter[0].(map[string]interface{})
@@ -367,8 +365,10 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 					}
 
 					if flag {
+						d.Set("filter_relationships", d.Get("filter_relationships"))
 						d.Set("filter_relationship", d.Get("filter_relationship"))
 					} else {
+						d.Set("filter_relationships", make(map[string]interface{}))
 						d.Set("filter_relationship", make(map[string]interface{}))
 					}
 
@@ -448,13 +448,11 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 		filterRefMap["filterName"] = filterRelationship["filter_name"]
 
 		filterRelMap["filterRef"] = filterRefMap
-
 		if tempVar, ok := d.GetOk("directives"); ok {
 			filterRelMap["directives"] = tempVar
 		}
 
 		filterList = append(filterList, filterRelMap)
-
 	}
 
 	filter_check := filter[0].(map[string]interface{})
@@ -534,13 +532,11 @@ func resourceMSOTemplateContractDelete(d *schema.ResourceData, m interface{}) er
 		filterRefMap["filterName"] = filterRelationship["filter_name"]
 
 		filterRelMap["filterRef"] = filterRefMap
-
 		if tempVar, ok := d.GetOk("directives"); ok {
 			filterRelMap["directives"] = tempVar
 		}
 
 		filterList = append(filterList, filterRelMap)
-
 	}
 
 	filter_check := filter[0].(map[string]interface{})
