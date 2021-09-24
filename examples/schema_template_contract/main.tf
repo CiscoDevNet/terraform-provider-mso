@@ -29,69 +29,70 @@ resource "mso_schema" "schema1" {
 }
 
 resource "mso_schema_template_filter_entry" "filter_entry" {
-  schema_id           = mso_schema.schema1.id
-	template_name       = mso_schema.schema1.template_name
-	name                = "Filter1"
-	display_name        = "Filter1"
-	entry_name          = "entry1"
-	entry_display_name  = "entry1"
-    entry_description   = "DemoEntry"
-    ether_type          = "arp"
-    ip_protocol         = "eigrp"
-    tcp_session_rules   = ["acknowledgement"]
-	destination_from    ="unspecified"
-	destination_to      ="unspecified"
-	source_from         ="unspecified"
-	source_to           ="unspecified"
-	arp_flag            ="unspecified"
-    stateful            = false
-    match_only_fragments= false
+  schema_id            = mso_schema.schema1.id
+  template_name        = mso_schema.schema1.template_name
+  name                 = "Filter1"
+  display_name         = "Filter1"
+  entry_name           = "entry1"
+  entry_display_name   = "entry1"
+  entry_description    = "DemoEntry"
+  ether_type           = "arp"
+  ip_protocol          = "eigrp"
+  tcp_session_rules    = ["acknowledgement"]
+  destination_from     = "unspecified"
+  destination_to       = "unspecified"
+  source_from          = "unspecified"
+  source_to            = "unspecified"
+  arp_flag             = "unspecified"
+  stateful             = false
+  match_only_fragments = false
 }
 
 resource "mso_schema_template_filter_entry" "filter_entry_2" {
-  schema_id           = mso_schema_template_filter_entry.filter_entry.schema_id
-	template_name       = mso_schema_template_filter_entry.filter_entry.template_name
-	name                = "Filter2"
-	display_name        = "Filter2"
-	entry_name          = "entry2"
-	entry_display_name  = "entry2"
-    entry_description   = "DemoEntry"
-    ether_type          = "arp"
-    ip_protocol         = "eigrp"
-    tcp_session_rules   = ["acknowledgement"]
-	destination_from    ="unspecified"
-	destination_to      ="unspecified"
-	source_from         ="unspecified"
-	source_to           ="unspecified"
-	arp_flag            ="unspecified"
-    stateful            = false
-    match_only_fragments= false
+  schema_id            = mso_schema_template_filter_entry.filter_entry.schema_id
+  template_name        = mso_schema_template_filter_entry.filter_entry.template_name
+  name                 = "Filter2"
+  display_name         = "Filter2"
+  entry_name           = "entry2"
+  entry_display_name   = "entry2"
+  entry_description    = "DemoEntry"
+  ether_type           = "arp"
+  ip_protocol          = "eigrp"
+  tcp_session_rules    = ["acknowledgement"]
+  destination_from     = "unspecified"
+  destination_to       = "unspecified"
+  source_from          = "unspecified"
+  source_to            = "unspecified"
+  arp_flag             = "unspecified"
+  stateful             = false
+  match_only_fragments = false
 }
 
 resource "mso_schema_template_contract" "template_contract" {
-  schema_id             = mso_schema_template_filter_entry.filter_entry_2.schema_id
-  template_name         = mso_schema_template_filter_entry.filter_entry_2.template_name
-  contract_name         = "Contract1"
-  display_name          = "Contract1"
-  filter_type           = "bothWay"
-  scope                 = "context"
+  schema_id     = mso_schema_template_filter_entry.filter_entry_2.schema_id
+  template_name = mso_schema_template_filter_entry.filter_entry_2.template_name
+  contract_name = "Contract1"
+  display_name  = "Contract1"
+  filter_type   = "bothWay"
+  scope         = "context"
   filter_relationship {
-    filter_schema_id    = mso_schema_template_filter_entry.filter_entry_2.schema_id
-    filter_template_name = mso_schema_template_filter_entry.filter_entry_2.template_name
-    filter_name = mso_schema_template_filter_entry.filter_entry.name
+    filter_schema_id     = mso_schema_template_filter_entry.filter_entry.schema_id
+    filter_template_name = mso_schema_template_filter_entry.filter_entry.template_name
+    filter_name          = mso_schema_template_filter_entry.filter_entry.name
   }
   filter_relationship {
-    filter_schema_id    = mso_schema_template_filter_entry.filter_entry_2.schema_id
+    filter_schema_id     = mso_schema_template_filter_entry.filter_entry_2.schema_id
     filter_template_name = mso_schema_template_filter_entry.filter_entry_2.template_name
-    filter_name = mso_schema_template_filter_entry.filter_entry_2.name
+    filter_name          = mso_schema_template_filter_entry.filter_entry_2.name
   }
-  directives            = ["none"]
+  directives = ["none"]
 }
 
-// The below format of using filter_relationships will be deprecated.
-resource "mso_schema_template_contract" "template_contract2" {
-  schema_id             = mso_schema_template_contract.template_contract.schema_id
-  template_name         = mso_schema_template_contract.template_contract.template_name
+// The below format of using filter_relationships is deprecated and might be removed in future release.
+// See filter_relationship example above for new syntax.
+resource "mso_schema_template_contract" "template_contract" {
+  schema_id             = mso_schema_template_filter_entry.filter_entry_2.schema_id
+  template_name         = mso_schema_template_filter_entry.filter_entry_2.template_name
   contract_name         = "Contract2"
   display_name          = "Contract2"
   filter_type           = "bothWay"
