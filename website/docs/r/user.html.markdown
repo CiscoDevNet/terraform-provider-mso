@@ -36,8 +36,12 @@ resource "mso_user" "user1" {
 
 * `username` - (Required) username of the user. It must contain at least 1 character in length.
 * `user_password` - (Required) password of the user. It must contain at least 8 characters in length.
-* `roles` - (Required) roles given to the user.
-* `roles.roleid` - (Required) id of roles given to the user.
+* `roles` - **Deprecated** (Optional) roles given to the user. This attribute is deprecated on ND-based MSO/NDO, use `user_rbac` instead.
+  * `roles.roleid` - (Optional) id of roles given to the user.
+  * `roles.access_type` - (Optional) access_type of roles given to the user.
+* `user_rbac` - (Optional) roles given to the user.
+  * `user_rbac.name` - (Optional) name of roles given to the user.
+  * `user_rbac.user_priv` - (Optional) Privilege access given to users (WritePriv, ReadPriv)
 * `first_name` - (Optional) firstname of the user.
 * `last_name` - (Optional) lastname of the user.
 * `email` - (Optional) email of the user.

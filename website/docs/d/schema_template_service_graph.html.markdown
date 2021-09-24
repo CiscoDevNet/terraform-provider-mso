@@ -31,7 +31,7 @@ data "mso_schema_template_service_graph" "test_sg" {
 
 ## Attribute Reference ##
 
-* `service_node_type` - (Optional) Type of Service Node attached to this Graph at index provided by `node_index`.
+* `service_node_type` - (Optional) Type of Service Node attached to this Graph at index provided by `node_index`. Allowed values are `firewall`, `load-balancer` , `other`.
 * `site_nodes` - (Optional) List of maps to Hold Site level Node association. 
 * `site_nodes.site_id` - (Optional) Site-Id Attached with the template. Where Service Graph is created. 
 * `site_nodes.tenant_name` - (Optional) Name of Tenant holding the Service Node. 
