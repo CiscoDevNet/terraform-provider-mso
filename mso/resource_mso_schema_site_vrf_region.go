@@ -110,7 +110,7 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 									},
 									"zone": &schema.Schema{
 										Type:         schema.TypeString,
-										Required:     true,
+										Optional:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
 									"usage": &schema.Schema{
@@ -223,7 +223,9 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 
 									subnetMap := make(map[string]interface{})
 									subnetMap["ip"] = subnet["ip"]
-									subnetMap["zone"] = subnet["zone"]
+									if subnet["zone"] != nil {
+										subnetMap["zone"] = subnet["zone"]
+									}
 									if subnet["usage"] != nil {
 										subnetMap["usage"] = subnet["usage"]
 									}
@@ -307,7 +309,9 @@ func resourceMSOSchemaSiteVrfRegionCreate(d *schema.ResourceData, m interface{})
 
 			subnetMap := make(map[string]interface{})
 			subnetMap["ip"] = subnet["ip"]
-			subnetMap["zone"] = subnet["zone"]
+			if subnet["zone"] != nil {
+				subnetMap["zone"] = subnet["zone"]
+			}
 			if subnet["usage"] != nil {
 				subnetMap["usage"] = subnet["usage"]
 			}
@@ -385,7 +389,9 @@ func resourceMSOSchemaSiteVrfRegionUpdate(d *schema.ResourceData, m interface{})
 
 			subnetMap := make(map[string]interface{})
 			subnetMap["ip"] = subnet["ip"]
-			subnetMap["zone"] = subnet["zone"]
+			if subnet["zone"] != nil {
+				subnetMap["zone"] = subnet["zone"]
+			}
 			if subnet["usage"] != nil {
 				subnetMap["usage"] = subnet["usage"]
 			}
@@ -502,7 +508,9 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 
 									subnetMap := make(map[string]interface{})
 									subnetMap["ip"] = subnet["ip"]
-									subnetMap["zone"] = subnet["zone"]
+									if subnet["zone"] != nil {
+										subnetMap["zone"] = subnet["zone"]
+									}
 									if subnet["usage"] != nil {
 										subnetMap["usage"] = subnet["usage"]
 									}

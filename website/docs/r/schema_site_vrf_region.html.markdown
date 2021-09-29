@@ -49,18 +49,18 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
 
 * `cidr` - (Required) CIDR to set into region
 * `cidr.cidr_ip` - (Required) Ip address for cidr.
-* `cidr.primary` - (Required) primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
+* `cidr.primary` - (Required) Primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
 
-* `cidr.subnet` - (Required) subnets to associate with cidr.
-* `cidr.subnet.ip` - (Required) ip address for subnet.
-* `cidr.subnet.zone` - (Required) zone for the subnet.
-* `cidr.subnet.usage` - (Optional) usage information of particular subnet.
+* `cidr.subnet` - (Required) Subnets to associate with cidr.
+* `cidr.subnet.ip` - (Required) Ip address for subnet.
+* `cidr.subnet.zone` - (Optional) The name of the availability zone for the subnet. This argument is required for AWS sites.
+* `cidr.subnet.usage` - (Optional) Usage information of particular subnet.
 
 * `vpn_gateway` - (Optional) VPN gateway flag.
 * `hub_network_enable` - (Optional) Hub Network enable flag. To set hub network in region, this attribute should be true. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
 
 * `hub_network` - (Optional) Hub Network to set into the region. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
-* `hub_network.name` - (Required) name of the hub network.
+* `hub_network.name` - (Required) The name of the hub network.
 * `hub_network.tenant_name` - (Required) Tenant name for the hub network.
 
 ## Attribute Reference ##
