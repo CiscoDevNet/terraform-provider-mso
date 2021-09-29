@@ -223,7 +223,9 @@ func dataSourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{})
 
 									subnetMap := make(map[string]interface{})
 									subnetMap["ip"] = subnet["ip"]
-									subnetMap["zone"] = subnet["zone"]
+									if subnet["zone"] != nil {
+										subnetMap["zone"] = subnet["zone"]
+									}
 									if subnet["usage"] != nil {
 										subnetMap["usage"] = subnet["usage"]
 									}

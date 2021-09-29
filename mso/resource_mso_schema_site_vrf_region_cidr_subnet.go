@@ -70,7 +70,7 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 			},
 			"zone": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"usage": &schema.Schema{

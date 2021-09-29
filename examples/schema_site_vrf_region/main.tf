@@ -31,7 +31,7 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
     subnet {
       ip = "1.20.30.4"
       zone = "us-east-1b"
-      usage = "sdfkhsdkf"
+      usage = "gateway"
     }
   }
 }
