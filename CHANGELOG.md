@@ -1,3 +1,9 @@
+## 0.3.1 (September 30, 2021)
+
+BUG FIXES:
+- Fix DeletebyId crash issue with nil pointer (mso-go-client v1.2.2 update)
+- Make zone attribute not mandatory in mso_schema_site_vrf_region and mso_schema_site_vrf_region_cidr_subnet (to support Azure sites)
+
 ## 0.3.0 (September 24, 2021)
 
 BUG FIXES:
