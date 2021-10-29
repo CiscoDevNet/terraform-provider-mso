@@ -1,3 +1,8 @@
+## 0.3.2 (October 29, 2021)
+
+BUG FIXES:
+- Fix issue in mso_tenant with Cloud Accounts
+
 ## 0.3.1 (September 30, 2021)
 
 BUG FIXES:
