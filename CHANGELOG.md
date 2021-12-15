@@ -1,3 +1,10 @@
+## 0.3.3 (December 15, 2021)
+
+BUG FIXES:
+- Fix login domain issue with NDO (mso-go-client v1.2.3 update)
+- Fix mso_user data source when running on NDO
+- Fix mso_schema_template_external_epg and mso_schema_site_external_epg when running on NDO
+
 ## 0.3.2 (October 29, 2021)
 
 BUG FIXES:
