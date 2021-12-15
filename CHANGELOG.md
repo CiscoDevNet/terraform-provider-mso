@@ -1,3 +1,9 @@
+## 0.3.4 (December 16, 2021)
+
+BUG FIXES:
+- Fix login payload issue due to NDO API change (mso-go-client v1.2.6 update)
+- Fix API change in l3outRef and add some error catching conditions
+
 ## 0.3.3 (December 15, 2021)
 
 BUG FIXES:
