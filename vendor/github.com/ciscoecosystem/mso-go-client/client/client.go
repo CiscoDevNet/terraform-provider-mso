@@ -16,9 +16,14 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/models"
 )
 
-const authPayload = `{
+const msoAuthPayload = `{
 	"username": "%s",
 	"password": "%s"
+}`
+
+const ndAuthPayload = `{
+	"userName": "%s",
+	"userPasswd": "%s"
 }`
 
 // Client is the main entry point
@@ -176,12 +181,16 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 func (c *Client) Authenticate() error {
 	method := "POST"
 	path := "/api/v1/auth/login"
+	var authPayload string
 
 	if c.platform == "nd" {
+		authPayload = ndAuthPayload
 		if c.domain == "" {
 			c.domain = "DefaultAuth"
 		}
 		path = "/login"
+	} else {
+		authPayload = msoAuthPayload
 	}
 	body, err := container.ParseJSON([]byte(fmt.Sprintf(authPayload, c.username, c.password)))
 	if err != nil {
