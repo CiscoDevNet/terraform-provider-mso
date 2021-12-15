@@ -52,7 +52,8 @@ func resourceMSOSchemaSiteExternalEpg() *schema.Resource {
 			},
 			"l3out_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
@@ -135,31 +136,30 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 	templateName := d.Get("template_name").(string)
 	l3outName := d.Get("l3out_name").(string)
 
-	// Get tenant name
-	tenantName, err := GetTenantNameViaTemplateName(msoClient, schemaId, templateName)
-	if err != nil {
-		return err
-	}
-
 	siteEpgMap := make(map[string]interface{})
 
-	l3outRefMap := make(map[string]interface{})
+	if l3outName != "" {
+		// Get tenant name
+		tenantName, err := GetTenantNameViaTemplateName(msoClient, schemaId, templateName)
+		if err != nil {
+			return err
+		}
 
-	l3outRefMap["schemaId"] = schemaId
-	l3outRefMap["templateName"] = templateName
-	l3outRefMap["l3outName"] = l3outName
+		l3outRefMap := make(map[string]interface{})
 
-	siteEpgMap["l3outRef"] = l3outRefMap
+		l3outRefMap["schemaId"] = schemaId
+		l3outRefMap["templateName"] = templateName
+		l3outRefMap["l3outName"] = l3outName
 
-	siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
-
-	var ext_epg_schema_id, ext_epg_template_name string
-	ext_epg_schema_id = schemaId
-	ext_epg_template_name = templateName
+		siteEpgMap["l3outRef"] = l3outRefMap
+		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
+	} else {
+		siteEpgMap["l3outDn"] = ""
+	}
 
 	externalEpgRefMap := make(map[string]interface{})
-	externalEpgRefMap["schemaId"] = ext_epg_schema_id
-	externalEpgRefMap["templateName"] = ext_epg_template_name
+	externalEpgRefMap["schemaId"] = schemaId
+	externalEpgRefMap["templateName"] = templateName
 	externalEpgRefMap["externalEpgName"] = externalEpgName
 
 	siteEpgMap["externalEpgRef"] = externalEpgRefMap
@@ -168,7 +168,7 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 	siteExternalEpgStruct := models.NewSchemaSiteExternalEpg("add", path, siteEpgMap)
 	log.Printf("[DETAILS] %s: ", siteExternalEpgStruct)
 
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
 
 	if err != nil {
 		return err
@@ -212,7 +212,7 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 					return err
 				}
 				externalEpgRef := models.StripQuotes(externalEpgCont.S("externalEpgRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/externalEpgs/(.*)")
+				re := regexp.MustCompile("/schemas/(.*?)/templates/(.*?)/externalEpgs/(.*)")
 				match := re.FindStringSubmatch(externalEpgRef)
 				if match[3] == stateExternalEpg {
 					d.SetId(match[3])
@@ -222,9 +222,11 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 					d.Set("site_id", apiSiteId)
 
 					l3outRef := models.StripQuotes(externalEpgCont.S("l3outRef").String())
-					reL3out := regexp.MustCompile("/schemas/(.*)/templates/(.*)/l3outs/(.*)")
-					matchL3out := reL3out.FindStringSubmatch(l3outRef)
-					d.Set("l3out_name", matchL3out[3])
+					if l3outRef != "{}" {
+						reL3out := regexp.MustCompile("/schemas/(.*?)/templates/(.*?)/l3outs/(.*)")
+						matchL3out := reL3out.FindStringSubmatch(l3outRef)
+						d.Set("l3out_name", matchL3out[3])
+					}
 
 					found = true
 					break
@@ -254,40 +256,45 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 
 	siteEpgMap := make(map[string]interface{})
 
-	l3outRefMap := make(map[string]interface{})
+	if l3outName != "" {
+		// Get tenant name
+		tenantName, err := GetTenantNameViaTemplateName(msoClient, schemaId, templateName)
+		if err != nil {
+			return err
+		}
 
-	l3outRefMap["schemaId"] = schemaId
-	l3outRefMap["templateName"] = templateName
-	l3outRefMap["l3outName"] = l3outName
+		l3outRefMap := make(map[string]interface{})
 
-	siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-test_tenant/out-%s", l3outName)
+		l3outRefMap["schemaId"] = schemaId
+		l3outRefMap["templateName"] = templateName
+		l3outRefMap["l3outName"] = l3outName
 
-	var ext_epg_schema_id, ext_epg_template_name string
-	ext_epg_schema_id = schemaId
-	ext_epg_template_name = templateName
+		siteEpgMap["l3outRef"] = l3outRefMap
+		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
+	} else {
+		siteEpgMap["l3outDn"] = ""
+	}
 
 	externalEpgRefMap := make(map[string]interface{})
-	externalEpgRefMap["schemaId"] = ext_epg_schema_id
-	externalEpgRefMap["templateName"] = ext_epg_template_name
+	externalEpgRefMap["schemaId"] = schemaId
+	externalEpgRefMap["templateName"] = templateName
 	externalEpgRefMap["externalEpgName"] = externalEpgName
 
 	siteEpgMap["externalEpgRef"] = externalEpgRefMap
-	siteEpgMap["l3outRef"] = l3outRefMap
 
 	path := fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", siteId, templateName, externalEpgName)
 	siteExternalEpgStruct := models.NewSchemaSiteExternalEpg("replace", path, siteEpgMap)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
-
-	if err != nil {
-		return err
+	_, patchErr := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
+	if patchErr != nil {
+		return patchErr
 	}
 
 	return resourceMSOSchemaSiteExternalEpgRead(d, m)
 }
 
 func resourceMSOSchemaSiteExternalEpgDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template External EPG: Beginning Update")
+	log.Printf("[DEBUG] Template External EPG: Beginning Delete")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -295,37 +302,9 @@ func resourceMSOSchemaSiteExternalEpgDelete(d *schema.ResourceData, m interface{
 	templateName := d.Get("template_name").(string)
 	externalEpgName := d.Get("external_epg_name").(string)
 
-	var l3outRefMap map[string]interface{}
-	if tempVar, ok := d.GetOk("l3out_name"); ok {
-		l3outName := tempVar.(string)
-		var l3outSchemaID, l3outTemplate string
-		if tmpVar, oki := d.GetOk("l3out_schema_id"); oki {
-			l3outSchemaID = tmpVar.(string)
-		} else {
-			l3outSchemaID = schemaId
-		}
-
-		if tpVar, okj := d.GetOk("l3out_template_name"); okj {
-			l3outTemplate = tpVar.(string)
-		} else {
-			l3outTemplate = templateName
-		}
-
-		l3outRefMap = make(map[string]interface{})
-
-		l3outRefMap["schemaId"] = l3outSchemaID
-		l3outRefMap["templateName"] = l3outTemplate
-		l3outRefMap["l3outName"] = l3outName
-
-	}
-
-	var ext_epg_schema_id, ext_epg_template_name string
-	ext_epg_schema_id = schemaId
-	ext_epg_template_name = templateName
-
 	externalEpgRefMap := make(map[string]interface{})
-	externalEpgRefMap["schemaId"] = ext_epg_schema_id
-	externalEpgRefMap["templateName"] = ext_epg_template_name
+	externalEpgRefMap["schemaId"] = schemaId
+	externalEpgRefMap["templateName"] = templateName
 	externalEpgRefMap["externalEpgName"] = externalEpgName
 
 	path := fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", siteId, templateName, externalEpgName)
