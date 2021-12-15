@@ -176,13 +176,19 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 func (c *Client) Authenticate() error {
 	method := "POST"
 	path := "/api/v1/auth/login"
+
 	if c.platform == "nd" {
-		c.domain = "local"
+		if c.domain == "" {
+			c.domain = "DefaultAuth"
+		}
 		path = "/login"
 	}
 	body, err := container.ParseJSON([]byte(fmt.Sprintf(authPayload, c.username, c.password)))
-	if c.domain != "" {
+	if err != nil {
+		return err
+	}
 
+	if c.domain != "" {
 		if c.platform == "nd" {
 			body.Set(c.domain, "domain")
 		} else {
@@ -193,16 +199,17 @@ func (c *Client) Authenticate() error {
 			body.Set(domainId, "domainId")
 		}
 	}
-	if err != nil {
-		return err
-	}
 
 	req, err := c.MakeRestRequest(method, path, body, false)
-	obj, _, err := c.Do(req)
-
 	if err != nil {
 		return err
 	}
+	
+	obj, _, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+
 	if obj == nil {
 		return errors.New("Empty response")
 	}
