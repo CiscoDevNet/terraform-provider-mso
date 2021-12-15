@@ -251,7 +251,7 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	extenalepgName := d.Get("external_epg_name").(string)
+	externalEpgName := d.Get("external_epg_name").(string)
 	displayName := d.Get("display_name").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
@@ -330,54 +330,69 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 		anpRefMap = nil
 	}
 
-	if extEpgType == "cloud" {
-		var sites []interface{}
-		if site, ok := d.GetOk("site_id"); ok {
-			sites = site.([]interface{})
-		} else {
-			return fmt.Errorf("site_id attribute is required for cloud configuration")
-		}
+	platform := msoClient.GetPlatform()
 
+	if extEpgType == "cloud" {
 		var selectorName string
 		if selName, ok := d.GetOk("selector_name"); ok {
 			selectorName = selName.(string)
 		} else {
-			return fmt.Errorf("selector_name attribute is required for cloud configuration")
+			if platform == "mso" {
+				return fmt.Errorf("selector_name attribute is required for cloud configuration")
+			}
+			selectorName = ""
 		}
 
 		var selectorIP string
 		if selIP, ok := d.GetOk("selector_ip"); ok {
 			selectorIP = selIP.(string)
 		} else {
-			return fmt.Errorf("selector_ip attribute is required for cloud configuration")
+			if platform == "mso" {
+				return fmt.Errorf("selector_ip attribute is required for cloud configuration")
+			}
+			selectorIP = ""
 		}
 
 		selectorList := make([]interface{}, 0, 1)
-		expressionList := make([]interface{}, 0, 1)
-		selectionMap := make(map[string]interface{})
-		expMap := make(map[string]interface{})
+		if selectorName != "" && selectorIP != "" {
+			expressionList := make([]interface{}, 0, 1)
+			selectionMap := make(map[string]interface{})
+			expMap := make(map[string]interface{})
 
-		expMap["key"] = "ipAddress"
-		expMap["operator"] = "equals"
-		expMap["value"] = selectorIP
-		expressionList = append(expressionList, expMap)
+			expMap["key"] = "ipAddress"
+			expMap["operator"] = "equals"
+			expMap["value"] = selectorIP
+			expressionList = append(expressionList, expMap)
 
-		selectionMap["name"] = selectorName
-		selectionMap["expressions"] = expressionList
-		selectorList = append(selectorList, selectionMap)
+			selectionMap["name"] = selectorName
+			selectionMap["expressions"] = expressionList
+			selectorList = append(selectorList, selectionMap)
+		}
 
 		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
-		externalepgStruct := models.NewTemplateExternalepg("add", pathTemp, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
+		externalepgStruct := models.NewTemplateExternalepg("add", pathTemp, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
 
 		structList := make([]models.Model, 0, 1)
 		structList = append(structList, externalepgStruct)
+
+		var sites []interface{}
+		if site, ok := d.GetOk("site_id"); ok {
+			sites = site.([]interface{})
+			if platform == "nd" {
+				return fmt.Errorf("site_id attribute is not supported when running on NDO. Use mso_schema_site_external_epg to add the external EPG to a site.")
+			}
+		} else {
+			if platform == "mso" {
+				return fmt.Errorf("site_id attribute is required for cloud configuration")
+			}
+		}
 		for _, site := range sites {
 			siteEpgMap := make(map[string]interface{})
 			epgRefMap := make(map[string]interface{})
 
 			epgRefMap["schemaId"] = schemaID
 			epgRefMap["templateName"] = templateName
-			epgRefMap["externalEpgName"] = extenalepgName
+			epgRefMap["externalEpgName"] = externalEpgName
 
 			siteEpgMap["externalEpgRef"] = epgRefMap
 			siteEpgMap["l3outDn"] = "l3out"
@@ -396,7 +411,7 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 
 	} else {
 		path := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
-		externalepgStruct := models.NewTemplateExternalepg("add", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
+		externalepgStruct := models.NewTemplateExternalepg("add", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 		if err != nil {
@@ -521,7 +536,7 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	extenalepgName := d.Get("external_epg_name").(string)
+	externalEpgName := d.Get("external_epg_name").(string)
 	displayName := d.Get("display_name").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
@@ -600,54 +615,69 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 		anpRefMap = nil
 	}
 
-	if extEpgType == "cloud" {
-		var sites []interface{}
-		if site, ok := d.GetOk("site_id"); ok {
-			sites = site.([]interface{})
-		} else {
-			return fmt.Errorf("site_id attribute is required for cloud configuration")
-		}
+	platform := msoClient.GetPlatform()
 
+	if extEpgType == "cloud" {
 		var selectorName string
 		if selName, ok := d.GetOk("selector_name"); ok {
 			selectorName = selName.(string)
 		} else {
-			return fmt.Errorf("selector_name attribute is required for cloud configuration")
+			if platform == "mso" {
+				return fmt.Errorf("selector_name attribute is required for cloud configuration")
+			}
+			selectorName = ""
 		}
 
 		var selectorIP string
 		if selIP, ok := d.GetOk("selector_ip"); ok {
 			selectorIP = selIP.(string)
 		} else {
-			return fmt.Errorf("selector_ip attribute is required for cloud configuration")
+			if platform == "mso" {
+				return fmt.Errorf("selector_ip attribute is required for cloud configuration")
+			}
+			selectorIP = ""
 		}
 
 		selectorList := make([]interface{}, 0, 1)
-		expressionList := make([]interface{}, 0, 1)
-		selectionMap := make(map[string]interface{})
-		expMap := make(map[string]interface{})
+		if selectorName != "" && selectorIP != "" {
+			expressionList := make([]interface{}, 0, 1)
+			selectionMap := make(map[string]interface{})
+			expMap := make(map[string]interface{})
 
-		expMap["key"] = "ipAddress"
-		expMap["operator"] = "equals"
-		expMap["value"] = selectorIP
-		expressionList = append(expressionList, expMap)
+			expMap["key"] = "ipAddress"
+			expMap["operator"] = "equals"
+			expMap["value"] = selectorIP
+			expressionList = append(expressionList, expMap)
 
-		selectionMap["name"] = selectorName
-		selectionMap["expressions"] = expressionList
-		selectorList = append(selectorList, selectionMap)
+			selectionMap["name"] = selectorName
+			selectionMap["expressions"] = expressionList
+			selectorList = append(selectorList, selectionMap)
+		}
 
-		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-		externalepgStruct := models.NewTemplateExternalepg("replace", pathTemp, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
+		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
+		externalepgStruct := models.NewTemplateExternalepg("replace", pathTemp, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
 
 		structList := make([]models.Model, 0, 1)
 		structList = append(structList, externalepgStruct)
+
+		var sites []interface{}
+		if site, ok := d.GetOk("site_id"); ok {
+			sites = site.([]interface{})
+			if platform == "nd" {
+				return fmt.Errorf("site_id attribute is not supported when running on NDO. Use mso_schema_site_external_epg to add the external EPG to a site.")
+			}
+		} else {
+			if platform == "mso" {
+				return fmt.Errorf("site_id attribute is required for cloud configuration")
+			}
+		}
 		for _, site := range sites {
 			siteEpgMap := make(map[string]interface{})
 			epgRefMap := make(map[string]interface{})
 
 			epgRefMap["schemaId"] = schemaID
 			epgRefMap["templateName"] = templateName
-			epgRefMap["externalEpgName"] = extenalepgName
+			epgRefMap["externalEpgName"] = externalEpgName
 
 			siteEpgMap["externalEpgRef"] = epgRefMap
 			siteEpgMap["l3outDn"] = "l3out"
@@ -656,7 +686,7 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 			if err != nil {
 				return err
 			}
-			flag, err := checkSiteEpg(cont, site.(string), templateName, extenalepgName)
+			flag, err := checkSiteExternalEpg(cont, site.(string), templateName, externalEpgName)
 			if err != nil {
 				return err
 			}
@@ -667,7 +697,7 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 				pathSite = fmt.Sprintf("/sites/%s-%s/externalEpgs/-", site.(string), templateName)
 			} else {
 				op = "replace"
-				pathSite = fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", site.(string), templateName, extenalepgName)
+				pathSite = fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", site.(string), templateName, externalEpgName)
 			}
 
 			siteExternalepgStruct := models.NewSchemaSiteExternalEpg(op, pathSite, siteEpgMap)
@@ -682,8 +712,8 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 		d.Partial(false)
 
 	} else {
-		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-		externalepgStruct := models.NewTemplateExternalepg("replace", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
+		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
+		externalepgStruct := models.NewTemplateExternalepg("replace", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 		if err != nil {
@@ -698,7 +728,7 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	extenalepgName := d.Get("external_epg_name").(string)
+	externalEpgName := d.Get("external_epg_name").(string)
 	displayName := d.Get("display_name").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
@@ -776,59 +806,74 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 		anpRefMap = nil
 	}
 
-	if extEpgType == "cloud" {
-		var sites []interface{}
-		if site, ok := d.GetOk("site_id"); ok {
-			sites = site.([]interface{})
-		} else {
-			return fmt.Errorf("site_id attribute is required for cloud configuration")
-		}
+	platform := msoClient.GetPlatform()
 
+	if extEpgType == "cloud" {
 		var selectorName string
 		if selName, ok := d.GetOk("selector_name"); ok {
 			selectorName = selName.(string)
 		} else {
-			return fmt.Errorf("selector_name attribute is required for cloud configuration")
+			if platform == "mso" {
+				return fmt.Errorf("selector_name attribute is required for cloud configuration")
+			}
+			selectorName = ""
 		}
 
 		var selectorIP string
 		if selIP, ok := d.GetOk("selector_ip"); ok {
 			selectorIP = selIP.(string)
 		} else {
-			return fmt.Errorf("selector_ip attribute is required for cloud configuration")
+			if platform == "mso" {
+				return fmt.Errorf("selector_ip attribute is required for cloud configuration")
+			}
+			selectorIP = ""
 		}
 
 		selectorList := make([]interface{}, 0, 1)
-		expressionList := make([]interface{}, 0, 1)
-		selectionMap := make(map[string]interface{})
-		expMap := make(map[string]interface{})
+		if selectorName != "" && selectorIP != "" {
+			expressionList := make([]interface{}, 0, 1)
+			selectionMap := make(map[string]interface{})
+			expMap := make(map[string]interface{})
 
-		expMap["key"] = "ipAddress"
-		expMap["operator"] = "equals"
-		expMap["value"] = selectorIP
-		expressionList = append(expressionList, expMap)
+			expMap["key"] = "ipAddress"
+			expMap["operator"] = "equals"
+			expMap["value"] = selectorIP
+			expressionList = append(expressionList, expMap)
 
-		selectionMap["name"] = selectorName
-		selectionMap["expressions"] = expressionList
-		selectorList = append(selectorList, selectionMap)
+			selectionMap["name"] = selectorName
+			selectionMap["expressions"] = expressionList
+			selectorList = append(selectorList, selectionMap)
+		}
 
-		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-		externalepgStruct := models.NewTemplateExternalepg("remove", pathTemp, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
+		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
+		externalepgStruct := models.NewTemplateExternalepg("remove", pathTemp, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
 
 		structList := make([]models.Model, 0, 1)
 		structList = append(structList, externalepgStruct)
+
+		var sites []interface{}
+		if site, ok := d.GetOk("site_id"); ok {
+			sites = site.([]interface{})
+			if platform == "nd" {
+				return fmt.Errorf("site_id attribute is not supported when running on NDO. Use mso_schema_site_external_epg to add the external EPG to a site.")
+			}
+		} else {
+			if platform == "mso" {
+				return fmt.Errorf("site_id attribute is required for cloud configuration")
+			}
+		}
 		for _, site := range sites {
 			siteEpgMap := make(map[string]interface{})
 			epgRefMap := make(map[string]interface{})
 
 			epgRefMap["schemaId"] = schemaID
 			epgRefMap["templateName"] = templateName
-			epgRefMap["externalEpgName"] = extenalepgName
+			epgRefMap["externalEpgName"] = externalEpgName
 
 			siteEpgMap["externalEpgRef"] = epgRefMap
 			siteEpgMap["l3outDn"] = "l3out"
 
-			pathSite := fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", site.(string), templateName, extenalepgName)
+			pathSite := fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", site.(string), templateName, externalEpgName)
 			siteExternalepgStruct := models.NewSchemaSiteExternalEpg("remove", pathSite, siteEpgMap)
 			structList = append(structList, siteExternalepgStruct)
 		}
@@ -839,8 +884,8 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 		}
 
 	} else {
-		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, extenalepgName)
-		externalepgStruct := models.NewTemplateExternalepg("remove", path, extenalepgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
+		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
+		externalepgStruct := models.NewTemplateExternalepg("remove", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 		if err != nil {
@@ -851,7 +896,7 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 	return nil
 }
 
-func checkSiteEpg(cont *container.Container, site, template, epgName string) (bool, error) {
+func checkSiteExternalEpg(cont *container.Container, site, template, epgName string) (bool, error) {
 	flag := false
 
 	siteCount, err := cont.ArrayCount("sites")
