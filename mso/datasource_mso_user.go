@@ -120,11 +120,12 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 	var dataCon *container.Container
 	if platform == "nd" {
 		dataCon = con.Index(cnt)
+		d.SetId(models.StripQuotes(dataCon.S("userID").String()))
 	} else {
 		dataCon = con.S("users").Index(cnt)
+		d.SetId(models.StripQuotes(dataCon.S("id").String()))
 	}
 
-	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 	d.Set("username", models.StripQuotes(dataCon.S(usernameKey).String()))
 	d.Set("user_password", models.StripQuotes(dataCon.S("password").String()))
 	if dataCon.Exists("firstName") {

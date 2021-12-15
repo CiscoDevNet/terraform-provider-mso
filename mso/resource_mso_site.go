@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/ciscoecosystem/mso-go-client/container"
+	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -215,7 +215,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		if username, ok := d.GetOk("username"); ok {
 			siteAttr.ApicUsername = username.(string)
 		}
-	
+
 		if password, ok := d.GetOk("password"); ok {
 			siteAttr.ApicPassword = password.(string)
 		}
@@ -223,11 +223,11 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 		if labels, ok := d.GetOk("labels"); ok {
 			siteAttr.Labels = labels.([]interface{})
 		}
-	
+
 		if maintMode, ok := d.GetOk("maintenance_mode"); ok {
 			siteAttr.MaintenanceMode = maintMode.(bool)
 		}
-	
+
 		if domain, ok := d.GetOk("login_domain"); ok {
 			domainStr := domain.(string)
 			usrName := d.Get("username").(string)
@@ -235,7 +235,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 			siteAttr.Domain = domainStr
 			siteAttr.HasDomain = true
 		}
-	
+
 		var loc *models.Location
 		if location, ok := d.GetOk("location"); ok {
 			loc = &models.Location{}
@@ -244,7 +244,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 			loc.Long, _ = strconv.ParseFloat(fmt.Sprintf("%v", loc_map["long"]), 64)
 			siteAttr.Location = loc
 		}
-	
+
 		if urls, ok := d.GetOk("urls"); ok {
 			siteAttr.Url = urls.([]interface{})
 		}
@@ -255,7 +255,7 @@ func resourceMSOSiteCreate(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 		id = models.StripQuotes(cont.S("id").String())
-	}	
+	}
 
 	d.SetId(fmt.Sprintf("%v", id))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
@@ -290,7 +290,7 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 		if username, ok := d.GetOk("username"); ok {
 			siteAttr.ApicUsername = username.(string)
 		}
-	
+
 		if password, ok := d.GetOk("password"); ok {
 			siteAttr.ApicPassword = password.(string)
 		}
@@ -298,7 +298,7 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 		if labels, ok := d.GetOk("labels"); ok {
 			siteAttr.Labels = labels.([]interface{})
 		}
-	
+
 		if maintMode, ok := d.GetOk("maintenance_mode"); ok {
 			siteAttr.MaintenanceMode = maintMode.(bool)
 		}
@@ -323,7 +323,7 @@ func resourceMSOSiteUpdate(d *schema.ResourceData, m interface{}) error {
 		if urls, ok := d.GetOk("urls"); ok {
 			siteAttr.Url = urls.([]interface{})
 		}
-	
+
 		if cloudProviders, ok := d.GetOk("cloud_providers"); ok {
 			siteAttr.CloudProviders = cloudProviders.([]interface{})
 		}
@@ -402,7 +402,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		} else {
 			locset = nil
 		}
-	d.Set("location", locset)
+		d.Set("location", locset)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
