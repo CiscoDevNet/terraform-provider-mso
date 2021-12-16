@@ -31,5 +31,5 @@ data "mso_schema_template_external_epg_subnet" "subnet1" {
 ## Attribute Reference ##
 
 * `name` - (Optional) Name of Subnet.
-* `scope` - (Optional) The scope of the subnet. Allowed values are `shared-rtctrl`, `export-rtctrl`, `shared-security`, `import-rtctrl`.
+* `scope` - (Optional) The scope of the subnet. Allowed values are `shared-rtctrl`, `export-rtctrl`, `shared-security`, `import-rtctrl`, `import-security`.
 * `aggregate` - (Optional) The aggregate of the subnet. Allowed values are `shared-rtctrl`, `export-rtctrl`, `shared-security`, `import-rtctrl`. Aggregate should be enabled only if shared-rtctrl is enabled in Scope.
