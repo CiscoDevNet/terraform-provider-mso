@@ -1,3 +1,10 @@
+## 0.4.0 (December 16, 2021)
+BEHAVIOR CHANGE:
+- Modify mso_schema_template_deploy so destroy undeploy all sites
+
+BUG FIXES:
+- Fix idemptotency issue with site_id in template_external_epg
+
 ## 0.3.4 (December 16, 2021)
 
 BUG FIXES:

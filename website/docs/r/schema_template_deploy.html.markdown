@@ -27,10 +27,10 @@ resource "mso_schema_template_deploy" "template_deployer" {
 
 * `schema_id` - (Required) The schema-id of template.
 * `template_name` - (Required) name of the template to deploy/undeploy.
-* `undeploy` - (Optional) Boolean flag indicating whether to undeploy the template or not. Default is false.
+* `undeploy` - (Optional) Boolean flag indicating whether to undeploy the template from a single site (see site_id) or not. Default is false.
 * `site_id` - (Optional) Site-id from where the template is to be undeployed. It is required if you set undeploy = true.
 
-NOTE: This resource is intentionally created non-idempotent so that it deploys the template in every run, it will not fail if there is no change and we deploy the template again.
+NOTE: This resource is intentionally created non-idempotent so that it deploys the template in every run, it will not fail if there is no change and we deploy the template again. When destroying the resource, all sites will be undeployed.
 
 
 ## Attribute Reference ##
