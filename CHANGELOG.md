@@ -1,3 +1,7 @@
+## 0.4.1 (December 17, 2021)
+BUG FIXES:
+- Fix documentation for mso_schema_template_external_epg, mso_schema_template_external_epg_subnet and mso_schema_template_contract.
+
 ## 0.4.0 (December 16, 2021)
 BEHAVIOR CHANGE:
 - Modify mso_schema_template_deploy so destroy undeploy all sites
