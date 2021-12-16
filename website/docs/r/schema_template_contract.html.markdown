@@ -20,7 +20,7 @@ resource "mso_schema_template_contract" "template_contract" {
   display_name = "C1"
   filter_type = "bothWay"
   scope = "context"
-  filter_relationships = {
+  filter_relationship {
     filter_schema_id = "5ea809672c00003bc40a2799"
     filter_template_name = "Template1"
     filter_name = "filter1"
@@ -42,7 +42,7 @@ resource "mso_schema_template_contract" "template_contract" {
   * `filter_relationships.filter_template_name` - (Optional) The template name in which the filter is located.
   * `filter_relationships.filter_name` - (Required) The filter to associate with this contract.
 
-* `filter_relationship` - (Required if filter_relationships is not used) Map to provide Filter Relationships.
+* `filter_relationship` - (Required if filter_relationships is not used) To provide Filter Relationships. Type - Block.
   * `filter_relationship.filter_schema_id` - (Optional) The schemaId in which the filter is located.
   * `filter_relationship.filter_template_name` - (Optional) The template name in which the filter is located.
   * `filter_relationship.filter_name` - (Required) The filter to associate with this contract.
