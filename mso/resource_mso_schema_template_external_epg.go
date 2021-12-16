@@ -119,7 +119,6 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 			"site_id": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"selector_name": &schema.Schema{
