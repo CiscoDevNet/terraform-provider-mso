@@ -80,6 +80,49 @@ func resourceMSOTemplateBD() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"unknown_multicast_flooding": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood",
+					"optimized_flooding",
+				}, false),
+			},
+			"multi_destination_flooding": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood_in_bd",
+					"drop",
+					"encap-flood",
+				}, false),
+			},
+			"ipv6_unknown_multicast_flooding": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood",
+					"optimized_flooding",
+				}, false),
+			},
+			"arp_flooding": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"virtual_mac_address": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"unicast_routing": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 			"vrf_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -95,7 +138,87 @@ func resourceMSOTemplateBD() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"subnets": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+
+						"name": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"description": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"scope": &schema.Schema{
+							ValidateFunc: validation.StringInSlice([]string{
+								"private",
+								"public",
+							}, false),
+						},
+						"shared": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"no_default_gateway": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"querier": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"virtual": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+						"primary": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+					},
+				},
+			},
+
 			"dhcp_policy": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"version": &schema.Schema{
+							Type:     schema.TypeInt,
+							Optional: true,
+							Computed: true,
+						},
+						"dhcp_option_policy_name": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"dhcp_option_policy_version": &schema.Schema{
+							Type:     schema.TypeInt,
+							Optional: true,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"dhcp_policies": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
@@ -239,8 +362,8 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
-	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name string
+	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -256,6 +379,24 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	if tempVar, ok := d.GetOk("layer2_unknown_unicast"); ok {
 		layer2_unknown_unicast = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unknown_multicast_flooding"); ok {
+		unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("multi_destination_flooding"); ok {
+		multi_destination_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ipv6_unknown_multicast_flooding"); ok {
+		ipv6_unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unicast_routing"); ok {
+		unicast_routing = tempVar.(bool)
+	}
+	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
+		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("arp_flooding"); ok {
+		arp_flooding = tempVar.(bool)
 	}
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -299,12 +440,58 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 		dhcpPolMap = nil
 	}
 
+	var dhcpPolsMap map[string]interface{}
+	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
+		dhcp_policy := tempVar.(map[string]interface{})
+		dhcpPolsMap = make(map[string]interface{})
+		log.Printf("Uniqueee string %v", dhcp_policy)
+		dhcpPolsMap["name"] = dhcp_policy["name"]
+		version, err := strconv.Atoi(dhcp_policy["version"].(string))
+		if err != nil {
+			return err
+		}
+		dhcpPolsMap["version"] = version
+
+		optionName := dhcp_policy["dhcp_option_policy_name"]
+		optionVersion := dhcp_policy["dhcp_option_policy_version"]
+		if optionName != nil {
+			if optionVersion != nil {
+				dhcpOptionMap := make(map[string]interface{})
+				dhcpOptionMap["name"] = optionName
+				ver, err := strconv.Atoi(optionVersion.(string))
+				if err != nil {
+					return err
+				}
+				dhcpOptionMap["version"] = ver
+				dhcpPolsMap["dhcpOptionLabel"] = dhcpOptionMap
+			} else {
+				return fmt.Errorf("dhcp_option_policy_version is required with dhcp_option_policy_name")
+			}
+		}
+	} else {
+		dhcpPolsMap = nil
+	}
+
+	var subNets map[string]interface{}
+	if tempVar, ok := d.GetOk("subnets"); ok {
+		subnets := tempVar.(map[string]interface{})
+		subNets = make(map[string]interface{})
+		subNets["name"] = subnets["name"]
+		subNets["description"] = subnets["description"]
+		subNets["scope"] = subnets["scope"]
+		subNets["shared"] = subnets["shared"]
+		subNets["no_default_gateway"] = subnets["no_default_gateway"]
+		subNets["querier"] = subnets["querier"]
+		subNets["virtual"] = subnets["virtual"]
+		subNets["primary"] = subnets["primary"]
+	}
+
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/-", templateName)
-	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, vrfRefMap, dhcpPolMap)
+	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding, unicast_routing, arp_flooding, vrfRefMap, dhcpPolMap, dhcpPolsMap, subnets)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
@@ -349,6 +536,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 				if err != nil {
 					return err
 				}
+
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
 					d.SetId(apiBD)
@@ -357,6 +545,10 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unknownMulticastFlooding").String()))
+					d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDestinationFlooding").String()))
+					d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("ipv6UnknownMulticastFlooding").String()))
+					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("virtualMacAddress").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
 					}
@@ -371,6 +563,12 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 
 					if bdCont.Exists("layer2_stretch") {
 						d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+					}
+					if bdCont.Exists("arp_flooding") {
+						d.Set("arp_flooding", bdCont.S("arpFlooding").Data().(bool))
+					}
+					if bdCont.Exists("unicast_routing") {
+						d.Set("unicast_routing", bdCont.S("unicastRouting").Data().(bool))
 					}
 
 					vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
@@ -397,6 +595,43 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 						d.Set("dhcp_policy", dhcpPolMap)
 					} else {
 						d.Set("dhcp_policy", make(map[string]interface{}))
+					}
+
+					if bdCont.Exists("dhcpLabels") {
+						dhcpPolsMap := make(map[string]interface{})
+						dhcpPolsMap["name"] = models.StripQuotes(bdCont.S("dhcpLabels", "name").String())
+						dhcpPolsMap["version"] = models.StripQuotes(bdCont.S("dhcpLabels", "version").String())
+						if bdCont.Exists("dhcpLabels", "dhcpOptionLabel") {
+							dhcpPolsMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabels", "dhcpOptionLabel", "name").String())
+							dhcpPolsMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabels", "dhcpOptionLabel", "version").String())
+							if dhcpPolsMap["dhcp_option_policy_name"] == "{}" {
+								dhcpPolsMap["dhcp_option_policy_name"] = nil
+							}
+							if dhcpPolsMap["dhcp_option_policy_version"] == "{}" {
+								dhcpPolsMap["dhcp_option_policy_version"] = nil
+							}
+						}
+						d.Set("dhcp_policies", dhcpPolsMap)
+					} else {
+						d.Set("dhcp_policies", make(map[string]interface{}))
+					}
+					if bdCont.Exists("subnets") {
+						dhcpPolsMap := make(map[string]interface{})
+						dhcpPolsMap["name"] = models.StripQuotes(bdCont.S("dhcpLabels", "name").String())
+						dhcpPolsMap["version"] = models.StripQuotes(bdCont.S("dhcpLabels", "version").String())
+						if bdCont.Exists("dhcpLabels", "dhcpOptionLabel") {
+							dhcpPolsMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabels", "dhcpOptionLabel", "name").String())
+							dhcpPolsMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabels", "dhcpOptionLabel", "version").String())
+							if dhcpPolsMap["dhcp_option_policy_name"] == "{}" {
+								dhcpPolsMap["dhcp_option_policy_name"] = nil
+							}
+							if dhcpPolsMap["dhcp_option_policy_version"] == "{}" {
+								dhcpPolsMap["dhcp_option_policy_version"] = nil
+							}
+						}
+						d.Set("dhcp_policies", dhcpPolsMap)
+					} else {
+						d.Set("dhcp_policies", make(map[string]interface{}))
 					}
 					found = true
 					break
@@ -426,8 +661,8 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
-	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name string
+	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -443,6 +678,24 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 	if tempVar, ok := d.GetOk("layer2_unknown_unicast"); ok {
 		layer2_unknown_unicast = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unknown_multicast_flooding"); ok {
+		unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("multi_destination_flooding"); ok {
+		multi_destination_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ipv6_unknown_multicast_flooding"); ok {
+		ipv6_unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unicast_routing"); ok {
+		unicast_routing = tempVar.(bool)
+	}
+	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
+		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("arp_flooding"); ok {
+		arp_flooding = tempVar.(bool)
 	}
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -484,13 +737,58 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	} else {
 		dhcpPolMap = nil
 	}
+	var dhcpPolsMap map[string]interface{}
+	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
+		dhcp_policy := tempVar.(map[string]interface{})
+		dhcpPolsMap = make(map[string]interface{})
+		log.Printf("Uniqueee string %v", dhcp_policy)
+		dhcpPolsMap["name"] = dhcp_policy["name"]
+		version, err := strconv.Atoi(dhcp_policy["version"].(string))
+		if err != nil {
+			return err
+		}
+		dhcpPolsMap["version"] = version
+
+		optionName := dhcp_policy["dhcp_option_policy_name"]
+		optionVersion := dhcp_policy["dhcp_option_policy_version"]
+		if optionName != nil {
+			if optionVersion != nil {
+				dhcpOptionMap := make(map[string]interface{})
+				dhcpOptionMap["name"] = optionName
+				ver, err := strconv.Atoi(optionVersion.(string))
+				if err != nil {
+					return err
+				}
+				dhcpOptionMap["version"] = ver
+				dhcpPolsMap["dhcpOptionLabel"] = dhcpOptionMap
+			} else {
+				return fmt.Errorf("dhcp_option_policy_version is required with dhcp_option_policy_name")
+			}
+		}
+	} else {
+		dhcpPolsMap = nil
+	}
+
+	var subNets map[string]interface{}
+	if tempVar, ok := d.GetOk("subnets"); ok {
+		subnets := tempVar.(map[string]interface{})
+		subNets = make(map[string]interface{})
+		subNets["name"] = subnets["name"]
+		subNets["description"] = subnets["description"]
+		subNets["scope"] = subnets["scope"]
+		subNets["shared"] = subnets["shared"]
+		subNets["no_default_gateway"] = subnets["no_default_gateway"]
+		subNets["querier"] = subnets["querier"]
+		subNets["virtual"] = subnets["virtual"]
+		subNets["primary"] = subnets["primary"]
+	}
 
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
-	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, vrfRefMap, dhcpPolMap)
+	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding, unicast_routing, arp_flooding, vrfRefMap, dhcpPolMap, dhcpPolsMap, subnets)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
