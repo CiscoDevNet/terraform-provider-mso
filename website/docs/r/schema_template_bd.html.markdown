@@ -41,7 +41,7 @@ resource "mso_schema_template_bd" "bridge_domain" {
 * `virtual_mac_address` - (Optional) Virtual MAC Address.
 * `unicast_routing` - (Optional) Unicast Routing status. Default to false.
 * `ipv6_unknown_multicast_flooding` - (Optional) IPv6 Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
-* `multi_destination_flooding` - (Optional) Multi-destination flooding behavior. Allowed values are `flood_in_bd`, `drop` and `encap-flood`. Default to `flood_in_bd`.
+* `multi_destination_flooding` - (Optional) Multi-destination flooding behavior. Allowed values are `flood_in_bd`, `drop` and `flood_in_encap`. Default to `flood_in_bd`.
 * `unknown_multicast_flooding` - (Optional) Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
 * `dhcp_policy` - (Optional) Map to provide dhcp_policy configurations. 
 * `dhcp_policy.name` - (Optional) dhcp_policy name. Required if you specify the dhcp_policy.
