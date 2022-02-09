@@ -33,28 +33,24 @@ func resourceMSOTemplateBD() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"display_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"intersite_bum_traffic": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -138,7 +134,6 @@ func resourceMSOTemplateBD() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-
 			"dhcp_policy": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -268,7 +263,6 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 						}
 					}
 					d.Set("dhcp_policy", dhcpPolMap)
-
 					found = true
 					break
 				}
@@ -487,7 +481,6 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 						}
 					}
 					d.Set("dhcp_policy", dhcpPolMap)
-
 					found = true
 					break
 				}
