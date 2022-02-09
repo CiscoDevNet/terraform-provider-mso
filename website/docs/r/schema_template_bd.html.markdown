@@ -37,17 +37,17 @@ resource "mso_schema_template_bd" "bridge_domain" {
 * `optimize_wan_bandwidth` - (Optional) Boolean flag to enable or disable the wan bandwidth optimization. Default to false.
 * `layer2_stretch` - (Optional) Boolean flag to enable or disable the layer-2 stretch. Default to false. Should enable this flag if you want to create subnets under this Bridge Domain.
 * `layer3_multicast` - (Optional) Boolean flag to enable or disable layer 3 multicast traffic. Default to false.
-* `arp_flooding` - (Optional) ARP Flooding. Default to false.
+* `arp_flooding` - (Optional) ARP Flooding status. Default to false.
 * `virtual_mac_address` - (Optional) Virtual MAC Address.
-* `unicast_routing` - (Optional) Unicast Routing. Default to false.
-* `ipv6_unknown_multicast_flooding` - (Optional) IPv6 Unknown Multicast Flooding. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
-* `multi_destination_flooding` - (Optional) Multi-Destination. Allowed values are `flood_in_bd`, `drop` and `encap-flood`. Default to `flood_in_bd`.
-* `unknown_multicast_flooding` - (Optional) Unknown Multicast Flooding. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
+* `unicast_routing` - (Optional) Unicast Routing status. Default to false.
+* `ipv6_unknown_multicast_flooding` - (Optional) IPv6 Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
+* `multi_destination_flooding` - (Optional) Multi-destination flooding behavior. Allowed values are `flood_in_bd`, `drop` and `encap-flood`. Default to `flood_in_bd`.
+* `unknown_multicast_flooding` - (Optional) Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
 * `dhcp_policy` - (Optional) Map to provide dhcp_policy configurations. 
 * `dhcp_policy.name` - (Optional) dhcp_policy name. Required if you specify the dhcp_policy.
 * `dhcp_policy.version` - (Optional) Version of dhcp_policy. Required if you specify the dhcp_policy.
 * `dhcp_policy.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
-* `dhcp_policy.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy. Require if you specify the `dhcp_policy.dhcp_option_policy_name`.
+* `dhcp_policy.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy. Required if you specify the `dhcp_policy.dhcp_option_policy_name`.
 
 
 ## Attribute Reference ##
