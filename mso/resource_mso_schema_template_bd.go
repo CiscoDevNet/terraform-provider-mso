@@ -92,7 +92,7 @@ func resourceMSOTemplateBD() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{
 					"flood_in_bd",
 					"drop",
-					"encap-flood",
+					"flood_in_encap",
 				}, false),
 			},
 			"ipv6_unknown_multicast_flooding": &schema.Schema{
