@@ -2,6 +2,7 @@ package mso
 
 import (
 	"log"
+	"regexp"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -54,11 +55,12 @@ func resourceMSODHCPOptionPolicy() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[a-zA-Z0-9]+$`), "value should be alphanumeric"),
 						},
 						"id": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[0-9]+$`), "value should be numeric"),
 						},
 						"data": {
 							Type:     schema.TypeString,
