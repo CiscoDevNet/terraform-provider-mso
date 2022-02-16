@@ -130,9 +130,10 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		return nil, err
 	}
 
+	d.SetId(models.StripQuotes(con.S("id").String()))
+
 	if platform == "nd" {
 		dataConAttr := con.S("common")
-		d.SetId(models.StripQuotes(con.S("id").String()))
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
 
 		if dataConAttr.Exists("siteId") {
@@ -140,7 +141,7 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		}
 
 		if dataConAttr.Exists("labels") {
-			d.Set("apic_site_id", models.StripQuotes(dataConAttr.S("siteId").String()))
+			d.Set("labels", models.StripQuotes(dataConAttr.S("labels").String()))
 		} else {
 			d.Set("labels", nil)
 		}
@@ -154,6 +155,8 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 
 		}
 	} else {
+		d.Set("name", models.StripQuotes(con.S("name").String()))
+		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 		d.Set("username", models.StripQuotes(con.S("username").String()))
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
@@ -402,9 +405,10 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
+	d.SetId(models.StripQuotes(con.S("id").String()))
+
 	if platform == "nd" {
 		dataConAttr := con.S("common")
-		d.SetId(models.StripQuotes(con.S("id").String()))
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
 
 		if dataConAttr.Exists("siteId") {
@@ -412,7 +416,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		}
 
 		if dataConAttr.Exists("labels") {
-			d.Set("apic_site_id", models.StripQuotes(dataConAttr.S("siteId").String()))
+			d.Set("labels", models.StripQuotes(dataConAttr.S("labels").String()))
 		} else {
 			d.Set("labels", nil)
 		}
@@ -426,6 +430,8 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 
 		}
 	} else {
+		d.Set("name", models.StripQuotes(con.S("name").String()))
+		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 		d.Set("username", models.StripQuotes(con.S("username").String()))
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
