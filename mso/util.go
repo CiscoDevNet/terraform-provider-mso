@@ -1,5 +1,9 @@
 package mso
 
+import (
+	"fmt"
+)
+
 const version = 1
 
 func toStringList(configured interface{}) []string {
@@ -9,4 +13,8 @@ func toStringList(configured interface{}) []string {
 		vs = append(vs, val)
 	}
 	return vs
+}
+
+func makeTestVariable(s string) string {
+	return fmt.Sprintf("acctest_%s", s)
 }

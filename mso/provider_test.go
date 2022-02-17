@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -10,6 +11,34 @@ import (
 
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
+var siteNames = []string{"ansible_test"}
+var tenantNames=[]string{"acctest_crest"}
+
+func CreatSchemaSiteConfig(site, tenant, name string) string {
+	resource := fmt.Sprintf(`
+	data "mso_site" "test" {
+		name  = "%s"
+	}
+	  
+ 	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	  
+	resource "mso_schema" "test" {
+		name          = "%s"
+		template_name = "%s"
+		tenant_id     = data.mso_tenant.test.id
+	}
+			
+	resource "mso_schema_site" "test" {
+		schema_id       =  mso_schema.test.id
+		site_id         =  data.mso_site.test.id
+		template_name   =  "%s"
+	}
+	`, site, tenant,tenant,name,name,name)
+	return resource
+}
 
 func init() {
 	testAccProvider = Provider().(*schema.Provider)

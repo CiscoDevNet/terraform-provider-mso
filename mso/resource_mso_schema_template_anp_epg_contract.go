@@ -346,7 +346,7 @@ func resourceMSOTemplateAnpEpgContractUpdate(d *schema.ResourceData, m interface
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given contract id is not found")
+		return fmt.Errorf("The given contract id is not found")
 	}
 	indexs := strconv.Itoa(index)
 
