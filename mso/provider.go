@@ -52,6 +52,7 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
+				DefaultFunc: schema.EnvDefaultFunc("MSO_PLATFORM", "mso"),
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
 					"nd",
@@ -107,6 +108,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_service_graph_node":         resourceMSOSchemaSiteServiceGraphNode(),
 			"mso_service_node_type":                      resourceMSOServiceNodeType(),
 			"mso_schema_template_contract_service_graph": resourceTemplateContractServiceGraph(),
+			"mso_schema_site_l3out":                      resourceMSOSchemaSiteL3out(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -155,6 +157,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_service_graph":          dataSourceMSOSchemaTemplateServiceGraph(),
 			"mso_service_node_type":                      dataSourceMSOServiceNodeType(),
 			"mso_schema_template_contract_service_graph": datasourceTemplateContractServiceGraph(),
+			"mso_schema_site_l3out":                      datasourceMSOSchemaSiteL3out(),
 		},
 
 		ConfigureFunc: configureClient,
