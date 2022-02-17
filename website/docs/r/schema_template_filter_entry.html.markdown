@@ -59,5 +59,5 @@ No attributes are exported.
 An existing MSO Resource Schema Template Filter Entry can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_template_filter_entry.filter_entry {schema_id}/template/{template_name}/filter/{name}
+terraform import mso_schema_template_filter_entry.filter_entry {schema_id}/template/{template_name}/filter/{name}/entry/{entry_name}
 ```
