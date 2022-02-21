@@ -49,7 +49,6 @@ func resourceMSODHCPOptionPolicy() *schema.Resource {
 			"option": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
