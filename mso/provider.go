@@ -113,6 +113,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf_region_hub_network":     resourceMSOSchemaSiteVRFRegionHubNetwork(),
 			"mso_dhcp_relay_policy":                      resourceMSODHCPRelayPolicy(),
 			"mso_dhcp_option_policy_option":              resourceMSODHCPOptionPolicyOption(),
+			"mso_dhcp_relay_policy_provider":             resourceMSODHCPRelayPolicyProvider(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -167,6 +168,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_validate":                        datasourceMSOSchemaValidate(),
 			"mso_dhcp_relay_policy":                      datasourceMSODHCPRelayPolicy(),
 			"mso_dhcp_option_policy_option":              datasourceMSODHCPOptionPolicyOption(),
+			"mso_dhcp_relay_policy_provider":             datasourceMSODHCPRelayPolicyProvider(),
 		},
 
 		ConfigureFunc: configureClient,
