@@ -27,6 +27,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -577,3 +578,17 @@ func ParseJSONBuffer(buffer io.Reader) (*Container, error) {
 }
 
 //--------------------------------------------------------------------------------------------------
+
+func (g *Container) SearchInObjectList(condition func(*Container) bool) (*Container, error) {
+	
+	children, err := g.Children()
+	if err != nil {
+		return nil, err
+	}
+	for _, obj := range children {
+		if condition(obj) {
+			return obj, nil
+		}
+	}
+	return nil, fmt.Errorf("Object Not found")
+}
