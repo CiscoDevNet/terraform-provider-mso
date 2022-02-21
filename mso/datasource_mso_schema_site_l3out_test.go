@@ -55,7 +55,7 @@ func TestAccMSOSchemaSiteL3out_DataSource(t *testing.T) {
 			{
 				Config: MSOSchemaSiteL3outDataSourceWithRequired(siteNames[0], tenantNames[0], prnames, vrf, l3out),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSODHCPOptionPolicyExists(resourceName, &l3outModel),
+					testAccCheckMSOSchemaSiteL3outExists(resourceName, &l3outModel),
 					resource.TestCheckResourceAttrPair(resourceName, "schema_id", dataSourceName, "schema_id"),
 					resource.TestCheckResourceAttrPair(resourceName, "l3out_name", dataSourceName, "l3out_name"),
 					resource.TestCheckResourceAttrPair(resourceName, "template_name", dataSourceName, "template_name"),
