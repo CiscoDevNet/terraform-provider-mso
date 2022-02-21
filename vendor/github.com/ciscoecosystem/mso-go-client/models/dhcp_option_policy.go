@@ -34,7 +34,6 @@ func (model *DHCPOptionPolicy) ToMap() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	err = json.Unmarshal(jsonObj, &objMap)
 	if err != nil {
 		return nil, err
