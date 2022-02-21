@@ -49,7 +49,7 @@ func TestAccMSOSchemaSiteL3out_Basic(t *testing.T) {
 			{
 				Config: MSOSchemaSiteL3outWithRequired(siteNames[0], tenantNames[0], prnames, vrf, l3out),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSODHCPOptionPolicyExists(resourceName, &l3out1),
+					testAccCheckMSOSchemaSiteL3outExists(resourceName, &l3out1),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceName, "l3out_name", l3out),
 					resource.TestCheckResourceAttr(resourceName, "template_name", prnames),
@@ -65,7 +65,7 @@ func TestAccMSOSchemaSiteL3out_Basic(t *testing.T) {
 			{
 				Config: MSOSchemaSiteL3outWithRequired(siteNames[0], tenantNames[0], prnames, vrf, l3outOther),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSODHCPOptionPolicyExists(resourceName, &l3out2),
+					testAccCheckMSOSchemaSiteL3outExists(resourceName, &l3out2),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceName, "l3out_name", l3outOther),
 					resource.TestCheckResourceAttr(resourceName, "template_name", prnames),
@@ -80,7 +80,7 @@ func TestAccMSOSchemaSiteL3out_Basic(t *testing.T) {
 			{
 				Config: MSOSchemaSiteL3outWithRequired(siteNames[0], tenantNames[0], prnames, vrfOther, l3out),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSODHCPOptionPolicyExists(resourceName, &l3out2),
+					testAccCheckMSOSchemaSiteL3outExists(resourceName, &l3out2),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttr(resourceName, "l3out_name", l3out),
 					resource.TestCheckResourceAttr(resourceName, "template_name", prnames),
@@ -163,7 +163,7 @@ func testAccCheckMSOSchemaSiteL3outDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckMSODHCPOptionPolicyExists(l3outName string, m *models.IntersiteL3outs) resource.TestCheckFunc {
+func testAccCheckMSOSchemaSiteL3outExists(l3outName string, m *models.IntersiteL3outs) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*client.Client)
 		rs, ok := s.RootModule().Resources[l3outName]
