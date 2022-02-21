@@ -108,6 +108,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_service_graph_node":         resourceMSOSchemaSiteServiceGraphNode(),
 			"mso_service_node_type":                      resourceMSOServiceNodeType(),
 			"mso_schema_template_contract_service_graph": resourceTemplateContractServiceGraph(),
+			"mso_dhcp_option_policy":                     resourceMSODHCPOptionPolicy(),
 			"mso_schema_site_l3out":                      resourceMSOSchemaSiteL3out(),
 		},
 
@@ -157,6 +158,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_service_graph":          dataSourceMSOSchemaTemplateServiceGraph(),
 			"mso_service_node_type":                      dataSourceMSOServiceNodeType(),
 			"mso_schema_template_contract_service_graph": datasourceTemplateContractServiceGraph(),
+			"mso_dhcp_option_policy":                     datasourceMSODHCPOptionPolicy(),
 			"mso_schema_site_l3out":                      datasourceMSOSchemaSiteL3out(),
 		},
 

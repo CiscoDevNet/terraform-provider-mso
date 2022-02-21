@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -63,7 +64,7 @@ func (c *Client) Save(endpoint string, obj models.Model) (*container.Container, 
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("Request: ", req)
 	cont, _, err := c.Do(req)
 	if err != nil {
 		return nil, err
@@ -117,7 +118,6 @@ func (c *Client) PatchbyID(endpoint string, objList ...models.Model) (*container
 			return nil, err
 		}
 		contJs.ArrayAppend(jsonPayload.Data())
-
 	}
 
 	// URL encoding
