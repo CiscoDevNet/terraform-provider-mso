@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -17,7 +16,6 @@ func (client *Client) CreateInterSchemaSiteVrfRegionHubNetwork(obj *models.Inter
 	}
 	hubNetwork := models.CreateInterSchemaSiteVrfRegionNetworkModel(obj, schemaCont)
 	regionHubNetworkMutex.Lock()
-	log.Printf("hubNetwork: %v\n", hubNetwork)
 	_, err = client.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", obj.SchemaID), hubNetwork)
 	if err != nil {
 		return err
