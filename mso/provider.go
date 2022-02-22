@@ -162,6 +162,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_dhcp_option_policy":                     datasourceMSODHCPOptionPolicy(),
 			"mso_schema_site_l3out":                      datasourceMSOSchemaSiteL3out(),
 			"mso_schema_site_vrf_region_hub_network":     datasourceMSOSchemaSiteVRFRegionHubNetwork(),
+			"mso_schema_validate":                        datasourceMSOSchemaValidate(),
 		},
 
 		ConfigureFunc: configureClient,
