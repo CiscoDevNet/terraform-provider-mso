@@ -172,7 +172,8 @@ func resourceMSOTemplateExtenalepgImport(d *schema.ResourceData, m interface{}) 
 				}
 				apiExternalepg := models.StripQuotes(externalepgCont.S("name").String())
 				if apiExternalepg == stateExternalepg {
-					d.SetId(get_attribute[4])
+					id := fmt.Sprintf("/schemas/%s/templates/%s/externalEpgs/%s", schemaId, apiTemplate, apiExternalepg)
+					d.SetId(id)
 					d.Set("external_epg_name", apiExternalepg)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
@@ -457,7 +458,8 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 				}
 				apiExternalepg := models.StripQuotes(externalepgCont.S("name").String())
 				if apiExternalepg == stateExternalepg {
-					d.SetId(apiExternalepg)
+					id := fmt.Sprintf("/schemas/%s/templates/%s/externalEpgs/%s", schemaId, apiTemplate, apiExternalepg)
+					d.SetId(id)
 					d.Set("external_epg_name", apiExternalepg)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
