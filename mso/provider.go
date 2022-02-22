@@ -110,6 +110,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_contract_service_graph": resourceTemplateContractServiceGraph(),
 			"mso_dhcp_option_policy":                     resourceMSODHCPOptionPolicy(),
 			"mso_schema_site_l3out":                      resourceMSOSchemaSiteL3out(),
+			"mso_schema_site_vrf_region_hub_network":     resourceMSOSchemaSiteVRFRegionHubNetwork(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -160,6 +161,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_contract_service_graph": datasourceTemplateContractServiceGraph(),
 			"mso_dhcp_option_policy":                     datasourceMSODHCPOptionPolicy(),
 			"mso_schema_site_l3out":                      datasourceMSOSchemaSiteL3out(),
+			"mso_schema_site_vrf_region_hub_network":     datasourceMSOSchemaSiteVRFRegionHubNetwork(),
+			"mso_schema_validate":                        datasourceMSOSchemaValidate(),
 		},
 
 		ConfigureFunc: configureClient,
