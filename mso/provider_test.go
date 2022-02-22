@@ -13,6 +13,8 @@ var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
 var siteNames = []string{"ansible_test"}
 var tenantNames = []string{"acctest_crest"}
+var validSchemaId = "6206831f1d000012864f99a8"
+var inValidScheamaId = "620683151d0000f1854f99a4"
 
 func CreatSchemaSiteConfig(site, tenant, name string) string {
 	resource := fmt.Sprintf(`
