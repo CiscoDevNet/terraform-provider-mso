@@ -22,7 +22,7 @@ func datasourceMSOSchemaValidate() *schema.Resource {
 			},
 			"result": {
 				Type:     schema.TypeString,
-				Default:  "false",
+				Computed: true,
 				Optional: true,
 			},
 		},
