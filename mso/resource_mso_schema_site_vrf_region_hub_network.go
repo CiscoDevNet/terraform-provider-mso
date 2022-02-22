@@ -81,7 +81,7 @@ func setMSOSchemaSiteVrfRegionHubNetworkAttributes(hubNetwork *models.InterSchem
 
 func resourceMSOSchemaSiteVRFRegionHubNetworkImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Println("[DEBUG] Schema Site VRF Region Hub Network: Beginning Import", d.Id())
-	msoClient := m.(client.Client)
+	msoClient := m.(*client.Client)
 	id := d.Id()
 	hubNetwork, err := hubNetworkIDtohubNetwork(id)
 	if err != nil {

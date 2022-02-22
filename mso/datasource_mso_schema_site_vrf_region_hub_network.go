@@ -55,7 +55,7 @@ func datasourceMSOSchemaSiteVRFRegionHubNetwork() *schema.Resource {
 
 func datasourceMSOSchemaSiteVRFRegionHubNetworkRead(d *schema.ResourceData, m interface{}) error {
 	log.Println("[DEBUG] Schema Site VRF Region Hub Network: Beginning Read")
-	msoClient := m.(client.Client)
+	msoClient := m.(*client.Client)
 	schemaID := d.Get("schema_id").(string)
 	siteID := d.Get("site_id").(string)
 	templateName := d.Get("template_name").(string)

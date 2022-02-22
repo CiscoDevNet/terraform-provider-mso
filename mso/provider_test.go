@@ -12,7 +12,7 @@ import (
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
 var siteNames = []string{"ansible_test"}
-var tenantNames=[]string{"acctest_crest"}
+var tenantNames = []string{"acctest_crest"}
 
 func CreatSchemaSiteConfig(site, tenant, name string) string {
 	resource := fmt.Sprintf(`
@@ -36,7 +36,7 @@ func CreatSchemaSiteConfig(site, tenant, name string) string {
 		site_id         =  data.mso_site.test.id
 		template_name   =  "%s"
 	}
-	`, site, tenant,tenant,name,name,name)
+	`, site, tenant, tenant, name, name, name)
 	return resource
 }
 
