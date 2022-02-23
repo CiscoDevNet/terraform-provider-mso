@@ -112,6 +112,66 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"epg_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"application",
+					"service",
+				}, false),
+			},
+			"cloud_service_epg_config": &schema.Schema{
+				Type: schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"access_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"private",
+								"public",
+								"public_and_private",
+							}, false),
+						},
+						"deployment_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"cloud_native",
+								"cloud_native_managed",
+								"third_party",
+							}, false),
+						},
+						"service_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"azure_api_management_services",
+								"azure_cosmos_db",
+								"azure_databricks",
+								"azure_sql",
+								"azure_storage",
+								"azure_storage_blob",
+								"azure_storage_file",
+								"azure_storage_queue",
+								"azure_storage_table",
+								"azure_kubernetes_services",
+								"azure_ad_domain_services",
+								"azure_contain_registry",
+								"azure_key_vault",
+								"redis_cache",
+								"custom",
+							}, false),
+						},
+						"custom_service_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -229,7 +289,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
+	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
@@ -268,6 +328,69 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	} else {
 		bd_template_name = templateName
 	}
+	if epg_type, ok := d.GetOk("epg_type"); ok {
+		epgType = epg_type.(string)
+	}
+
+	service := make(map[string]interface{})
+	if val, ok := d.GetOk("cloud_service_epg_config"); ok {
+		service_list := val.(*schema.Set).List()
+		for _, val := range service_list {
+
+			map_service := make(map[string]interface{})
+			inner_service := val.(map[string]interface{})
+
+			if inner_service["access_type"] == "private" {
+				map_service["accessType"] = "Private"
+			} else if inner_service["access_type"] == "public" {
+				map_service["accessType"] = "Public"
+			} else if inner_service["access_type"] == "public_and_private" {
+				map_service["accessType"] = "PublicAndPrivate"
+			}
+
+			if inner_service["deployment_type"] == "cloud_native" {
+				map_service["deploymentType"] = "CloudNative"
+			} else if inner_service["deployment_type"] == "cloud_native_managed" {
+				map_service["deploymentType"] = "CloudNativeManaged"
+			} else if inner_service["deployment_type"] == "third_party" {
+				map_service["deploymentType"] = "Third-party"
+			}
+
+			if inner_service["service_type"] == "azure_api_management_services" {
+				map_service["serviceType"] = "Azure-ApiManagement"
+			} else if inner_service["service_type"] == "azure_cosmos_db" {
+				map_service["serviceType"] = "Azure-CosmosDB"
+			} else if inner_service["service_type"] == "azure_databricks" {
+				map_service["serviceType"] = "Azure-Databricks"
+			} else if inner_service["service_type"] == "azure_sql" {
+				map_service["serviceType"] = "Azure-SqlServer"
+			} else if inner_service["service_type"] == "azure_storage" {
+				map_service["serviceType"] = "Azure-Storage"
+			} else if inner_service["service_type"] == "azure_storage_blob" {
+				map_service["serviceType"] = "Azure-StorageBlob"
+			} else if inner_service["service_type"] == "azure_storage_file" {
+				map_service["serviceType"] = "Azure-StorageFile"
+			} else if inner_service["service_type"] == "azure_storage_queue" {
+				map_service["serviceType"] = "Azure-StorageQueue"
+			} else if inner_service["service_type"] == "azure_storage_table" {
+				map_service["serviceType"] = "Azure-StorageTable"
+			} else if inner_service["service_type"] == "azure_kubernetes_services" {
+				map_service["serviceType"] = "Azure-AksCluster"
+			} else if inner_service["service_type"] == "azure_ad_domain_services" {
+				map_service["serviceType"] = "Azure-ADDS"
+			} else if inner_service["service_type"] == "azure_contain_registry" {
+				map_service["serviceType"] = "Azure-ContainerRegistry"
+			} else if inner_service["service_type"] == "azure_key_vault" {
+				map_service["serviceType"] = "Azure-KeyVault"
+			} else if inner_service["service_type"] == "redis_cache" {
+				map_service["serviceType"] = "Azure-Redis"
+			} else if inner_service["service_type"] == "custom" {
+				map_service["serviceType"] = "Custom"
+				map_service["customSvcType"] = inner_service["custom_service_type"]
+			}
+			service = map_service
+		}
+	}
 
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
@@ -280,7 +403,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/-", templateName, anpName)
-	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, service)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -353,6 +476,25 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
 							}
 							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
+							d.Set("epg_type", models.StripQuotes(epgCont.S("epgType").String()))
+							if d.Get("epg_type") == "service" {
+								services := make([]interface{}, 0)
+								map_service := make(map[string]interface{})
+
+								servicesCont := epgCont.S("cloudServiceEpgConfig")
+								log.Printf("SERVSERV %s", servicesCont)
+								if err != nil {
+									return fmt.Errorf("Unable to parse the Cloud Services")
+								}
+
+								map_service["deployment_type"] = models.StripQuotes(servicesCont.S("deploymentType").String())
+								map_service["access_type"] = models.StripQuotes(servicesCont.S("accessType").String())
+								map_service["service_type"] = models.StripQuotes(servicesCont.S("serviceType").String())
+								log.Printf("SERVSERV %s", map_service)
+								services = append(services, map_service)
+
+								d.Set("cloud_service_epg_config", services)
+							}
 
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -400,7 +542,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
+	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
@@ -438,6 +580,69 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	} else {
 		bd_template_name = templateName
 	}
+	if epg_type, ok := d.GetOk("epg_type"); ok {
+		epgType = epg_type.(string)
+	}
+
+	service := make(map[string]interface{})
+	if val, ok := d.GetOk("cloud_service_epg_config"); ok {
+		service_list := val.(*schema.Set).List()
+		for _, val := range service_list {
+
+			map_service := make(map[string]interface{})
+			inner_service := val.(map[string]interface{})
+
+			if inner_service["access_type"] == "private" {
+				map_service["accessType"] = "Private"
+			} else if inner_service["access_type"] == "public" {
+				map_service["accessType"] = "Public"
+			} else if inner_service["access_type"] == "public_and_private" {
+				map_service["accessType"] = "PublicAndPrivate"
+			}
+
+			if inner_service["deployment_type"] == "cloud_native" {
+				map_service["deploymentType"] = "CloudNative"
+			} else if inner_service["deployment_type"] == "cloud_native_managed" {
+				map_service["deploymentType"] = "CloudNativeManaged"
+			} else if inner_service["deployment_type"] == "third_party" {
+				map_service["deploymentType"] = "Third-party"
+			}
+
+			if inner_service["service_type"] == "azure_api_management_services" {
+				map_service["serviceType"] = "Azure-ApiManagement"
+			} else if inner_service["service_type"] == "azure_cosmos_db" {
+				map_service["serviceType"] = "Azure-CosmosDB"
+			} else if inner_service["service_type"] == "azure_databricks" {
+				map_service["serviceType"] = "Azure-Databricks"
+			} else if inner_service["service_type"] == "azure_sql" {
+				map_service["serviceType"] = "Azure-SqlServer"
+			} else if inner_service["service_type"] == "azure_storage" {
+				map_service["serviceType"] = "Azure-Storage"
+			} else if inner_service["service_type"] == "azure_storage_blob" {
+				map_service["serviceType"] = "Azure-StorageBlob"
+			} else if inner_service["service_type"] == "azure_storage_file" {
+				map_service["serviceType"] = "Azure-StorageFile"
+			} else if inner_service["service_type"] == "azure_storage_queue" {
+				map_service["serviceType"] = "Azure-StorageQueue"
+			} else if inner_service["service_type"] == "azure_storage_table" {
+				map_service["serviceType"] = "Azure-StorageTable"
+			} else if inner_service["service_type"] == "azure_kubernetes_services" {
+				map_service["serviceType"] = "Azure-AksCluster"
+			} else if inner_service["service_type"] == "azure_ad_domain_services" {
+				map_service["serviceType"] = "Azure-ADDS"
+			} else if inner_service["service_type"] == "azure_contain_registry" {
+				map_service["serviceType"] = "Azure-ContainerRegistry"
+			} else if inner_service["service_type"] == "azure_key_vault" {
+				map_service["serviceType"] = "Azure-KeyVault"
+			} else if inner_service["service_type"] == "redis_cache" {
+				map_service["serviceType"] = "Azure-Redis"
+			} else if inner_service["service_type"] == "custom" {
+				map_service["serviceType"] = "Custom"
+				map_service["customSvcType"] = inner_service["custom_service_type"]
+			}
+			service = map_service
+		}
+	}
 
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
@@ -450,7 +655,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, service)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -472,7 +677,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
+	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
@@ -510,6 +715,69 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	} else {
 		bd_template_name = templateName
 	}
+	if epg_type, ok := d.GetOk("epg_type"); ok {
+		epgType = epg_type.(string)
+	}
+
+	service := make(map[string]interface{})
+	if val, ok := d.GetOk("cloud_service_epg_config"); ok {
+		service_list := val.(*schema.Set).List()
+		for _, val := range service_list {
+
+			map_service := make(map[string]interface{})
+			inner_service := val.(map[string]interface{})
+
+			if inner_service["access_type"] == "private" {
+				map_service["accessType"] = "Private"
+			} else if inner_service["access_type"] == "public" {
+				map_service["accessType"] = "Public"
+			} else if inner_service["access_type"] == "public_and_private" {
+				map_service["accessType"] = "PublicAndPrivate"
+			}
+
+			if inner_service["deployment_type"] == "cloud_native" {
+				map_service["deploymentType"] = "CloudNative"
+			} else if inner_service["deployment_type"] == "cloud_native_managed" {
+				map_service["deploymentType"] = "CloudNativeManaged"
+			} else if inner_service["deployment_type"] == "third_party" {
+				map_service["deploymentType"] = "Third-party"
+			}
+
+			if inner_service["service_type"] == "azure_api_management_services" {
+				map_service["serviceType"] = "Azure-ApiManagement"
+			} else if inner_service["service_type"] == "azure_cosmos_db" {
+				map_service["serviceType"] = "Azure-CosmosDB"
+			} else if inner_service["service_type"] == "azure_databricks" {
+				map_service["serviceType"] = "Azure-Databricks"
+			} else if inner_service["service_type"] == "azure_sql" {
+				map_service["serviceType"] = "Azure-SqlServer"
+			} else if inner_service["service_type"] == "azure_storage" {
+				map_service["serviceType"] = "Azure-Storage"
+			} else if inner_service["service_type"] == "azure_storage_blob" {
+				map_service["serviceType"] = "Azure-StorageBlob"
+			} else if inner_service["service_type"] == "azure_storage_file" {
+				map_service["serviceType"] = "Azure-StorageFile"
+			} else if inner_service["service_type"] == "azure_storage_queue" {
+				map_service["serviceType"] = "Azure-StorageQueue"
+			} else if inner_service["service_type"] == "azure_storage_table" {
+				map_service["serviceType"] = "Azure-StorageTable"
+			} else if inner_service["service_type"] == "azure_kubernetes_services" {
+				map_service["serviceType"] = "Azure-AksCluster"
+			} else if inner_service["service_type"] == "azure_ad_domain_services" {
+				map_service["serviceType"] = "Azure-ADDS"
+			} else if inner_service["service_type"] == "azure_contain_registry" {
+				map_service["serviceType"] = "Azure-ContainerRegistry"
+			} else if inner_service["service_type"] == "azure_key_vault" {
+				map_service["serviceType"] = "Azure-KeyVault"
+			} else if inner_service["service_type"] == "redis_cache" {
+				map_service["serviceType"] = "Azure-Redis"
+			} else if inner_service["service_type"] == "custom" {
+				map_service["serviceType"] = "Custom"
+				map_service["customSvcType"] = inner_service["custom_service_type"]
+			}
+			service = map_service
+		}
+	}
 
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
@@ -522,7 +790,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
+	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, service)
 
 	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
