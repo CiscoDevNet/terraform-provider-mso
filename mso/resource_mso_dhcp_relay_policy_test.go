@@ -24,7 +24,7 @@ func TestAccMSODHCPRelayPolicy_Basic(t *testing.T) {
 	schemaName := makeTestVariable(acctest.RandString(5))
 	templateName := makeTestVariable(acctest.RandString(5))
 	dhcpServerAddress, _ := acctest.RandIpAddress("1.2.0.0/16")
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyDestroy,
@@ -132,7 +132,7 @@ func TestAccMSODHCPRelayPolicy_Update(t *testing.T) {
 	otherDisplayName := makeTestVariable(acctest.RandString(5))
 	schemaName := makeTestVariable(acctest.RandString(5))
 	templateName := makeTestVariable(acctest.RandString(5))
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyDestroy,
@@ -177,7 +177,7 @@ func TestAccMSODHCPRelayPolicy_Negative(t *testing.T) {
 	displayName := makeTestVariable(acctest.RandString(5))
 	schemaName := makeTestVariable(acctest.RandString(5))
 	templateName := makeTestVariable(acctest.RandString(5))
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyDestroy,
@@ -220,7 +220,7 @@ func TestAccMSODHCPRelayPolicy_Negative(t *testing.T) {
 func TestAccMSODHCPRelayPolicy_MultipleCreateDelete(t *testing.T) {
 	tenant := tenantNames[0]
 	name := makeTestVariable(acctest.RandString(5))
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyDestroy,

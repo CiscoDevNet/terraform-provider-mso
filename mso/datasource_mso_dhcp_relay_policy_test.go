@@ -24,7 +24,7 @@ func TestAccMSODHCPRelayPolicy_DataSource(t *testing.T) {
 	dhcpServerAddress, _ := acctest.RandIpAddress("1.2.0.0/16")
 	randomParameter := acctest.RandStringFromCharSet(5, "abcdefghijklmnopqrstuvwxyz")
 	randomValue := acctest.RandString(5)
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyDestroy,
