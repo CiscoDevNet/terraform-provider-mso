@@ -119,12 +119,13 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 					"application",
 					"service",
 				}, false),
+				Default: "application",
 			},
 			"cloud_service_epg_config": &schema.Schema{
 				Type: schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"access_type": &schema.Schema{
+						"access_type": {
 							Type:     schema.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
@@ -133,7 +134,7 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 								"public_and_private",
 							}, false),
 						},
-						"deployment_type": &schema.Schema{
+						"deployment_type": {
 							Type:     schema.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
@@ -142,7 +143,7 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 								"third_party",
 							}, false),
 						},
-						"service_type": &schema.Schema{
+						"service_type": {
 							Type:     schema.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
@@ -163,7 +164,7 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 								"custom",
 							}, false),
 						},
-						"custom_service_type": &schema.Schema{
+						"custom_service_type": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -241,7 +242,68 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
 							}
 							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
+							d.Set("epg_type", models.StripQuotes(epgCont.S("epgType").String()))
+							if d.Get("epg_type") == "service" {
+								services := make([]interface{}, 0)
+								map_service := make(map[string]interface{})
+								servicesCont := epgCont.S("cloudServiceEpgConfig")
 
+								if models.StripQuotes(servicesCont.S("accessType").String()) == "Private" {
+									map_service["access_type"] = "private"
+								} else if models.StripQuotes(servicesCont.S("accessType").String()) == "Public" {
+									map_service["access_type"] = "public"
+								} else if models.StripQuotes(servicesCont.S("accessType").String()) == "PublicAndPrivate" {
+									map_service["access_type"] = "public_and_private"
+								}
+
+								if models.StripQuotes(servicesCont.S("deploymentType").String()) == "CloudNative" {
+									map_service["deployment_type"] = "cloud_native"
+								} else if models.StripQuotes(servicesCont.S("deploymentType").String()) == "CloudNativeManaged" {
+									map_service["deployment_type"] = "cloud_native_managed"
+								} else if models.StripQuotes(servicesCont.S("deploymentType").String()) == "Third-party" {
+									map_service["deployment_type"] = "third_party"
+								}
+
+								if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-ApiManagement" {
+									map_service["service_type"] = "azure_api_management_services"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-CosmosDB" {
+									map_service["service_type"] = "azure_cosmos_db"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-Databricks" {
+									map_service["service_type"] = "azure_databricks"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-SqlServer" {
+									map_service["service_type"] = "azure_sql"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-Storage" {
+									map_service["service_type"] = "azure_storage"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-StorageBlob" {
+									map_service["service_type"] = "azure_storage_blob"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-StorageFile" {
+									map_service["service_type"] = "azure_storage_file"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-StorageQueue" {
+									map_service["service_type"] = "azure_storage_queue"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-StorageTable" {
+									map_service["service_type"] = "azure_storage_table"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-AksCluster" {
+									map_service["service_type"] = "azure_kubernetes_services"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-ADDS" {
+									map_service["service_type"] = "azure_ad_domain_services"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-ContainerRegistry" {
+									map_service["service_type"] = "azure_contain_registry"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-KeyVault" {
+									map_service["service_type"] = "azure_key_vault"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Azure-Redis" {
+									map_service["service_type"] = "redis_cache"
+								} else if models.StripQuotes(servicesCont.S("serviceType").String()) == "Custom" {
+									map_service["service_type"] = "custom"
+									map_service["custom_service_type"] = models.StripQuotes(servicesCont.S("customSvcType").String())
+								}
+
+								services = append(services, map_service)
+								d.Set("cloud_service_epg_config", services)
+
+							} else {
+								assign_empty := make([]interface{}, 0)
+								d.Set("cloud_service_epg_config", assign_empty)
+							}
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
 							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
@@ -476,25 +538,6 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
 							}
 							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
-							d.Set("epg_type", models.StripQuotes(epgCont.S("epgType").String()))
-							if d.Get("epg_type") == "service" {
-								services := make([]interface{}, 0)
-								map_service := make(map[string]interface{})
-
-								servicesCont := epgCont.S("cloudServiceEpgConfig")
-								log.Printf("SERVSERV %s", servicesCont)
-								if err != nil {
-									return fmt.Errorf("Unable to parse the Cloud Services")
-								}
-
-								map_service["deployment_type"] = models.StripQuotes(servicesCont.S("deploymentType").String())
-								map_service["access_type"] = models.StripQuotes(servicesCont.S("accessType").String())
-								map_service["service_type"] = models.StripQuotes(servicesCont.S("serviceType").String())
-								log.Printf("SERVSERV %s", map_service)
-								services = append(services, map_service)
-
-								d.Set("cloud_service_epg_config", services)
-							}
 
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -531,7 +574,7 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 }
 
 func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template BD: Beginning Update")
+	log.Printf("[DEBUG] %s: Beginning Update", d.Id())
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -666,7 +709,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 }
 
 func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template BD: Beginning Update")
+	log.Printf("[DEBUG] %s: Beginning Delete", d.Id())
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
