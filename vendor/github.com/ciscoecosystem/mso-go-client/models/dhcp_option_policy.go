@@ -81,9 +81,7 @@ func PrepareDHCPOptionPolicyModelForUpdate(remotePolicyCont *container.Container
 			newOptionList = append(newOptionList, remoteOption)
 		}
 	}
-
 	fmt.Printf("newOptionList: %v\n", newOptionList)
-
 	newPolicy.DHCPOption = newOptionList
 	return newPolicy, nil
 }
