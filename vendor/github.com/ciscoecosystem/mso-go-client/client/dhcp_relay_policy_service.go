@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 )
@@ -41,8 +42,17 @@ func (client *Client) ReadDHCPRelayPolicy(id string) (*container.Container, erro
 }
 
 func (client *Client) UpdateDHCPRelayPolicy(id string, obj *models.DHCPRelayPolicy) (*container.Container, error) {
+	remotePolicy, err := client.ReadDHCPRelayPolicy(id)
+	if err != nil {
+		return nil, err
+	}
+
+	payloadModel, err := models.PrepareDHCPRelayPolicyModelForUpdate(remotePolicy, obj)
+	if err != nil {
+		return nil, err
+	}
 	path := "api/v1/policies/dhcp/relay/" + id
-	cont, err := client.Put(path, obj)
+	cont, err := client.Put(path, payloadModel)
 	if err != nil {
 		return nil, err
 	}
