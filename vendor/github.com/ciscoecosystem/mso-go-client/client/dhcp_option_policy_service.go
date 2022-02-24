@@ -42,8 +42,18 @@ func (client *Client) ReadDHCPOptionPolicy(id string) (*container.Container, err
 }
 
 func (client *Client) UpdateDHCPOptionPolicy(id string, obj *models.DHCPOptionPolicy) (*container.Container, error) {
+	remotePolicy, err := client.ReadDHCPOptionPolicy(id)
+	if err != nil {
+		return nil, err
+	}
+
+	payloadModel, err := models.PrepareDHCPOptionPolicyModelForUpdate(remotePolicy, obj)
+	if err != nil {
+		return nil, err
+	}
+
 	path := "api/v1/policies/dhcp/option/" + id
-	cont, err := client.Put(path, obj)
+	cont, err := client.Put(path, payloadModel)
 	if err != nil {
 		return nil, err
 	}
