@@ -35,9 +35,13 @@ resource "mso_dhcp_relay_policy" "example" {
 - `tenant_id` - (Required) ID of parent `mso_tenant` resource.
 - `description` - (Optional) The description for this DHCP Relay Policy.
 - `dhcp_relay_policy_provider` - (Optional) DHCP Provider configuration to be associated to the Policy.
-  - `epg` - (Required) The reference of the EPG.
-  - `external_epg` - (Required) The reference of the External EPG. external_epg and epg both are not expected simultaneously, only one of them is required at a time.
+  - `epg` - (Optional) The reference of the EPG.
+  - `external_epg` - (Optional) The reference of the External EPG.
   - `dhcp_server_address` - (Required) The DHCP Server Address.
+
+## Note
+
+external_epg and epg both are not expected simultaneously, only one of them is required at a time.
 
 ## Attribute Reference
 
