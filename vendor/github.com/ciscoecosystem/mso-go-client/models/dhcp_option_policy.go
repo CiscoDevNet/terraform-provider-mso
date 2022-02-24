@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
 )
@@ -34,7 +35,7 @@ func (model *DHCPOptionPolicy) ToMap() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	err = json.Unmarshal(jsonObj, &objMap)
 	if err != nil {
 		return nil, err
@@ -52,4 +53,38 @@ func DHCPOptionPolicyFromContainer(cont *container.Container) (*DHCPOptionPolicy
 	}
 
 	return &policy, nil
+}
+
+func PrepareDHCPOptionPolicyModelForUpdate(remotePolicyCont *container.Container, newPolicy *DHCPOptionPolicy) (*DHCPOptionPolicy, error) {
+	remotePolicy := DHCPOptionPolicy{}
+	err := json.Unmarshal(remotePolicyCont.Bytes(), &remotePolicy)
+	if err != nil {
+		return nil, err
+	}
+
+	newOptionList := make([]DHCPOption, 0)
+
+	for _, newOption := range newPolicy.DHCPOption {
+		if newOption.ID != "remove" {
+			newOptionList = append(newOptionList, newOption)
+		}
+	}
+
+	fmt.Printf("newOptionList: %v\n", newOptionList)
+
+	for _, remoteOption := range remotePolicy.DHCPOption { 
+		found := false
+		for _, newOption := range newPolicy.DHCPOption {
+			if newOption.Name == remoteOption.Name {
+				found = true
+			}
+		}
+		if !found {
+			newOptionList = append(newOptionList, remoteOption)
+		}
+	}
+	fmt.Printf("newOptionList: %v\n", newOptionList)
+
+	newPolicy.DHCPOption = newOptionList
+	return newPolicy, nil
 }

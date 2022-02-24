@@ -202,10 +202,18 @@ func resourceMSODHCPOptionPolicyUpdate(d *schema.ResourceData, m interface{}) er
 
 		optionsToDel := oldOptionSet.Difference(newOptionSet).List()
 		optionsToCreate := newOptionSet.Difference(oldOptionSet).List()
-		optionModelList := make([]models.DHCPOption, 0)
 
-		fmt.Printf("optionsToCreate: %v\n", optionsToCreate)
-		fmt.Printf("optionsToDel: %v\n", optionsToDel)
+		for i, delOption := range optionsToDel {
+			for _, crOption := range optionsToCreate {
+				if crOption.(map[string]interface{})["name"].(string) == delOption.(map[string]interface{})["name"].(string) {
+					fmt.Printf("optionsToDel bfr: %v\n", optionsToDel)
+					optionsToDel = append(optionsToDel[:i], optionsToDel[i+1:]...)
+					fmt.Printf("optionsToDel aft: %v\n", optionsToDel)
+				}
+			}
+		}
+
+		optionModelList := make([]models.DHCPOption, 0)
 
 		for _, option := range optionsToDel {
 			optionMap := option.(map[string]interface{})
@@ -216,7 +224,7 @@ func resourceMSODHCPOptionPolicyUpdate(d *schema.ResourceData, m interface{}) er
 			})
 		}
 
-		for _, option := range optionsToCreate {
+		for _, option := range newOptionSet.List() {
 			optionMap := option.(map[string]interface{})
 			optionModelList = append(optionModelList, models.DHCPOption{
 				Name: optionMap["name"].(string),
@@ -225,6 +233,7 @@ func resourceMSODHCPOptionPolicyUpdate(d *schema.ResourceData, m interface{}) er
 			})
 		}
 
+		fmt.Printf("optionModelList: %v\n", optionModelList)
 		DHCPOptionPolicy.DHCPOption = optionModelList
 	}
 
