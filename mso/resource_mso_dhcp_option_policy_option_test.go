@@ -75,9 +75,6 @@ func TestAccMSODHCPOptionPolicyOption_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: MSODHCPOptionPolicyOptionWithRequired(tenant, optionPolicyName, name),
-			},
-			{
 				Config: MSODHCPOptionPolicyOptionWithRequired(tenant, nameOther, name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMSODHCPOptionPolicyOptionExists(resourceName, &opt2),
