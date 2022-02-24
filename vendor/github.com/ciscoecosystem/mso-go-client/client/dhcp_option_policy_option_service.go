@@ -20,13 +20,11 @@ func (client *Client) CreateDHCPOptionPolicyOption(obj *models.DHCPOptionPolicyO
 	if err != nil {
 		return err
 	}
-
 	option := models.DHCPOption{
 		Data: obj.Data,
 		ID:   obj.ID,
 		Name: obj.Name,
 	}
-
 	DHCPOptionPolicy.DHCPOption = append(DHCPOptionPolicy.DHCPOption, option)
 	_, err = client.UpdateDHCPOptionPolicy(optionPolicyID, DHCPOptionPolicy)
 	if err != nil {
@@ -49,7 +47,6 @@ func (client *Client) ReadDHCPOptionPolicyOption(id string) (*models.DHCPOptionP
 	if err != nil {
 		return nil, err
 	}
-
 	flag := false
 	dhcpOption := models.DHCPOptionPolicyOption{}
 	for _, option := range DHCPOptionPolicy.DHCPOption {
@@ -65,6 +62,7 @@ func (client *Client) ReadDHCPOptionPolicyOption(id string) (*models.DHCPOptionP
 	if flag {
 		return &dhcpOption, nil
 	}
+
 	return nil, fmt.Errorf("No DHCP Option Policy found")
 }
 
@@ -81,7 +79,6 @@ func (client *Client) UpdateDHCPOptionPolicyOption(obj *models.DHCPOptionPolicyO
 	if err != nil {
 		return err
 	}
-
 	NewOptions := make([]models.DHCPOption, 0, 1)
 	NewOption := models.DHCPOption{
 		Data: obj.Data,
@@ -96,7 +93,6 @@ func (client *Client) UpdateDHCPOptionPolicyOption(obj *models.DHCPOptionPolicyO
 			NewOptions = append(NewOptions, NewOption)
 		}
 	}
-
 	DHCPOptionPolicy.DHCPOption = NewOptions
 	_, err = client.UpdateDHCPOptionPolicy(optionPolicyID, DHCPOptionPolicy)
 	if err != nil {
@@ -130,5 +126,6 @@ func (client *Client) DeleteDHCPOptionPolicyOption(id string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

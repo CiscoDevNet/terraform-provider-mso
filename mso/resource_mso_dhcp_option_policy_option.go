@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sync"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
+
+var dhcpMutex sync.Mutex
 
 func resourceMSODHCPOptionPolicyOption() *schema.Resource {
 	return &schema.Resource{
@@ -101,11 +104,13 @@ func resourceMSODHCPOptionPolicyOptionCreate(d *schema.ResourceData, m interface
 	}
 	log.Printf("DHCPOptionPolicyOptionModel.PolicyName %v", DHCPOptionPolicyOptionModel.PolicyName)
 	log.Printf("DHCPOptionPolicyOptionModel.Name %v", DHCPOptionPolicyOptionModel.Name)
+	dhcpMutex.Lock()
 	err := msoClient.CreateDHCPOptionPolicyOption(&DHCPOptionPolicyOptionModel)
 	id := DHCPOptionPolicyOptionModeltoId(&DHCPOptionPolicyOptionModel)
 	if err != nil {
 		return err
 	}
+	dhcpMutex.Unlock()
 	d.SetId(id)
 	log.Printf("[DEBUG] DHCP Option Policy Option: Creation Completed %s", d.Id())
 	return resourceMSODHCPOptionPolicyOptionRead(d, m)
@@ -125,10 +130,12 @@ func resourceMSODHCPOptionPolicyOptionUpdate(d *schema.ResourceData, m interface
 		Data:       optionData.(string),
 		PolicyName: optionPolicyName.(string),
 	}
+	dhcpMutex.Lock()
 	err := msoClient.UpdateDHCPOptionPolicyOption(&newPolicy)
 	if err != nil {
 		return err
 	}
+	dhcpMutex.Unlock()
 	d.SetId(DHCPOptionPolicyOptionModeltoId(&newPolicy))
 	log.Println("[DEBUG] DHCP Option Policy Option: Update Completed", d.Id())
 	return resourceMSODHCPOptionPolicyOptionRead(d, m)
@@ -138,10 +145,12 @@ func resourceMSODHCPOptionPolicyOptionDelete(d *schema.ResourceData, m interface
 	log.Println("[DEBUG] DHCP Option Policy Option: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
 	id := d.Id()
+	dhcpMutex.Lock()
 	err := msoClient.DeleteDHCPOptionPolicyOption(id)
 	if err != nil {
 		return err
 	}
+	dhcpMutex.Unlock()
 	log.Println("[DEBUG] DHCP Option Policy Option: Destroy Completed", d.Id())
 	d.SetId("")
 	return nil
