@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
 )
