@@ -107,17 +107,34 @@ func getDHCPRelayPolicy(client *client.Client, id string) (*models.DHCPRelayPoli
 func setDHCPRelayPolicy(DHCPRelayPolicy *models.DHCPRelayPolicy, d *schema.ResourceData) {
 	d.Set("description", DHCPRelayPolicy.Desc)
 	d.Set("name", DHCPRelayPolicy.Name)
-	d.Set("tenant_id", DHCPRelayPolicy.TenantID)
-	providerList := make([]map[string]string, 0)
-	for _, provider := range DHCPRelayPolicy.DHCPProvider {
-		providerList = append(providerList, map[string]string{
-			"external_epg":        provider.ExternalEPG,
-			"epg":                 provider.EPG,
-			"dhcp_server_address": provider.DHCPServerAddress,
-			"tenant_id":           provider.TenantID,
-		})
+	tfProviderList := make([]map[string]string, 0)
+	if _, ok := d.GetOk("tenant_id"); ok {
+		providerList := d.Get("dhcp_relay_policy_provider").([]interface{})
+		for _, provider := range providerList {
+			providerMap := provider.(map[string]interface{})
+			for _, remoteProvider := range DHCPRelayPolicy.DHCPProvider {
+				if providerMap["external_epg"].(string) == remoteProvider.ExternalEPG && providerMap["epg"] == remoteProvider.EPG && providerMap["dhcp_server_address"] == remoteProvider.DHCPServerAddress {
+					tfProviderList = append(tfProviderList, map[string]string{
+						"epg":                 remoteProvider.EPG,
+						"external_epg":        remoteProvider.ExternalEPG,
+						"dhcp_server_address": remoteProvider.DHCPServerAddress,
+						"tenant_id":           remoteProvider.TenantID,
+					})
+				}
+			}
+		}
+	} else {
+		for _, provider := range DHCPRelayPolicy.DHCPProvider {
+			tfProviderList = append(tfProviderList, map[string]string{
+				"external_epg":        provider.ExternalEPG,
+				"epg":                 provider.EPG,
+				"dhcp_server_address": provider.DHCPServerAddress,
+				"tenant_id":           provider.TenantID,
+			})
+		}
 	}
-	d.Set("dhcp_relay_policy_provider", providerList)
+	d.Set("tenant_id", DHCPRelayPolicy.TenantID)
+	d.Set("dhcp_relay_policy_provider", tfProviderList)
 	d.SetId(DHCPRelayPolicy.ID)
 }
 
@@ -187,13 +204,10 @@ func resourceMSODHCPRelayPolicyUpdate(d *schema.ResourceData, m interface{}) err
 		DHCPRelayPolicy.Desc = desc.(string)
 	}
 
-	if providerList, ok := d.GetOk("dhcp_relay_policy_provider"); ok {
-		err := ValidateProviderList(providerList.([]interface{}))
-		if err != nil {
-			return err
-		}
-		providerModelList := make([]models.DHCPProvider, 0)
-		for _, provider := range providerList.([]interface{}) {
+	providerModelList := make([]models.DHCPProvider, 0)
+	if d.HasChange("dhcp_relay_policy_provider") {
+		providerList := d.Get("dhcp_relay_policy_provider").([]interface{})
+		for _, provider := range providerList {
 			providerMap := provider.(map[string]interface{})
 			if providerMap["epg"] == "" && providerMap["external_epg"] == "" {
 				return fmt.Errorf("expected any one of the epg or external_epg")
@@ -208,6 +222,51 @@ func resourceMSODHCPRelayPolicyUpdate(d *schema.ResourceData, m interface{}) err
 				TenantID:          tenantId,
 			})
 		}
+		err := ValidateProviderList(providerList)
+		if err != nil {
+			return err
+		}
+		oldProviders, newProviders := d.GetChange("dhcp_relay_policy_provider")
+		oldProvidersList := oldProviders.([]interface{})
+		newProvidersList := newProviders.([]interface{})
+
+		providerModelList := make([]models.DHCPProvider, 0)
+		oldProviderHashMap := make(map[string]int, 0)
+
+		for i, v := range oldProvidersList {
+			val := v.(map[string]interface{})
+			oldProviderHashMap[fmt.Sprintf("%s%s%s", val["dhcp_server_address"].(string), val["epg"].(string), val["external_epg"].(string))] = i
+		}
+		newProviderHashMap := make(map[string]int, 0)
+		for i, v := range newProvidersList {
+			val := v.(map[string]interface{})
+			newProviderHashMap[fmt.Sprintf("%s%s%s", val["dhcp_server_address"].(string), val["epg"].(string), val["external_epg"].(string))] = i
+		}
+
+		for k, i := range oldProviderHashMap {
+			if _, ok := newProviderHashMap[k]; !ok {
+				providerMap := oldProvidersList[i].(map[string]interface{})
+				providerModelList = append(providerModelList, models.DHCPProvider{
+					ExternalEPG:       providerMap["external_epg"].(string),
+					EPG:               providerMap["epg"].(string),
+					DHCPServerAddress: providerMap["dhcp_server_address"].(string),
+					TenantID:          providerMap["tenant_id"].(string),
+					Operation:         "remove",
+				})
+			}
+		}
+
+		for _, provider := range newProvidersList {
+			providerMap := provider.(map[string]interface{})
+			providerModelList = append(providerModelList, models.DHCPProvider{
+				ExternalEPG:       providerMap["external_epg"].(string),
+				EPG:               providerMap["epg"].(string),
+				DHCPServerAddress: providerMap["dhcp_server_address"].(string),
+				TenantID:          providerMap["tenant_id"].(string),
+			})
+		}
+
+		log.Printf("providerModelList: %v\n", providerModelList)
 		DHCPRelayPolicy.DHCPProvider = providerModelList
 	}
 

@@ -146,7 +146,6 @@ func MSODHCPRelayPolicyDataSourceWithoutName(tenant, name string) string {
 	resource "mso_dhcp_relay_policy" "test" {
 		tenant_id = mso_tenant.test.id
 		name = "%s"
-
 	}
 	data "mso_dhcp_relay_policy" "test" {}
 	`, tenant, tenant, name)
@@ -181,7 +180,6 @@ func MSODHCPRelayPolicyDataSourceAttr(tenant, name, key, val string) string {
 	resource "mso_dhcp_relay_policy" "test" {
 		tenant_id = data.mso_tenant.test.id
 		name = "%s"
-
 	}
 	data "mso_dhcp_relay_policy" "test" {
 		name = mso_dhcp_relay_policy.test.name
