@@ -279,7 +279,7 @@ func testAccCheckMSODHCPRelayPolicyDestroy(s *terraform.State) error {
 		if rs.Type == "mso_dhcp_relay_policy" {
 			_, err := client.ReadDHCPRelayPolicy(rs.Primary.ID)
 			if err == nil {
-				return fmt.Errorf("Label still exists")
+				return fmt.Errorf("DHCP Relay Policy still exists")
 			}
 		} else {
 			continue
