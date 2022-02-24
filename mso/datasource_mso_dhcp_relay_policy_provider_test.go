@@ -14,7 +14,7 @@ func TestAccMSODHCPRelayPolicyProvider_DataSource(t *testing.T) {
 	// resourceName := "mso_dhcp_relay_policy_provider.test"
 	// dataSourceName := "data.mso_dhcp_relay_policy_provider.test"
 	polName := "need_to_update"
-	addr,_:=acctest.RandIpAddress("10.6.0.0/16")
+	addr, _ := acctest.RandIpAddress("10.6.0.0/16")
 	randomParameter := acctest.RandStringFromCharSet(5, "abcdefghijklmnopqrstuvwxyz")
 	randomValue := acctest.RandString(5)
 	resource.ParallelTest(t, resource.TestCase{
@@ -24,16 +24,16 @@ func TestAccMSODHCPRelayPolicyProvider_DataSource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				//TODO: need to update resource block
-				Config:      MSODHCPRelayPolicyProviderDataSourceWithoutRequired(polName,addr, "dhcp_relay_policy_name"),
+				Config:      MSODHCPRelayPolicyProviderDataSourceWithoutRequired(polName, addr, "dhcp_relay_policy_name"),
 				ExpectError: regexp.MustCompile(`Missing required argument`),
 			},
 			{
-				Config:      MSODHCPRelayPolicyProviderDataSourceWithoutRequired(polName,addr, "dhcp_server_address"),
+				Config:      MSODHCPRelayPolicyProviderDataSourceWithoutRequired(polName, addr, "dhcp_server_address"),
 				ExpectError: regexp.MustCompile(`Missing required argument`),
 			},
 			//TODO: case when both epg and external epg are defined
 			{
-				Config:MSODHCPRelayPolicyProviderDataSourceAttr(polName,addr,randomParameter,randomValue),
+				Config:      MSODHCPRelayPolicyProviderDataSourceAttr(polName, addr, randomParameter, randomValue),
 				ExpectError: regexp.MustCompile(`An argument named(.)+is not expected here.`),
 			},
 			{
@@ -72,8 +72,8 @@ func MSODHCPRelayPolicyProviderDataSourceWithoutRequired(polname, addr, attr str
 	return fmt.Sprintf(rBlock, polname, addr)
 }
 
-func MSODHCPRelayPolicyProviderDataSourceAttr(polname,addr,key,value string) string{
-	resource:=fmt.Sprintf(`
+func MSODHCPRelayPolicyProviderDataSourceAttr(polname, addr, key, value string) string {
+	resource := fmt.Sprintf(`
 	resource "mso_dhcp_relay_policy_provider" "test" {
 		dhcp_relay_policy_name = "%s"
 		dhcp_server_address = "%s"
@@ -83,6 +83,6 @@ func MSODHCPRelayPolicyProviderDataSourceAttr(polname,addr,key,value string) str
 		dhcp_server_address = mso_dhcp_relay_policy_provider.test.dhcp_server_address
 		%s = "%s"
 	}
-	`,polname,addr,key,value)
+	`, polname, addr, key, value)
 	return resource
 }

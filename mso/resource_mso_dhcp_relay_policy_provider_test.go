@@ -13,37 +13,59 @@ import (
 )
 
 func TestAccMSODHCPRelayPolicyProvider_Basic(t *testing.T) {
-	// var prov1 models.IntersiteL3outs
-	// var prov2 models.IntersiteL3outs
+	var prov1 models.DHCPRelayPolicyProvider
+	var prov2 models.DHCPRelayPolicyProvider
 	resourceName := "mso_dhcp_relay_policy_provider.test"
 	addr, _ := acctest.RandIpAddress("10.1.0.0/16")
 	// addrother,_:=acctest.RandIpAddress("10.2.0.0/16")
-	polName := "need_to_update"
+	name := makeTestVariable(acctest.RandString(5))
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyProviderDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      MSODHCPRelayPolicyProviderWithoutRequired(polName, addr, "dhcp_relay_policy_name"),
+				Config:      MSODHCPRelayPolicyProviderWithoutRequired(tenantNames[0], name, addr, "dhcp_relay_policy_name"),
 				ExpectError: regexp.MustCompile(`Missing required argument`),
 			},
 			{
-				Config:      MSODHCPRelayPolicyProviderWithoutRequired(polName, addr, "dhcp_server_address"),
+				Config:      MSODHCPRelayPolicyProviderWithoutRequired(tenantNames[0], name, addr, "dhcp_server_address"),
 				ExpectError: regexp.MustCompile(`Missing required argument`),
 			},
 			{
-				Config:      MSODHCPRelayPolicyProviderWithRequired(polName, addr),
+				Config:      MSODHCPRelayPolicyProviderWithRequired(tenantNames[0], name, addr),
 				ExpectError: regexp.MustCompile(`one of (.)+ must be specified`),
 			},
-			//TODO: case when both epg and external epg are defined
-			//TODO: case with epg
+			// {
+			// 	Config:      MSODHCPRelayPolicyProviderWithEpgExtEpg(tenantNames[0], name, addr, epg),
+			// 	ExpectError: regexp.MustCompile(`(.)+ conflicts with external_epg_ref`),
+			// },
+			{
+				Config: MSODHCPRelayPolicyProviderWithEpg(tenantNames[0], name, addr, epg),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMSODHCPRelayPolicyProviderExists(resourceName, &prov1),
+					resource.TestCheckResourceAttr(resourceName, "dhcp_relay_policy_name", name),
+					resource.TestCheckResourceAttr(resourceName, "dhcp_server_address", addr),
+					resource.TestCheckResourceAttr(resourceName, "epg_ref", epg),
+					resource.TestCheckResourceAttr(resourceName, "external_epg_ref", ""),
+				),
+			},
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-			//TODO: case with external epg
+			{
+				Config: MSODHCPRelayPolicyProviderWithExtEpg(tenantNames[0], name, addr),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMSODHCPRelayPolicyProviderExists(resourceName, &prov2),
+					resource.TestCheckResourceAttr(resourceName, "dhcp_relay_policy_name", name),
+					resource.TestCheckResourceAttr(resourceName, "dhcp_server_address", addr),
+					resource.TestCheckResourceAttr(resourceName, "epg_ref", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "external_epg_ref"),
+					testAccCheckMSODHCPRelayPolicyProviderIdNotEqual(&prov1, &prov2),
+				),
+			},
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
@@ -148,34 +170,108 @@ func testAccCheckMSODHCPRelayPolicyProviderIdNotEqual(m1, m2 *models.DHCPRelayPo
 	}
 }
 
-func MSODHCPRelayPolicyProviderWithoutRequired(polname, addr, attr string) string {
-	rBlock := ""
+func MSODHCPRelayPolicyProviderWithExtEpg(tenant, name, addr string) string {
+	resource := CreateDHCPRelayPolicy(tenant, name)
+	resource += fmt.Sprintf(`
+	resource mso_schema "test"{
+		name = "%s"
+		template_name = "%s"
+		tenant_id = data.mso_tenant.test.id
+	}
+	resource mso_schema_template_vrf "test" {
+		schema_id = mso_schema.test.id
+		template= mso_schema.test.template_name
+		name= "%s"
+		display_name= "%s"
+	}
+	resource "mso_schema_template_external_epg" "test" {
+		schema_id = mso_schema.test.id
+		template_name = mso_schema.test.template_name
+		external_epg_name = "%s"
+		display_name = "%s"
+		vrf_name = mso_schema_template_vrf.test.name
+	}
+	resource "mso_dhcp_relay_policy_provider" "test" {
+		dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
+		dhcp_server_address = "%s"
+		external_epg_ref = mso_schema_template_external_epg.test.id
+	}
+	`, name, name, name, name, name, name, addr)
+	return resource
+}
+
+func MSODHCPRelayPolicyProviderWithEpg(tenant, name, addr, epg string) string {
+	resource := CreateDHCPRelayPolicy(tenant, name)
+	resource += fmt.Sprintf(`
+	resource "mso_dhcp_relay_policy_provider" "test" {
+		dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
+		dhcp_server_address = "%s"
+		epg_ref = "%s"
+	}
+	`, addr, epg)
+	return resource
+}
+
+func MSODHCPRelayPolicyProviderWithEpgExtEpg(tenant, name, addr, epg string) string {
+	resource := CreateDHCPRelayPolicy(tenant, name)
+	resource += fmt.Sprintf(`
+	resource mso_schema "test"{
+		name = "%s"
+		template_name = "%s"
+		tenant_id = data.mso_tenant.test.id
+	}
+	resource mso_schema_template_vrf "test" {
+		schema_id = mso_schema.test.id
+		template= mso_schema.test.template_name
+		name= "%s"
+		display_name= "%s"
+	}
+	resource "mso_schema_template_external_epg" "test" {
+		schema_id = mso_schema.test.id
+		template_name = mso_schema.test.template_name
+		external_epg_name = "%s"
+		display_name = "%s"
+		vrf_name = mso_schema_template_vrf.test.name
+	}
+	resource "mso_dhcp_relay_policy_provider" "test" {
+		dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
+		dhcp_server_address = "%s"
+		epg_ref = "%s"
+		external_epg_ref = mso_schema_template_external_epg.test.id
+	}
+	`, name, name, name, name, name, name, addr, epg)
+	return resource
+}
+
+func MSODHCPRelayPolicyProviderWithoutRequired(tenant, name, addr, attr string) string {
+	rBlock := CreateDHCPRelayPolicy(tenant, name)
 	switch attr {
 	case "dhcp_relay_policy_name":
 		rBlock += `
 		resource "mso_dhcp_relay_policy_provider" "test" {
-		#	dhcp_relay_policy_name = "%s"
+		#	dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
 			dhcp_server_address = "%s"
 		}
 		`
 	case "dhcp_server_address":
 		rBlock += `
 		resource "mso_dhcp_relay_policy_provider" "test" {
-			dhcp_relay_policy_name = "%s"
+			dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
 		#	dhcp_server_address = "%s"
 		}
 		`
 	}
-	return fmt.Sprintf(rBlock, polname, addr)
+	return fmt.Sprintf(rBlock, addr)
 }
 
-func MSODHCPRelayPolicyProviderWithRequired(polname, addr string) string {
-	resource := fmt.Sprintf(`
+func MSODHCPRelayPolicyProviderWithRequired(tenant, name, addr string) string {
+	resource := CreateDHCPRelayPolicy(tenant, name)
+	resource += fmt.Sprintf(`
 	resource "mso_dhcp_relay_policy_provider" "test" {
-		dhcp_relay_policy_name = "%s"
+		dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
 		dhcp_server_address = "%s"
 	}
-	`, polname, addr)
+	`, addr)
 	return resource
 }
 
