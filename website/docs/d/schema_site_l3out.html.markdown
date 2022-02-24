@@ -14,11 +14,11 @@ Data source for MSO schema site L3out, to fetch the MSO schema site L3out detail
 
 ```hcl
 data "mso_schema_site_l3out" "exmple" {
-    vrf_name = data.mso_schema_site_vrf.example.vrf_name
+    vrf_name = mso_schema_site_vrf.example.vrf_name
     l3out_name = mso_schema_site_l3out.example.l3out_name
-    template_name = data.mso_site.example.template_name
-    site_id = data.mso_site.example.site_id
-    schema_id = data.mso_site.example.schema_id
+    template_name = mso_site.example.template_name
+    site_id = mso_site.example.site_id
+    schema_id = mso_site.example.schema_id
 }
 ```
 
