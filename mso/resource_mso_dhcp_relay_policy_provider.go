@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
+
+var dhcpRelayPolicyMut sync.Mutex
 
 func resourceMSODHCPRelayPolicyProvider() *schema.Resource {
 	return &schema.Resource{
@@ -79,6 +82,7 @@ func resourceMSODHCPRelayPolicyProviderCreate(d *schema.ResourceData, m interfac
 	if extEpgRef, ok := d.GetOk("external_epg_ref"); ok {
 		DHCPRelayPolicyProviderModel.ExternalEpgRef = extEpgRef.(string)
 	}
+	dhcpRelayPolicyMut.Lock()
 	err := msoClient.CreateDHCPRelayPolicyProvider(&DHCPRelayPolicyProviderModel)
 	id := DHCPRelayPolicyProviderModeltoId(&DHCPRelayPolicyProviderModel)
 	if err != nil {
@@ -86,7 +90,9 @@ func resourceMSODHCPRelayPolicyProviderCreate(d *schema.ResourceData, m interfac
 	}
 	d.SetId(id)
 	log.Printf("[DEBUG] DHCP Relay Policy Provider: Creation Completed %s", d.Id())
-	return resourceMSODHCPRelayPolicyProviderRead(d, m)
+	err = resourceMSODHCPRelayPolicyProviderRead(d, m)
+	dhcpRelayPolicyMut.Unlock()
+	return err
 }
 
 func resourceMSODHCPRelayPolicyProviderRead(d *schema.ResourceData, m interface{}) error {
@@ -128,13 +134,16 @@ func resourceMSODHCPRelayPolicyProviderUpdate(d *schema.ResourceData, m interfac
 		EpgRef:         newEpg.(string),
 		ExternalEpgRef: newExternalEpg.(string),
 	}
+	dhcpRelayPolicyMut.Lock()
 	err := msoClient.UpdateDHCPRelayPolicyProvider(&newPolicy, &oldPolicy)
 	if err != nil {
 		return err
 	}
 	d.SetId(DHCPRelayPolicyProviderModeltoId(&newPolicy))
 	log.Println("[DEBUG] DHCP Relay Policy Provider: Update Completed", d.Id())
-	return resourceMSODHCPRelayPolicyProviderRead(d, m)
+	err = resourceMSODHCPRelayPolicyProviderRead(d, m)
+	dhcpRelayPolicyMut.Unlock()
+	return err
 }
 
 func resourceMSODHCPRelayPolicyProviderDelete(d *schema.ResourceData, m interface{}) error {
@@ -145,10 +154,12 @@ func resourceMSODHCPRelayPolicyProviderDelete(d *schema.ResourceData, m interfac
 	if err != nil {
 		return err
 	}
+	dhcpRelayPolicyMut.Lock()
 	err = msoClient.DeleteDHCPRelayPolicyProvider(dhcpRelayPolicyModel)
 	if err != nil {
 		return err
 	}
+	dhcpRelayPolicyMut.Unlock()
 	log.Println("[DEBUG] Schema Site L3out: Beginning Destroy", d.Id())
 	d.SetId("")
 	return nil
