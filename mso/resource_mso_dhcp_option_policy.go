@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 
@@ -47,30 +48,39 @@ func resourceMSODHCPOptionPolicy() *schema.Resource {
 			},
 
 			"option": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[a-zA-Z0-9]+$`), "value should be alphanumeric"),
-						},
-						"id": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[0-9]+$`), "value should be numeric"),
-						},
-						"data": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
-				},
+				Set:      schema.HashResource(DHCPOptionSchema),
+				Elem:     DHCPOptionSchema,
 			},
 		}),
 	}
+}
+
+var DHCPOptionSchema *schema.Resource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+			ValidateFunc: validation.StringMatch(
+				regexp.MustCompile(`^[a-zA-Z0-9]+$`),
+				"value should be alphanumeric",
+			),
+		},
+		"id": {
+			Type:     schema.TypeString,
+			Required: true,
+			ValidateFunc: validation.StringMatch(
+				regexp.MustCompile(`^[0-9]+$`),
+				"value should be numeric",
+			),
+		},
+		"data": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
+		},
+	},
 }
 
 func resourceMSODHCPOptionPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -103,17 +113,34 @@ func getDHCPOptionPolicy(client *client.Client, id string) (*models.DHCPOptionPo
 func setDHCPOptionPolicy(DHCPOptionPolicy *models.DHCPOptionPolicy, d *schema.ResourceData) {
 	d.Set("description", DHCPOptionPolicy.Desc)
 	d.Set("name", DHCPOptionPolicy.Name)
-	d.Set("tenant_id", DHCPOptionPolicy.TenantID)
-	d.SetId(DHCPOptionPolicy.ID)
 	tfOptionList := make([]map[string]string, 0)
-	for _, option := range DHCPOptionPolicy.DHCPOption {
-		tfOptionList = append(tfOptionList, map[string]string{
-			"name": option.Name,
-			"data": option.Data,
-			"id":   option.ID,
-		})
+	if _, ok := d.GetOk("tenant_id"); ok {
+		optionList := d.Get("option").(*schema.Set).List()
+		for _, option := range optionList {
+			optionMap := option.(map[string]interface{})
+			for _, remoteOption := range DHCPOptionPolicy.DHCPOption {
+				if optionMap["name"].(string) != remoteOption.Name {
+					continue
+				}
+				tfOptionList = append(tfOptionList, map[string]string{
+					"name": remoteOption.Name,
+					"data": remoteOption.Data,
+					"id":   remoteOption.ID,
+				})
+			}
+		}
+	} else {
+		for _, remoteOption := range DHCPOptionPolicy.DHCPOption {
+			tfOptionList = append(tfOptionList, map[string]string{
+				"name": remoteOption.Name,
+				"data": remoteOption.Data,
+				"id":   remoteOption.ID,
+			})
+		}
 	}
+	d.Set("tenant_id", DHCPOptionPolicy.TenantID)
 	d.Set("option", tfOptionList)
+	d.SetId(DHCPOptionPolicy.ID)
 }
 
 func resourceMSODHCPOptionPolicyCreate(d *schema.ResourceData, m interface{}) error {
@@ -132,7 +159,7 @@ func resourceMSODHCPOptionPolicyCreate(d *schema.ResourceData, m interface{}) er
 
 	if optionList, ok := d.GetOk("option"); ok {
 		optionModelList := make([]models.DHCPOption, 0)
-		for _, option := range optionList.([]interface{}) {
+		for _, option := range optionList.(*schema.Set).List() {
 			optionMap := option.(map[string]interface{})
 			optionModelList = append(optionModelList, models.DHCPOption{
 				Name: optionMap["name"].(string),
@@ -168,16 +195,36 @@ func resourceMSODHCPOptionPolicyUpdate(d *schema.ResourceData, m interface{}) er
 		DHCPOptionPolicy.Desc = desc.(string)
 	}
 
-	if optionList, ok := d.GetOk("option"); ok {
+	if d.HasChange("option") {
+		oldOptions, newOptions := d.GetChange("option")
+		oldOptionSet := oldOptions.(*schema.Set)
+		newOptionSet := newOptions.(*schema.Set)
+
+		optionsToDel := oldOptionSet.Difference(newOptionSet).List()
+		optionsToCreate := newOptionSet.Difference(oldOptionSet).List()
 		optionModelList := make([]models.DHCPOption, 0)
-		for _, option := range optionList.([]interface{}) {
+
+		fmt.Printf("optionsToCreate: %v\n", optionsToCreate)
+		fmt.Printf("optionsToDel: %v\n", optionsToDel)
+
+		for _, option := range optionsToDel {
 			optionMap := option.(map[string]interface{})
 			optionModelList = append(optionModelList, models.DHCPOption{
 				Name: optionMap["name"].(string),
-				ID:   optionMap["id"].(string),
 				Data: optionMap["data"].(string),
+				ID:   "remove",
 			})
 		}
+
+		for _, option := range optionsToCreate {
+			optionMap := option.(map[string]interface{})
+			optionModelList = append(optionModelList, models.DHCPOption{
+				Name: optionMap["name"].(string),
+				Data: optionMap["data"].(string),
+				ID:   optionMap["id"].(string),
+			})
+		}
+
 		DHCPOptionPolicy.DHCPOption = optionModelList
 	}
 
