@@ -43,6 +43,20 @@ func CreatSchemaSiteConfig(site, tenant, name string) string {
 	return resource
 }
 
+func CreateDHCPRelayPolicy(tenant, polname string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id = data.mso_tenant.test.id
+		name = "%s"		
+	}
+	`, tenant, tenant, polname)
+	return resource
+}
+
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
 	testAccProviders = map[string]terraform.ResourceProvider{
