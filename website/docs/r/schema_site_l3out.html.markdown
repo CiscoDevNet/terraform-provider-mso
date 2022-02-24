@@ -14,11 +14,11 @@ Manages MSO Schema Site L3out.
 
 ```hcl
 resource "mso_schema_site_l3out" "example" {
-    vrf_name = data.mso_schema_site_vrf.example.vrf_name
+    vrf_name = mso_schema_site_vrf.example.vrf_name
     l3out_name = "example"
-    template_name = data.mso_site.example.template_name
-    site_id = data.mso_site.example.site_id
-    schema_id = data.mso_site.example.schema_id 
+    template_name = mso_site.example.template_name
+    site_id = mso_site.example.site_id
+    schema_id = mso_site.example.schema_id 
 }
 
 ```
