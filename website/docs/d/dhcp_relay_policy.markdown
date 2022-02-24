@@ -28,5 +28,5 @@ data "mso_dhcp_relay_policy" "example" {
 - `description` - The description for this DHCP Relay Policy.
 - `dhcp_relay_policy_provider` - DHCP Provider configuration to be associated to the Policy.
   - `epg` - The reference of the EPG.
-  - `external_epg` - The reference of the External EPG. external_epg and epg both should not be expected simultaneously.
+  - `external_epg` - The reference of the External EPG.
   - `dhcp_server_address` - The DHCP Server Address.

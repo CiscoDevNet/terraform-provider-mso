@@ -22,7 +22,7 @@ resource "mso_tenant" "tenant1" {
 resource "mso_schema" "schema1" {
   name          = var.schema_name
   template_name = var.template_name
-  tenant_id     = data.mso_tenant.tenant1.id
+  tenant_id     = mso_tenant.tenant1.id
 }
 
 resource "mso_schema_template_vrf" "vrf1" {

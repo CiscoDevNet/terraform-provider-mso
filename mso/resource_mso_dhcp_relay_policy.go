@@ -52,12 +52,14 @@ func resourceMSODHCPRelayPolicy() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"epg": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: epgRefValidation(),
 						},
 						"external_epg": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: externalEpgRefValidation(),
 						},
 						"dhcp_server_address": {
 							Type:         schema.TypeString,
@@ -135,11 +137,15 @@ func resourceMSODHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) err
 	}
 
 	if providerList, ok := d.GetOk("dhcp_relay_policy_provider"); ok {
+		err := ValidateProviderList(providerList.([]interface{}))
+		if err != nil {
+			return err
+		}
 		providerModelList := make([]models.DHCPProvider, 0)
 		for _, provider := range providerList.([]interface{}) {
 			providerMap := provider.(map[string]interface{})
 			if providerMap["epg"] == "" && providerMap["external_epg"] == "" {
-				return fmt.Errorf("expected any one of the epg or external_epg.")
+				return fmt.Errorf("expected any one of the epg or external_epg")
 			}
 			if providerMap["epg"] != "" && providerMap["external_epg"] != "" {
 				return fmt.Errorf("epg and external_epg both should not be set simultaneously")
@@ -182,11 +188,15 @@ func resourceMSODHCPRelayPolicyUpdate(d *schema.ResourceData, m interface{}) err
 	}
 
 	if providerList, ok := d.GetOk("dhcp_relay_policy_provider"); ok {
+		err := ValidateProviderList(providerList.([]interface{}))
+		if err != nil {
+			return err
+		}
 		providerModelList := make([]models.DHCPProvider, 0)
 		for _, provider := range providerList.([]interface{}) {
 			providerMap := provider.(map[string]interface{})
 			if providerMap["epg"] == "" && providerMap["external_epg"] == "" {
-				return fmt.Errorf("expected any one of the epg or external_epg.")
+				return fmt.Errorf("expected any one of the epg or external_epg")
 			}
 			if providerMap["epg"] != "" && providerMap["external_epg"] != "" {
 				return fmt.Errorf("epg and external_epg both should not be set simultaneously")
@@ -239,5 +249,18 @@ func resourceMSODHCPRelayPolicyDelete(d *schema.ResourceData, m interface{}) err
 	}
 	d.SetId("")
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
+	return nil
+}
+
+func ValidateProviderList(providers []interface{}) error {
+	idMap := make(map[string]bool, 0)
+	for _, provider := range providers {
+		providerMap := provider.(map[string]interface{})
+		id := fmt.Sprintf("ip-%s/epg-%s/extepg-%s", providerMap["dhcp_server_address"].(string), providerMap["epg"].(string), providerMap["external_epg"].(string))
+		if _, ok := idMap[id]; ok {
+			return fmt.Errorf("duplicate provider configuration")
+		}
+		idMap[id] = true
+	}
 	return nil
 }

@@ -49,7 +49,7 @@ func TestAccMSODHCPRelayPolicy_Basic(t *testing.T) {
 			},
 			{
 				Config:      MSODHCPRelayPolicyProviderWithoutEPG(tenant, name, dhcpServerAddress, epg, "epg"),
-				ExpectError: regexp.MustCompile(`expected any one of the epg or external_epg.`),
+				ExpectError: regexp.MustCompile(`expected any one of the epg or external_epg`),
 			},
 			{
 				Config:      MSODHCPRelayPolicyProviderWithoutEPG(tenant, name, dhcpServerAddress, epg, "dhcp_server_address"),
@@ -57,7 +57,7 @@ func TestAccMSODHCPRelayPolicy_Basic(t *testing.T) {
 			},
 			{
 				Config:      MSODHCPRelayPolicyProviderWithoutExternalEPG(tenant, name, dhcpServerAddress, schemaName, templateName, displayName),
-				ExpectError: regexp.MustCompile(`expected any one of the epg or external_epg.`),
+				ExpectError: regexp.MustCompile(`expected any one of the epg or external_epg`),
 			},
 			{
 				Config: MSODHCPRelayPolicyWithEPGRequired(tenant, name, dhcpServerAddress, epg),
@@ -127,7 +127,6 @@ func TestAccMSODHCPRelayPolicy_Update(t *testing.T) {
 	tenant := tenantNames[0]
 	name := makeTestVariable(acctest.RandString(5))
 	dhcpServerAddress, _ := acctest.RandIpAddress("1.2.0.0/16")
-	otherDhcpServerAddress, _ := acctest.RandIpAddress("1.2.0.0/16")
 	displayName := makeTestVariable(acctest.RandString(5))
 	otherDisplayName := makeTestVariable(acctest.RandString(5))
 	schemaName := makeTestVariable(acctest.RandString(5))
@@ -138,7 +137,7 @@ func TestAccMSODHCPRelayPolicy_Update(t *testing.T) {
 		CheckDestroy: testAccCheckMSODHCPRelayPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: MSODHCPRelayPolicyWithMultipleProvider(tenant, name, dhcpServerAddress, otherDhcpServerAddress, schemaName, templateName, displayName, otherDisplayName),
+				Config: MSODHCPRelayPolicyWithMultipleProvider(tenant, name, dhcpServerAddress, schemaName, templateName, displayName, otherDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMSODHCPRelayPolicyExists(resourceName, &relayPolicy1),
 					resource.TestCheckResourceAttr(resourceName, "description", ""),
@@ -170,6 +169,7 @@ func TestAccMSODHCPRelayPolicy_Update(t *testing.T) {
 
 func TestAccMSODHCPRelayPolicy_Negative(t *testing.T) {
 	tenant := tenantNames[0]
+	epg := epg
 	name := makeTestVariable(acctest.RandString(5))
 	randomParameter := acctest.RandStringFromCharSet(5, "abcdefghijklmnopqrstuvwxyz")
 	randomValue := acctest.RandString(5)
@@ -199,8 +199,20 @@ func TestAccMSODHCPRelayPolicy_Negative(t *testing.T) {
 				ExpectError: regexp.MustCompile(`An argument named(.)+is not expected here.`),
 			},
 			{
-				Config:      MSODHCPRelayPolicyWithMultipleProvider(tenant, name, dhcpServerAddress, dhcpServerAddress, schemaName, templateName, displayName, displayName),
+				Config:      MSODHCPRelayPolicyWithSameExternalEPG(tenant, name, dhcpServerAddress, schemaName, templateName, displayName),
 				ExpectError: regexp.MustCompile(`duplicate`),
+			},
+			{
+				Config:      MSODHCPRelayPolicyWithSameEPG(tenant, name, dhcpServerAddress, epg),
+				ExpectError: regexp.MustCompile(`duplicate`),
+			},
+			{
+				Config:      MSODHCPRelayPolicyWithInvalidEPG(tenant, name, dhcpServerAddress, "epg"),
+				ExpectError: regexp.MustCompile(`invalid`),
+			},
+			{
+				Config:      MSODHCPRelayPolicyWithInvalidExternalEPG(tenant, name, dhcpServerAddress, "external_epg"),
+				ExpectError: regexp.MustCompile(`invalid`),
 			},
 			{
 				Config:      MSODHCPRelayPolicyWithExternalEPGRequired(tenant, name, schemaName, templateName, randomValue, displayName),
@@ -349,7 +361,7 @@ func MSODHCPRelayPolicyWithRequired(tenant, name string) string {
 	return resource
 }
 
-func MSODHCPRelayPolicyWithMultipleProvider(tenant, name, dhcpServerAddress, otherDhcpServerAddress, schemaName, templateName, displayName, otherDisplayName string) string {
+func MSODHCPRelayPolicyWithMultipleProvider(tenant, name, dhcpServerAddress, schemaName, templateName, displayName, otherDisplayName string) string {
 	resource := fmt.Sprintf(`
 	data "mso_tenant" "test" {
 		name = "%s"
@@ -392,7 +404,105 @@ func MSODHCPRelayPolicyWithMultipleProvider(tenant, name, dhcpServerAddress, oth
 			external_epg = mso_schema_template_external_epg.test1.id
 		}
 	}
-	`, tenant, tenant, schemaName, templateName, displayName, displayName, displayName, displayName, otherDisplayName, otherDisplayName, name, dhcpServerAddress, otherDhcpServerAddress)
+	`, tenant, tenant, schemaName, templateName, displayName, displayName, displayName, displayName, otherDisplayName, otherDisplayName, name, dhcpServerAddress, dhcpServerAddress)
+	return resource
+}
+
+func MSODHCPRelayPolicyWithSameExternalEPG(tenant, name, dhcpServerAddress, schemaName, templateName, displayName string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	resource mso_schema "test"{
+		name = "%s"
+		template_name = "%s"
+		tenant_id = data.mso_tenant.test.id
+	}
+	resource mso_schema_template_vrf "test" {
+		schema_id = mso_schema.test.id
+		template= mso_schema.test.template_name
+		name= "%s"
+		display_name= "%s"
+	}
+	resource "mso_schema_template_external_epg" "test" {
+		schema_id = mso_schema.test.id
+		template_name = mso_schema.test.template_name
+		external_epg_name = "%s"
+		display_name = "%s"
+		vrf_name = mso_schema_template_vrf.test.name
+	}
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id = data.mso_tenant.test.id
+		name = "%s"
+		dhcp_relay_policy_provider {
+			dhcp_server_address = "%s"
+			external_epg = mso_schema_template_external_epg.test.id
+		}
+		dhcp_relay_policy_provider {
+			dhcp_server_address = "%s"
+			external_epg = mso_schema_template_external_epg.test.id
+		}
+	}
+	`, tenant, tenant, schemaName, templateName, displayName, displayName, displayName, displayName, name, dhcpServerAddress, dhcpServerAddress)
+	return resource
+}
+
+func MSODHCPRelayPolicyWithInvalidExternalEPG(tenant, name, dhcpServerAddress, external_epg string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id = data.mso_tenant.test.id
+		name = "%s"
+		dhcp_relay_policy_provider {
+			dhcp_server_address = "%s"
+			external_epg = "%s"
+		}
+	}
+	`, tenant, tenant, name, dhcpServerAddress, external_epg)
+	return resource
+}
+
+func MSODHCPRelayPolicyWithSameEPG(tenant, name, dhcpServerAddress, epg string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id = data.mso_tenant.test.id
+		name = "%s"
+		dhcp_relay_policy_provider {
+			dhcp_server_address = "%s"
+			epg = "%s"
+		}
+		dhcp_relay_policy_provider {
+			dhcp_server_address = "%s"
+			epg = "%s"
+		}
+	}
+	`, tenant, tenant, name, dhcpServerAddress, epg, dhcpServerAddress, epg)
+	return resource
+}
+
+func MSODHCPRelayPolicyWithInvalidEPG(tenant, name, dhcpServerAddress, epg string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id = data.mso_tenant.test.id
+		name = "%s"
+		dhcp_relay_policy_provider {
+			dhcp_server_address = "%s"
+			epg = "%s"
+		}
+	}
+	`, tenant, tenant, name, dhcpServerAddress, epg)
 	return resource
 }
 

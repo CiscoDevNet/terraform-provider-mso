@@ -36,7 +36,7 @@ variable "dhcp_server_address" {
 
 variable "epg" {
   type        = string
-  default     = "/schemas/621392f81d0000282a4f9d1c/templates/ACC_CREST/anps/test_ap/epgs/test_epg"
+  default     = "/schemas/621392f81d0000282a4f9d1c/templates/ACC_CREST/anps/UntitledAP1/epgs/test_epg"
   description = "EPG."
 }
 

@@ -15,7 +15,7 @@ var siteNames = []string{"ansible_test"}
 var tenantNames = []string{"acctest_crest"}
 var validSchemaId = "6206831f1d000012864f99a8"
 var inValidScheamaId = "620683151d0000f1854f99a4"
-var epg = "/schemas/621392f81d0000282a4f9d1c/templates/ACC_CREST/anps/test_ap/epgs/test_epg"
+var epg = "/schemas/621392f81d0000282a4f9d1c/templates/ACC_CREST/anps/UntitledAP1/epgs/test_epg"
 
 func CreatSchemaSiteConfig(site, tenant, name string) string {
 	resource := fmt.Sprintf(`
