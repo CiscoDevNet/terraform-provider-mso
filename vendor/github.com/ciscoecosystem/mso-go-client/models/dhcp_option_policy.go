@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
 )
@@ -70,7 +69,7 @@ func PrepareDHCPOptionPolicyModelForUpdate(remotePolicyCont *container.Container
 		}
 	}
 
-	for _, remoteOption := range remotePolicy.DHCPOption { 
+	for _, remoteOption := range remotePolicy.DHCPOption {
 		found := false
 		for _, newOption := range newPolicy.DHCPOption {
 			if newOption.Name == remoteOption.Name {
