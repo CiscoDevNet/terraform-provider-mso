@@ -16,7 +16,7 @@ func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 	var pol1 models.TemplateBDDHCPPolicy
 	schema := makeTestVariable(acctest.RandString(5))
 	name := makeTestVariable(acctest.RandString(5))
-	nameOther:=makeTestVariable(acctest.RandString(5))
+	nameOther := makeTestVariable(acctest.RandString(5))
 	resourceName := "mso_schema_template_bd_dhcp_policy.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -51,7 +51,7 @@ func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "version", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 				),
-			},{
+			}, {
 				Config: CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenantNames[0], schema, name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMSOSchemaTemplateBDDHCPPolicyExists(resourceName, &pol1),
@@ -86,16 +86,24 @@ func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 	})
 }
 
-func CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenant,scheme,name string) string{
+func CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenant, scheme, name string) string {
 	resource := GetParentConfigBDDHCPPolicy(tenant, scheme, name)
-	resource += fmt.Sprintln(`
+	resource += fmt.Sprintf(`
+	resource "mso_dhcp_option_policy" "example" {
+		tenant_id   = mso_tenant.tenant1.id
+		name        = "%s"
+	}
 	resource "mso_schema_template_bd_dhcp_policy" "test" {
 		schema_id           = mso_schema.test.id
 		template_name       = mso_schema.test.template_name
 		bd_name             = mso_schema_template_bd.test.name
 		name                = mso_dhcp_relay_policy.test.name
+		dhcp_option_name    = mso_dhcp_option_policy.example.name
+		version             = 1
+		dhcp_option_version = 1
 	}
-	`)
+	`, name)
+	return resource
 }
 
 func CreateMSOSchemaTemplateBDDHCPPolicyWithRequired(tenant, scheme, name string) string {
