@@ -1,33 +1,36 @@
 package mso
 
-// import (
-// 	"fmt"
-// 	"regexp"
-// 	"testing"
+import (
+	"fmt"
+	"testing"
 
-// 	"github.com/ciscoecosystem/mso-go-client/client"
-// 	"github.com/ciscoecosystem/mso-go-client/models"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-// 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-// )
+	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/models"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+)
 
-// func TestAccMSOSchemaTemplateBD_Basic(t *testing.T) {
-// 	var ss TemplateBD
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccCheckMSOSchemaTemplateBDDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccCheckMSOTemplateBDConfig_basic("flood"),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckMSOSchemaTemplateBDExists("mso_schema_template_bd.bridge_domain", &ss),
-// 					testAccCheckMSOSchemaTemplateBDAttributes("flood", &ss),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
+	var pol1 models.TemplateBDDHCPPolicy
+	schema:=makeTestVariable(acctest.RandString(5))
+	name:=makeTestVariable(acctest.RandString(5))
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMSOSchemaTemplateBDDHCPDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: CreateMSOSchemaTemplateBDDHCPPolicyWithoutRequired(tenantNames[0],schema,name),
+			},
+		},
+	})
+}
+
+func CreateMSOSchemaTemplateBDDHCPPolicyWithoutRequired(tenant,schema,name string) string{
+	resource:=GetParentConfigBDDHCPPolicy(tenant,schema,name)
+	return resource
+}
 
 // func TestAccMSOSchemaTemplateBD_Update(t *testing.T) {
 // 	var ss TemplateBD
@@ -68,115 +71,43 @@ package mso
 // `, unicast)
 // }
 
-// func testAccCheckMSOSchemaTemplateBDExists(bdName string, ss *TemplateBD) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		client := testAccProvider.Meta().(*client.Client)
-// 		rs1, err1 := s.RootModule().Resources[bdName]
+func testAccCheckMSOSchemaTemplateBDDHCPPolicyExists(resource string, m *models.TemplateBDDHCPPolicy) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		client := testAccProvider.Meta().(*client.Client)
+		rs1, err1 := s.RootModule().Resources[resource]
 
-// 		if !err1 {
-// 			return fmt.Errorf("BD %s not found", bdName)
-// 		}
-// 		if rs1.Primary.ID == "" {
-// 			return fmt.Errorf("No Schema id was set")
-// 		}
+		if !err1 {
+			return fmt.Errorf("BD DHCP Policy %s not found", resource)
+		}
+		if rs1.Primary.ID == "" {
+			return fmt.Errorf("No BD DHCP Policy id was set")
+		}
+		BDDHCPPolicyModel := modelFromMSOTemplateBDDHCPPolicyId(rs1.Primary.ID)
+		remoteModel, err := getMSOTemplateBDDHCPPolicy(client, BDDHCPPolicyModel)
+		if err != nil {
+			return err
+		}
+		*m = *remoteModel
+		return nil
+	}
+}
 
-// 		cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
-// 		if err != nil {
-// 			return err
-// 		}
-// 		count, err := cont.ArrayCount("templates")
-// 		if err != nil {
-// 			return fmt.Errorf("No Template found")
-// 		}
-// 		tp := TemplateBD{}
-// 		found := false
-// 		for i := 0; i < count; i++ {
-// 			tempCont, err := cont.ArrayElement(i, "templates")
-// 			if err != nil {
-// 				return err
-// 			}
+func testAccCheckMSOSchemaTemplateBDDHCPDestroy(s *terraform.State) error {
+	client := testAccProvider.Meta().(*client.Client)
 
-// 			apiTemplateName := models.StripQuotes(tempCont.S("name").String())
-// 			if apiTemplateName == "Template1" {
-// 				bdCount, err := tempCont.ArrayCount("bds")
-// 				if err != nil {
-// 					return fmt.Errorf("Unable to get BD list")
-// 				}
-// 				for j := 0; j < bdCount; j++ {
-// 					bdCont, err := tempCont.ArrayElement(j, "bds")
-// 					if err != nil {
-// 						return err
-// 					}
-// 					apiBD := models.StripQuotes(bdCont.S("name").String())
-// 					if apiBD == "testAccBD" {
-// 						tp.display_name = models.StripQuotes(bdCont.S("displayName").String())
-// 						tp.layer2_unknown_unicast = models.StripQuotes(bdCont.S("l2UnknownUnicast").String())
-// 						vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
-// 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
-// 						match := re.FindStringSubmatch(vrfRef)
-// 						tp.vrf_name = match[3]
-// 						found = true
-// 						break
+	for _, rs := range s.RootModule().Resources {
 
-// 					}
-// 				}
-// 			}
-// 		}
+		if rs.Type == "mso_schema_template_bd_dhcp_policy" {
+			BDDHCPPolicyModel := modelFromMSOTemplateBDDHCPPolicyId(rs.Primary.ID)
+			_, err := getMSOTemplateBDDHCPPolicy(client, BDDHCPPolicyModel)
+			if err != nil {
+				return fmt.Errorf("Schema Template BD DHCP Policy with id %s still exists", rs.Primary.ID)
+			}
+		}
+	}
+	return nil
+}
 
-// 		if !found {
-// 			return fmt.Errorf("BD not found from API")
-// 		}
-
-// 		tp1 := &tp
-
-// 		*ss = *tp1
-// 		return nil
-// 	}
-// }
-
-// func testAccCheckMSOSchemaTemplateBDDestroy(s *terraform.State) error {
-// 	client := testAccProvider.Meta().(*client.Client)
-
-// 	for _, rs := range s.RootModule().Resources {
-
-// 		if rs.Type == "mso_schema_template_bd" {
-// 			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
-// 			if err != nil {
-// 				return nil
-// 			} else {
-// 				count, err := cont.ArrayCount("templates")
-// 				if err != nil {
-// 					return fmt.Errorf("No Template found")
-// 				}
-// 				for i := 0; i < count; i++ {
-// 					tempCont, err := cont.ArrayElement(i, "templates")
-// 					if err != nil {
-// 						return fmt.Errorf("No Template exists")
-// 					}
-// 					apiTemplateName := models.StripQuotes(tempCont.S("name").String())
-// 					if apiTemplateName == "Template1" {
-// 						bdCount, err := tempCont.ArrayCount("bds")
-// 						if err != nil {
-// 							return fmt.Errorf("Unable to get BD list")
-// 						}
-// 						for j := 0; j < bdCount; j++ {
-// 							bdCont, err := tempCont.ArrayElement(j, "bds")
-// 							if err != nil {
-// 								return err
-// 							}
-// 							apiBD := models.StripQuotes(bdCont.S("name").String())
-// 							if apiBD == "testAccBD" {
-// 								return fmt.Errorf("template bridge domain still exists.")
-// 							}
-// 						}
-// 					}
-
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
 // func testAccCheckMSOSchemaTemplateBDAttributes(layer2_unknown_unicast string, ss *TemplateBD) resource.TestCheckFunc {
 // 	return func(s *terraform.State) error {
 // 		if layer2_unknown_unicast != ss.layer2_unknown_unicast {
