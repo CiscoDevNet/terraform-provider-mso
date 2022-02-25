@@ -32,10 +32,8 @@ github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQ
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
-github.com/ciscoecosystem/mso-go-client v1.2.7-0.20220224163826-1e9cd986601b h1:noyAK9Ljh/nPnnfYspOD54rwKXGywlxn9ubVjgP7sRM=
-github.com/ciscoecosystem/mso-go-client v1.2.7-0.20220224163826-1e9cd986601b/go.mod h1:K/Pe1jG59kJCYHGlZEt7/R3dTARsM1bHW8ZN5FAr0bw=
-github.com/ciscoecosystem/mso-go-client v1.2.7-0.20220225045648-5363bece7246 h1:3F4mTT3OXbcOmyzGZWWpvmu1xCfeQn3Tzk+BegIl4Rk=
-github.com/ciscoecosystem/mso-go-client v1.2.7-0.20220225045648-5363bece7246/go.mod h1:K/Pe1jG59kJCYHGlZEt7/R3dTARsM1bHW8ZN5FAr0bw=
+github.com/ciscoecosystem/mso-go-client v1.2.7-0.20220225072437-647869245db5 h1:IT8whAcCX70L95t8bftPK5c1NBkJ6MgKP7XRTuw0r4A=
+github.com/ciscoecosystem/mso-go-client v1.2.7-0.20220225072437-647869245db5/go.mod h1:K/Pe1jG59kJCYHGlZEt7/R3dTARsM1bHW8ZN5FAr0bw=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
