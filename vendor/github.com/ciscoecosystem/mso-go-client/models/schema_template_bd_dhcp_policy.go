@@ -83,7 +83,8 @@ func TemplateBDDHCPPolicyModelForDeletion(bdDHCPPol *TemplateBDDHCPPolicy) *Temp
 
 func TemplateBDDHCPPolicyFromContainer(cont *container.Container, tf *TemplateBDDHCPPolicy) (*TemplateBDDHCPPolicy, error) {
 	remoteBDDHCPPol := TemplateBDDHCPPolicy{}
-
+	remoteBDDHCPPol.SchemaID = tf.SchemaID
+	remoteBDDHCPPol.TemplateName = tf.TemplateName
 	templateCont, err := cont.S("templates").SearchInObjectList(
 		func(cont *container.Container) bool {
 			return G(cont, "name") == tf.TemplateName
@@ -93,6 +94,7 @@ func TemplateBDDHCPPolicyFromContainer(cont *container.Container, tf *TemplateBD
 		return nil, err
 	}
 
+	remoteBDDHCPPol.BDName = tf.BDName
 	bdCont, err := templateCont.S("bds").SearchInObjectList(
 		func(cont *container.Container) bool {
 			return G(cont, "name") == tf.BDName
@@ -116,9 +118,9 @@ func TemplateBDDHCPPolicyFromContainer(cont *container.Container, tf *TemplateBD
 	if err != nil {
 		return nil, err
 	}
-	if bdCont.Exists("dhcpOptionLabel") {
-		remoteBDDHCPPol.DHCPOptionName = G(bdDHCPCont, "dhcpOptionLabel,name")
-		remoteBDDHCPPol.DHCPOptionVersion, err = strconv.Atoi(G(bdDHCPCont, "dhcpOptionLabel,version"))
+	if bdDHCPCont.Exists("dhcpOptionLabel") {
+		remoteBDDHCPPol.DHCPOptionName = G(bdDHCPCont, "dhcpOptionLabel", "name")
+		remoteBDDHCPPol.DHCPOptionVersion, err = strconv.Atoi(G(bdDHCPCont, "dhcpOptionLabel", "version"))
 		if err != nil {
 			return nil, err
 		}

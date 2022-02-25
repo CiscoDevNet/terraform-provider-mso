@@ -114,6 +114,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_dhcp_relay_policy":                      resourceMSODHCPRelayPolicy(),
 			"mso_dhcp_option_policy_option":              resourceMSODHCPOptionPolicyOption(),
 			"mso_dhcp_relay_policy_provider":             resourceMSODHCPRelayPolicyProvider(),
+			"mso_schema_template_bd_dhcp_policy":         resourceMSOTemplateBDDHCPPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -169,6 +170,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_dhcp_relay_policy":                      datasourceMSODHCPRelayPolicy(),
 			"mso_dhcp_option_policy_option":              datasourceMSODHCPOptionPolicyOption(),
 			"mso_dhcp_relay_policy_provider":             datasourceMSODHCPRelayPolicyProvider(),
+			"mso_schema_template_bd_dhcp_policy":         datasourceMSOTemplateBDDHCPPolicy(),
 		},
 
 		ConfigureFunc: configureClient,
