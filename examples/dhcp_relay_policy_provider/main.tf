@@ -31,8 +31,8 @@ resource mso_schema "example"{
 
 resource mso_schema_template_vrf "example" {
 	schema_id = mso_schema.test.id
-	template= mso_schema.test.template_name
-	name= "example"
+	template = mso_schema.test.template_name
+	name = "example"
 	display_name= "example"
 }
 
