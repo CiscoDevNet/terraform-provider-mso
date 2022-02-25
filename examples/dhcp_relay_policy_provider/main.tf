@@ -46,6 +46,6 @@ resource "mso_schema_template_external_epg" "example" {
 
 resource "mso_dhcp_relay_policy_provider" "example" {
 	dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
-	dhcp_server_address = "example"
+	dhcp_server_address = "1.2.3.4"
 	external_epg_ref = mso_schema_template_external_epg.test.id
 }
