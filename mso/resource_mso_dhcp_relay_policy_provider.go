@@ -147,7 +147,7 @@ func resourceMSODHCPRelayPolicyProviderUpdate(d *schema.ResourceData, m interfac
 }
 
 func resourceMSODHCPRelayPolicyProviderDelete(d *schema.ResourceData, m interface{}) error {
-	log.Println("[DEBUG] Schema Site L3out: Beginning Destroy", d.Id())
+	log.Println("[DEBUG] DHCP Relay Policy Provider: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
 	id := d.Id()
 	dhcpRelayPolicyModel, err := DHCPRelayPolicyProviderIdtoModel(id)
@@ -159,9 +159,9 @@ func resourceMSODHCPRelayPolicyProviderDelete(d *schema.ResourceData, m interfac
 	if err != nil {
 		return err
 	}
-	dhcpRelayPolicyMut.Unlock()
-	log.Println("[DEBUG] Schema Site L3out: Beginning Destroy", d.Id())
 	d.SetId("")
+	dhcpRelayPolicyMut.Unlock()
+	log.Println("[DEBUG] DHCP Relay Policy Provider: Completed Destroy", d.Id())
 	return nil
 }
 
