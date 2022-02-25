@@ -19,33 +19,33 @@ data "mso_tenant" "example" {
 }
 
 resource "mso_dhcp_relay_policy" "example" {
-	tenant_id = data.mso_tenant.test.id
+	tenant_id = data.mso_tenant.example.id
 	name = "example"		
 }
 
 resource mso_schema "example"{
 	name = "example"
 	template_name = "example"
-	tenant_id = data.mso_tenant.test.id
+	tenant_id = data.mso_tenant.example.id
 }
 
 resource mso_schema_template_vrf "example" {
-	schema_id = mso_schema.test.id
-	template= mso_schema.test.template_name
-	name= "example"
+	schema_id = mso_schema.example.id
+	template = mso_schema.example.template_name
+	name = "example"
 	display_name= "example"
 }
 
 resource "mso_schema_template_external_epg" "example" {
-	schema_id = mso_schema.test.id
-	template_name = mso_schema.test.template_name
+	schema_id = mso_schema.example.id
+	template_name = mso_schema.example.template_name
 	external_epg_name = "example"
 	display_name = "example"
-	vrf_name = mso_schema_template_vrf.test.name
+	vrf_name = mso_schema_template_vrf.example.name
 }
 
 resource "mso_dhcp_relay_policy_provider" "example" {
-	dhcp_relay_policy_name = mso_dhcp_relay_policy.test.name
-	dhcp_server_address = "example"
-	external_epg_ref = mso_schema_template_external_epg.test.id
+	dhcp_relay_policy_name = mso_dhcp_relay_policy.example.name
+	dhcp_server_address = "1.2.3.4"
+	external_epg_ref = mso_schema_template_external_epg.example.id
 }
