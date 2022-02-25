@@ -246,6 +246,7 @@ func MSODHCPOptionPolicyOptionWithOutRequiredParameters() string {
 	resource := fmt.Sprintln(`
 	resource "mso_dhcp_option_policy_option" "test" {
 		option_data = "test_data"
+		option_id = "123"
 	}
 	`)
 	return resource
