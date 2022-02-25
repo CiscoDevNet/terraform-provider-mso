@@ -202,8 +202,7 @@ func TestAccMSODHCPOptionPolicy_Negative(t *testing.T) {
 				ExpectError: regexp.MustCompile(`Unsupported argument`),
 			},
 			{
-				Config:      MSODHCPOptionPolicyWithRequired(randomValue, randomValue),
-				ExpectError: regexp.MustCompile(`An argument named(.)+is not expected here.`),
+				Config: MSODHCPOptionPolicyWithRequired(randomValue, randomValue),
 			},
 		},
 	})

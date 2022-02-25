@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	
+
 	"github.com/ciscoecosystem/mso-go-client/models"
 )
 
@@ -83,9 +84,10 @@ func (client *Client) DeleteDHCPRelayPolicyProvider(obj *models.DHCPRelayPolicyP
 	}
 	NewProviders := make([]models.DHCPProvider, 0, 1)
 	for _, provider := range DHCPRelay.DHCPProvider {
-		if provider.DHCPServerAddress != obj.Addr && provider.EPG != obj.EpgRef && provider.ExternalEPG != obj.ExternalEpgRef {
-			NewProviders = append(NewProviders, provider)
+		if provider.DHCPServerAddress == obj.Addr && provider.EPG == obj.EpgRef && provider.ExternalEPG == obj.ExternalEpgRef {
+			provider.Operation = "remove"
 		}
+		NewProviders = append(NewProviders, provider)
 	}
 	DHCPRelay.DHCPProvider = NewProviders
 	_, err = client.UpdateDHCPRelayPolicy(relayPolicyId, DHCPRelay)
