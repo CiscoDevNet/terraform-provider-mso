@@ -63,8 +63,8 @@ func A(data map[string]interface{}, key string, value interface{}) {
 	}
 }
 
-func G(cont *container.Container, key string) string {
-	return StripQuotes(cont.S(key).String())
+func G(cont *container.Container, key... string) string {
+	return StripQuotes(cont.S(key...).String())
 }
 
 func ListFromContainer(cont *container.Container, klass string) []*container.Container {
