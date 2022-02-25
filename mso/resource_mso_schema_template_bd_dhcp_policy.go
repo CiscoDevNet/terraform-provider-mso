@@ -192,7 +192,7 @@ func resourceMSOTemplateBDDHCPPolicyRead(d *schema.ResourceData, m interface{}) 
 		d.SetId("")
 		return nil
 	}
-
+	fmt.Printf("remoteBDDHCPPolicy: %v\n", remoteBDDHCPPolicy)
 	setMSOTemplateBDDHCPPolicy(d, remoteBDDHCPPolicy)
 
 	d.SetId(
@@ -228,7 +228,7 @@ func createMSOTemplateBDDHCPPolicyId(obj *models.TemplateBDDHCPPolicy) string {
 }
 
 func modelFromMSOTemplateBDDHCPPolicyId(id string) *models.TemplateBDDHCPPolicy {
-	re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
+	re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)/dhcpLabels/(.*)")
 	match := re.FindStringSubmatch(id)
 	return &models.TemplateBDDHCPPolicy{
 		SchemaID:     match[1],
