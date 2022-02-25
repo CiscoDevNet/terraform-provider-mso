@@ -14,11 +14,13 @@ import (
 
 func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 	var pol1 models.TemplateBDDHCPPolicy
+	var pol2 models.TemplateBDDHCPPolicy
 	schema := makeTestVariable(acctest.RandString(5))
 	name := makeTestVariable(acctest.RandString(5))
 	nameOther := makeTestVariable(acctest.RandString(5))
+	option := makeTestVariable(acctest.RandString(5))
 	resourceName := "mso_schema_template_bd_dhcp_policy.test"
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSOSchemaTemplateBDDHCPDestroy,
@@ -51,17 +53,19 @@ func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "version", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 				),
-			}, {
-				Config: CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenantNames[0], schema, name),
+			},
+			{
+				Config: CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenantNames[0], schema, name, option),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDDHCPPolicyExists(resourceName, &pol1),
+					testAccCheckMSOSchemaTemplateBDDHCPPolicyExists(resourceName, &pol2),
 					resource.TestCheckResourceAttr(resourceName, "bd_name", name),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "template_name", schema),
-					resource.TestCheckResourceAttr(resourceName, "dhcp_option_name", ""),
-					resource.TestCheckResourceAttr(resourceName, "dhcp_option_version", "0"),
-					resource.TestCheckResourceAttr(resourceName, "version", "0"),
+					resource.TestCheckResourceAttr(resourceName, "dhcp_option_name", option),
+					resource.TestCheckResourceAttr(resourceName, "dhcp_option_version", "1"),
+					resource.TestCheckResourceAttr(resourceName, "version", "1"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					testAccCheckMSOSchemaTemplateBDDHCPPolicyIdEqual(&pol1, &pol2),
 				),
 			},
 			{
@@ -72,7 +76,7 @@ func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 			{
 				Config: CreateMSOSchemaTemplateBDDHCPPolicyWithRequired(tenantNames[0], schema, nameOther),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateBDDHCPPolicyExists(resourceName, &pol1),
+					testAccCheckMSOSchemaTemplateBDDHCPPolicyExists(resourceName, &pol2),
 					resource.TestCheckResourceAttr(resourceName, "bd_name", nameOther),
 					resource.TestCheckResourceAttr(resourceName, "name", nameOther),
 					resource.TestCheckResourceAttr(resourceName, "template_name", schema),
@@ -80,17 +84,55 @@ func TestAccMSOSchemaTemplateBDDHCPPolicy_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "dhcp_option_version", "0"),
 					resource.TestCheckResourceAttr(resourceName, "version", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					testAccCheckMSOSchemaTemplateBDDHCPPolicyIdNotEqual(&pol1, &pol2),
 				),
 			},
 		},
 	})
 }
 
-func CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenant, scheme, name string) string {
+func TestAccMSOSchemaTemplateBDDHCPPolicy_Negtive(t *testing.T) {
+	schema := makeTestVariable(acctest.RandString(5))
+	name := makeTestVariable(acctest.RandString(5))
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMSOSchemaTemplateBDDHCPDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: CreateMSOSchemaTemplateBDDHCPPolicyWithInvalidParentName(tenantNames[0], schema, name),
+			},
+		},
+	})
+}
+
+func testAccCheckMSOSchemaTemplateBDDHCPPolicyIdEqual(m1, m2 *models.TemplateBDDHCPPolicy) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		id1 := createMSOTemplateBDDHCPPolicyId(m1)
+		id2 := createMSOTemplateBDDHCPPolicyId(m2)
+		if id1 != id2 {
+			return fmt.Errorf("Schema Template BD DHCP Policy ids are not equal")
+		}
+		return nil
+	}
+}
+
+func testAccCheckMSOSchemaTemplateBDDHCPPolicyIdNotEqual(m1, m2 *models.TemplateBDDHCPPolicy) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		id1 := createMSOTemplateBDDHCPPolicyId(m1)
+		id2 := createMSOTemplateBDDHCPPolicyId(m2)
+		if id1 == id2 {
+			return fmt.Errorf("Schema Template BD DHCP Policy ids are equal")
+		}
+		return nil
+	}
+}
+
+func CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenant, scheme, name, option string) string {
 	resource := GetParentConfigBDDHCPPolicy(tenant, scheme, name)
 	resource += fmt.Sprintf(`
 	resource "mso_dhcp_option_policy" "example" {
-		tenant_id   = mso_tenant.tenant1.id
+		tenant_id   = data.mso_tenant.test.id
 		name        = "%s"
 	}
 	resource "mso_schema_template_bd_dhcp_policy" "test" {
@@ -102,7 +144,7 @@ func CreateMSOSchemaTemplateBDDHCPPolicyWithOptionalValues(tenant, scheme, name 
 		version             = 1
 		dhcp_option_version = 1
 	}
-	`, name)
+	`, option)
 	return resource
 }
 
