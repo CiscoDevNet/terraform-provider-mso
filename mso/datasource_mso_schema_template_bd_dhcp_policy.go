@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -66,7 +65,6 @@ func datasourceMSOTemplateBDDHCPPolicyRead(d *schema.ResourceData, m interface{}
 	if err != nil {
 		return err
 	}
-	fmt.Printf("remoteBDDHCPPolicy: %v\n", remoteBDDHCPPolicy)
 	setMSOTemplateBDDHCPPolicy(d, remoteBDDHCPPolicy)
 
 	d.SetId(createMSOTemplateBDDHCPPolicyId(&bdDHCPPolicy))

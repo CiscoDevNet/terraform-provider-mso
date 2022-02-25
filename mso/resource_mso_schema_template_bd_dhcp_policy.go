@@ -192,7 +192,6 @@ func resourceMSOTemplateBDDHCPPolicyRead(d *schema.ResourceData, m interface{}) 
 		d.SetId("")
 		return nil
 	}
-	fmt.Printf("remoteBDDHCPPolicy: %v\n", remoteBDDHCPPolicy)
 	setMSOTemplateBDDHCPPolicy(d, remoteBDDHCPPolicy)
 
 	d.SetId(

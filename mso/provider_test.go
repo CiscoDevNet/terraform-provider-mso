@@ -57,8 +57,8 @@ func CreateDHCPRelayPolicy(tenant, polname string) string {
 	return resource
 }
 
-func GetParentConfigBDDHCPPolicy(tenant,schema,name string)string{
-	resource:=fmt.Sprintf(`
+func GetParentConfigBDDHCPPolicy(tenant, schema, name string) string {
+	resource := fmt.Sprintf(`
 	data "mso_tenant" "test" {
 		name         = "%s"
 		display_name = "%s"
@@ -89,14 +89,8 @@ func GetParentConfigBDDHCPPolicy(tenant,schema,name string)string{
 		tenant_id   = data.mso_tenant.test.id
 		name        = "%s"
 	}
-	  
-	resource "mso_schema_template_bd_dhcp_policy" "test" {
-		schema_id           = mso_schema.test.id
-		template_name       = mso_schema.test.template_name
-		bd_name             = mso_schema_template_bd.test.name
-		name                = mso_dhcp_relay_policy.test.name
-	  }
-	`)
+	`, tenant, tenant, schema, schema, name, name, name, name, name)
+	return resource
 }
 
 func init() {
