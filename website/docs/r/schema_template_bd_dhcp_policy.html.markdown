@@ -34,6 +34,9 @@ resource "mso_schema_template_bd_dhcp_policy" "exp" {
 * `dhcp_option_name` - (Optional) Name of the DHCP Option Policy.
 * `dhcp_option_version` - (Optional) Version of the attached DHCP Option Policy
 
+### Note
+ `dhcp_option_version` is required if `dhcp_option_name` is set.
+
 ## Attribute Reference ##
 
 No attributes are exported.
