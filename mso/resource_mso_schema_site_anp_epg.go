@@ -190,13 +190,13 @@ func resourceMSOSchemaSiteAnpEpgCreate(d *schema.ResourceData, m interface{}) er
 
 			private_link_label = map_label
 		}
-		anpEpgStruct := models.NewSchemaSiteAnpEpgPrivate("add", path, private_link_label, anpEpgRefMap)
+		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, private_link_label, anpEpgRefMap)
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 		if err != nil {
 			return err
 		}
 	} else {
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, anpEpgRefMap)
+		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, nil, anpEpgRefMap)
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 		if err != nil {
 			return err
@@ -318,13 +318,13 @@ func resourceMSOSchemaSiteAnpEpgDelete(d *schema.ResourceData, m interface{}) er
 
 			private_link_label = map_label
 		}
-		anpEpgStruct := models.NewSchemaSiteAnpEpgPrivate("remove", path, private_link_label, anpEpgRefMap)
+		anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, private_link_label, anpEpgRefMap)
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 		if err != nil {
 			return err
 		}
 	} else {
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, anpEpgRefMap)
+		anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, nil, anpEpgRefMap)
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 		if err != nil {
 			return err
