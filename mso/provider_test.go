@@ -57,6 +57,42 @@ func CreateDHCPRelayPolicy(tenant, polname string) string {
 	return resource
 }
 
+func GetParentConfigBDDHCPPolicy(tenant, schema, name string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name         = "%s"
+		display_name = "%s"
+	}
+	  
+	 resource "mso_schema" "test" {
+		name          = "%s"
+		template_name = "%s"
+		tenant_id     = data.mso_tenant.test.id
+	}
+	  
+	resource "mso_schema_template_vrf" "test" {
+		schema_id        = mso_schema.test.id
+		template         = mso_schema.test.template_name
+		name             = "%s"
+		display_name     = "%s"
+	}
+	  
+	resource "mso_schema_template_bd" "test" {
+		schema_id              = mso_schema.test.id
+		template_name          = mso_schema.test.template_name
+		name                   = "%s"
+		display_name           = "%s"
+		vrf_name               = mso_schema_template_vrf.test.name
+	}
+	  
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id   = data.mso_tenant.test.id
+		name        = "%s"
+	}
+	`, tenant, tenant, schema, schema, name, name, name, name, name)
+	return resource
+}
+
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
 	testAccProviders = map[string]terraform.ResourceProvider{
