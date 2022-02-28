@@ -818,7 +818,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given Anp Epg Domain is not found")
+		return fmt.Errorf("The given Anp Epg Domain is not found")
 	}
 	indexs := strconv.Itoa(index)
 

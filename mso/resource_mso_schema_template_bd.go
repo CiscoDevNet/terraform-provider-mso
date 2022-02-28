@@ -33,28 +33,24 @@ func resourceMSOTemplateBD() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"display_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"intersite_bum_traffic": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -77,6 +73,49 @@ func resourceMSOTemplateBD() *schema.Resource {
 			},
 			"layer2_unknown_unicast": &schema.Schema{
 				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"unknown_multicast_flooding": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood",
+					"optimized_flooding",
+				}, false),
+			},
+			"multi_destination_flooding": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood_in_bd",
+					"drop",
+					"flood_in_encap",
+				}, false),
+			},
+			"ipv6_unknown_multicast_flooding": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood",
+					"optimized_flooding",
+				}, false),
+			},
+			"arp_flooding": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"virtual_mac_address": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"unicast_routing": &schema.Schema{
+				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
@@ -170,20 +209,30 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
+					d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
+					d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("v6unkMcastAct").String()))
+					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("vmac").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
 					}
 
-					if bdCont.Exists("optimize_wan_bandwidth") {
+					if bdCont.Exists("optimizeWanBandwidth") {
 						d.Set("optimize_wan_bandwidth", bdCont.S("optimizeWanBandwidth").Data().(bool))
 					}
 
-					if bdCont.Exists("layer3_multicast") {
+					if bdCont.Exists("l3MCast") {
 						d.Set("layer3_multicast", bdCont.S("l3MCast").Data().(bool))
 					}
 
-					if bdCont.Exists("layer2_stretch") {
+					if bdCont.Exists("l2Stretch") {
 						d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
+					}
+					if bdCont.Exists("arpFlood") {
+						d.Set("arp_flooding", bdCont.S("arpFlood").Data().(bool))
+					}
+					if bdCont.Exists("unicastRouting") {
+						d.Set("unicast_routing", bdCont.S("unicastRouting").Data().(bool))
 					}
 
 					vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
@@ -193,10 +242,15 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					d.Set("vrf_schema_id", match[1])
 					d.Set("vrf_template_name", match[2])
 
-					if bdCont.Exists("dhcpLabel") {
-						dhcpPolMap := make(map[string]interface{})
-						dhcpPolMap["name"] = models.StripQuotes(bdCont.S("dhcpLabel", "name").String())
+					dhcpPolMap := make(map[string]interface{})
+					dhcpPolMap["name"] = models.StripQuotes(bdCont.S("dhcpLabel", "name").String())
+					if dhcpPolMap["name"] == "{}" {
+						dhcpPolMap = nil
+					} else {
 						dhcpPolMap["version"] = models.StripQuotes(bdCont.S("dhcpLabel", "version").String())
+						if dhcpPolMap["version"] == "{}" {
+							dhcpPolMap["version"] = nil
+						}
 						if bdCont.Exists("dhcpLabel", "dhcpOptionLabel") {
 							dhcpPolMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "name").String())
 							dhcpPolMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "version").String())
@@ -207,10 +261,8 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 								dhcpPolMap["dhcp_option_policy_version"] = nil
 							}
 						}
-						d.Set("dhcp_policy", dhcpPolMap)
-					} else {
-						d.Set("dhcp_policy", make(map[string]interface{}))
 					}
+					d.Set("dhcp_policy", dhcpPolMap)
 					found = true
 					break
 				}
@@ -239,8 +291,8 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
-	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name string
+	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -257,6 +309,24 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	if tempVar, ok := d.GetOk("layer2_unknown_unicast"); ok {
 		layer2_unknown_unicast = tempVar.(string)
 	}
+	if tempVar, ok := d.GetOk("unknown_multicast_flooding"); ok {
+		unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("multi_destination_flooding"); ok {
+		multi_destination_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ipv6_unknown_multicast_flooding"); ok {
+		ipv6_unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unicast_routing"); ok {
+		unicast_routing = tempVar.(bool)
+	}
+	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
+		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("arp_flooding"); ok {
+		arp_flooding = tempVar.(bool)
+	}
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
 	} else {
@@ -271,7 +341,6 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
 		dhcp_policy := tempVar.(map[string]interface{})
 		dhcpPolMap = make(map[string]interface{})
-		log.Printf("Uniqueee string %v", dhcp_policy)
 		dhcpPolMap["name"] = dhcp_policy["name"]
 		version, err := strconv.Atoi(dhcp_policy["version"].(string))
 		if err != nil {
@@ -304,7 +373,7 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/-", templateName)
-	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, vrfRefMap, dhcpPolMap)
+	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
@@ -349,6 +418,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 				if err != nil {
 					return err
 				}
+
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
 					d.SetId(apiBD)
@@ -357,6 +427,10 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
+					d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
+					d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("v6unkMcastAct").String()))
+					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("vmac").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
 					}
@@ -372,6 +446,12 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					if bdCont.Exists("layer2_stretch") {
 						d.Set("layer2_stretch", bdCont.S("l2Stretch").Data().(bool))
 					}
+					if bdCont.Exists("arp_flooding") {
+						d.Set("arp_flooding", bdCont.S("arpFlood").Data().(bool))
+					}
+					if bdCont.Exists("unicast_routing") {
+						d.Set("unicast_routing", bdCont.S("unicastRouting").Data().(bool))
+					}
 
 					vrfRef := models.StripQuotes(bdCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -380,10 +460,15 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("vrf_schema_id", match[1])
 					d.Set("vrf_template_name", match[2])
 
-					if bdCont.Exists("dhcpLabel") {
-						dhcpPolMap := make(map[string]interface{})
-						dhcpPolMap["name"] = models.StripQuotes(bdCont.S("dhcpLabel", "name").String())
+					dhcpPolMap := make(map[string]interface{})
+					dhcpPolMap["name"] = models.StripQuotes(bdCont.S("dhcpLabel", "name").String())
+					if dhcpPolMap["name"] == "{}" {
+						dhcpPolMap = nil
+					} else {
 						dhcpPolMap["version"] = models.StripQuotes(bdCont.S("dhcpLabel", "version").String())
+						if dhcpPolMap["version"] == "{}" {
+							dhcpPolMap["version"] = nil
+						}
 						if bdCont.Exists("dhcpLabel", "dhcpOptionLabel") {
 							dhcpPolMap["dhcp_option_policy_name"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "name").String())
 							dhcpPolMap["dhcp_option_policy_version"] = models.StripQuotes(bdCont.S("dhcpLabel", "dhcpOptionLabel", "version").String())
@@ -394,10 +479,8 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 								dhcpPolMap["dhcp_option_policy_version"] = nil
 							}
 						}
-						d.Set("dhcp_policy", dhcpPolMap)
-					} else {
-						d.Set("dhcp_policy", make(map[string]interface{}))
 					}
+					d.Set("dhcp_policy", dhcpPolMap)
 					found = true
 					break
 				}
@@ -426,8 +509,8 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
-	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name string
+	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -443,6 +526,24 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 	if tempVar, ok := d.GetOk("layer2_unknown_unicast"); ok {
 		layer2_unknown_unicast = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unknown_multicast_flooding"); ok {
+		unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("multi_destination_flooding"); ok {
+		multi_destination_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ipv6_unknown_multicast_flooding"); ok {
+		ipv6_unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unicast_routing"); ok {
+		unicast_routing = tempVar.(bool)
+	}
+	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
+		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("arp_flooding"); ok {
+		arp_flooding = tempVar.(bool)
 	}
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -490,7 +591,7 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
-	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, vrfRefMap, dhcpPolMap)
+	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
@@ -510,8 +611,8 @@ func resourceMSOTemplateBDDelete(d *schema.ResourceData, m interface{}) error {
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
-	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name string
+	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -524,6 +625,24 @@ func resourceMSOTemplateBDDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	if tempVar, ok := d.GetOk("layer2_unknown_unicast"); ok {
 		layer2_unknown_unicast = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unknown_multicast_flooding"); ok {
+		unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("multi_destination_flooding"); ok {
+		multi_destination_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ipv6_unknown_multicast_flooding"); ok {
+		ipv6_unknown_multicast_flooding = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("unicast_routing"); ok {
+		unicast_routing = tempVar.(bool)
+	}
+	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
+		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("arp_flooding"); ok {
+		arp_flooding = tempVar.(bool)
 	}
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -563,7 +682,7 @@ func resourceMSOTemplateBDDelete(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
-	bdStruct := models.NewTemplateBD("remove", path, name, displayName, layer2_unknown_unicast, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, vrfRefMap, dhcpPolMap)
+	bdStruct := models.NewTemplateBD("remove", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 

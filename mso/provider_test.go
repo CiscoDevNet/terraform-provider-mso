@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -10,6 +11,87 @@ import (
 
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
+var siteNames = []string{"ansible_test"}
+var tenantNames = []string{"acctest_crest"}
+var validSchemaId = "6206831f1d000012864f99a8"
+var inValidScheamaId = "620683151d0000f1854f99a4"
+var epg = "/schemas/621392f81d0000282a4f9d1c/templates/ACC_CREST/anps/UntitledAP1/epgs/test_epg"
+
+func CreatSchemaSiteConfig(site, tenant, name string) string {
+	resource := fmt.Sprintf(`
+	data "mso_site" "test" {
+		name  = "%s"
+	}
+	  
+ 	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	  
+	resource "mso_schema" "test" {
+		name          = "%s"
+		template_name = "%s"
+		tenant_id     = data.mso_tenant.test.id
+	}
+			
+	resource "mso_schema_site" "test" {
+		schema_id       =  mso_schema.test.id
+		site_id         =  data.mso_site.test.id
+		template_name   =  "%s"
+	}
+	`, site, tenant, tenant, name, name, name)
+	return resource
+}
+
+func CreateDHCPRelayPolicy(tenant, polname string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name = "%s"
+		display_name = "%s"
+	}
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id = data.mso_tenant.test.id
+		name = "%s"		
+	}
+	`, tenant, tenant, polname)
+	return resource
+}
+
+func GetParentConfigBDDHCPPolicy(tenant, schema, name string) string {
+	resource := fmt.Sprintf(`
+	data "mso_tenant" "test" {
+		name         = "%s"
+		display_name = "%s"
+	}
+	  
+	 resource "mso_schema" "test" {
+		name          = "%s"
+		template_name = "%s"
+		tenant_id     = data.mso_tenant.test.id
+	}
+	  
+	resource "mso_schema_template_vrf" "test" {
+		schema_id        = mso_schema.test.id
+		template         = mso_schema.test.template_name
+		name             = "%s"
+		display_name     = "%s"
+	}
+	  
+	resource "mso_schema_template_bd" "test" {
+		schema_id              = mso_schema.test.id
+		template_name          = mso_schema.test.template_name
+		name                   = "%s"
+		display_name           = "%s"
+		vrf_name               = mso_schema_template_vrf.test.name
+	}
+	  
+	resource "mso_dhcp_relay_policy" "test" {
+		tenant_id   = data.mso_tenant.test.id
+		name        = "%s"
+	}
+	`, tenant, tenant, schema, schema, name, name, name, name, name)
+	return resource
+}
 
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
