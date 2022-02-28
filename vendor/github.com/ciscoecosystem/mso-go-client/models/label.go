@@ -6,6 +6,9 @@ type Label struct {
 	Type      string `json:",omitempty"`
 }
 
+
+
+
 func NewLabel (id, labels, types string) *Label{
 	
 	return &Label{
