@@ -30,11 +30,8 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
   vrf_schema_id              = "5eafeb792c0000a18e0a2900"
   bd_schema_id               = "5eafeb792c0000a18e0a2900"
   vrf_template_name          = "stemplate1"
-  cloud_service_epg_config{
-    access_type= "private"
-    deployment_type = "cloud_native"
-    service_type = "custom"
-    custom_service_type = "Test"
-  }
-
+  access_type= "private"
+  deployment_type = "cloud_native"
+  service_type = "custom"
+  custom_service_type = "Test"
 }

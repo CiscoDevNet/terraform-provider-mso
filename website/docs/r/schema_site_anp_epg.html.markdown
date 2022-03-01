@@ -29,7 +29,7 @@ resource "mso_schema_site_anp_epg" "site_anp_epg" {
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
-* `private_link_label` - (Optional) Private Link Label. This argument is required when the EPG type is service at template level.
+* `private_link_label` - (Optional) Private Link Label.
 
 ## Attribute Reference ##
 
