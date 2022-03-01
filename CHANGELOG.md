@@ -1,3 +1,13 @@
+## 0.5.0 (February 28, 2022)
+IMPROVEMENTS:
+- Add arp_flooding, virtual_mac_address, unicast_routing, ipv6_unknown_multicast_flooding, multi_destination_flooding and unknown_multicast_flooding in mso_schema_template_bd
+
+BUG FIXES:
+- Fix import documentation for mso_schema_template_external_epg_subnet, mso_schema_site_bd_subnet and mso_schema_template_filter_entry.
+- Fix aci_site import and idempotency issues with NDO
+- Add check to ignore error code 141 Resource Not Present to all Delete methods
+- Fix idempotency issue of mso_schema_template_bd
+
 ## 0.4.1 (December 17, 2021)
 BUG FIXES:
 - Fix documentation for mso_schema_template_external_epg, mso_schema_template_external_epg_subnet and mso_schema_template_contract.
