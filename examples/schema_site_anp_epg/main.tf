@@ -19,7 +19,5 @@ resource "mso_schema_site_anp_epg" "foo_schema_site_anp_epg" {
   site_id       = "5c7c95d9510000cf01c1ee3d"
   anp_name      = "ANP"
   epg_name      = "DB"
-  private_link_label {
-    name = "Cloud"
-    }
+  private_link_label = "Cloud"
 }

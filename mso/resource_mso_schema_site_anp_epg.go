@@ -14,6 +14,7 @@ import (
 func resourceMSOSchemaSiteAnpEpg() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpEpgCreate,
+		Update: resourceMSOSchemaSiteAnpEpgUpdate,
 		Read:   resourceMSOSchemaSiteAnpEpgRead,
 		Delete: resourceMSOSchemaSiteAnpEpgDelete,
 
@@ -55,18 +56,8 @@ func resourceMSOSchemaSiteAnpEpg() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"private_link_label": &schema.Schema{
-				Type: schema.TypeSet,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
-						},
-					},
-				},
+				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 		}),
 	}
@@ -132,16 +123,11 @@ func resourceMSOSchemaSiteAnpEpgImport(d *schema.ResourceData, m interface{}) ([
 							d.Set("template_name", split[4])
 							d.Set("anp_name", split[6])
 							d.Set("epg_name", apiEPG)
-							labels := make([]interface{}, 0)
-							map_label := make(map[string]interface{})
-							labelsCont := epgCont.S("privateLinkLabel")
-							if models.StripQuotes(labelsCont.S("name").String()) == "{}" {
-								assign_empty := make([]interface{}, 0)
-								d.Set("private_link_label", assign_empty)
+							privatelinklabelsCont := epgCont.S("privateLinkLabel")
+							if models.StripQuotes(privatelinklabelsCont.S("name").String()) == "{}" {
+								d.Set("private_link_label", "")
 							} else {
-								map_label["name"] = models.StripQuotes(labelsCont.S("name").String())
-								labels = append(labels, map_label)
-								d.Set("private_link_label", labels)
+								d.Set("private_link_label", models.StripQuotes(privatelinklabelsCont.S("name").String()))
 							}
 							found = true
 							break
@@ -178,30 +164,20 @@ func resourceMSOSchemaSiteAnpEpgCreate(d *schema.ResourceData, m interface{}) er
 
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", siteId, templateName, anpName)
 
-	private_link_label := make(map[string]interface{})
+	privateLinkLabel := make(map[string]interface{})
 	if val, ok := d.GetOk("private_link_label"); ok {
-		label_list := val.(*schema.Set).List()
-		for _, val := range label_list {
-
-			map_label := make(map[string]interface{})
-			inner_label := val.(map[string]interface{})
-
-			map_label["name"] = inner_label["name"]
-
-			private_link_label = map_label
-		}
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, private_link_label, anpEpgRefMap)
-		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
-		if err != nil {
-			return err
-		}
+		map_private_link_label := make(map[string]interface{})
+		map_private_link_label["name"] = val
+		privateLinkLabel = map_private_link_label
 	} else {
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, nil, anpEpgRefMap)
-		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
-		if err != nil {
-			return err
-		}
+		privateLinkLabel = nil
 	}
+	anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, privateLinkLabel, anpEpgRefMap)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	if err != nil {
+		return err
+	}
+
 	return resourceMSOSchemaSiteAnpEpgRead(d, m)
 }
 
@@ -289,7 +265,7 @@ func resourceMSOSchemaSiteAnpEpgRead(d *schema.ResourceData, m interface{}) erro
 
 }
 
-func resourceMSOSchemaSiteAnpEpgDelete(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteAnpEpgUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site Anp Epg: Beginning Update")
 	msoClient := m.(*client.Client)
 
@@ -306,30 +282,55 @@ func resourceMSOSchemaSiteAnpEpgDelete(d *schema.ResourceData, m interface{}) er
 	anpEpgRefMap["epgName"] = epgName
 
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s", siteId, templateName, anpName, epgName)
-	private_link_label := make(map[string]interface{})
+
+	privateLinkLabel := make(map[string]interface{})
 	if val, ok := d.GetOk("private_link_label"); ok {
-		label_list := val.(*schema.Set).List()
-		for _, val := range label_list {
-
-			map_label := make(map[string]interface{})
-			inner_label := val.(map[string]interface{})
-
-			map_label["name"] = inner_label["name"]
-
-			private_link_label = map_label
-		}
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, private_link_label, anpEpgRefMap)
-		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
-		if err != nil {
-			return err
-		}
+		map_private_link_label := make(map[string]interface{})
+		map_private_link_label["name"] = val
+		privateLinkLabel = map_private_link_label
 	} else {
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, nil, anpEpgRefMap)
-		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
-		if err != nil {
-			return err
-		}
+		privateLinkLabel = nil
 	}
+	anpEpgStruct := models.NewSchemaSiteAnpEpg("replace", path, privateLinkLabel, anpEpgRefMap)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	if err != nil {
+		return err
+	}
+
+	return resourceMSOSchemaSiteAnpEpgRead(d, m)
+}
+
+func resourceMSOSchemaSiteAnpEpgDelete(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] Site Anp Epg: Beginning Delete")
+	msoClient := m.(*client.Client)
+
+	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anpName := d.Get("anp_name").(string)
+	epgName := d.Get("epg_name").(string)
+
+	anpEpgRefMap := make(map[string]interface{})
+	anpEpgRefMap["schemaId"] = schemaId
+	anpEpgRefMap["templateName"] = templateName
+	anpEpgRefMap["anpName"] = anpName
+	anpEpgRefMap["epgName"] = epgName
+
+	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s", siteId, templateName, anpName, epgName)
+	privateLinkLabel := make(map[string]interface{})
+	if val, ok := d.GetOk("private_link_label"); ok {
+		map_private_link_label := make(map[string]interface{})
+		map_private_link_label["name"] = val
+		privateLinkLabel = map_private_link_label
+	} else {
+		privateLinkLabel = nil
+	}
+	anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, privateLinkLabel, anpEpgRefMap)
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	if err != nil {
+		return err
+	}
+
 	d.SetId("")
 	return nil
 }
