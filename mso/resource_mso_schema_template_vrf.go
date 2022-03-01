@@ -316,8 +316,10 @@ func resourceMSOSchemaTemplateVrfDelete(d *schema.ResourceData, m interface{}) e
 	}
 	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("remove", "/templates/"+template+"/vrfs/"+name, "", "", l3m, vzany)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
-	if err != nil {
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 

@@ -269,8 +269,10 @@ func resourceMSOSchemaTemplateAnpDelete(d *schema.ResourceData, m interface{}) e
 	template := d.Get("template").(string)
 	name := d.Get("name").(string)
 	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("remove", "/templates/"+template+"/anps/"+name, "", "")
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
-	if err != nil {
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 

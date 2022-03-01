@@ -267,8 +267,10 @@ func resourceMSOSchemaSiteBdL3outDelete(d *schema.ResourceData, m interface{}) e
 	path := fmt.Sprintf("/sites/%s-%s/bds/%s/l3Outs/%s", siteId, templateName, bdName, indexs)
 	BdL3outStruct := models.NewSchemaSiteBdL3out("remove", path, l3outName)
 
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdL3outStruct)
-	if errs != nil {
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdL3outStruct)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 

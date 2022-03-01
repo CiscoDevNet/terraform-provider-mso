@@ -957,8 +957,10 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/%s", siteId, templateName, anpName, epgName, indexs)
 	anpEpgDomainStruct := models.NewSchemaSiteAnpEpgDomain("remove", path, domainType, DN, deployImmediacy, resolutionImmediacy, vmmDomainPropertiesRefMap)
 
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgDomainStruct)
-	if errs != nil {
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgDomainStruct)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 	d.SetId("")

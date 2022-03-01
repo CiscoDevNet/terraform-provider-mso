@@ -479,8 +479,10 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 							index := k
 							path := fmt.Sprintf("/templates/%s/bds/%s/subnets/%v", apiTemplate, apiBD, index)
 							bdSubnetStruct := models.NewTemplateBDSubnet("remove", path, apiIP, Desc, Scope, Shared, NoDefaultGateway, Querier)
-							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdSubnetStruct)
-							if err != nil {
+							response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdSubnetStruct)
+
+							// Ignoring Error with code 141: Resource Not Found when deleting
+							if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 								return err
 							}
 							break

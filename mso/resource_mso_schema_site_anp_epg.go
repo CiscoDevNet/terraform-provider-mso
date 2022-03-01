@@ -265,9 +265,10 @@ func resourceMSOSchemaSiteAnpEpgDelete(d *schema.ResourceData, m interface{}) er
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s", siteId, templateName, anpName, epgName)
 	anpEpgStruct := models.NewSchemaSiteAnpEpg("remove", path, anpEpgRefMap)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
-	if err != nil {
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 	d.SetId("")

@@ -342,8 +342,10 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%s", templateName, epgName, indexs)
 	contractStruct := models.NewTemplateExternalEpgContract("remove", path, "", nil)
 
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
-	if errs != nil {
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 	d.SetId("")

@@ -222,8 +222,10 @@ func resourceMSOSchemaSiteAnpDelete(d *schema.ResourceData, m interface{}) error
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s", siteId, templateName, anpName)
 	anpStruct := models.NewSchemaSiteAnp("remove", path, anpRefMap)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
-	if err != nil {
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 	d.SetId("")
