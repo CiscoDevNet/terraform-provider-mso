@@ -449,8 +449,10 @@ func resourceMSOSchemaTemplateAnpEpgSubnetDelete(d *schema.ResourceData, m inter
 	}
 	indexs := strconv.Itoa(index)
 	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("remove", "/templates/"+template+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/"+indexs, "", "", false)
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
-	if errs != nil {
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 

@@ -633,8 +633,10 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttrDelete(d *schema.ResourceData, m int
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/uSegAttrs/%s", templateName, anpName, epgName, name)
 	usegAttrApp := models.NewSchemaTemplateAnpEpgUsegAttr("remove", path, usegAttrMap)
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), usegAttrApp)
-	if errs != nil {
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), usegAttrApp)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 

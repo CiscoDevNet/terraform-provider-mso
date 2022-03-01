@@ -877,8 +877,10 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 			structList = append(structList, siteExternalepgStruct)
 		}
 
-		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), structList...)
-		if err != nil {
+		response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), structList...)
+
+		// Ignoring Error with code 141: Resource Not Found when deleting
+		if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 			return err
 		}
 
@@ -886,8 +888,10 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
 		externalepgStruct := models.NewTemplateExternalepg("remove", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
-		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
-		if err != nil {
+		response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
+
+		// Ignoring Error with code 141: Resource Not Found when deleting
+		if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 			return err
 		}
 	}

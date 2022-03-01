@@ -196,8 +196,10 @@ func resourceMSOSchemaTemplateDelete(d *schema.ResourceData, m interface{}) erro
 
 	schematemplate := models.NewSchemaTemplate("remove", fmt.Sprintf("/templates/%s", templateName), tenantId, templateName, templateDisplayName)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
-	if err != nil {
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 

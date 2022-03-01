@@ -800,9 +800,10 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 									index := l
 									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSite, stateTemplate, stateAnp, stateEpg, index)
 									anpStruct := models.NewSchemaSiteAnpEpgStaticPort("remove", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
-									_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+									response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
 
-									if err != nil {
+									// Ignoring Error with code 141: Resource Not Found when deleting
+									if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 										return err
 									}
 									break
