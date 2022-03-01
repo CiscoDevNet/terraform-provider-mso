@@ -539,8 +539,10 @@ func resourceSchemaSiteApnEpgSelectorDelete(d *schema.ResourceData, m interface{
 
 	schemasiteanpepgselector := models.NewSchemaTemplateAnpEpgSelector("remove", path, schemasiteanpepgselectorMap)
 
-	_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemasiteanpepgselector)
-	if err1 != nil {
+	response, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemasiteanpepgselector)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err1 != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err1
 	}
 

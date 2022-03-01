@@ -558,9 +558,10 @@ func resourceMSOSchemaSiteVrfRegionDelete(d *schema.ResourceData, m interface{})
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s", siteId, templateName, vrfName, regionName)
 	vrfRegionStruct := models.NewSchemaSiteVrfRegion("remove", path, regionName, false, false, nil, nil)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
 
-	if err != nil {
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 	d.SetId("")

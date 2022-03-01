@@ -308,8 +308,10 @@ func resourceMSOTemplateL3outDelete(d *schema.ResourceData, m interface{}) error
 	path := fmt.Sprintf("/templates/%s/intersiteL3outs/%s", templateName, l3outName)
 	l3outStruct := models.NewTemplateL3out("remove", path, l3outName, displayName, vrfRefMap)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), l3outStruct)
-	if err != nil {
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), l3outStruct)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 	d.SetId("")

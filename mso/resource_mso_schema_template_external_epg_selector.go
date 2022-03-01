@@ -387,8 +387,10 @@ func resourceSchemaTemplateExternalEPGSelectorDelete(d *schema.ResourceData, m i
 
 	schemaTemplateExternalEpgSelector := models.NewSchemaTemplateExternalEPGSelector("remove", path, nil)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaTemplateExternalEpgSelector)
-	if err != nil {
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), schemaTemplateExternalEpgSelector)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 	d.SetId("")
