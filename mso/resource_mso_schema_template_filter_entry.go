@@ -650,15 +650,19 @@ func resourceMSOSchemaTemplateFilterEntryDelete(d *schema.ResourceData, m interf
 					if entriesCount == 1 {
 						path := fmt.Sprintf("/templates/%s/filters/%s", apiTemplate, apiFilterName)
 						filterStruct := models.NewTemplateFilter("remove", path, apiFilterName, displayName, entries)
-						_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
-						if err != nil {
+						response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
+
+						// Ignoring Error with code 141: Resource Not Found when deleting
+						if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 							return err
 						}
 					} else {
 						pathf := fmt.Sprintf("/templates/%s/filters/%s/entries/%s", stateTemplate, filterName, entryName)
 						filterStruct := models.NewTemplateFilterEntry("remove", pathf, entryName, entryDisplayName, entryDescription, etherType, arpFlag, ipProtocol, sourceFrom, sourceTo, destinationFrom, destinationTo, matchOnlyFragments, stateful, tcpSessionRules)
-						_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
-						if err != nil {
+						response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
+
+						// Ignoring Error with code 141: Resource Not Found when deleting
+						if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 							return err
 						}
 					}

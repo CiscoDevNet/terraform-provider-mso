@@ -251,7 +251,8 @@ func resourceMSOSchemaSiteAnpEpgStaticleafCreate(d *schema.ResourceData, m inter
 						anpEpgRefMap["epgName"] = epgName
 
 						pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, anpName)
-						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+						//private_link_label argument used in resource site_anp_epg is set to nil here
+						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
 						_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 						if ers != nil {
@@ -287,7 +288,8 @@ func resourceMSOSchemaSiteAnpEpgStaticleafCreate(d *schema.ResourceData, m inter
 				anpEpgRefMap["epgName"] = epgName
 
 				pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, anpName)
-				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+				//private_link_label argument used in resource site_anp_epg is set to nil here
+				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
 				_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 				if ers != nil {
@@ -501,9 +503,10 @@ func resourceMSOSchemaSiteAnpEpgStaticleafDelete(d *schema.ResourceData, m inter
 	indexs := strconv.Itoa(index)
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticLeafs/%s", siteId, templateName, anpName, epgName, indexs)
 	anpEpgStaticStruct := models.NewSchemaSiteAnpEpgStaticleaf("remove", path, paths, portEncapVlan)
-	_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStaticStruct)
+	response, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStaticStruct)
 
-	if err1 != nil {
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err1 != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err1
 	}
 	d.SetId("")

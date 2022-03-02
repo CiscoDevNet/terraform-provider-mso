@@ -357,7 +357,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 						anpEpgRefMap["epgName"] = stateEpgName
 
 						pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, stateANPName)
-						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+						//private_link_label argument used in resource site_anp_epg is set to nil here
+						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
 						_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 						if ers != nil {
@@ -392,7 +393,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 				anpEpgRefMap["epgName"] = stateEpgName
 
 				pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", stateSiteId, stateTemplateName, stateANPName)
-				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+				//private_link_label argument used in resource site_anp_epg is set to nil here
+				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
 				_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 				if ers != nil {
@@ -800,9 +802,10 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 									index := l
 									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSite, stateTemplate, stateAnp, stateEpg, index)
 									anpStruct := models.NewSchemaSiteAnpEpgStaticPort("remove", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
-									_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+									response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
 
-									if err != nil {
+									// Ignoring Error with code 141: Resource Not Found when deleting
+									if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 										return err
 									}
 									break

@@ -342,8 +342,10 @@ func resourceMSOSchemaSiteVrfRegionCidrDelete(d *schema.ResourceData, m interfac
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s/cidrs/%s", siteId, templateName, vrfName, regionName, indexs)
 	VrfRegionCidrStruct := models.NewSchemaSiteVrfRegionCidr("remove", path, ip, primary)
 
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), VrfRegionCidrStruct)
-	if errs != nil {
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), VrfRegionCidrStruct)
+
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 	d.SetId("")

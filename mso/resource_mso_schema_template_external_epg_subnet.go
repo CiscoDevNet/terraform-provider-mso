@@ -366,9 +366,10 @@ func resourceMSOTemplateExtenalepgSubnetDelete(d *schema.ResourceData, m interfa
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/subnets/%s", templateName, extenalepgName, indexs)
 	externalepgStruct := models.NewTemplateExternalEpgSubnet("remove", path, IP, Name, Scope, Aggregate)
 
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 
-	if errs != nil {
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return errs
 	}
 	d.SetId("")

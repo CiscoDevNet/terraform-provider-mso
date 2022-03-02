@@ -547,9 +547,10 @@ func resourceMSOTemplateContractDelete(d *schema.ResourceData, m interface{}) er
 	path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
 	contractStruct := models.NewTemplateContract("remove", path, contractName, displayName, scope, filter_type, filter)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
 
-	if err != nil {
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
 	d.SetId("")
