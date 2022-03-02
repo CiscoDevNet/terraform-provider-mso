@@ -119,7 +119,7 @@ func (c *Client) PatchbyID(endpoint string, objList ...models.Model) (*container
 		contJs.ArrayAppend(jsonPayload.Data())
 
 	}
-
+	fmt.Printf("Patch Request Container: %v\n", contJs)
 	// URL encoding
 	baseUrl, _ := url.Parse(endpoint)
 	qs := url.Values{}

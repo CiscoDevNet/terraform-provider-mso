@@ -228,11 +228,13 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	Name := d.Get("name").(string)
 	bdName := d.Get("bd_name").(string)
 	vrfName := d.Get("vrf_name").(string)
-	displayName := d.Get("display_name").(string)
+	displayName := d.Get("name").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
-
+	if val, ok := d.GetOk("display_name"); ok {
+		displayName = val.(string)
+	}
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
 	}
@@ -400,11 +402,13 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	Name := d.Get("name").(string)
 	bdName := d.Get("bd_name").(string)
 	vrfName := d.Get("vrf_name").(string)
-	displayName := d.Get("display_name").(string)
+	displayName := d.Get("name").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
-
+	if val, ok := d.GetOk("display_name"); ok {
+		displayName = val.(string)
+	}
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
 	}
@@ -523,7 +527,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	bdRefMap["templateName"] = bd_template_name
 	bdRefMap["bdName"] = bdName
 
-	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
+	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, Name)
 	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
