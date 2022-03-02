@@ -6,7 +6,7 @@ type SchemaSiteAnpEpg struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaSiteAnpEpg(ops, path string, epgRef map[string]interface{}) *SchemaSiteAnpEpg {
+func NewSchemaSiteAnpEpg(ops, path string, privateLinkLabel, epgRef map[string]interface{}) *SchemaSiteAnpEpg {
 	var siteAnpEpgMap map[string]interface{}
 	siteAnpEpgMap = map[string]interface{}{
 		"epgRef":             epgRef,
@@ -17,6 +17,7 @@ func NewSchemaSiteAnpEpg(ops, path string, epgRef map[string]interface{}) *Schem
 		"uSegAttrs":          []interface{}{},
 		"subnets":            []interface{}{},
 		"selectors":          []interface{}{},
+		"privateLinkLabel":   privateLinkLabel,
 	}
 
 	return &SchemaSiteAnpEpg{
