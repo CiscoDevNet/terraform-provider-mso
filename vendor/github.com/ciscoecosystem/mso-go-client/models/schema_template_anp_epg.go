@@ -6,19 +6,21 @@ type TemplateAnpEpg struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg string, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool, vrfRef, bdRef map[string]interface{}) *TemplateAnpEpg {
+func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType string, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool, vrfRef, bdRef, cloudServiceEpgConfig map[string]interface{}) *TemplateAnpEpg {
 	var anpepgMap map[string]interface{}
 	anpepgMap = map[string]interface{}{
-		"name":           name,
-		"displayName":    displayName,
-		"subnets":        []interface{}{},
-		"uSegEpg":        uSegEpg,
-		"intraEpg":       intraEpg,
-		"mCastSource":    intersiteMulticasteSource,
-		"proxyArp":       proxyArp,
-		"preferredGroup": preferredGroup,
-		"vrfRef":         vrfRef,
-		"bdRef":          bdRef,
+		"name":                  name,
+		"displayName":           displayName,
+		"subnets":               []interface{}{},
+		"uSegEpg":               uSegEpg,
+		"intraEpg":              intraEpg,
+		"epgType":               epgType,
+		"mCastSource":           intersiteMulticasteSource,
+		"proxyArp":              proxyArp,
+		"preferredGroup":        preferredGroup,
+		"vrfRef":                vrfRef,
+		"bdRef":                 bdRef,
+		"cloudServiceEpgConfig": cloudServiceEpgConfig,
 	}
 
 	if anpepgMap["intraEpg"] == "" {

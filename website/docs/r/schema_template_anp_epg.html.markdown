@@ -25,6 +25,11 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
   intra_epg = "unenforced"
   intersite_multicast_source = false
   preferred_group = false
+  epg_type = "service"
+  access_type= "private"
+  deployment_type = "cloud_native"
+  service_type = "azure_sql"
+  
 }
 ```
 
@@ -46,6 +51,11 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 * `intersite_multicast_source` - (Optional) Whether intersite multicast source is enabled. Default to false.
 * `proxy_arp` - (Optional) Whether to enable Proxy ARP or not. (For Forwarding control) Default to false.
 * `preferred_group` - (Optional) Boolean flag to enable or disable whether this EPG is added to preferred group.      Default value is set to false.
+* `epg_type` - (Optional) EPG Type. Allowed values are `application` and `service`. Default is `application`.
+* `access_type` - Access Type. Allowed values are `private`, `public` and `public_and_private`.
+* `deployment_type` - Deployment Type. Allowed values are `cloud_native`, `cloud_native_managed` and `third_party`.
+* `service_type` - Service Type. Allowed values are `azure_api_management_services`, `azure_cosmos_db`, `azure_databricks`, `azure_sql`, `azure_storage`, `azure_storage_blob`, `azure_storage_file`, `azure_storage_queue`, `azure_storage_table`, `azure_kubernetes_services`, `azure_ad_domain_services`, `azure_contain_registry`, `azure_key_vault`, `redis_cache`, `custom`.
+* `custom_service_type` - Custom Service Type. This argument is required when `service_type` is set to `custom`.
 
 ## Attribute Reference ##
 

@@ -357,7 +357,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 						anpEpgRefMap["epgName"] = stateEpgName
 
 						pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", apiSite, apiTemplate, stateANPName)
-						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+						//private_link_label argument used in resource site_anp_epg is set to nil here
+						anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
 						_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 						if ers != nil {
@@ -392,7 +393,8 @@ func resourceMSOSchemaSiteAnpEpgStaticPortCreate(d *schema.ResourceData, m inter
 				anpEpgRefMap["epgName"] = stateEpgName
 
 				pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", stateSiteId, stateTemplateName, stateANPName)
-				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, anpEpgRefMap)
+				//private_link_label argument used in resource site_anp_epg is set to nil here
+				anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
 				_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 				if ers != nil {
