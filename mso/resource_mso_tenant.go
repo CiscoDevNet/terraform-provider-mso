@@ -711,7 +711,11 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(models.StripQuotes(con.S("id").String()))
 	d.Set("name", models.StripQuotes(con.S("name").String()))
 	d.Set("display_name", models.StripQuotes(con.S("displayName").String()))
-	d.Set("description", models.StripQuotes(con.S("description").String()))
+	if con.Exists("description") {
+		d.Set("description", models.StripQuotes(con.S("description").String()))
+	} else {
+		d.Set("description", "")
+	}
 
 	count1, _ := con.ArrayCount("siteAssociations")
 	site_associations := make([]interface{}, 0)
