@@ -65,7 +65,7 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
   deployment_immediacy = "lazy"
   pod = "pod-7"
   leaf = "109"
-  path = "eth1/10"
+  path = "HX-FI-A_PolGrp"
   vlan = 200
   mode = "untagged"
 
@@ -81,7 +81,7 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
 * `epg_name` - (Required) EPG name under which you want to deploy Static Port.
 * `path_type` - (Required) The type of the static port. Allowed values are `port`, `vpc` and `dpc`.
 * `pod` - (Required) The pod of the static port.
-* `leaf` - (Required) The leaf of the static port.
+* `leaf` - (Required) The leaf of the static port. When `path_type` is `port` or `dpc`, then `leaf` is a string of the leaf ID; Example - '101'. When `path_type` is `vpc`, then `leaf` is a list with both leaf IDs; Example - '101-102'.
 * `path` - (Required) The path of the static port.
 * `mode` - (Required) The mode of the static port. Allowed values are `native`, `regular` and `untagged`.
 * `deployment_immediacy` - (Required) The deployment immediacy of the static port. Allowed values are `immediate` and `lazy`.
