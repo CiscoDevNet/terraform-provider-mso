@@ -195,7 +195,7 @@ func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 				awsCont, err := sitesCont.ArrayElement(0, "awsAccount")
 				if err == nil {
 					mapSite["aws_account_id"] = models.StripQuotes(awsCont.S("accountId").String())
-					if awsCont.Exists("isTrusted") {
+					if awsCont.Exists("isTrusted") && awsCont.S("isTrusted").Data() != nil {
 						mapSite["is_aws_account_trusted"] = awsCont.S("isTrusted").Data().(bool)
 					}
 					mapSite["vendor"] = "aws"
@@ -734,7 +734,7 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 				awsCont, err := sitesCont.ArrayElement(0, "awsAccount")
 				if err == nil {
 					mapSite["aws_account_id"] = models.StripQuotes(awsCont.S("accountId").String())
-					if awsCont.Exists("isTrusted") {
+					if awsCont.Exists("isTrusted") && awsCont.S("isTrusted").Data() != nil {
 						mapSite["is_aws_account_trusted"] = awsCont.S("isTrusted").Data().(bool)
 					}
 					mapSite["vendor"] = "aws"
