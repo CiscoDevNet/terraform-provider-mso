@@ -173,16 +173,21 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 							d.SetId(id)
 							d.Set("name", apiEPG)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
-							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
-							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
+							if epgCont.Exists("intraEpg") {
+								d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
+							}
+							if epgCont.Exists("uSegEpg") {
+								d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
+							}
 							if epgCont.Exists("mCastSource") {
 								d.Set("intersite_multicast_source", epgCont.S("mCastSource").Data().(bool))
 							}
 							if epgCont.Exists("proxyArp") {
 								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
 							}
-							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
-
+							if epgCont.Exists("preferredGroup") {
+								d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
+							}
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
 							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
@@ -348,16 +353,21 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 							d.Set("name", apiEPG)
 							d.Set("template_name", apiTemplate)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
-							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
-							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
+							if epgCont.Exists("intraEpg") {
+								d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
+							}
+							if epgCont.Exists("uSegEpg") {
+								d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
+							}
 							if epgCont.Exists("mCastSource") {
 								d.Set("intersite_multicast_source", epgCont.S("mCastSource").Data().(bool))
 							}
 							if epgCont.Exists("proxyArp") {
 								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
 							}
-							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
-
+							if epgCont.Exists("preferredGroup") {
+								d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
+							}
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
 							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
