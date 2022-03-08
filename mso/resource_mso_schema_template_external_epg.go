@@ -223,8 +223,10 @@ func resourceMSOTemplateExtenalepgImport(d *schema.ResourceData, m interface{}) 
 							selector := selList[0].(map[string]interface{})
 							d.Set("selector_name", selector["name"])
 							expList := selector["expressions"].([]interface{})
-							exp := expList[0].(map[string]interface{})
-							d.Set("selector_ip", exp["value"])
+							if len(expList) > 0 {
+								exp := expList[0].(map[string]interface{})
+								d.Set("selector_ip", exp["value"])
+							}
 						}
 					} else {
 						d.Set("site_id", make([]interface{}, 0, 1))
@@ -510,8 +512,16 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 							selector := selList[0].(map[string]interface{})
 							d.Set("selector_name", selector["name"])
 							expList := selector["expressions"].([]interface{})
-							exp := expList[0].(map[string]interface{})
-							d.Set("selector_ip", exp["value"])
+							if len(expList) > 0 {
+								exp := expList[0].(map[string]interface{})
+								d.Set("selector_ip", exp["value"])
+							} else {
+								d.Set("selector_ip", "")
+							}
+						} else {
+							d.Set("site_id", make([]interface{}, 0, 1))
+							d.Set("selector_name", "")
+							d.Set("selector_ip", "")
 						}
 					} else {
 						d.Set("site_id", make([]interface{}, 0, 1))
