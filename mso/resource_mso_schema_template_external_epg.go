@@ -505,12 +505,13 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 					epgType := d.Get("external_epg_type").(string)
 					if epgType == "cloud" {
 						selList := externalepgCont.S("selectors").Data().([]interface{})
-
-						selector := selList[0].(map[string]interface{})
-						d.Set("selector_name", selector["name"])
-						expList := selector["expressions"].([]interface{})
-						exp := expList[0].(map[string]interface{})
-						d.Set("selector_ip", exp["value"])
+						if len(selList) > 0 {
+							selector := selList[0].(map[string]interface{})
+							d.Set("selector_name", selector["name"])
+							expList := selector["expressions"].([]interface{})
+							exp := expList[0].(map[string]interface{})
+							d.Set("selector_ip", exp["value"])
+						}
 					} else {
 						d.Set("site_id", make([]interface{}, 0, 1))
 						d.Set("selector_name", "")
