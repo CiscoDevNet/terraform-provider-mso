@@ -161,7 +161,7 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		if con.Exists("labels") && con.S("labels").Data() != nil {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		} else {
-			d.Set("labels", nil)
+			d.Set("labels", []string{})
 		}
 		if con.Exists("urls") {
 			d.Set("urls", con.S("urls").Data().([]interface{}))
@@ -438,7 +438,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		if con.Exists("labels") && con.S("labels").Data() != nil {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		} else {
-			d.Set("labels", nil)
+			d.Set("labels", []string{})
 		}
 		if con.Exists("urls") {
 			d.Set("urls", con.S("urls").Data().([]interface{}))
