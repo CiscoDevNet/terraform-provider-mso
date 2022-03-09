@@ -158,8 +158,10 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		d.Set("name", models.StripQuotes(con.S("name").String()))
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 		d.Set("username", models.StripQuotes(con.S("username").String()))
-		if con.Exists("labels") {
+		if con.Exists("labels") && con.S("labels").Data() != nil {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
+		} else {
+			d.Set("labels", []string{})
 		}
 		if con.Exists("urls") {
 			d.Set("urls", con.S("urls").Data().([]interface{}))
@@ -433,8 +435,10 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("name", models.StripQuotes(con.S("name").String()))
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 		d.Set("username", models.StripQuotes(con.S("username").String()))
-		if con.Exists("labels") {
+		if con.Exists("labels") && con.S("labels").Data() != nil {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
+		} else {
+			d.Set("labels", []string{})
 		}
 		if con.Exists("urls") {
 			d.Set("urls", con.S("urls").Data().([]interface{}))

@@ -25,12 +25,12 @@ resource "mso_site" "foo_site" {
 ## Argument Reference ##
 
 * `name` - (Required) The name of the site.
-* `username` - (Required) The username for the APICs.
-* `password` - (Required) The password for the APICs.
+* `username` - (Optional) The username for the APICs.
+* `password` - (Optional) The password for the APICs.
 * `apic_site_id` - (Required) The site ID of the APICs.
 * `login_domain` - (Optional) Name of login domain. This parameter should be used to authenticate remote user with APIC.
 * `maintenance_mode` - (Optional) Boolean flag to enable/disable Maintenance Mode on the site. This parameter is supported only in MSO version 3.0 or higher.
-* `urls` - (Required) A list of URLs to reference the APICs.
+* `urls` - (Optional) A list of URLs to reference the APICs.
 * `labels` - (Optional) The labels for this site.
 * `location` - (Optional) Location of the site.
 
@@ -38,6 +38,8 @@ resource "mso_site" "foo_site" {
 
 No Attributes are Exported.
 
+## Note ##
+`urls`, `username` and `labels` attributes are not supported when the Platform is `nd`
 ## Importing ##
 
 An existing MSO Site can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
