@@ -53,23 +53,19 @@ func resourceSchemaTemplateExternalEPGSelector() *schema.Resource {
 			},
 
 			"expressions": &schema.Schema{
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 
 						"operator": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 
 						"value": &schema.Schema{
@@ -196,7 +192,7 @@ func resourceSchemaTemplateExternalEPGSelectorCreate(d *schema.ResourceData, m i
 
 	expList := make([]interface{}, 0, 1)
 	if exp, ok := d.GetOk("expressions"); ok {
-		exps := exp.([]interface{})
+		exps := exp.(*schema.Set).List()
 
 		for _, val := range exps {
 			tp := val.(map[string]interface{})
@@ -245,7 +241,7 @@ func resourceSchemaTemplateExternalEPGSelectorUpdate(d *schema.ResourceData, m i
 
 	expList := make([]interface{}, 0, 1)
 	if exp, ok := d.GetOk("expressions"); ok {
-		exps := exp.([]interface{})
+		exps := exp.(*schema.Set).List()
 
 		for _, val := range exps {
 			tp := val.(map[string]interface{})
