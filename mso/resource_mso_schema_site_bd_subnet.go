@@ -105,7 +105,7 @@ func resourceMSOSchemaSiteBdSubnetImport(d *schema.ResourceData, m interface{}) 
 	found := false
 	stateBd := get_attribute[4]
 	stateIp := import_split[2]
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return nil, err
