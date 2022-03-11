@@ -69,7 +69,6 @@ func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 			"expressions": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
-				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": &schema.Schema{
@@ -438,9 +437,9 @@ func resourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{})
 										tp := val.(map[string]interface{})
 										expressionsMap := make(map[string]interface{})
 
-										expressionsMap["key"] = tp["key"]
+										expressionsMap["key"] = tp["key"].(string)
 
-										expressionsMap["operator"] = tp["operator"]
+										expressionsMap["operator"] = tp["operator"].(string)
 
 										if tp["value"] != nil {
 											expressionsMap["value"] = tp["value"]
@@ -499,7 +498,7 @@ func resourceSchemaSiteApnEpgSelectorDelete(d *schema.ResourceData, m interface{
 
 	expList := make([]interface{}, 0, 1)
 	if exp, ok := d.GetOk("expressions"); ok {
-		exps := exp.([]interface{})
+		exps := exp.(*schema.Set).List()
 
 		for _, val := range exps {
 			exp := val.(map[string]interface{})
