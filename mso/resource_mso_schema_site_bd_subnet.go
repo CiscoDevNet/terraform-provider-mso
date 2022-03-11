@@ -243,7 +243,7 @@ func resourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) er
 	stateTemplate := d.Get("template_name").(string)
 	stateBd := d.Get("bd_name").(string)
 	stateIp := d.Get("ip").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -364,7 +364,9 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 	if err != nil {
 		return fmt.Errorf("No Site found")
 	}
-	for i := 0; i < count; i++ {
+	updated := false
+
+	for i := 0; i < count && !updated; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -410,6 +412,7 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 							if err != nil {
 								return err
 							}
+							updated = true
 						}
 
 					}
@@ -470,7 +473,10 @@ func resourceMSOSchemaSiteBdSubnetDelete(d *schema.ResourceData, m interface{}) 
 	if err != nil {
 		return fmt.Errorf("No Sites found")
 	}
-	for i := 0; i < count; i++ {
+
+	deleted := false
+
+	for i := 0; i < count && !deleted; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -512,6 +518,7 @@ func resourceMSOSchemaSiteBdSubnetDelete(d *schema.ResourceData, m interface{}) 
 							if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 								return err
 							}
+							deleted = true
 						}
 					}
 				}
