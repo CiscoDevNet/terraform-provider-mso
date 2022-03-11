@@ -67,7 +67,7 @@ func resourceMSOSchemaSiteAnpEpgSelector() *schema.Resource {
 			},
 
 			"expressions": &schema.Schema{
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -251,7 +251,7 @@ func resourceSchemaSiteApnEpgSelectorCreate(d *schema.ResourceData, m interface{
 
 	expList := make([]interface{}, 0, 1)
 	if exp, ok := d.GetOk("expressions"); ok {
-		exps := exp.([]interface{})
+		exps := exp.(*schema.Set).List()
 
 		for _, val := range exps {
 			exp := val.(map[string]interface{})
@@ -306,7 +306,7 @@ func resourceSchemaSiteApnEpgSelectorUpdate(d *schema.ResourceData, m interface{
 
 	expList := make([]interface{}, 0, 1)
 	if exp, ok := d.GetOk("expressions"); ok {
-		exps := exp.([]interface{})
+		exps := exp.(*schema.Set).List()
 
 		for _, val := range exps {
 			exp := val.(map[string]interface{})
