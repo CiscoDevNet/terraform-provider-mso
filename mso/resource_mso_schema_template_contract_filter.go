@@ -74,7 +74,7 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 			},
 
 			"directives": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Required: true,
 			},
@@ -259,7 +259,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 
 	var directives []interface{}
 	if tempVar, ok := d.GetOk("directives"); ok {
-		directives = tempVar.([]interface{})
+		directives = tempVar.(*schema.Set).List()
 	}
 
 	if filter_type == "bothWay" {
@@ -497,7 +497,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 
 	var directives []interface{}
 	if tempVar, ok := d.GetOk("directives"); ok {
-		directives = tempVar.([]interface{})
+		directives = tempVar.(*schema.Set).List()
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
