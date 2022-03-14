@@ -7,7 +7,8 @@ type TemplateBD struct {
 }
 
 func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, multiDstPktAct, v6unkMcastAct, vmac string, intersiteBumTrafficAllow, optimizeWanBandwidth, l2Stretch, l3MCast, arpFlood, unicastRouting bool, vrfRef, dhcpLabel map[string]interface{}) *TemplateBD {
-	bdMap := map[string]interface{}{
+	var bdMap map[string]interface{}
+	bdMap = map[string]interface{}{
 		"name":                     name,
 		"displayName":              displayName,
 		"l2UnknownUnicast":         layer2Unicast,
@@ -37,15 +38,11 @@ func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, mul
 	}
 
 	if bdMap["multiDstPktAct"] == "flood_in_bd" || bdMap["multiDstPktAct"] == "" {
-		bdMap["multiDstPktAct"] = "flood_in_bd"
+		bdMap["multiDstPktAct"] = "bd-flood"
 	}
 
 	if bdMap["multiDstPktAct"] == "flood_in_encap" {
-		bdMap["multiDstPktAct"] = "flood_in_encap"
-	}
-
-	if bdMap["multiDstPktAct"] == "drop" {
-		bdMap["multiDstPktAct"] = "drop"
+		bdMap["multiDstPktAct"] = "encap-flood"
 	}
 
 	if bdMap["v6unkMcastAct"] == "optimized_flooding" {
