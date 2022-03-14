@@ -428,7 +428,13 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
 					d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
-					d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
+					if models.StripQuotes(bdCont.S("multiDstPktAct").String()) == "encap-flood" {
+						d.Set("multi_destination_flooding", "flood_in_encap")
+					} else if models.StripQuotes(bdCont.S("multiDstPktAct").String()) == "bd-flood" {
+						d.Set("multi_destination_flooding", "flood_in_bd")
+					} else {
+						d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
+					}
 					d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("v6unkMcastAct").String()))
 					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("vmac").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
