@@ -675,7 +675,7 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 
 	var directives []interface{}
 	if tempVar, ok := d.GetOk("directives"); ok {
-		directives = tempVar.([]interface{})
+		directives = tempVar.(*schema.Set).List()
 	}
 
 	indexf := 0
