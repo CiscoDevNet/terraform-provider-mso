@@ -221,7 +221,8 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 						}
 						apiEPG := models.StripQuotes(epgCont.S("name").String())
 						if apiEPG == stateEPG {
-							d.SetId(apiEPG)
+							id := fmt.Sprintf("/schemas/%s/templates/%s/anps/%s/epgs/%s", schemaId, apiTemplate, apiANP, apiEPG)
+							d.SetId(id)
 							d.Set("name", apiEPG)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
@@ -512,7 +513,8 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 						}
 						apiEPG := models.StripQuotes(epgCont.S("name").String())
 						if apiEPG == stateEPG {
-							d.SetId(apiEPG)
+							id := fmt.Sprintf("/schemas/%s/templates/%s/anps/%s/epgs/%s", schemaId, apiTemplate, apiANP, apiEPG)
+							d.SetId(id)
 							d.Set("schema_id", schemaId)
 							d.Set("name", apiEPG)
 							d.Set("template_name", apiTemplate)

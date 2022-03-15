@@ -311,7 +311,7 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 		return err
 	}
 	if index == -1 {
-		fmt.Errorf("The given subnet ip is not found")
+		return fmt.Errorf("The given subnet ip is not found")
 	}
 	indexs := strconv.Itoa(index)
 
