@@ -117,9 +117,10 @@ func (client *Client) DeleteDHCPOptionPolicyOption(id string) error {
 	}
 	NewOptions := make([]models.DHCPOption, 0, 1)
 	for _, option := range DHCPOptionPolicy.DHCPOption {
-		if option.Name != idSplit[1] {
-			NewOptions = append(NewOptions, option)
+		if option.Name == idSplit[1] {
+			option.ID = "remove"
 		}
+		NewOptions = append(NewOptions, option)
 	}
 	DHCPOptionPolicy.DHCPOption = NewOptions
 	_, err = client.UpdateDHCPOptionPolicy(optionPolicyID, DHCPOptionPolicy)
