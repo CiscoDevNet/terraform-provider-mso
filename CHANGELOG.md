@@ -1,3 +1,10 @@
+## 0.6.0 (March 15, 2022)
+IMPROVEMENTS:
+- Add Service EPG support for cloud sites (#113)
+
+BUG FIXES:
+- Update mso_schema_site_anp_epg_static_port documentation and example for path_type = vpc/dpc (#118)
+
 ## 0.5.0 (February 28, 2022)
 IMPROVEMENTS:
 - Add arp_flooding, virtual_mac_address, unicast_routing, ipv6_unknown_multicast_flooding, multi_destination_flooding and unknown_multicast_flooding in mso_schema_template_bd
