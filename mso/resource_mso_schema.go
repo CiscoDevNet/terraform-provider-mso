@@ -27,12 +27,14 @@ func resourceMSOSchema() *schema.Resource {
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
+				ForceNew:     true,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
+				ForceNew:     true,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
@@ -112,6 +114,9 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	oldTemplate := old.(string)
 	newTemplate := new.(string)
 
+	oldTenant, newTenant := d.GetChange("tenant_id")
+	d.Set("tenant_id", oldTenant)
+	log.Printf("newTenant: %v\n", newTenant)
 	if d.HasChange("tenant_id") {
 		return fmt.Errorf("Tenant associated with Template cannot be changed.")
 	}
