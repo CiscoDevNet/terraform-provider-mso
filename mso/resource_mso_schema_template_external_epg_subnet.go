@@ -343,10 +343,10 @@ func resourceMSOTemplateExtenalepgSubnetDelete(d *schema.ResourceData, m interfa
 		Name = tempVar.(string)
 	}
 	if tempVar, ok := d.GetOk("scope"); ok {
-		Scope = tempVar.([]interface{})
+		Scope = tempVar.(*schema.Set).List()
 	}
 	if tempVar, ok := d.GetOk("aggregate"); ok {
-		Aggregate = tempVar.([]interface{})
+		Aggregate = tempVar.(*schema.Set).List()
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
