@@ -56,7 +56,6 @@ func resourceMSOTemplateExtenalepgSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-				Default:      nil,
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeList,
