@@ -7,8 +7,8 @@ terraform {
 }
 
 provider "mso" {
-  username = ""                 # <MSO username>
-  password = ""              # <MSO pwd>
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
   url      = "" # <MSO URL>
   insecure = true
   # platform = "nd" # Use it when logging in ND
