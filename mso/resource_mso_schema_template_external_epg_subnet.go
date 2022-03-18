@@ -56,6 +56,7 @@ func resourceMSOTemplateExtenalepgSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Default:      nil,
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeList,
@@ -249,10 +250,13 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 							d.Set("external_epg_name", apiExternalepg)
 							d.SetId(apiIP)
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
-							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
+							if name := models.StripQuotes(subnetsCont.S("name").String()); name == "{}" {
+								d.Set("name", "")
+							} else {
+								d.Set("name", name)
+							}
 							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
 							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
-
 							found = true
 							break
 						}
