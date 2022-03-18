@@ -384,8 +384,6 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	templateName := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	Name := d.Get("name").(string)
-	bdName := d.Get("bd_name").(string)
-	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
@@ -443,14 +441,18 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	cloudServiceEpgConfig := getcloudServiceEpgConfig(d, access_type, deployment_type, service_type)
 
 	vrfRefMap := make(map[string]interface{})
-	vrfRefMap["schemaId"] = vrf_schema_id
-	vrfRefMap["templateName"] = vrf_template_name
-	vrfRefMap["vrfName"] = vrfName
+	if vrfName, ok := d.GetOk("vrf_name"); ok {
+		vrfRefMap["schemaId"] = vrf_schema_id
+		vrfRefMap["templateName"] = vrf_template_name
+		vrfRefMap["vrfName"] = vrfName
+	}
 
 	bdRefMap := make(map[string]interface{})
-	bdRefMap["schemaId"] = bd_schema_id
-	bdRefMap["templateName"] = bd_template_name
-	bdRefMap["bdName"] = bdName
+	if bdName, ok := d.GetOk("bd_name"); ok {
+		bdRefMap["schemaId"] = bd_schema_id
+		bdRefMap["templateName"] = bd_template_name
+		bdRefMap["bdName"] = bdName
+	}
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/-", templateName, anpName)
 	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
