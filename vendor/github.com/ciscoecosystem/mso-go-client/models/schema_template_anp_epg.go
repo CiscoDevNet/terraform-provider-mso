@@ -18,9 +18,15 @@ func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType string, u
 		"mCastSource":           intersiteMulticasteSource,
 		"proxyArp":              proxyArp,
 		"preferredGroup":        preferredGroup,
-		"vrfRef":                vrfRef,
-		"bdRef":                 bdRef,
 		"cloudServiceEpgConfig": cloudServiceEpgConfig,
+	}
+
+	if _, ok := vrfRef["vrfName"]; ok {
+		anpepgMap["vrfRef"] = vrfRef
+	}
+
+	if _, ok := bdRef["bdName"]; ok {
+		anpepgMap["bdRef"] = bdRef
 	}
 
 	if anpepgMap["intraEpg"] == "" {

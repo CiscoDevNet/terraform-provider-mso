@@ -37,6 +37,7 @@ type Client struct {
 	proxyUrl   string
 	domain     string
 	platform   string
+	skipLoggingPayload bool
 }
 
 // singleton implementation of a client
@@ -71,6 +72,12 @@ func Domain(domain string) Option {
 func Platform(platform string) Option {
 	return func(client *Client) {
 		client.platform = platform
+	}
+}
+
+func SkipLoggingPayload(skipLoggingPayload bool) Option {
+	return func(client *Client) {
+		client.skipLoggingPayload = skipLoggingPayload
 	}
 }
 
@@ -209,12 +216,15 @@ func (c *Client) Authenticate() error {
 		}
 	}
 
+	c.skipLoggingPayload = true
+
 	req, err := c.MakeRestRequest(method, path, body, false)
 	if err != nil {
 		return err
 	}
 	
 	obj, _, err := c.Do(req)
+	c.skipLoggingPayload = false
 	if err != nil {
 		return err
 	}
@@ -279,11 +289,14 @@ func StrtoInt(s string, startIndex int, bitSize int) (int64, error) {
 
 func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, error) {
 	log.Printf("[DEBUG] Begining DO method %s", req.URL.String())
+	log.Printf("[TRACE] HTTP Request Method and URL: %s %s", req.Method, req.URL.String())
+	if !c.skipLoggingPayload {
+		log.Printf("[TRACE] HTTP Request Body: %v", req.Body)
+	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Printf("\nHTTP Request: %s %s", req.Method, req.URL.String())
 	log.Printf("nHTTP Response: %d %s %v", resp.StatusCode, resp.Status, resp)
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
