@@ -41,6 +41,7 @@ func dataSourceMSOTemplateExternalEpgSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				ForceNew:     true,
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
