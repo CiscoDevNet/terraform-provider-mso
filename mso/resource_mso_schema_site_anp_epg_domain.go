@@ -65,6 +65,14 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+
+			"domain_type_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+
 			"dn": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -159,11 +167,12 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 	stateEpg := get_attribute[6]
 	domain := get_attribute[8]
 	domainType := get_attribute[10]
+	domainTypeName := get_attribute[12]
 
 	var stateDomain string
 
 	if domainType == "vmmDomain" {
-		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+		stateDomain = fmt.Sprintf("uni/vmmp-%s/dom-%s", domainTypeName, domain)
 
 	} else if domainType == "l3ExtDomain" {
 		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
@@ -235,8 +244,9 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 									d.SetId(apiDomain)
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
+									d.Set("domain_type_name", domainTypeName)
 									d.Set("dn", domain)
-									d.Set("deployment_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
+									d.Set("deploy_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
 
 									if domainCont.Exists("switchingMode") {
@@ -309,6 +319,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	domainType := d.Get("domain_type").(string)
+	domainTypeName := d.Get("domain_type_name").(string)
 	domainName := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
@@ -318,7 +329,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	var allowMicroSegmentation bool
 
 	if domainType == "vmmDomain" {
-		DN = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domainName)
+		DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", domainTypeName, domainName)
 
 	} else if domainType == "l3ExtDomain" {
 		DN = fmt.Sprintf("uni/l3dom-%s", domainName)
@@ -563,11 +574,12 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 	stateEpg := d.Get("epg_name").(string)
 	domain := d.Get("dn").(string)
 	domainType := d.Get("domain_type").(string)
+	domainTypeName := d.Get("domain_type_name").(string)
 
 	var stateDomain string
 
 	if domainType == "vmmDomain" {
-		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+		stateDomain = fmt.Sprintf("uni/vmmp-%s/dom-%s", domainTypeName, domain)
 
 	} else if domainType == "l3ExtDomain" {
 		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
@@ -713,6 +725,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	domainType := d.Get("domain_type").(string)
+	domainTypeName := d.Get("domain_type_name").(string)
 	domainName := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
@@ -722,7 +735,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	var allowMicroSegmentation bool
 
 	if domainType == "vmmDomain" {
-		DN = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domainName)
+		DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", domainTypeName, domainName)
 
 	} else if domainType == "l3ExtDomain" {
 		DN = fmt.Sprintf("uni/l3dom-%s", domainName)
@@ -845,6 +858,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	domainType := d.Get("domain_type").(string)
+	domainTypeName := d.Get("domain_type_name").(string)
 	domainName := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
@@ -854,7 +868,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	var allowMicroSegmentation bool
 
 	if domainType == "vmmDomain" {
-		DN = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domainName)
+		DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", domainTypeName, domainName)
 
 	} else if domainType == "l3ExtDomain" {
 		DN = fmt.Sprintf("uni/l3dom-%s", domainName)

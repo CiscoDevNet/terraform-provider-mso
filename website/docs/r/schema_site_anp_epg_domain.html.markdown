@@ -20,6 +20,7 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
   anp_name = "ANP"
   epg_name = "Web"
   domain_type = "vmmDomain"
+  domain_type_name = "VMware"
   dn = "VMware-ab"
   deploy_immediacy = "lazy"
   resolution_immediacy = "lazy"
@@ -48,6 +49,7 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `dn` - (Required) The domain profile name.
 * `deploy_immediacy` - (Required) The deployment immediacy of the domain. choices: [ immediate, lazy ]
 * `domain_type` - (Required) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `domain_type_name` - (Required) The name of domain type. choices: [ VMware, Microsoft, Redhat ]
 * `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
 * `vlan_encap_mode` - (Optional) Which VLAN enacap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
 * `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with vmmDomain domain association.
@@ -69,5 +71,5 @@ No attributes are exported.
 An existing MSO Schema Site Application Network Profiles Endpoint Groups Domain can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_site_anp_epg_domain.site_anp_epg_domain {schema_id}/site/{site_id}/anp/{anp_name}/epg/{epg_name}/domain/{domain_name}/domainType/{domain_type}
+terraform import mso_schema_site_anp_epg_domain.site_anp_epg_domain {schema_id}/site/{site_id}/anp/{anp_name}/epg/{epg_name}/domain/{domain_name}/domainType/{domain_type}/domainTypeName/{domain_type_name}
 ```
