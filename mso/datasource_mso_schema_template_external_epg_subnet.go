@@ -47,6 +47,7 @@ func dataSourceMSOTemplateExternalEpgSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Default:      nil,
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeList,
@@ -121,7 +122,11 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 							idSubnet := strings.Split(ip, "/")
 							d.SetId(idSubnet[0])
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
-							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
+							if name := models.StripQuotes(subnetsCont.S("name").String()); name == "{}" {
+								d.Set("name", "")
+							} else {
+								d.Set("name", name)
+							}
 							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
 							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
 
