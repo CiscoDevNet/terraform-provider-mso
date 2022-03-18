@@ -10,9 +10,12 @@ func NewTemplateExternalEpgSubnet(ops, path, ip, name string, scope, aggregate [
 	var bdsubnetMap map[string]interface{}
 	bdsubnetMap = map[string]interface{}{
 		"ip":        ip,
-		"name":      name,
 		"scope":     scope,
 		"aggregate": aggregate,
+	}
+
+	if name != "" {
+		bdsubnetMap["name"] = name
 	}
 
 	return &ExternalEpgSubnet{
