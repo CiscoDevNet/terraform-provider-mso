@@ -289,7 +289,7 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
 							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
 							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
-							if len(match_vrf) == 3 {
+							if len(match_vrf) == 4 {
 								d.Set("vrf_name", match_vrf[3])
 								d.Set("vrf_schema_id", match_vrf[1])
 								d.Set("vrf_template_name", match_vrf[2])
@@ -298,7 +298,7 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 							bdRef := models.StripQuotes(epgCont.S("bdRef").String())
 							re_bd := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
 							match_bd := re_bd.FindStringSubmatch(bdRef)
-							if len(match_bd) == 3 {
+							if len(match_bd) == 4 {
 								d.Set("bd_name", match_bd[3])
 								d.Set("bd_schema_id", match_bd[1])
 								d.Set("bd_template_name", match_bd[2])
