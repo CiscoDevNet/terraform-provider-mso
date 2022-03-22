@@ -20,7 +20,7 @@ resource "mso_schema_site_anp_epg_domain" "foo_schema_site_anp_epg_domain" {
   anp_name                  = "ANP"
   epg_name                  = "Web"
   domain_type               = "vmmDomain"
-  domain_type_name          = "Microsoft"
+  vmm_domain_type           = "Microsoft"
   dn                        = "VM-Micro"
   deploy_immediacy          = "immediate"
   resolution_immediacy      = "immediate"
