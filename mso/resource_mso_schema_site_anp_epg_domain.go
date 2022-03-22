@@ -133,6 +133,11 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"vmm_domain_profile": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "VMware",
+			},
 		}),
 	}
 }
@@ -312,13 +317,14 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	domainName := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
+	vmmDomainProfile := d.Get("vmm_domain_profile").(string)
 
 	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn string
 	var microSegVlan, portEncapVlan float64
 	var allowMicroSegmentation bool
 
 	if domainType == "vmmDomain" {
-		DN = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domainName)
+		DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainProfile, domainName)
 
 	} else if domainType == "l3ExtDomain" {
 		DN = fmt.Sprintf("uni/l3dom-%s", domainName)
@@ -561,11 +567,12 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 	stateEpg := d.Get("epg_name").(string)
 	domain := d.Get("dn").(string)
 	domainType := d.Get("domain_type").(string)
+	vmmDomainProfile := d.Get("vmm_domain_profile").(string)
 
 	var stateDomain string
 
 	if domainType == "vmmDomain" {
-		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+		stateDomain = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainProfile, domain)
 
 	} else if domainType == "l3ExtDomain" {
 		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
@@ -714,13 +721,14 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	domainName := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
+	vmmDomainProfile := d.Get("vmm_domain_profile").(string)
 
 	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn string
 	var microSegVlan, portEncapVlan float64
 	var allowMicroSegmentation bool
 
 	if domainType == "vmmDomain" {
-		DN = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domainName)
+		DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainProfile, domainName)
 
 	} else if domainType == "l3ExtDomain" {
 		DN = fmt.Sprintf("uni/l3dom-%s", domainName)
@@ -846,13 +854,14 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	domainName := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
+	vmmDomainProfile := d.Get("vmm_domain_profile").(string)
 
 	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn string
 	var microSegVlan, portEncapVlan float64
 	var allowMicroSegmentation bool
 
 	if domainType == "vmmDomain" {
-		DN = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domainName)
+		DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainProfile, domainName)
 
 	} else if domainType == "l3ExtDomain" {
 		DN = fmt.Sprintf("uni/l3dom-%s", domainName)
