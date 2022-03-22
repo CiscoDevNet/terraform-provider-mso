@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -282,7 +283,6 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -290,96 +290,67 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	count, err := cont.ArrayCount("templates")
-	if err != nil {
+	templateCount := 0
+	if cont.Exists("templates") {
+		templateCount = len(cont.S("templates").Data().([]interface{}))
+	} else {
 		return fmt.Errorf("No Template found")
 	}
-	stateTemplate := d.Get("template_name").(string)
-	found := false
-	stateContract := d.Get("contract_name")
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return err
-		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
-		if apiTemplate == stateTemplate {
-			contractCount, err := tempCont.ArrayCount("contracts")
-			if err != nil {
+	templateState := d.Get("template_name").(string)
+	contractNameState := d.Get("contract_name").(string)
+	foundContract := false
+
+	for i := 0; i < templateCount; i++ {
+		templateCont := cont.S("templates").Index(i)
+		templateNameCont := models.StripQuotes(templateCont.S("name").String())
+
+		if templateState == templateNameCont {
+			contractCount := 0
+			if templateCont.Exists("contracts") {
+				contractCount = len(templateCont.S("contracts").Data().([]interface{}))
+			} else {
 				return fmt.Errorf("Unable to get contract list")
 			}
 			for j := 0; j < contractCount; j++ {
-				contractCont, err := tempCont.ArrayElement(j, "contracts")
-				if err != nil {
-					return err
-				}
-				apiContract := models.StripQuotes(contractCont.S("name").String())
-				if apiContract == stateContract {
-					d.SetId(apiContract)
-					d.Set("contract_name", apiContract)
+				contractCont := templateCont.S("contracts").Index(j)
+				contractNameCont := models.StripQuotes(contractCont.S("name").String())
+
+				if contractNameCont == contractNameState {
+					foundContract = true
+					d.SetId(contractNameCont)
+					d.Set("contract_name", contractNameCont)
 					d.Set("schema_id", schemaId)
-					d.Set("template_name", apiTemplate)
+					d.Set("template_name", templateNameCont)
 					d.Set("display_name", models.StripQuotes(contractCont.S("displayName").String()))
 					d.Set("filter_type", models.StripQuotes(contractCont.S("filterType").String()))
 					d.Set("scope", models.StripQuotes(contractCont.S("scope").String()))
+					filterRelationshipCount := 0
+					if contractCont.Exists("filterRelationships") {
+						filterRelationshipCount = len(contractCont.S("filterRelationships").Data().([]interface{}))
+						filterRelationships := make([]map[string]string, 0)
 
-					count, _ := contractCont.ArrayCount("filterRelationships")
-
-					var filterSchema string
-					var filterTemplate string
-					var filterName string
-
-					if tempVar, ok := d.GetOk("filter_relationships"); ok {
-						filter_relationships := tempVar.(map[string]interface{})
-
-						if filter_relationships["filter_schema_id"] != nil {
-							filterSchema = filter_relationships["filter_schema_id"].(string)
-						} else {
-							filterSchema = schemaId
+						for k := 0; k < filterRelationshipCount; k++ {
+							filterCont := contractCont.S("filterRelationships").Index(k)
+							d.Set("directives", filterCont.S("directives").Data().([]interface{}))
+							filterRelation := make(map[string]string)
+							filterRef := models.G(filterCont, "filterRef")
+							re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/filters/(.*)")
+							match := re.FindStringSubmatch(filterRef)
+							filterRelation["filter_schema_id"] = match[1]
+							filterRelation["filter_template_name"] = match[2]
+							filterRelation["filter_name"] = match[3]
+							filterRelationships = append(filterRelationships, filterRelation)
 						}
-
-						if filter_relationships["filter_template_name"] != nil {
-							filterTemplate = filter_relationships["filter_template_name"].(string)
-						} else {
-							filterTemplate = apiTemplate
-						}
-
-						filterName = filter_relationships["filter_name"].(string)
-					}
-
-					flag := false
-					for i := 0; i < count; i++ {
-						filterCont, err := contractCont.ArrayElement(i, "filterRelationships")
-						if err != nil {
-							return fmt.Errorf("Unable to parse the filter Relationships list")
-						}
-
-						d.Set("directives", filterCont.S("directives").Data().([]interface{}))
-						filRef := filterCont.S("filterRef").Data()
-						split := strings.Split(filRef.(string), "/")
-
-						if split[2] == filterSchema && split[4] == filterTemplate && split[6] == filterName {
-							flag = true
+						if _, ok := d.GetOk("filter_relationships"); !ok {
+							d.Set("filter_relationship", filterRelationships)
 						}
 					}
-
-					if flag {
-						d.Set("filter_relationships", d.Get("filter_relationships"))
-						d.Set("filter_relationship", d.Get("filter_relationship"))
-					} else {
-						d.Set("filter_relationships", make(map[string]interface{}))
-						d.Set("filter_relationship", make(map[string]interface{}))
-					}
-
-					found = true
-					break
 				}
 			}
 		}
 	}
-
-	if !found {
+	if !foundContract {
 		d.SetId("")
 	}
 
