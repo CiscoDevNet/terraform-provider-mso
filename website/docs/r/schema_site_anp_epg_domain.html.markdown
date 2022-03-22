@@ -82,7 +82,7 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `deploy_immediacy` - (Required) The deployment immediacy of the domain. choices: [ immediate, lazy ]
 * `domain_type` - (Required) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
 * `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
-* `vlan_encap_mode` - (Optional) Which VLAN enacap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
+* `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
 * `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with vmmDomain domain association.
 * `switching_mode` - (Optional) Which switching mode to use with this domain association. This attribute can only be used with vmmDomain domain association.
 * `switch_type` - (Optional) Which switch type to use with this domain association. This attribute can only be used with vmmDomain domain association.
