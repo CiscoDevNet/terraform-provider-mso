@@ -31,6 +31,7 @@ data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 * `epg_name` - (Required) Name of Endpoint Group to manage.
 * `dn` - (Required) The domain profile name.
 * `domain_type` - (Required) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `vmm_domain_profile` -  (Optional) Type of profile when `domain_type` is vmmDomain. Defalut value is VMware.
 
 ## Attribute Reference ##
 

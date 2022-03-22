@@ -120,6 +120,11 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"vmm_domain_profile": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "VMware",
+			},
 		}),
 	}
 }
@@ -146,11 +151,11 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 	stateEpg := d.Get("epg_name").(string)
 	domain := d.Get("dn").(string)
 	domainType := d.Get("domain_type").(string)
-
+	vmmDomainProfile := d.Get("vmm_domain_profile").(string)
 	var stateDomain string
 
 	if domainType == "vmmDomain" {
-		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+		stateDomain = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainProfile, domain)
 
 	} else if domainType == "l3ExtDomain" {
 		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
