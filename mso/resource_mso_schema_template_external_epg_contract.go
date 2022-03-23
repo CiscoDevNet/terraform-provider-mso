@@ -89,6 +89,7 @@ func resourceMSOTemplateExternalEpgContractImport(d *schema.ResourceData, m inte
 	found := false
 	stateEPG := get_attribute[4]
 	stateContract := get_attribute[6]
+	stateType := get_attribute[7]
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -122,12 +123,14 @@ func resourceMSOTemplateExternalEpgContractImport(d *schema.ResourceData, m inte
 						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
-						if stateContract == (fmt.Sprintf("%s", split[3])) {
+						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
+						if stateContract == (fmt.Sprintf("%s", split[3])) && stateType == relationType {
 							d.SetId(fmt.Sprintf("%s", split[3]))
 							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
 							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
 							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
 							d.Set("relationship_type", models.StripQuotes(contractCont.S("relationshipType").String()))
+							log.Printf("[relationType] %s : after set", d.Get("relationship_type"))
 							found = true
 							break
 						}
@@ -237,12 +240,13 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
-						if stateContract == fmt.Sprintf("%s", split[3]) {
+						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
+						if stateContract == fmt.Sprintf("%s", split[3]) && d.Get("relationship_type") == relationType {
 							d.SetId(fmt.Sprintf("%s", split[3]))
 							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
 							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
 							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
-							d.Set("relationship_type", models.StripQuotes(contractCont.S("relationshipType").String()))
+							d.Set("relationship_type", relationType)
 							found = true
 							break
 						}
