@@ -121,8 +121,3 @@ resource "mso_schema_template_external_epg_contract" "provider_contract_2" {
   contract_schema_id        = mso_schema_template_contract.template_contract_2.schema_id
   contract_template_name    = mso_schema_template_contract.template_contract_2.template_name
 }
-
-
-
-
-
