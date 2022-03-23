@@ -47,7 +47,7 @@ func resourceMSODHCPOptionPolicy() *schema.Resource {
 			},
 
 			"option": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -108,7 +108,7 @@ func resourceMSODHCPOptionPolicyCreate(d *schema.ResourceData, m interface{}) er
 
 	if optionList, ok := d.GetOk("option"); ok {
 		optionModelList := make([]models.DHCPOption, 0)
-		for _, option := range optionList.([]interface{}) {
+		for _, option := range optionList.(*schema.Set).List() {
 			optionMap := option.(map[string]interface{})
 			optionModelList = append(optionModelList, models.DHCPOption{
 				Name: optionMap["name"].(string),
@@ -146,8 +146,8 @@ func resourceMSODHCPOptionPolicyUpdate(d *schema.ResourceData, m interface{}) er
 
 	if d.HasChange("option") {
 		oldOptions, newOptions := d.GetChange("option")
-		oldOptionList := oldOptions.([]interface{})
-		newOptionList := newOptions.([]interface{})
+		oldOptionList := oldOptions.(*schema.Set).List()
+		newOptionList := newOptions.(*schema.Set).List()
 
 		optionModelList := make([]models.DHCPOption, 0)
 
@@ -259,7 +259,7 @@ func setDHCPOptionPolicy(DHCPOptionPolicy *models.DHCPOptionPolicy, d *schema.Re
 }
 
 func setOnlyManagedOptions(d *schema.ResourceData, DHCPOptionPolicy *models.DHCPOptionPolicy) []map[string]string {
-	optionList := d.Get("option").([]interface{})
+	optionList := d.Get("option").(*schema.Set).List()
 	remoteOptionHashMap := make(map[string]int)
 	tfOptionList := make([]map[string]string, 0)
 
