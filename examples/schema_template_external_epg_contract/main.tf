@@ -77,6 +77,21 @@ resource "mso_schema_template_contract" "template_contract" {
   directives = ["none"]
 }
 
+resource "mso_schema_template_contract" "template_contract_2" {
+  schema_id     = mso_schema.test_schema.id
+  template_name = mso_schema.test_schema.template_name
+  contract_name = "Contract2"
+  display_name  = "Contract2"
+  filter_type   = "bothWay"
+  scope         = "context"
+  filter_relationship {
+    filter_schema_id     = mso_schema_template_filter_entry.filter_entry.schema_id
+    filter_template_name = mso_schema_template_filter_entry.filter_entry.template_name
+    filter_name          = mso_schema_template_filter_entry.filter_entry.name
+  }
+  directives = ["none"]
+}
+
 resource "mso_schema_template_external_epg_contract" "consumer_contract" {
   schema_id                 = mso_schema.test_schema.id
   template_name             = mso_schema.test_schema.template_name
@@ -96,3 +111,18 @@ resource "mso_schema_template_external_epg_contract" "provider_contract" {
   contract_schema_id        = mso_schema_template_contract.template_contract.schema_id
   contract_template_name    = mso_schema_template_contract.template_contract.template_name
 }
+
+resource "mso_schema_template_external_epg_contract" "provider_contract_2" {
+  schema_id                 = mso_schema.test_schema.id
+  template_name             = mso_schema.test_schema.template_name
+  contract_name             = mso_schema_template_contract.template_contract_2.contract_name
+  external_epg_name         = mso_schema_template_external_epg.template_externalepg.external_epg_name
+  relationship_type         = "provider"
+  contract_schema_id        = mso_schema_template_contract.template_contract_2.schema_id
+  contract_template_name    = mso_schema_template_contract.template_contract_2.template_name
+}
+
+
+
+
+
