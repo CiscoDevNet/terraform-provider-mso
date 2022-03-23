@@ -42,5 +42,5 @@ No attributes are exported.
 An existing MSO Schema Template External Endpoint Group Contract can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_template_external_epg_contract.c1 {schema_id}/template/{template_name}/externalEPG/{external_epg_name}/contract/{contract_name}
+terraform import mso_schema_template_external_epg_contract.c1 {schema_id}/templates/{template_name}/externalEpgs/{external_epg_name}/contractRelationships/{contract_name}/{relationship_type}
 ```
