@@ -56,7 +56,7 @@ github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/bgentry/go-netrc/netrc
 # github.com/bgentry/speakeasy v0.1.0
 github.com/bgentry/speakeasy
-# github.com/ciscoecosystem/mso-go-client v1.3.6-0.20220315072201-a0b7834a846a
+# github.com/ciscoecosystem/mso-go-client v1.3.6-0.20220323045444-fa18f00df40a
 github.com/ciscoecosystem/mso-go-client/client
 github.com/ciscoecosystem/mso-go-client/container
 github.com/ciscoecosystem/mso-go-client/models
