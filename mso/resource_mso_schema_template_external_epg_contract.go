@@ -60,11 +60,13 @@ func resourceMSOTemplateExternalEpgContract() *schema.Resource {
 			"contract_schema_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 				Computed: true,
 			},
 			"contract_template_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 				Computed: true,
 			},
 		}),
@@ -125,12 +127,11 @@ func resourceMSOTemplateExternalEpgContractImport(d *schema.ResourceData, m inte
 						split := re.FindStringSubmatch(contractRef)
 						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
 						if stateContract == (fmt.Sprintf("%s", split[3])) && stateType == relationType {
-							d.SetId(fmt.Sprintf("%s", split[3]))
+							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaId, stateTemplate, stateEPG, stateContract, stateType))
 							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
 							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
 							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
 							d.Set("relationship_type", models.StripQuotes(contractCont.S("relationshipType").String()))
-							log.Printf("[relationType] %s : after set", d.Get("relationship_type"))
 							found = true
 							break
 						}
@@ -207,6 +208,7 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 	found := false
 	stateEPG := d.Get("external_epg_name").(string)
 	stateContract := d.Get("contract_name").(string)
+	stateType := d.Get("relationship_type").(string)
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -241,8 +243,8 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
 						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
-						if stateContract == fmt.Sprintf("%s", split[3]) && d.Get("relationship_type") == relationType {
-							d.SetId(fmt.Sprintf("%s", split[3]))
+						if stateContract == fmt.Sprintf("%s", split[3]) && stateType == relationType {
+							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaId, stateTemplate, stateEPG, stateContract, stateType))
 							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
 							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
 							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
@@ -355,8 +357,12 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 	d.SetId("")
 	return nil
 }
-func fetchIndexs(cont *container.Container, templateName, epgName, contractName string) (int, error) {
+func fetchIndexs(cont *container.Container, templateName, epgName, contractId string) (int, error) {
 	index := -1
+	re := regexp.MustCompile("(.*)/templates/(.*)/externalEpgs/(.*)/contractRelationships/(.*)/(.*)")
+	split := re.FindStringSubmatch(contractId)
+	contractType := split[5]
+	contractName := split[4]
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
 		return index, fmt.Errorf("No Template found")
@@ -393,7 +399,8 @@ func fetchIndexs(cont *container.Container, templateName, epgName, contractName 
 						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
-						if contractName == fmt.Sprintf("%s", split[3]) {
+						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
+						if contractName == fmt.Sprintf("%s", split[3]) && contractType == relationType {
 							index = k
 							break
 						}
