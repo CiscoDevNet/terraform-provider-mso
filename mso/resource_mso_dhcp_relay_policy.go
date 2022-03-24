@@ -47,7 +47,7 @@ func resourceMSODHCPRelayPolicy() *schema.Resource {
 			},
 
 			"dhcp_relay_policy_provider": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -109,7 +109,7 @@ func setDHCPRelayPolicy(DHCPRelayPolicy *models.DHCPRelayPolicy, d *schema.Resou
 	d.Set("name", DHCPRelayPolicy.Name)
 	tfProviderList := make([]map[string]string, 0)
 	if _, ok := d.GetOk("tenant_id"); ok {
-		providerList := d.Get("dhcp_relay_policy_provider").([]interface{})
+		providerList := d.Get("dhcp_relay_policy_provider").(*schema.Set).List()
 		for _, provider := range providerList {
 			providerMap := provider.(map[string]interface{})
 			for _, remoteProvider := range DHCPRelayPolicy.DHCPProvider {
@@ -159,7 +159,7 @@ func resourceMSODHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) err
 			return err
 		}
 		providerModelList := make([]models.DHCPProvider, 0)
-		for _, provider := range providerList.([]interface{}) {
+		for _, provider := range providerList.(*schema.Set).List() {
 			providerMap := provider.(map[string]interface{})
 			if providerMap["epg"] == "" && providerMap["external_epg"] == "" {
 				return fmt.Errorf("expected any one of the epg or external_epg")
@@ -206,7 +206,7 @@ func resourceMSODHCPRelayPolicyUpdate(d *schema.ResourceData, m interface{}) err
 
 	providerModelList := make([]models.DHCPProvider, 0)
 	if d.HasChange("dhcp_relay_policy_provider") {
-		providerList := d.Get("dhcp_relay_policy_provider").([]interface{})
+		providerList := d.Get("dhcp_relay_policy_provider").(*schema.Set).List()
 		for _, provider := range providerList {
 			providerMap := provider.(map[string]interface{})
 			if providerMap["epg"] == "" && providerMap["external_epg"] == "" {
@@ -227,8 +227,8 @@ func resourceMSODHCPRelayPolicyUpdate(d *schema.ResourceData, m interface{}) err
 			return err
 		}
 		oldProviders, newProviders := d.GetChange("dhcp_relay_policy_provider")
-		oldProvidersList := oldProviders.([]interface{})
-		newProvidersList := newProviders.([]interface{})
+		oldProvidersList := oldProviders.(*schema.Set).List()
+		newProvidersList := newProviders.(*schema.Set).List()
 
 		providerModelList := make([]models.DHCPProvider, 0)
 		oldProviderHashMap := make(map[string]int, 0)
