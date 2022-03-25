@@ -200,39 +200,13 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 
 	var stateDomain string
 
-	vmmp_match, _ := regexp.MatchString(".*/uni/vmmp-.*", get_dn)
-	l3dom_match, _ := regexp.MatchString(".*/uni/l3dom-.*", get_dn)
-	l2dom_match, _ := regexp.MatchString(".*/uni/l2dom-.*", get_dn)
-	phys_match, _ := regexp.MatchString(".*/uni/phys-.*", get_dn)
-	fc_match, _ := regexp.MatchString(".*/uni/fc-.*", get_dn)
 	re_domain := regexp.MustCompile("(.*)/uni/(.*)-(.*)")
 	match_domain := re_domain.FindStringSubmatch(get_dn)
 	d.Set("domain_name", match_domain[3])
-	if vmmp_match {
-		re_vmmDomain := regexp.MustCompile("uni/vmmp-(.*)/dom-(.*)")
-		match_vmmDomain := re_vmmDomain.FindStringSubmatch(get_dn)
-		d.Set("vmm_domain_type", match_vmmDomain[1])
-		d.Set("domain_name", match_vmmDomain[2])
-		stateDomain = match_vmmDomain[0]
-	} else if l2dom_match {
-		re_domain := regexp.MustCompile("uni/l2dom-(.*)")
-		match_domain := re_domain.FindStringSubmatch(get_dn)
-		stateDomain = match_domain[0]
-	} else if l3dom_match {
-		re_domain := regexp.MustCompile("uni/l3dom-(.*)")
-		match_domain := re_domain.FindStringSubmatch(get_dn)
-		stateDomain = match_domain[0]
-	} else if phys_match {
-		re_domain := regexp.MustCompile("uni/phys(.*)")
-		match_domain := re_domain.FindStringSubmatch(get_dn)
-		stateDomain = match_domain[0]
-	} else if fc_match {
-		re_domain := regexp.MustCompile("uni/fc(.*)")
-		match_domain := re_domain.FindStringSubmatch(get_dn)
-		stateDomain = match_domain[0]
-	} else {
-		stateDomain = ""
+	if strings.Split(match_domain[2], "-")[0] == "vmmp" {
+		d.Set("vmm_domain_type", strings.Split(strings.Split(match_domain[2], "-")[1], "/")[0])
 	}
+	stateDomain = strings.ReplaceAll(get_dn, match_domain[1]+"/", "")
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -289,6 +263,7 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 									d.SetId(apiDomain)
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
+									d.Set("domain_dn", apiDomain)
 									d.Set("deploy_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
 
@@ -361,52 +336,54 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	siteId := d.Get("site_id").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
-	domainType := d.Get("domain_type").(string)
-	vmmDomainType := d.Get("vmm_domain_type").(string)
-	domainNameDnOld := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
 
-	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn, domainName string
+	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn, domainType, domainName string
 	var microSegVlan, portEncapVlan float64
-	var allowMicroSegmentation, checkDomainTypeFromDN bool
+	var allowMicroSegmentation bool
 
-	_, ok_oldName := d.GetOk("dn")
+	domainNameDnOld, ok_oldName := d.GetOk("dn")
 	tempVarName, ok_name := d.GetOk("domain_name")
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
 		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
-	}
-
-	if ok_name {
+	} else if ok_name {
 		domainName = tempVarName.(string)
-	} else {
-		domainName = domainNameDnOld
-	}
-
-	if ok_dn {
+	} else if ok_oldName {
+		domainName = domainNameDnOld.(string)
+	} else if ok_dn {
 		DN = tempVarDn.(string)
-		vmmp_match, _ := regexp.MatchString("uni/vmmp-.*", DN)
-		checkDomainTypeFromDN = vmmp_match
-		l3dom_match, _ := regexp.MatchString("uni/l3dom-.*", DN)
-		l2dom_match, _ := regexp.MatchString("uni/l2dom-.*", DN)
-		phys_match, _ := regexp.MatchString("uni/phys-.*", DN)
-		fc_match, _ := regexp.MatchString("uni/fc-.*", DN)
-		domainType = "vmmDomain"
-		if l2dom_match {
+		re_domain := regexp.MustCompile("uni/(.*)-(.*)")
+		match_domain := re_domain.FindStringSubmatch(DN)
+		check_domain := match_domain[1]
+		if strings.Split(match_domain[1], "-")[0] == "vmmp" {
+			domainType = "vmmDomain"
+		} else if check_domain == "l2dom" {
 			domainType = "l2ExtDomain"
-		} else if l3dom_match {
+		} else if check_domain == "l3dom" {
 			domainType = "l3ExtDomain"
-		} else if phys_match {
+		} else if check_domain == "phys" {
 			domainType = "physicalDomain"
-		} else if fc_match {
+		} else if check_domain == "fc" {
 			domainType = "fibreChannelDomain"
 		}
-	} else {
-		if domainType == "vmmDomain" {
-			DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainType, domainName)
+	}
 
+	// Construct DN if domain_dn is not provided
+	if ok_name || ok_oldName {
+		if tempVarDomainType, ok := d.GetOk("domain_type"); ok {
+			domainType = tempVarDomainType.(string)
+		} else {
+			return fmt.Errorf("domain_type is required when domain_name is provided.")
+		}
+		if domainType == "vmmDomain" {
+			if tempVarVmmType, ok := d.GetOk("vmm_domain_type"); ok {
+				DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", tempVarVmmType.(string), domainName)
+			} else {
+				return fmt.Errorf("vmm_domain_type is required when domain_type is vmmDomain.")
+			}
 		} else if domainType == "l3ExtDomain" {
 			DN = fmt.Sprintf("uni/l3dom-%s", domainName)
 
@@ -426,7 +403,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 
 	vmmDomainPropertiesRefMap := make(map[string]interface{})
 
-	if domainType == "vmmDomain" || checkDomainTypeFromDN {
+	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
 		}
@@ -827,52 +804,57 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	siteId := d.Get("site_id").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
-	domainType := d.Get("domain_type").(string)
-	vmmDomainType := d.Get("domain_type_name").(string)
-	domainNameDnOld := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
 
-	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn, domainName string
+	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn, domainType, domainName string
 	var microSegVlan, portEncapVlan float64
-	var allowMicroSegmentation, checkDomainTypeFromDN bool
+	var allowMicroSegmentation bool
 
-	_, ok_oldName := d.GetOk("dn")
+	domainNameDnOld, ok_oldName := d.GetOk("dn")
 	tempVarName, ok_name := d.GetOk("domain_name")
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
 		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
 	}
-
-	if ok_name {
+	if !ok_oldName && !ok_name && !ok_dn {
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
+	} else if ok_name {
 		domainName = tempVarName.(string)
-	} else {
-		domainName = domainNameDnOld
-	}
-
-	if ok_dn {
+	} else if ok_oldName {
+		domainName = domainNameDnOld.(string)
+	} else if ok_dn {
 		DN = tempVarDn.(string)
-		vmmp_match, _ := regexp.MatchString("uni/vmmp-.*", DN)
-		checkDomainTypeFromDN = vmmp_match
-		l3dom_match, _ := regexp.MatchString("uni/l3dom-.*", DN)
-		l2dom_match, _ := regexp.MatchString("uni/l2dom-.*", DN)
-		phys_match, _ := regexp.MatchString("uni/phys-.*", DN)
-		fc_match, _ := regexp.MatchString("uni/fc-.*", DN)
-		domainType = "vmmDomain"
-		if l2dom_match {
+		re_domain := regexp.MustCompile("uni/(.*)-(.*)")
+		match_domain := re_domain.FindStringSubmatch(DN)
+		check_domain := match_domain[1]
+		if strings.Split(match_domain[1], "-")[0] == "vmmp" {
+			domainType = "vmmDomain"
+		} else if check_domain == "l2dom" {
 			domainType = "l2ExtDomain"
-		} else if l3dom_match {
+		} else if check_domain == "l3dom" {
 			domainType = "l3ExtDomain"
-		} else if phys_match {
+		} else if check_domain == "phys" {
 			domainType = "physicalDomain"
-		} else if fc_match {
+		} else if check_domain == "fc" {
 			domainType = "fibreChannelDomain"
 		}
-	} else {
-		if domainType == "vmmDomain" {
-			DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainType, domainName)
+	}
 
+	// Construct DN if domain_dn is not provided
+	if ok_name || ok_oldName {
+		if tempVarDomainType, ok := d.GetOk("domain_type"); ok {
+			domainType = tempVarDomainType.(string)
+		} else {
+			return fmt.Errorf("domain_type is required when domain_name is provided.")
+		}
+		if domainType == "vmmDomain" {
+			if tempVarVmmType, ok := d.GetOk("vmm_domain_type"); ok {
+				DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", tempVarVmmType.(string), domainName)
+			} else {
+				return fmt.Errorf("vmm_domain_type is required when domain_type is vmmDomain.")
+			}
 		} else if domainType == "l3ExtDomain" {
 			DN = fmt.Sprintf("uni/l3dom-%s", domainName)
 
@@ -891,7 +873,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	}
 
 	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	if domainType == "vmmDomain" || checkDomainTypeFromDN {
+	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
 		}
@@ -994,52 +976,53 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	siteId := d.Get("site_id").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
-	domainType := d.Get("domain_type").(string)
-	vmmDomainType := d.Get("vmm_domain_type").(string)
-	domainNameDnOld := d.Get("dn").(string)
 	deployImmediacy := d.Get("deploy_immediacy").(string)
 	resolutionImmediacy := d.Get("resolution_immediacy").(string)
 
-	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn, domainName string
+	var DN, microSegVlanType, portEncapVlanType, vlanEncapMode, switchingMode, switchType, enhancedLagpolicyName, enhancedLagpolicyDn, domainType, domainName string
 	var microSegVlan, portEncapVlan float64
-	var allowMicroSegmentation, checkDomainTypeFromDN bool
+	var allowMicroSegmentation bool
 
-	_, ok_oldName := d.GetOk("dn")
+	domainNameDnOld, ok_oldName := d.GetOk("dn")
 	tempVarName, ok_name := d.GetOk("domain_name")
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
 		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
-	}
-
-	if ok_name {
+	} else if ok_name {
 		domainName = tempVarName.(string)
-	} else {
-		domainName = domainNameDnOld
-	}
-
-	if ok_dn {
+	} else if ok_oldName {
+		domainName = domainNameDnOld.(string)
+	} else if ok_dn {
 		DN = tempVarDn.(string)
-		vmmp_match, _ := regexp.MatchString("uni/vmmp-.*", DN)
-		checkDomainTypeFromDN = vmmp_match
-		l3dom_match, _ := regexp.MatchString("uni/l3dom-.*", DN)
-		l2dom_match, _ := regexp.MatchString("uni/l2dom-.*", DN)
-		phys_match, _ := regexp.MatchString("uni/phys-.*", DN)
-		fc_match, _ := regexp.MatchString("uni/fc-.*", DN)
-		domainType = "vmmDomain"
-		if l2dom_match {
+		re_domain := regexp.MustCompile("uni/(.*)-(.*)")
+		match_domain := re_domain.FindStringSubmatch(DN)
+		check_domain := match_domain[1]
+		if strings.Split(match_domain[1], "-")[0] == "vmmp" {
+			domainType = "vmmDomain"
+		} else if check_domain == "l2dom" {
 			domainType = "l2ExtDomain"
-		} else if l3dom_match {
+		} else if check_domain == "l3dom" {
 			domainType = "l3ExtDomain"
-		} else if phys_match {
+		} else if check_domain == "phys" {
 			domainType = "physicalDomain"
-		} else if fc_match {
+		} else if check_domain == "fc" {
 			domainType = "fibreChannelDomain"
 		}
-	} else {
+	}
+	// Construct DN if domain_dn is not provided
+	if ok_name || ok_oldName {
+		if tempVarDomainType, ok := d.GetOk("domain_type"); ok {
+			domainType = tempVarDomainType.(string)
+		} else {
+			return fmt.Errorf("domain_type is required when domain_name is provided.")
+		}
 		if domainType == "vmmDomain" {
-			DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainType, domainName)
-
+			if tempVarVmmType, ok := d.GetOk("vmm_domain_type"); ok {
+				DN = fmt.Sprintf("uni/vmmp-%s/dom-%s", tempVarVmmType.(string), domainName)
+			} else {
+				return fmt.Errorf("vmm_domain_type is required when domain_type is vmmDomain.")
+			}
 		} else if domainType == "l3ExtDomain" {
 			DN = fmt.Sprintf("uni/l3dom-%s", domainName)
 
@@ -1058,7 +1041,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	}
 
 	vmmDomainPropertiesRefMap := make(map[string]interface{})
-	if domainType == "vmmDomain" || checkDomainTypeFromDN {
+	if domainType == "vmmDomain" {
 		if TempVar, ok := d.GetOk("micro_seg_vlan_type"); ok {
 			microSegVlanType = TempVar.(string)
 		}
