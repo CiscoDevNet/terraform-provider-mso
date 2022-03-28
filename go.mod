@@ -3,7 +3,7 @@ module github.com/terraform-providers/terraform-provider-mso
 go 1.13
 
 require (
-	github.com/ciscoecosystem/mso-go-client v1.3.6-0.20220323045444-fa18f00df40a
+	github.com/ciscoecosystem/mso-go-client v1.3.7
 	github.com/hashicorp/terraform-json v0.13.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.14.0
 	github.com/stretchr/testify v1.6.1 // indirect
