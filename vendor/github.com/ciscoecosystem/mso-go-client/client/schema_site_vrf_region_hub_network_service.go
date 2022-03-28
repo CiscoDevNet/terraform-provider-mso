@@ -14,7 +14,10 @@ func (client *Client) CreateInterSchemaSiteVrfRegionHubNetwork(obj *models.Inter
 	if err != nil {
 		return err
 	}
-	hubNetwork := models.CreateInterSchemaSiteVrfRegionNetworkModel(obj, schemaCont)
+	hubNetwork, err := models.CreateInterSchemaSiteVrfRegionNetworkModel(obj, schemaCont)
+	if err != nil {
+		return err
+	}
 	regionHubNetworkMutex.Lock()
 	_, err = client.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", obj.SchemaID), hubNetwork)
 	if err != nil {
@@ -29,7 +32,10 @@ func (client *Client) DeleteInterSchemaSiteVrfRegionHubNetwork(obj *models.Inter
 	if err != nil {
 		return err
 	}
-	hubNetwork := models.DeleteInterSchemaSiteVrfRegionNetworkModel(obj, schemaCont)
+	hubNetwork, err := models.DeleteInterSchemaSiteVrfRegionNetworkModel(obj, schemaCont)
+	if err != nil {
+		return err
+	}
 	regionHubNetworkMutex.Lock()
 	_, err = client.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", obj.SchemaID), hubNetwork)
 	if err != nil {
