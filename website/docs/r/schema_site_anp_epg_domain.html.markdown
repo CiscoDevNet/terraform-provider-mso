@@ -75,12 +75,12 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg Domain.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
-* `dn` - (Optional) **Deprecated**. The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (if applicable) to be set.
-* `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (if applicable) to be set.
+* `dn` - (Optional) **Deprecated**. The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when applicable) to be set.
 * `domain_dn` - (Optional) The dn of domain. This is required when `domain_name` and `domain_type` are not specified.
-* `vmm_domain_type` - (Required) The vmm domain type. This is required when `domain_type` is vmmDomain. choices: [ VMware, Microsoft, Redhat ]
+* `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when applicable) to be set.
+* `domain_type` - (Optional) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain. choices: [ VMware, Microsoft, Redhat ]
 * `deploy_immediacy` - (Required) The deployment immediacy of the domain. choices: [ immediate, lazy ]
-* `domain_type` - (Required) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
 * `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
 * `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
 * `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with vmmDomain domain association.
@@ -102,5 +102,5 @@ No attributes are exported.
 An existing MSO Schema Site Application Network Profiles Endpoint Groups Domain can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_site_anp_epg_domain.site_anp_epg_domain {schema_id}/sites/{site_id}-{template_name}/anps/{anp_name}/epgs/{epg_name}/domainDn/{domain_dn}
+terraform import mso_schema_site_anp_epg_domain.site_anp_epg_domain {schema_id}/sites/{site_id}-{template_name}/anps/{anp_name}/epgs/{epg_name}/domainAssociations/{domain_dn}
 ```

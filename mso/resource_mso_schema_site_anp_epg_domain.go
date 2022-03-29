@@ -87,10 +87,11 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				}, false),
 			},
 			"domain_dn": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"domain_name", "vmm_domain_type", "domain_type"},
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					if new == "" {
 						return true
@@ -105,8 +106,8 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Optional:      true,
 				ForceNew:      true,
 				ValidateFunc:  validation.StringLenBetween(1, 1000),
-				ConflictsWith: []string{"domain_name"},
-				Deprecated:    "use domain_dn alone or domain_name in association with domain_type and vmm_domain_type if applicable.",
+				ConflictsWith: []string{"domain_name", "domain_dn"},
+				Deprecated:    "use domain_dn alone or domain_name in association with domain_type and vmm_domain_type when applicable.",
 			},
 			"deploy_immediacy": &schema.Schema{
 				Type:         schema.TypeString,
@@ -200,13 +201,14 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 
 	var stateDomain string
 
-	re_domain := regexp.MustCompile("(.*)/uni/(.*)-(.*)")
+	re_domain := regexp.MustCompile("(.*)uni/(.*)-(.*)")
 	match_domain := re_domain.FindStringSubmatch(get_dn)
 	d.Set("domain_name", match_domain[3])
-	if strings.Split(match_domain[2], "-")[0] == "vmmp" {
-		d.Set("vmm_domain_type", strings.Split(strings.Split(match_domain[2], "-")[1], "/")[0])
+	if strings.Contains(match_domain[2], "vmmp") {
+		vmmp_domain := regexp.MustCompile("(.*)-(.*)/")
+		d.Set("vmm_domain_type", vmmp_domain.FindStringSubmatch(match_domain[2])[2])
 	}
-	stateDomain = strings.ReplaceAll(get_dn, match_domain[1]+"/", "")
+	stateDomain = strings.ReplaceAll(get_dn, match_domain[1], "")
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -264,6 +266,7 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
 									d.Set("domain_dn", apiDomain)
+
 									d.Set("deploy_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
 
@@ -348,7 +351,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when applicable are required.")
 	} else if ok_name {
 		domainName = tempVarName.(string)
 	} else if ok_oldName {
@@ -396,8 +399,6 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 		} else if domainType == "fibreChannelDomain" {
 			DN = fmt.Sprintf("uni/fc-%s", domainName)
 
-		} else {
-			DN = ""
 		}
 	}
 
@@ -487,7 +488,6 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	if err != nil {
 		return fmt.Errorf("No Sites found")
 	}
-	//found := false
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -628,10 +628,8 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 	stateEpg := d.Get("epg_name").(string)
 	domainNameDnOld := d.Get("dn").(string)
 	domainType := d.Get("domain_type").(string)
-	vmmDomainType := d.Get("vmm_domain_type").(string)
-	stateDomain := d.Get("domain_dn").(string)
 
-	var domainName string
+	var domainName, stateDomain string
 
 	if tempVar, ok := d.GetOk("domain_name"); ok {
 		domainName = tempVar.(string)
@@ -643,6 +641,7 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 		stateDomain = tempVar.(string)
 	} else {
 		if domainType == "vmmDomain" {
+			vmmDomainType := d.Get("vmm_domain_type").(string)
 			stateDomain = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainType, domainName)
 
 		} else if domainType == "l3ExtDomain" {
@@ -657,8 +656,6 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 		} else if domainType == "fibreChannelDomain" {
 			stateDomain = fmt.Sprintf("uni/fc-%s", domainName)
 
-		} else {
-			stateDomain = ""
 		}
 	}
 
@@ -716,6 +713,8 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 									d.SetId(apiDomain)
 									d.Set("site_id", apiSite)
 									d.Set("domain_dn", apiDomain)
+
+									//if domain_dn was not set by user set domain_type and vmm_domain_type
 									if _, ok := d.GetOk("domain_dn"); !ok {
 										d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
 										vmmp_match, _ := regexp.MatchString("uni/vmmp-.*", apiDomain)
@@ -816,10 +815,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
-	}
-	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when applicable are required.")
 	} else if ok_name {
 		domainName = tempVarName.(string)
 	} else if ok_oldName {
@@ -867,8 +863,6 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		} else if domainType == "fibreChannelDomain" {
 			DN = fmt.Sprintf("uni/fc-%s", domainName)
 
-		} else {
-			DN = ""
 		}
 	}
 
@@ -988,7 +982,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type if applicable are required.")
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when applicable are required.")
 	} else if ok_name {
 		domainName = tempVarName.(string)
 	} else if ok_oldName {
@@ -1035,8 +1029,6 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 		} else if domainType == "fibreChannelDomain" {
 			DN = fmt.Sprintf("uni/fc-%s", domainName)
 
-		} else {
-			DN = ""
 		}
 	}
 
