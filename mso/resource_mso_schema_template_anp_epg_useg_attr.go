@@ -499,7 +499,9 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m inter
 								if currentName == name {
 									d.SetId(currentName)
 									d.Set("name", currentName)
-									d.Set("operator", models.StripQuotes(usegCont.S("operator").String()))
+									if usegCont.Exists("operator") {
+										d.Set("operator", models.StripQuotes(usegCont.S("operator").String()))
+									}
 									d.Set("useg_type", models.StripQuotes(usegCont.S("type").String()))
 									d.Set("value", models.StripQuotes(usegCont.S("value").String()))
 
