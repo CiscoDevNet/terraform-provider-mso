@@ -154,7 +154,7 @@ func resourceMSODHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) err
 	}
 
 	if providerList, ok := d.GetOk("dhcp_relay_policy_provider"); ok {
-		err := ValidateProviderList(providerList.([]interface{}))
+		err := ValidateProviderList(providerList.(*schema.Set).List())
 		if err != nil {
 			return err
 		}
