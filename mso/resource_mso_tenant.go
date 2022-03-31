@@ -59,7 +59,7 @@ func resourceMSOTenant() *schema.Resource {
 			},
 
 			"site_associations": &schema.Schema{
-				Type: schema.TypeList,
+				Type: schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"site_id": {
@@ -304,7 +304,7 @@ func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	d.Set("site_associations", site_associations)
 	count2, _ := con.ArrayCount("userAssociations")
 	if err != nil {
-		d.Set("user_assocoations", make([]interface{}, 0))
+		d.Set("user_associations", make([]interface{}, 0))
 	}
 	user_associations := make([]interface{}, 0)
 	for i := 0; i < count2; i++ {
@@ -340,7 +340,7 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 	site_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("site_associations"); ok {
-		siteList := val.([]interface{})
+		siteList := val.(*schema.Set).List()
 		for _, val := range siteList {
 
 			mapSite := make(map[string]interface{})
@@ -531,7 +531,7 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 
 	site_associations := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("site_associations"); ok {
-		siteList := val.([]interface{})
+		siteList := val.(*schema.Set).List()
 		for _, val := range siteList {
 
 			mapSite := make(map[string]interface{})
