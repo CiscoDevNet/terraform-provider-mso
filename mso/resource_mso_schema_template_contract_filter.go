@@ -262,6 +262,25 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 		directives = tempVar.(*schema.Set).List()
 	}
 
+	found, err := checkIfContractExists(msoClient, schemaID, templateName, contractName)
+
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		list := make([]interface{}, 0, 1)
+
+		path := fmt.Sprintf("/templates/%s/contracts/-", templateName)
+		contractStruct := models.NewTemplateContract("add", path, contractName, "", "", "", list)
+
+		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	if filter_type == "bothWay" {
 		path := fmt.Sprintf("/templates/%s/contracts/%s/filterType", templateName, contractName)
 		contractStruct := models.NewTemplateContractFilter("replace", path, filter_type)
@@ -819,4 +838,39 @@ func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface
 	}
 	return resourceMSOTemplateContractFilterRead(d, m)
 
+}
+
+func checkIfContractExists(c *client.Client, schema, template, contract string) (bool, error) {
+	schemaPath := fmt.Sprintf("/api/v1/schemas/%s", schema)
+	cont, err := c.GetViaURL(schemaPath)
+	if err != nil {
+		return false, err
+	}
+	templateLen := 0
+	if cont.Exists("templates") {
+		templateLen = len(cont.S("templates").Data().([]interface{}))
+	}
+	for i := 0; i < templateLen; i++ {
+		templateCont := cont.S("templates").Index(i)
+		templateName := models.G(templateCont, "name")
+		if templateName == template {
+			contractLen := 0
+			if templateCont.Exists("contracts") {
+				contractLen = len(templateCont.S("contracts").Data().([]interface{}))
+			}
+			for j := 0; j < contractLen; j++ {
+				contractCont := templateCont.S("contracts").Index(j)
+				contractRef := models.G(contractCont, "contractRef")
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+				match := re.FindStringSubmatch(contractRef)
+				if len(match) == 4 {
+					contractName := match[3]
+					if contractName == contract {
+						return true, nil
+					}
+				}
+			}
+		}
+	}
+	return false, nil
 }
