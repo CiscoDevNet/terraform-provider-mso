@@ -290,12 +290,13 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		if apiTemplate == stateTemplate && apiTenant == stateTenant {
 			d.Set("template_name", apiTemplate)
 			d.Set("tenant_id", apiTenant)
-		} else {
-			d.Set("template_name", "")
-			d.Set("tenant_id", "")
 		}
 	}
-	d.Set("template", templates)
+	if _, ok := d.GetOk("template_name"); !ok {
+		d.Set("template", templates)
+		d.Set("template_name", "")
+		d.Set("tenant_id", "")
+	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
