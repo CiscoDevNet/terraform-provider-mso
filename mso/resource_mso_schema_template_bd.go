@@ -461,9 +461,9 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					}
 					v6unkMcastAct := models.StripQuotes(bdCont.S("v6unkMcastAct").String())
 					if v6unkMcastAct == "opt-flood" {
-						d.Set("multi_destination_flooding", "optimized_flooding")
+						d.Set("ipv6_unknown_multicast_flooding", "optimized_flooding")
 					} else {
-						d.Set("multi_destination_flooding", "flood")
+						d.Set("ipv6_unknown_multicast_flooding", "flood")
 					}
 					// d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
 					// d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
