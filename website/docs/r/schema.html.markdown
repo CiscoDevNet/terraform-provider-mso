@@ -12,6 +12,8 @@ Manages MSO Schema
 
 ## Example Usage ##
 
+### When template_name and tenant_id are used ##
+
 ```hcl
 resource "mso_schema" "foo_schema" {
   name          = "nkp12"
@@ -21,11 +23,39 @@ resource "mso_schema" "foo_schema" {
 
 ```
 
+### When template blocks are provided ##
+
+```hcl
+resource "mso_schema" "schema1" {
+  name          = "Schema3"
+  template {
+    name          = "Template1"
+    display_name  = "TEMP1"
+    tenant_id     = "623316531d0000abdd50343a"
+  }
+  template {
+    name          = "Template2"
+    display_name  = "TEMP2"
+    tenant_id     = "623316531d0000abdd50343a"
+  }
+  template {
+    name          = "Template3"
+    display_name  = "TEMP3"
+    tenant_id     = "0000ffff0000000000000010"
+  }
+}  
+
+```
+
 ## Argument Reference ##
 
 * `name` - (Required) name of the schema.
-* `template_name` - (Required) name of template attached to this schema.
-* `tenant_id` - (Required) tenant_id for this schema.
+* `template_name` - (Optional) **Deprecated**. name of template attached to this schema.
+* `tenant_id` - (Optional) **Deprecated**. tenant_id for this schema.
+* `template` - (Optional) template associated with this schema. Multiple templates can be created using this attribute. Type - Set.
+  * `name` - name of template.
+  * `display_name` - display name for the template
+  * `tenant_id` - tenant_id for the template.
 
 ## Attribute Reference ##
 
