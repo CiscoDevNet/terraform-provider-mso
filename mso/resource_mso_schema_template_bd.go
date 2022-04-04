@@ -177,6 +177,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("[DEBUG] : Import getviaurl")
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
 		return nil, fmt.Errorf("No Template found")
@@ -192,6 +193,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
 		if apiTemplate == stateTemplate {
+			log.Printf("[DEBUG] : Import apiTemplate == stateTemplate")
 			bdCount, err := tempCont.ArrayCount("bds")
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get BD list")
@@ -203,6 +205,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 				}
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
+					log.Printf("[DEBUG] : Import set attr")
 					d.SetId(apiBD)
 					d.Set("name", apiBD)
 					d.Set("schema_id", schemaId)
@@ -214,8 +217,10 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					} else {
 						d.Set("unknown_multicast_flooding", "flood")
 					}
+					log.Printf("[DEBUG] %s: Import Read unknown_mul_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
 					// d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
 					multiDstPktAct := models.StripQuotes(bdCont.S("multiDstPktAct").String())
+					log.Printf("[DEBUG] %s: Import Read multi_destination", multiDstPktAct)
 					if multiDstPktAct == "encap-flood" {
 						d.Set("multi_destination_flooding", "flood_in_encap")
 					} else if multiDstPktAct == "bd-flood" {
@@ -225,6 +230,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					}
 					// d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
 					v6unkMcastAct := models.StripQuotes(bdCont.S("v6unkMcastAct").String())
+					log.Printf("[DEBUG] %s: Import Read ipv6_unknown_multicast_flooding", v6unkMcastAct)
 					if v6unkMcastAct == "opt-flood" {
 						d.Set("ipv6_unknown_multicast_flooding", "optimized_flooding")
 					} else {
@@ -446,12 +452,14 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					log.Printf("[DEBUG] %s: Read unknown_mul_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
 					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
 						d.Set("unknown_multicast_flooding", "optimized_flooding")
 					} else {
 						d.Set("unknown_multicast_flooding", "flood")
 					}
 					multiDstPktAct := models.StripQuotes(bdCont.S("multiDstPktAct").String())
+					log.Printf("[DEBUG] %s: Read multi_destination", multiDstPktAct)
 					if multiDstPktAct == "encap-flood" {
 						d.Set("multi_destination_flooding", "flood_in_encap")
 					} else if multiDstPktAct == "bd-flood" {
@@ -460,6 +468,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 						d.Set("multi_destination_flooding", "drop")
 					}
 					v6unkMcastAct := models.StripQuotes(bdCont.S("v6unkMcastAct").String())
+					log.Printf("[DEBUG] %s: Read ipv6_unknown_multicast_flooding", v6unkMcastAct)
 					if v6unkMcastAct == "opt-flood" {
 						d.Set("ipv6_unknown_multicast_flooding", "optimized_flooding")
 					} else {
