@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -135,13 +136,30 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 	if platform == "nd" {
 		dataConAttr := con.S("common")
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
+		unameStr := models.StripQuotes(dataConAttr.S("username").String())
+		d.Set("username", unameStr)
+		if _, ok := d.GetOk("username"); ok {
+			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
+			matches := regex.FindStringSubmatch(unameStr)
+			if len(matches) == 3 {
+				d.Set("username", matches[2])
+				d.Set("login_domain", matches[1])
+			}
+		}
+
+		platform := models.StripQuotes(dataConAttr.S("platformType").String())
+		if platform == "CloudApic" {
+			d.Set("platform", "cloud")
+		} else {
+			d.Set("platform", "on-premise")
+		}
 
 		if dataConAttr.Exists("siteId") {
 			d.Set("apic_site_id", models.StripQuotes(dataConAttr.S("siteId").String()))
 		}
 
 		if dataConAttr.Exists("labels") {
-			d.Set("labels", models.StripQuotes(dataConAttr.S("labels").String()))
+			d.Set("labels", dataConAttr.S("labels").Data().([]interface{}))
 		} else {
 			d.Set("labels", nil)
 		}
@@ -154,10 +172,27 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 			d.Set("cloud_providers", nil)
 
 		}
+		d.Set("maintenance_mode", false)
+		if dataConAttr.Exists("latitude") && dataConAttr.Exists("longitude") {
+			locset := make(map[string]interface{})
+			locset["lat"] = models.StripQuotes(dataConAttr.S("latitude").String())
+			locset["long"] = models.StripQuotes(dataConAttr.S("longitude").String())
+			d.Set("location", locset)
+		}
+		if dataConAttr.Exists("urls") {
+			urls := dataConAttr.S("urls").Data().([]interface{})
+			var urlsList []interface{}
+			for _, url := range urls {
+				split := strings.Split(url.(string), ":")
+				urlsList = append(urlsList, fmt.Sprintf("%s:%s", split[0], split[1]))
+			}
+			d.Set("urls", urlsList)
+		}
 	} else {
 		d.Set("name", models.StripQuotes(con.S("name").String()))
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
-		d.Set("username", models.StripQuotes(con.S("username").String()))
+		unameStr := models.StripQuotes(con.S("username").String())
+		d.Set("username", unameStr)
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		}
@@ -173,9 +208,9 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		if con.Exists("maintenanceMode") {
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
-		if _, ok := d.GetOk("login_domain"); ok {
+
+		if _, ok := d.GetOk("username"); ok {
 			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
-			unameStr := models.StripQuotes(con.S("username").String())
 			matches := regex.FindStringSubmatch(unameStr)
 			if len(matches) == 3 {
 				d.Set("username", matches[2])
@@ -411,14 +446,41 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		dataConAttr := con.S("common")
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
 
+		unameStr := models.StripQuotes(dataConAttr.S("username").String())
+		d.Set("username", unameStr)
+		if _, ok := d.GetOk("username"); ok {
+			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
+			matches := regex.FindStringSubmatch(unameStr)
+			if len(matches) == 3 {
+				d.Set("username", matches[2])
+				d.Set("login_domain", matches[1])
+			}
+		}
+
 		if dataConAttr.Exists("siteId") {
 			d.Set("apic_site_id", models.StripQuotes(dataConAttr.S("siteId").String()))
 		}
 
 		if dataConAttr.Exists("labels") {
-			d.Set("labels", models.StripQuotes(dataConAttr.S("labels").String()))
+			d.Set("labels", dataConAttr.S("labels").Data().([]interface{}))
 		} else {
 			d.Set("labels", nil)
+		}
+		if dataConAttr.Exists("urls") {
+			urls := dataConAttr.S("urls").Data().([]interface{})
+			var urlsList []interface{}
+			for _, url := range urls {
+				split := strings.Split(url.(string), ":")
+				urlsList = append(urlsList, fmt.Sprintf("%s:%s", split[0], split[1]))
+			}
+			d.Set("urls", urlsList)
+		}
+
+		platform := models.StripQuotes(dataConAttr.S("platformType").String())
+		if platform == "CloudApic" {
+			d.Set("platform", "cloud")
+		} else {
+			d.Set("platform", "on-premise")
 		}
 
 		dataCloud := con.S("apic")
@@ -429,10 +491,18 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 			d.Set("cloud_providers", nil)
 
 		}
+		d.Set("maintenance_mode", false)
+		if dataConAttr.Exists("latitude") && dataConAttr.Exists("longitude") {
+			locset := make(map[string]interface{})
+			locset["lat"] = models.StripQuotes(dataConAttr.S("latitude").String())
+			locset["long"] = models.StripQuotes(dataConAttr.S("longitude").String())
+			d.Set("location", locset)
+		}
 	} else {
 		d.Set("name", models.StripQuotes(con.S("name").String()))
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
-		d.Set("username", models.StripQuotes(con.S("username").String()))
+		unameStr := models.StripQuotes(con.S("username").String())
+		d.Set("username", unameStr)
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		}
@@ -448,9 +518,8 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		if con.Exists("maintenanceMode") {
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
-		if _, ok := d.GetOk("login_domain"); ok {
+		if _, ok := d.GetOk("username"); ok {
 			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
-			unameStr := models.StripQuotes(con.S("username").String())
 			matches := regex.FindStringSubmatch(unameStr)
 			if len(matches) == 3 {
 				d.Set("username", matches[2])
