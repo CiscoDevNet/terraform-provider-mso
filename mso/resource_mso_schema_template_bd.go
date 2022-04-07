@@ -228,7 +228,6 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					} else {
 						d.Set("ipv6_unknown_multicast_flooding", "flood")
 					}
-					// d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("v6unkMcastAct").String()))
 					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("vmac").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
