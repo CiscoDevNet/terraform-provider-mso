@@ -209,9 +209,25 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
-					d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
-					d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
-					d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("v6unkMcastAct").String()))
+					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
+						d.Set("unknown_multicast_flooding", "optimized_flooding")
+					} else {
+						d.Set("unknown_multicast_flooding", "flood")
+					}
+					multiDstPktAct := models.StripQuotes(bdCont.S("multiDstPktAct").String())
+					if multiDstPktAct == "encap-flood" {
+						d.Set("multi_destination_flooding", "flood_in_encap")
+					} else if multiDstPktAct == "bd-flood" {
+						d.Set("multi_destination_flooding", "flood_in_bd")
+					} else {
+						d.Set("multi_destination_flooding", "drop")
+					}
+					v6unkMcastAct := models.StripQuotes(bdCont.S("v6unkMcastAct").String())
+					if v6unkMcastAct == "opt-flood" {
+						d.Set("ipv6_unknown_multicast_flooding", "optimized_flooding")
+					} else {
+						d.Set("ipv6_unknown_multicast_flooding", "flood")
+					}
 					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("vmac").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
@@ -427,9 +443,25 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
-					d.Set("unknown_multicast_flooding", models.StripQuotes(bdCont.S("unkMcastAct").String()))
-					d.Set("multi_destination_flooding", models.StripQuotes(bdCont.S("multiDstPktAct").String()))
-					d.Set("ipv6_unknown_multicast_flooding", models.StripQuotes(bdCont.S("v6unkMcastAct").String()))
+					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
+						d.Set("unknown_multicast_flooding", "optimized_flooding")
+					} else {
+						d.Set("unknown_multicast_flooding", "flood")
+					}
+					multiDstPktAct := models.StripQuotes(bdCont.S("multiDstPktAct").String())
+					if multiDstPktAct == "encap-flood" {
+						d.Set("multi_destination_flooding", "flood_in_encap")
+					} else if multiDstPktAct == "bd-flood" {
+						d.Set("multi_destination_flooding", "flood_in_bd")
+					} else {
+						d.Set("multi_destination_flooding", "drop")
+					}
+					v6unkMcastAct := models.StripQuotes(bdCont.S("v6unkMcastAct").String())
+					if v6unkMcastAct == "opt-flood" {
+						d.Set("ipv6_unknown_multicast_flooding", "optimized_flooding")
+					} else {
+						d.Set("ipv6_unknown_multicast_flooding", "flood")
+					}
 					d.Set("virtual_mac_address", models.StripQuotes(bdCont.S("vmac").String()))
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
