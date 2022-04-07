@@ -136,16 +136,8 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 	if platform == "nd" {
 		dataConAttr := con.S("common")
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
-		unameStr := models.StripQuotes(dataConAttr.S("username").String())
-		d.Set("username", unameStr)
-		if _, ok := d.GetOk("username"); ok {
-			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
-			matches := regex.FindStringSubmatch(unameStr)
-			if len(matches) == 3 {
-				d.Set("username", matches[2])
-				d.Set("login_domain", matches[1])
-			}
-		}
+
+		d.Set("username", models.StripQuotes(dataConAttr.S("username").String()))
 
 		platform := models.StripQuotes(dataConAttr.S("platformType").String())
 		if platform == "CloudApic" {
@@ -210,7 +202,7 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		}
 
 		if _, ok := d.GetOk("username"); ok {
-			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
+			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
 			matches := regex.FindStringSubmatch(unameStr)
 			if len(matches) == 3 {
 				d.Set("username", matches[2])
@@ -446,16 +438,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		dataConAttr := con.S("common")
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
 
-		unameStr := models.StripQuotes(dataConAttr.S("username").String())
-		d.Set("username", unameStr)
-		if _, ok := d.GetOk("username"); ok {
-			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
-			matches := regex.FindStringSubmatch(unameStr)
-			if len(matches) == 3 {
-				d.Set("username", matches[2])
-				d.Set("login_domain", matches[1])
-			}
-		}
+		d.Set("username", models.StripQuotes(dataConAttr.S("username").String()))
 
 		if dataConAttr.Exists("siteId") {
 			d.Set("apic_site_id", models.StripQuotes(dataConAttr.S("siteId").String()))
@@ -519,7 +502,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
 		if _, ok := d.GetOk("username"); ok {
-			regex := regexp.MustCompile(`apic#(.*)\\{4}(.*)`)
+			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
 			matches := regex.FindStringSubmatch(unameStr)
 			if len(matches) == 3 {
 				d.Set("username", matches[2])
