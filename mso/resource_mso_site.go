@@ -201,7 +201,7 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
 
-		if _, ok := d.GetOk("username"); ok {
+		if username != "" {
 			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
 			matches := regex.FindStringSubmatch(username)
 			if len(matches) == 3 {
@@ -501,7 +501,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		if con.Exists("maintenanceMode") {
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
-		if _, ok := d.GetOk("username"); ok {
+		if username != "" {
 			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
 			matches := regex.FindStringSubmatch(username)
 			if len(matches) == 3 {
