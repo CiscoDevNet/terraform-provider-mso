@@ -183,8 +183,8 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 	} else {
 		d.Set("name", models.StripQuotes(con.S("name").String()))
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
-		unameStr := models.StripQuotes(con.S("username").String())
-		d.Set("username", unameStr)
+		username := models.StripQuotes(con.S("username").String())
+		d.Set("username", username)
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		}
@@ -203,7 +203,7 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 
 		if _, ok := d.GetOk("username"); ok {
 			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
-			matches := regex.FindStringSubmatch(unameStr)
+			matches := regex.FindStringSubmatch(username)
 			if len(matches) == 3 {
 				d.Set("username", matches[2])
 				d.Set("login_domain", matches[1])
@@ -484,8 +484,8 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	} else {
 		d.Set("name", models.StripQuotes(con.S("name").String()))
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
-		unameStr := models.StripQuotes(con.S("username").String())
-		d.Set("username", unameStr)
+		username := models.StripQuotes(con.S("username").String())
+		d.Set("username", username)
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		}
@@ -503,7 +503,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		}
 		if _, ok := d.GetOk("username"); ok {
 			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
-			matches := regex.FindStringSubmatch(unameStr)
+			matches := regex.FindStringSubmatch(username)
 			if len(matches) == 3 {
 				d.Set("username", matches[2])
 				d.Set("login_domain", matches[1])
