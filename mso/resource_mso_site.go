@@ -185,6 +185,15 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 		username := models.StripQuotes(con.S("username").String())
 		d.Set("username", username)
+		if username != "" {
+			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
+			matches := regex.FindStringSubmatch(username)
+			if len(matches) == 3 {
+				d.Set("username", matches[2])
+				d.Set("login_domain", matches[1])
+			}
+
+		}
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		}
@@ -201,15 +210,6 @@ func resourceMSOSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.Res
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
 
-		if username != "" {
-			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
-			matches := regex.FindStringSubmatch(username)
-			if len(matches) == 3 {
-				d.Set("username", matches[2])
-				d.Set("login_domain", matches[1])
-			}
-
-		}
 		if con.Exists("location") {
 			loc1 := con.S("location").Data()
 			locset := make(map[string]interface{})
@@ -486,6 +486,15 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("apic_site_id", models.StripQuotes(con.S("apicSiteId").String()))
 		username := models.StripQuotes(con.S("username").String())
 		d.Set("username", username)
+		if username != "" {
+			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
+			matches := regex.FindStringSubmatch(username)
+			if len(matches) == 3 {
+				d.Set("username", matches[2])
+				d.Set("login_domain", matches[1])
+			}
+
+		}
 		if con.Exists("labels") {
 			d.Set("labels", con.S("labels").Data().([]interface{}))
 		}
@@ -501,15 +510,7 @@ func resourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		if con.Exists("maintenanceMode") {
 			d.Set("maintenance_mode", con.S("maintenanceMode").Data().(bool))
 		}
-		if username != "" {
-			regex := regexp.MustCompile(`apic#(.*)\\{2}(.*)`)
-			matches := regex.FindStringSubmatch(username)
-			if len(matches) == 3 {
-				d.Set("username", matches[2])
-				d.Set("login_domain", matches[1])
-			}
 
-		}
 		if con.Exists("location") {
 			loc1 := con.S("location").Data()
 			locset := make(map[string]interface{})
