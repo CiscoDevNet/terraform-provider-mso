@@ -75,11 +75,11 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg Domain.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
-* `dn` - (Optional) **Deprecated**. The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when applicable) to be set.
+* `dn` - (Optional) **Deprecated**. The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
 * `domain_dn` - (Optional) The dn of domain. This is required when `domain_name` and `domain_type` are not specified.
-* `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when applicable) to be set.
+* `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
 * `domain_type` - (Optional) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
-* `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain. choices: [ VMware, Microsoft, Redhat ]
+* `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain and `domain_dn` is not used. choices: [ VMware, Microsoft, Redhat ]
 * `deploy_immediacy` - (Required) The deployment immediacy of the domain. choices: [ immediate, lazy ]
 * `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
 * `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]

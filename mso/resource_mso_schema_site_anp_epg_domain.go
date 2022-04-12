@@ -107,7 +107,7 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				ForceNew:      true,
 				ValidateFunc:  validation.StringLenBetween(1, 1000),
 				ConflictsWith: []string{"domain_name", "domain_dn"},
-				Deprecated:    "use domain_dn alone or domain_name in association with domain_type and vmm_domain_type when applicable.",
+				Deprecated:    "use domain_dn alone or domain_name in association with domain_type and vmm_domain_type when it is applicable.",
 			},
 			"deploy_immediacy": &schema.Schema{
 				Type:         schema.TypeString,
@@ -351,7 +351,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when applicable are required.")
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when it is applicable are required.")
 	} else if ok_name {
 		domainName = tempVarName.(string)
 	} else if ok_oldName {
@@ -815,7 +815,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when applicable are required.")
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when it is applicable are required.")
 	} else if ok_name {
 		domainName = tempVarName.(string)
 	} else if ok_oldName {
@@ -982,7 +982,7 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 	tempVarDn, ok_dn := d.GetOk("domain_dn")
 
 	if !ok_oldName && !ok_name && !ok_dn {
-		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when applicable are required.")
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when it is applicable are required.")
 	} else if ok_name {
 		domainName = tempVarName.(string)
 	} else if ok_oldName {
