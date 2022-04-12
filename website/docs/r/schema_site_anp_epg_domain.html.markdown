@@ -62,7 +62,7 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
   port_encap_vlan_type = "vlan"
   port_encap_vlan = 45
   enhanced_lag_policy_name = "name"
-  enhanced_lag_policy_dn = "dn"
+  enhanced_lag_policy_dn = "uni/vmmp-VMware/dom-VMware-ab/vswitchpolcont/enlacplagp-Lacp"
 
 }
 
