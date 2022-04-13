@@ -74,16 +74,27 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema: Beginning Creation")
 	msoClient := m.(*client.Client)
 	name := d.Get("name").(string)
+	tempVarTemplateName, ok_template_name := d.GetOk("template_name")
+	tempVarTemplates, ok_templates := d.GetOk("template")
+
+	if !ok_template_name && !ok_templates {
+		return fmt.Errorf("template_name or a template block with its name, tenant_id and display_name are required.")
+	}
+
 	var schemaApp *models.Schema
-	if tempVar, ok := d.GetOk("template_name"); ok {
-		templateName := tempVar.(string)
-		tenantId := d.Get("tenant_id").(string)
+	if ok_template_name {
+		tempVarTenantId, ok := d.GetOk("tenant_id")
+		if !ok {
+			return fmt.Errorf("tenant_id is required when using template_name.")
+		}
+		templateName := tempVarTemplateName.(string)
+		tenantId := tempVarTenantId.(string)
 		schemaApp, _ = models.NewSchema("", name, templateName, tenantId, make([]interface{}, 0, 1))
 
 	} else {
 		templates := make([]interface{}, 0, 1)
-		if val, ok := d.GetOk("template"); ok {
-			template_list := val.(*schema.Set).List()
+		if ok_templates {
+			template_list := tempVarTemplates.(*schema.Set).List()
 			for _, val := range template_list {
 				map_templates := make(map[string]interface{})
 				inner_templates := val.(map[string]interface{})
@@ -146,7 +157,12 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema: Beginning Update")
 	msoClient := m.(*client.Client)
 	name := d.Get("name").(string)
-	if _, ok := d.GetOk("template_name"); ok {
+	_, ok_template_name := d.GetOk("template_name")
+	tempVarTemplates, ok_templates := d.GetOk("template")
+
+	if !ok_template_name && !ok_templates {
+		return fmt.Errorf("template_name or a template block with its name, tenant_id and display_name are required.")
+	} else if ok_template_name {
 		old, new := d.GetChange("template_name")
 		oldTemplate := old.(string)
 		newTemplate := new.(string)
@@ -231,8 +247,8 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 
 			templates := make([]interface{}, 0, 1)
-			if val, ok := d.GetOk("template"); ok {
-				template_list := val.(*schema.Set).List()
+			if ok_templates {
+				template_list := tempVarTemplates.(*schema.Set).List()
 				for _, val := range template_list {
 					map_templates := make(map[string]interface{})
 					inner_templates := val.(map[string]interface{})
