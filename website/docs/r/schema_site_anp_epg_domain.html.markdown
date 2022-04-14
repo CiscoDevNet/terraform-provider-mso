@@ -34,8 +34,8 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
   micro_seg_vlan = 46
   port_encap_vlan_type = "vlan"
   port_encap_vlan = 45
-  enhanced_lag_policy_name = "name"
-  enhanced_lag_policy_dn = "dn"
+  enhanced_lag_policy_name = "Lacp"
+  enhanced_lag_policy_dn = "uni/vmmp-VMware/dom-VMware-ab/vswitchpolcont/enlacplagp-Lacp"
 
 }
 
@@ -61,7 +61,7 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
   micro_seg_vlan = 46
   port_encap_vlan_type = "vlan"
   port_encap_vlan = 45
-  enhanced_lag_policy_name = "name"
+  enhanced_lag_policy_name = "Lacp"
   enhanced_lag_policy_dn = "uni/vmmp-VMware/dom-VMware-ab/vswitchpolcont/enlacplagp-Lacp"
 
 }
@@ -75,10 +75,10 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg Domain.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
-* `dn` - (Optional) **Deprecated**. The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
+* `dn` - (Optional) **Deprecated**. The domain profile name. Use `domain_dn` or `domain_name` in association with `domain_type` and `vmm_domain_type` when it is applicable.
 * `domain_dn` - (Optional) The dn of domain. This is required when `domain_name` and `domain_type` are not specified.
 * `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
-* `domain_type` - (Optional) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `domain_type` - (Optional) The type of domain to associate. This is required when `domain_dn` is not used. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
 * `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain and `domain_dn` is not used. choices: [ VMware, Microsoft, Redhat ]
 * `deploy_immediacy` - (Required) The deployment immediacy of the domain. choices: [ immediate, lazy ]
 * `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
