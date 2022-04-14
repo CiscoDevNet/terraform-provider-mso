@@ -78,11 +78,11 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `dn` - (Optional) **Deprecated**. The domain profile name. Use `domain_dn` or `domain_name` in association with `domain_type` and `vmm_domain_type` when it is applicable.
 * `domain_dn` - (Optional) The dn of domain. This is required when `domain_name` and `domain_type` are not specified.
 * `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
-* `domain_type` - (Optional) The type of domain to associate. This is required when `domain_dn` is not used. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
-* `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain and `domain_dn` is not used. choices: [ VMware, Microsoft, Redhat ]
-* `deploy_immediacy` - (Required) The deployment immediacy of the domain. choices: [ immediate, lazy ]
-* `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. choices: [ immediate, lazy, pre-provision ]
-* `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with vmmDomain domain association. choices: [ static, dynamic ]
+* `domain_type` - (Optional) The type of domain to associate. This is required when `domain_dn` is not used. Choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain and `domain_dn` is not used. Choices: [ VMware, Microsoft, Redhat ]
+* `deploy_immediacy` - (Required) The deployment immediacy of the domain. Choices: [ immediate, lazy ]
+* `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. Choices: [ immediate, lazy, pre-provision ]
+* `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with vmmDomain domain association. Choices: [ static, dynamic ]
 * `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with vmmDomain domain association.
 * `switching_mode` - (Optional) Which switching mode to use with this domain association. This attribute can only be used with vmmDomain domain association.
 * `switch_type` - (Optional) Which switch type to use with this domain association. This attribute can only be used with vmmDomain domain association.

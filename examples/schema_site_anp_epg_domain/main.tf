@@ -32,8 +32,6 @@ resource "mso_schema_site_anp_epg_domain" "foo_schema_site_anp_epg_domain" {
   micro_seg_vlan            = 46
   port_encap_vlan_type      = "vlan"
   port_encap_vlan           = 45
-  enhanced_lag_policy_name  = "name"
-  enhanced_lag_policy_dn    = "dn"
 }
 
 resource "mso_schema_site_anp_epg_domain" "foo_schema_site_anp_epg_domain" {
@@ -53,6 +51,6 @@ resource "mso_schema_site_anp_epg_domain" "foo_schema_site_anp_epg_domain" {
   micro_seg_vlan            = 46
   port_encap_vlan_type      = "vlan"
   port_encap_vlan           = 45
-  enhanced_lag_policy_name  = "name"
+  enhanced_lag_policy_name  = "Lacp"
   enhanced_lag_policy_dn    = "uni/vmmp-VMware/dom-TEST/vswitchpolcont/enlacplagp-Lacp"
 }
