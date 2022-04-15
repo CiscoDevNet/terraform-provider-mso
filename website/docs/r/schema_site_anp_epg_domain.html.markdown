@@ -75,7 +75,7 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg Domain.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
-* `dn` - (Optional) **Deprecated**. The domain profile name. Use `domain_dn` or `domain_name` in association with `domain_type` and `vmm_domain_type` when it is applicable.
+* `dn` - (Optional) **Deprecated**. The domain profile name. Use `domain_dn` or `domain_name` in association with `domain_type` and `vmm_domain_type` when it is applicable instead.
 * `domain_dn` - (Optional) The dn of domain. This is required when `domain_name` and `domain_type` are not specified.
 * `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
 * `domain_type` - (Optional) The type of domain to associate. This is required when `domain_dn` is not used. Choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]

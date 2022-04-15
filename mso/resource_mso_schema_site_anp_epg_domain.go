@@ -958,6 +958,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		return errs
 	}
 
+	d.SetId(DN)
 	return resourceMSOSchemaSiteAnpEpgDomainRead(d, m)
 }
 
