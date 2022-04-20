@@ -262,7 +262,7 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 								apiDomain := models.StripQuotes(domainCont.S("dn").String())
 
 								if apiDomain == stateDomain {
-									d.SetId(apiDomain)
+									d.SetId(schemaId + fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/", apiSite, apiTemplate, apiAnp, apiEPG) + apiDomain)
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
 									d.Set("domain_dn", apiDomain)
@@ -601,7 +601,7 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 		return errs
 	}
 
-	d.SetId(DN)
+	d.SetId(schemaId + fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/-", siteId, templateName, anpName, epgName) + DN)
 	return resourceMSOSchemaSiteAnpEpgDomainRead(d, m)
 }
 
@@ -710,7 +710,7 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 								apiDomain := models.StripQuotes(domainCont.S("dn").String())
 
 								if apiDomain == stateDomain {
-									d.SetId(apiDomain)
+									d.SetId(schemaId + fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/", apiSite, apiTemplate, apiAnp, apiEPG) + apiDomain)
 									d.Set("site_id", apiSite)
 									d.Set("domain_dn", apiDomain)
 
@@ -958,7 +958,7 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		return errs
 	}
 
-	d.SetId(DN)
+	d.SetId(schemaId + fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/-", siteId, templateName, anpName, epgName) + DN)
 	return resourceMSOSchemaSiteAnpEpgDomainRead(d, m)
 }
 
