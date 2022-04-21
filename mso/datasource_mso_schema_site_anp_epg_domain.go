@@ -26,7 +26,7 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
@@ -48,17 +48,48 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
-			"dn": &schema.Schema{
+			"domain_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"domain_type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"vmmDomain",
+					"l3ExtDomain",
+					"l2ExtDomain",
+					"physicalDomain",
+					"fibreChannelDomain",
+				}, false),
+			},
+			"vmm_domain_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"VMware",
+					"Microsoft",
+					"Redhat",
+				}, false),
+			},
+			"domain_dn": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"domain_name", "vmm_domain_type", "domain_type"},
+			},
+			"dn": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"domain_name", "domain_dn"},
+				Deprecated:    "use domain_dn alone or domain_name in association with domain_type and vmm_domain_type when it is applicable.",
 			},
 			"deployment_immediacy": &schema.Schema{
 				Type:     schema.TypeString,
@@ -128,7 +159,6 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -139,33 +169,47 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 	if err != nil {
 		return fmt.Errorf("No Sites found")
 	}
-
 	stateSite := d.Get("site_id").(string)
 	found := false
+	stateTemplate := d.Get("template_name").(string)
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
-	domain := d.Get("dn").(string)
+	domainNameDnOld := d.Get("dn").(string)
+	domainNameNew := d.Get("domain_name").(string)
 	domainType := d.Get("domain_type").(string)
+	DN := d.Get("domain_dn").(string)
 
-	var stateDomain string
+	var domainName, stateDomain string
 
-	if domainType == "vmmDomain" {
-		stateDomain = fmt.Sprintf("uni/vmmp-VMware/dom-%s", domain)
+	if domainNameNew == "" && DN == "" && domainNameDnOld == "" {
+		return fmt.Errorf("domain_dn or domain_name in association with domain_type and vmm_domain_type when it is applicable are required.")
+	}
 
-	} else if domainType == "l3ExtDomain" {
-		stateDomain = fmt.Sprintf("uni/l3dom-%s", domain)
+	if domainNameNew != "" && DN == "" && domainNameDnOld == "" {
+		domainName = domainNameNew
+	} else if domainNameNew == "" && DN == "" && domainNameDnOld != "" {
+		domainName = domainNameDnOld
+	} else if domainNameNew == "" && DN != "" && domainNameDnOld == "" {
+		stateDomain = DN
+	}
+	if stateDomain == "" {
+		if domainType == "vmmDomain" {
+			vmmDomainType := d.Get("vmm_domain_type").(string)
+			stateDomain = fmt.Sprintf("uni/vmmp-%s/dom-%s", vmmDomainType, domainName)
 
-	} else if domainType == "l2ExtDomain" {
-		stateDomain = fmt.Sprintf("uni/l2dom-%s", domain)
+		} else if domainType == "l3ExtDomain" {
+			stateDomain = fmt.Sprintf("uni/l3dom-%s", domainName)
 
-	} else if domainType == "physicalDomain" {
-		stateDomain = fmt.Sprintf("uni/phys-%s", domain)
+		} else if domainType == "l2ExtDomain" {
+			stateDomain = fmt.Sprintf("uni/l2dom-%s", domainName)
 
-	} else if domainType == "fibreChannelDomain" {
-		stateDomain = fmt.Sprintf("uni/fc-%s", domain)
+		} else if domainType == "physicalDomain" {
+			stateDomain = fmt.Sprintf("uni/phys-%s", domainName)
 
-	} else {
-		stateDomain = ""
+		} else if domainType == "fibreChannelDomain" {
+			stateDomain = fmt.Sprintf("uni/fc-%s", domainName)
+
+		}
 	}
 
 	for i := 0; i < count; i++ {
@@ -174,8 +218,9 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
@@ -219,11 +264,12 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 								apiDomain := models.StripQuotes(domainCont.S("dn").String())
 
 								if apiDomain == stateDomain {
-									d.SetId(apiDomain)
+									d.SetId(fmt.Sprintf("%s/sites/%s-%s/anps/%s/epgs/%s/domainAssociations/%s", schemaId, apiSite, apiTemplate, apiAnp, apiEPG, apiDomain))
 									d.Set("site_id", apiSite)
 									d.Set("domain_type", models.StripQuotes(domainCont.S("domainType").String()))
-									d.Set("dn", domain)
-									d.Set("deployment_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
+									d.Set("domain_dn", apiDomain)
+
+									d.Set("deploy_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
 
 									if domainCont.Exists("switchingMode") {
@@ -284,5 +330,4 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
-
 }

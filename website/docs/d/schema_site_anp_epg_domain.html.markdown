@@ -12,15 +12,35 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups Dom
 
 ## Example Usage ##
 
+### domain_name used in association with domain_type and vmm_domain_type ###
+
 ```hcl
 data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
   schema_id = "5c4d9fca270000a101f8094a"
   site_id = "5c7c95b25100008f01c1ee3c"
+  template_name = Template1
   anp_name = "ANP"
   epg_name = "Web"
-  dn = "VMware-ab"
+  domain_name = "VMware-ab"
   domain_type = "vmmDomain"
+  vmm_domain_type = "VMware"
+
 }
+```
+
+### domain_dn usage ###
+
+```hcl
+resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
+  schema_id = "5c4d9fca270000a101f8094a"
+  template_name = "Template1"
+  site_id = "5c7c95b25100008f01c1ee3c"
+  anp_name = "ANP"
+  epg_name = "Web"
+  domain_dn = "uni/vmmp-VMware/dom-VMware-ab"
+  
+}
+
 ```
 
 ## Argument Reference ##
@@ -29,8 +49,11 @@ data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
 * `site_id` - (Required) SiteID under which you want to deploy Anp Epg Domain.
 * `anp_name` - (Required) Name of Application Network Profiles.
 * `epg_name` - (Required) Name of Endpoint Group to manage.
-* `dn` - (Required) The domain profile name.
-* `domain_type` - (Required) The type of domain to associate. choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `dn` - (Optional) **Deprecated**. The domain profile name. Use `domain_dn` or `domain_name` in association with `domain_type` and `vmm_domain_type` when it is applicable instead.
+* `domain_dn` - (Optional) The dn of domain. This is required when `domain_name` and `domain_type` are not specified.
+* `domain_name` - (Optional) The domain profile name. This is required when `domain_dn` is not used. This attribute requires `domain_type` and `vmm_domain_type` (when it is applicable) to be set.
+* `domain_type` - (Optional) The type of domain to associate. This is required when `domain_dn` is not used. Choices: [ vmmDomain, l3ExtDomain, l2ExtDomain, physicalDomain, fibreChannelDomain ]
+* `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain and `domain_dn` is not used. Choices: [ VMware, Microsoft, Redhat ]
 
 ## Attribute Reference ##
 
