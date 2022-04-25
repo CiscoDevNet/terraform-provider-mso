@@ -1,9 +1,11 @@
 package mso
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -89,7 +91,7 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 		}
 		templateName := tempVarTemplateName.(string)
 		tenantId := tempVarTenantId.(string)
-		schemaApp, _ = models.NewSchema("", name, templateName, tenantId, make([]interface{}, 0, 1))
+		schemaApp = models.NewSchema("", name, templateName, tenantId, make([]interface{}, 0, 1))
 
 	} else {
 		templates := make([]interface{}, 0, 1)
@@ -104,7 +106,7 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 				templates = append(templates, map_templates)
 			}
 		}
-		schemaApp, _ = models.NewSchema("", name, "", "", templates)
+		schemaApp = models.NewSchema("", name, "", "", templates)
 	}
 
 	cont, err := msoClient.Save("api/v1/schemas", schemaApp)
@@ -158,7 +160,7 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 	name := d.Get("name").(string)
 	_, ok_template_name := d.GetOk("template_name")
-	tempVarTemplates, ok_templates := d.GetOk("template")
+	_, ok_templates := d.GetOk("template")
 
 	if !ok_template_name && !ok_templates {
 		return fmt.Errorf("template_name or a template block with its name, tenant_id and display_name are required.")
@@ -170,28 +172,28 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("Tenant associated with Template cannot be changed.")
 		}
 		schemaNamePayload := fmt.Sprintf(`
-	{ 
-		"op": "replace",
-		"path": "/displayName",
-		"value": "%s"
-	}
-`, name)
+		{ 
+			"op": "replace",
+			"path": "/displayName",
+			"value": "%s"
+		}
+		`, name)
 
 		templateNamePayload := fmt.Sprintf(`
-	{
-		"op": "replace",
-		"path": "/templates/%s/name",
-		"value": "%s"
-	}
-`, oldTemplate, newTemplate)
+		{
+			"op": "replace",
+			"path": "/templates/%s/name",
+			"value": "%s"
+		}
+		`, oldTemplate, newTemplate)
 
 		tempDisplayNamePayload := fmt.Sprintf(`
-	{
-		"op": "replace",
-		"path": "/templates/%s/displayName",
-		"value": "%s"
-	}
-`, newTemplate, newTemplate)
+		{
+			"op": "replace",
+			"path": "/templates/%s/displayName",
+			"value": "%s"
+		}
+		`, newTemplate, newTemplate)
 
 		jsonSchema, err := container.ParseJSON([]byte(schemaNamePayload))
 		jsonTemplate, err := container.ParseJSON([]byte(templateNamePayload))
@@ -221,46 +223,128 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	} else {
+		listAttributesToChange := make([]string, 0)
+		if d.HasChange("name") {
+			listAttributesToChange = append(listAttributesToChange, fmt.Sprintf(`
+			{ 
+				"op": "replace",
+				"path": "/displayName",
+				"value": "%s"
+			}
+		`, name))
+		}
 		if d.HasChange("template") {
+			// This keeps a track of new maps whose values have been changed (new values)
+			listMapsReplaced := make([]interface{}, 0)
+
+			// This keeps a track of old maps whose values will be changed (old values)
+			listMapsToReplace := make([]interface{}, 0)
+
 			old_templates, new_templates := d.GetChange("template")
-			platform := msoClient.GetPlatform()
 
-			//In non-ND based MSOs, tenant cannnot be changed by PATCH API, so we delete it explicitly.
-			if platform != "nd" {
-				//Get all the new maps
-				getDifferenceNew := differenceInMaps(new_templates.(*schema.Set), old_templates.(*schema.Set))
+			//Get all the new maps
+			getDifferenceNew := differenceInMaps(new_templates.(*schema.Set), old_templates.(*schema.Set))
 
-				// Get old maps that have a change
-				getDifferenceOld := differenceInMaps(old_templates.(*schema.Set), new_templates.(*schema.Set))
+			// Get old maps that have a change
+			getDifferenceOld := differenceInMaps(old_templates.(*schema.Set), new_templates.(*schema.Set))
 
-				for _, valueMapOld := range getDifferenceOld {
-					valueOld := valueMapOld.(map[string]interface{})
-					for _, valueMapNew := range getDifferenceNew {
-						valueNew := valueMapNew.(map[string]interface{})
+			for _, valueMapOld := range getDifferenceOld {
+				valueOld := valueMapOld.(map[string]interface{})
+				for _, valueMapNew := range getDifferenceNew {
+					valueNew := valueMapNew.(map[string]interface{})
+					// Tenant Id of template has been changed
+					if valueOld["name"] == valueNew["name"] && valueOld["tenant_id"] != valueNew["tenant_id"] {
+						listMapsReplaced = append(listMapsReplaced, valueNew)
+						listMapsToReplace = append(listMapsToReplace, valueOld)
+						listAttributesToChange = append(listAttributesToChange, fmt.Sprintf(`
+							{
+								"op": "replace",
+								"path": "/templates/%s/tenantId",
+								"value": "%s"
+							}
+					`, valueOld["name"].(string), valueNew["tenant_id"].(string)))
+					}
+					// Display name of template has been changed
+					if valueOld["name"] == valueNew["name"] && valueOld["display_name"] != valueNew["display_name"] {
+						listMapsReplaced = append(listMapsReplaced, valueNew)
+						listMapsToReplace = append(listMapsToReplace, valueOld)
+						listAttributesToChange = append(listAttributesToChange, fmt.Sprintf(`
+							{
+								"op": "replace",
+								"path": "/templates/%s/displayName",
+								"value": "%s"
+							}
+					`, valueOld["name"].(string), valueNew["display_name"].(string)))
+					}
+					// Name of template has been changed
+					if valueOld["name"] != valueNew["name"] && valueOld["display_name"] == valueNew["display_name"] && valueOld["tenant_id"] == valueNew["tenant_id"] {
+						listMapsReplaced = append(listMapsReplaced, valueNew)
+						listMapsToReplace = append(listMapsToReplace, valueOld)
+						listAttributesToChange = append(listAttributesToChange, fmt.Sprintf(`
+							{
+								"op": "replace",
+								"path": "/templates/%s/name",
+								"value": "%s"
+							}
+						`, valueOld["name"].(string), valueNew["name"].(string)))
 
-						//Tenant ID has been changed. Delete Template.
-						if valueOld["name"] == valueNew["name"] && valueOld["display_name"] == valueNew["display_name"] {
-							deleteTemplate(valueOld["name"].(string), valueOld["display_name"].(string), valueOld["tenant_id"].(string), d, m)
-						}
 					}
 				}
 			}
 
-			templates := make([]interface{}, 0, 1)
-			if ok_templates {
-				template_list := tempVarTemplates.(*schema.Set).List()
-				for _, val := range template_list {
-					map_templates := make(map[string]interface{})
-					inner_templates := val.(map[string]interface{})
-					map_templates["name"] = inner_templates["name"]
-					map_templates["displayName"] = inner_templates["display_name"]
-					map_templates["tenantId"] = inner_templates["tenant_id"]
-					templates = append(templates, map_templates)
-				}
+			// New templates have been added to the block.
+			listMapsToAdd := differenceInLists(getDifferenceNew, listMapsReplaced)
+			for _, MapToAdd := range listMapsToAdd {
+				map_add, _ := json.Marshal(MapToAdd)
+				map_values := strings.Replace(strings.Replace(string(map_add), "display_name", "displayName", 1), "tenant_id", "tenantId", 1)
+				listAttributesToChange = append(listAttributesToChange, fmt.Sprintf(`
+							{
+								"op": "add",
+								"path": "/templates/-",
+								"value": %s
+							}
+						`, map_values))
 			}
-			dn := d.Id()
-			_, schemaApp := models.NewSchema(dn, name, "", "", templates)
-			_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", dn), schemaApp)
+
+			// templates have been removed from the block
+			listMapsToRemove := differenceInLists(getDifferenceOld, listMapsToReplace)
+			for _, MapToRemove := range listMapsToRemove {
+				valueRemove := MapToRemove.(map[string]interface{})
+				map_remove, _ := json.Marshal(valueRemove)
+				map_values := strings.Replace(strings.Replace(string(map_remove), "display_name", "displayName", 1), "tenant_id", "tenantId", 1)
+				listAttributesToChange = append(listAttributesToChange, fmt.Sprintf(`
+							{
+								"op": "remove",
+								"path": "/templates/%s",
+								"value": %s
+							}
+						`, valueRemove["name"], map_values))
+			}
+
+		}
+
+		// Construction of complete payload for PATCH
+		if len(listAttributesToChange) != 0 {
+			payloadCon := container.New()
+			payloadCon.Array()
+			jsonAttributes, err := container.ParseJSON([]byte(fmt.Sprintf(`[` + strings.Join(listAttributesToChange, ",") + `]`)))
+			if err != nil {
+				return err
+			}
+			payloadCon.ArrayAppend(jsonAttributes.Data())
+
+			path := fmt.Sprintf("api/v1/schemas/%s", d.Id())
+
+			req, err := msoClient.MakeRestRequest("PATCH", path, payloadCon.Index(0), true)
+			if err != nil {
+				return err
+			}
+			cont, _, err := msoClient.Do(req)
+			if err != nil {
+				return err
+			}
+
+			err = client.CheckForErrors(cont, "PATCH")
 			if err != nil {
 				return err
 			}
@@ -333,24 +417,36 @@ func resourceMSOSchemaDelete(d *schema.ResourceData, m interface{}) error {
 	return err
 }
 
-//Helper function 1
-func deleteTemplate(name, tenantId, displayName string, d *schema.ResourceData, m interface{}) error {
-	msoClient := m.(*client.Client)
-	schematemplateDelete := models.NewSchemaTemplate("remove", fmt.Sprintf("/templates/%s", name), tenantId, name, displayName)
-	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", d.Id()), schematemplateDelete)
-	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
-		return err
-	}
-	return nil
-}
-
-//Helper function 2
+//Helper function 1 for sets
 func differenceInMaps(mapSlice1, mapSlice2 *schema.Set) []interface{} {
 	var difference []interface{}
 	for i := 0; i < 1; i++ {
 		for _, s1 := range mapSlice1.List() {
 			found := false
 			for _, s2 := range mapSlice2.List() {
+				if reflect.DeepEqual(s1, s2) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				difference = append(difference, s1)
+			}
+		}
+		if i == 0 {
+			mapSlice1, mapSlice2 = mapSlice2, mapSlice1
+		}
+	}
+	return difference
+}
+
+//Helper function 2 for lists
+func differenceInLists(mapSlice1, mapSlice2 []interface{}) []interface{} {
+	var difference []interface{}
+	for i := 0; i < 1; i++ {
+		for _, s1 := range mapSlice1 {
+			found := false
+			for _, s2 := range mapSlice2 {
 				if reflect.DeepEqual(s1, s2) {
 					found = true
 					break
