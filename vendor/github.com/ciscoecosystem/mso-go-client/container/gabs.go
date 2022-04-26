@@ -580,7 +580,6 @@ func ParseJSONBuffer(buffer io.Reader) (*Container, error) {
 //--------------------------------------------------------------------------------------------------
 
 func (g *Container) SearchInObjectList(condition func(*Container) bool) (*Container, error) {
-	
 	children, err := g.Children()
 	if err != nil {
 		return nil, err
@@ -591,4 +590,17 @@ func (g *Container) SearchInObjectList(condition func(*Container) bool) (*Contai
 		}
 	}
 	return nil, fmt.Errorf("Object Not found")
+}
+
+func (g *Container) SearchInObjectListWithIndex(condition func(*Container) bool) (*Container, int, error) {
+	children, err := g.Children()
+	if err != nil {
+		return nil, -1, err
+	}
+	for index, obj := range children {
+		if condition(obj) {
+			return obj, index, nil
+		}
+	}
+	return nil, -1, fmt.Errorf("Object Not found")
 }

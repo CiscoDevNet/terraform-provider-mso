@@ -3,8 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"strings"
+	"regexp"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
 )
@@ -25,24 +24,24 @@ type InterSchemaSiteVrfRegionHubNetork struct {
 	SchemaID     string
 }
 
-func CreateInterSchemaSiteVrfRegionNetworkModel(hubNetwork *InterSchemaSiteVrfRegionHubNetork, cont *container.Container) *SchemaSiteVrfRegionHubNetork {
+func CreateInterSchemaSiteVrfRegionNetworkModel(hubNetwork *InterSchemaSiteVrfRegionHubNetork, cont *container.Container) (*SchemaSiteVrfRegionHubNetork, error) {
 	vrfHubNetwork := SchemaSiteVrfRegionHubNetork{
 		Ops:  "replace",
 		Path: fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s", hubNetwork.SiteID, hubNetwork.TemplateName, hubNetwork.VrfName, hubNetwork.Region),
 	}
 	vrfRegionMap, err := InterSchemaSiteVrfRegionFromContainer(cont, hubNetwork)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("No VRF Region found")
 	}
 	vrfRegionMap["cloudRsCtxProfileToGatewayRouterP"] = map[string]string{
 		"name":       hubNetwork.Name,
 		"tenantName": hubNetwork.TenantName,
 	}
 	vrfHubNetwork.Value = vrfRegionMap
-	return &vrfHubNetwork
+	return &vrfHubNetwork, nil
 }
 
-func DeleteInterSchemaSiteVrfRegionNetworkModel(hubNetwork *InterSchemaSiteVrfRegionHubNetork, cont *container.Container) *SchemaSiteVrfRegionHubNetork {
+func DeleteInterSchemaSiteVrfRegionNetworkModel(hubNetwork *InterSchemaSiteVrfRegionHubNetork, cont *container.Container) (*SchemaSiteVrfRegionHubNetork, error) {
 	vrfHubNetwork := SchemaSiteVrfRegionHubNetork{
 		Ops:  "replace",
 		Path: fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s", hubNetwork.SiteID, hubNetwork.TemplateName, hubNetwork.VrfName, hubNetwork.Region),
@@ -51,130 +50,94 @@ func DeleteInterSchemaSiteVrfRegionNetworkModel(hubNetwork *InterSchemaSiteVrfRe
 	vrfHubNetworkMap["name"] = hubNetwork.Region
 	vrfRegionMap, err := InterSchemaSiteVrfRegionFromContainer(cont, hubNetwork)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("No VRF Region found")
 	}
 	vrfRegionMap["cloudRsCtxProfileToGatewayRouterP"] = nil
 	vrfHubNetwork.Value = vrfRegionMap
-	return &vrfHubNetwork
+	return &vrfHubNetwork, nil
 }
 
 func InterSchemaSiteVrfRegionFromContainer(cont *container.Container, regionHubNetwork *InterSchemaSiteVrfRegionHubNetork) (map[string]interface{}, error) {
 	regionMap := make(map[string]interface{})
-	var found bool = false
-	count, err := cont.ArrayCount("sites")
+	siteCont, err := cont.S("sites").SearchInObjectList(
+		func(cont *container.Container) bool {
+			return G(cont, "siteId") == regionHubNetwork.SiteID && G(cont, "templateName") == regionHubNetwork.TemplateName
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("no sites found")
+		return nil, err
 	}
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		log.Printf("tempCont: %v\n", tempCont)
-		if err != nil {
-			return nil, err
-		}
-		siteId := StripQuotes(tempCont.S("siteId").String())
-		templateName := StripQuotes((tempCont.S("templateName")).String())
-		if (siteId == regionHubNetwork.SiteID) && (templateName == regionHubNetwork.TemplateName) {
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return nil, fmt.Errorf("unable to get VRFs List")
-			}
-			vrfCont := tempCont.S("vrfs")
-			for j := 0; j < vrfCount; j++ {
-				vrfTempCont := vrfCont.Index(j)
-				log.Printf("vrfTempCont: %v\n", vrfTempCont)
-				vrfRef := strings.Split(StripQuotes(vrfTempCont.S("vrfRef").String()), "/")
-				vrfName := vrfRef[len(vrfRef)-1]
-				if vrfName == regionHubNetwork.VrfName {
-					regionCount, err := vrfTempCont.ArrayCount("regions")
-					if err != nil {
-						return nil, fmt.Errorf("unable to Regions List")
-					}
-					regionCont := vrfTempCont.S("regions")
-					for k := 0; k < regionCount; k++ {
-						regionTempCont := regionCont.Index(k)
-						log.Printf("regionTempCont: %v\n", regionTempCont)
-						regionName := G(regionTempCont, "name")
-						if regionName == regionHubNetwork.Region {
-							err := json.Unmarshal(regionTempCont.EncodeJSON(), &regionMap)
-							if err != nil {
-								return nil, err
-							}
-							found = true
-							return regionMap, nil
-						}
-					}
-				}
-			}
-		}
+	vrfCont, err := siteCont.S("vrfs").SearchInObjectList(
+		func(cont *container.Container) bool {
+			vrfRef := G(cont, "vrfRef")
+			re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
+			match := re.FindStringSubmatch(vrfRef)
+			vrfName := match[3]
+			return vrfName == regionHubNetwork.VrfName
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
-	if !found {
-		return nil, fmt.Errorf("unable to find siteVrfRegionHubNetwork %s", regionHubNetwork.Name)
+	regionCont, err := vrfCont.S("regions").SearchInObjectList(
+		func(cont *container.Container) bool {
+			return G(cont, "name") == regionHubNetwork.Region
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(regionCont.EncodeJSON(), &regionMap)
+	if err != nil {
+		return nil, err
 	}
 	return regionMap, nil
 }
 
 func InterSchemaSiteVrfRegionHubNetworkFromContainer(cont *container.Container, regionHubNetwork *InterSchemaSiteVrfRegionHubNetork) (*InterSchemaSiteVrfRegionHubNetork, error) {
 	hubNetwork := InterSchemaSiteVrfRegionHubNetork{}
-	var found bool = false
-	count, err := cont.ArrayCount("sites")
+	hubNetwork.SiteID = regionHubNetwork.SiteID
+	hubNetwork.TemplateName = regionHubNetwork.TemplateName
+	hubNetwork.SchemaID = regionHubNetwork.SchemaID
+	siteCont, err := cont.S("sites").SearchInObjectList(
+		func(cont *container.Container) bool {
+			return G(cont, "siteId") == regionHubNetwork.SiteID && G(cont, "templateName") == regionHubNetwork.TemplateName
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("no sites found")
+		return nil, err
 	}
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		log.Printf("tempCont: %v\n", tempCont)
-		if err != nil {
-			return nil, err
-		}
-		siteId := StripQuotes(tempCont.S("siteId").String())
-		templateName := StripQuotes((tempCont.S("templateName")).String())
-		if (siteId == regionHubNetwork.SiteID) && (templateName == regionHubNetwork.TemplateName) {
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return nil, fmt.Errorf("unable to get VRFs List")
-			}
-			vrfCont := tempCont.S("vrfs")
-			for j := 0; j < vrfCount; j++ {
-				vrfTempCont := vrfCont.Index(j)
-				log.Printf("vrfTempCont: %v\n", vrfTempCont)
-				vrfRef := strings.Split(StripQuotes(vrfTempCont.S("vrfRef").String()), "/")
-				vrfName := vrfRef[len(vrfRef)-1]
-				if vrfName == regionHubNetwork.VrfName {
-					regionCount, err := vrfTempCont.ArrayCount("regions")
-					if err != nil {
-						return nil, fmt.Errorf("unable to Regions List")
-					}
-					regionCont := vrfTempCont.S("regions")
-					for k := 0; k < regionCount; k++ {
-						regionTempCont := regionCont.Index(k)
-						log.Printf("regionTempCont: %v\n", regionTempCont)
-						regionName := G(regionTempCont, "name")
-						if regionName == regionHubNetwork.Region {
-							routePCont := regionTempCont.S("cloudRsCtxProfileToGatewayRouterP")
-							log.Printf("routePCont: %v\n", routePCont)
-							hubName := StripQuotes(routePCont.S("name").String())
-							tenantName := StripQuotes(routePCont.S("tenantName").String())
-							if hubName == regionHubNetwork.Name && tenantName == regionHubNetwork.TenantName {
-								hubNetwork.Name = hubName
-								hubNetwork.TenantName = tenantName
-								hubNetwork.Region = regionName
-								hubNetwork.VrfName = vrfName
-								hubNetwork.TemplateName = templateName
-								hubNetwork.SiteID = siteId
-								hubNetwork.SchemaID = vrfRef[2]
-								found = true
-								break
-							}
-						}
-					}
-				}
-			}
+	hubNetwork.VrfName = regionHubNetwork.VrfName
+	vrfCont, err := siteCont.S("vrfs").SearchInObjectList(
+		func(cont *container.Container) bool {
+			vrfRef := G(cont, "vrfRef")
+			re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
+			match := re.FindStringSubmatch(vrfRef)
+			vrfName := match[3]
+			return vrfName == regionHubNetwork.VrfName
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	hubNetwork.Region = regionHubNetwork.Region
+	regionCont, err := vrfCont.S("regions").SearchInObjectList(
+		func(cont *container.Container) bool {
+			return G(cont, "name") == regionHubNetwork.Region
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	hubNetwork.Name = regionHubNetwork.Name
+	hubNetwork.TenantName = regionHubNetwork.TenantName
+	if regionCont.Exists("cloudRsCtxProfileToGatewayRouterP") {
+		hubNetworkCont := regionCont.S("cloudRsCtxProfileToGatewayRouterP")
+		if G(hubNetworkCont, "name") == hubNetwork.Name && G(hubNetworkCont, "tenantName") == hubNetwork.TenantName {
+			return &hubNetwork, nil
 		}
 	}
-	if !found {
-		return nil, fmt.Errorf("unable to find siteVrfRegionHubNetwork %s", regionHubNetwork.Name)
-	}
-	return &hubNetwork, nil
+	return nil, fmt.Errorf("No Schema Site VRF Region Hub Network Found")
 }
 
 func (hubNetwork *SchemaSiteVrfRegionHubNetork) ToMap() (map[string]interface{}, error) {
