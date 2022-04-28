@@ -148,6 +148,8 @@ func resourceMSOSchemaImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	}
 	d.Set("template", templates)
+	/* When importing a schema with a single template, there is no way of knowing which template format(single or block) the user is expecting to be populated. Since template_name and tenant_id are deprecated, and are going to be removed in a future release,
+	   template_name and tenant_id are set to "" in the import function. */
 	d.Set("template_name", "")
 	d.Set("tenant_id", "")
 
