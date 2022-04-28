@@ -9,13 +9,7 @@ type Schema struct {
 	Sites []map[string]interface{} `json:",omitempty"`
 }
 
-type SchemaReplace struct {
-	Ops   string                   `json:",omitempty"`
-	Path  string                   `json:",omitempty"`
-	Value []map[string]interface{} `json:",omitempty"`
-}
-
-func NewSchema(id, displayName, templateName, tenantId string, template []interface{}) (*Schema, *SchemaReplace) {
+func NewSchema(id, displayName, templateName, tenantId string, template []interface{}) *Schema {
 	result := []map[string]interface{}{}
 	if templateName != "" {
 		templateMap := map[string]interface{}{
@@ -37,33 +31,19 @@ func NewSchema(id, displayName, templateName, tenantId string, template []interf
 		for _, map_values := range template {
 			map_template_values := map_values.(map[string]interface{})
 			templateMap := map[string]interface{}{
-				"name":          map_template_values["name"],
-				"tenantId":      map_template_values["tenantId"],
-				"displayName":   map_template_values["displayName"],
-				"anps":          []interface{}{},
-				"contracts":     []interface{}{},
-				"vrfs":          []interface{}{},
-				"bds":           []interface{}{},
-				"filters":       []interface{}{},
-				"externalEpgs":  []interface{}{},
-				"serviceGraphs": []interface{}{},
+				"name":        map_template_values["name"],
+				"tenantId":    map_template_values["tenantId"],
+				"displayName": map_template_values["displayName"],
 			}
 			result = append(result, templateMap)
 		}
 	}
-	if id == "" {
-		return &Schema{
-			Id:          id,
-			DisplayName: displayName,
-			Templates:   result,
-			Sites:       []map[string]interface{}{},
-		}, nil
-	} else {
-		return nil, &SchemaReplace{
-			Ops:   "replace",
-			Path:  "/templates",
-			Value: result,
-		}
+
+	return &Schema{
+		Id:          id,
+		DisplayName: displayName,
+		Templates:   result,
+		Sites:       []map[string]interface{}{},
 	}
 }
 
@@ -75,15 +55,4 @@ func (schema *Schema) ToMap() (map[string]interface{}, error) {
 	A(schemaAttributeMap, "sites", schema.Sites)
 
 	return schemaAttributeMap, nil
-}
-
-func (schemaReplace *SchemaReplace) ToMap() (map[string]interface{}, error) {
-	schemaReplaceMap := make(map[string]interface{})
-	A(schemaReplaceMap, "op", schemaReplace.Ops)
-	A(schemaReplaceMap, "path", schemaReplace.Path)
-	if schemaReplace.Value != nil {
-		A(schemaReplaceMap, "value", schemaReplace.Value)
-	}
-
-	return schemaReplaceMap, nil
 }

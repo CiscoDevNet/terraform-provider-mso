@@ -24,5 +24,5 @@ data "mso_schema" "sample_schema" {
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) name of template Attached to this schema.
-* `tenant_id` - (Optional) tenant_id for this schema.
+* `template_name` - (Optional) name of template Attached to the schema.
+* `tenant_id` - (Optional) tenant_id for the schema.

@@ -193,7 +193,7 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 			"path": "/templates/%s/displayName",
 			"value": "%s"
 		}
-		`, newTemplate, newTemplate)
+		`, oldTemplate, newTemplate)
 
 		jsonSchema, err := container.ParseJSON([]byte(schemaNamePayload))
 		jsonTemplate, err := container.ParseJSON([]byte(templateNamePayload))
