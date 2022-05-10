@@ -24,5 +24,10 @@ data "mso_schema" "sample_schema" {
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) name of template Attached to this schema.
-* `tenant_id` - (Optional) tenant_id for this schema.
+* `template_name` - (Optional) **Deprecated**. Name of template attached to the schema.
+* `tenant_id` - (Optional) **Deprecated**. tenant_id for the schema.
+* `template` - (Optional) A block that represents the template associated with the schema. Type - Block.
+  * `name` - Name of template.
+  * `display_name` - Display name for the template.
+  * `tenant_id` - tenant_id for the template.
+

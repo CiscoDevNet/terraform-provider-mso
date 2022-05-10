@@ -28,12 +28,37 @@ func datasourceMSOSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Deprecated:   "see template",
 			},
 
 			"tenant_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Deprecated:   "see template",
+			},
+			"template": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"display_name": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"tenant_id": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+					},
+				},
 			},
 		}),
 	}
@@ -72,26 +97,25 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("No Template found")
 	}
 
-	found := false
+	templates := make([]interface{}, 0)
 	for i := 0; i < countTemplate; i++ {
 		tempCont, err := dataCon.ArrayElement(i, "templates")
 
 		if err != nil {
 			return fmt.Errorf("Unable to parse the template list")
 		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-		apiTenant := models.StripQuotes(tempCont.S("tenantId").String())
+		if i == 0 {
+			d.Set("template_name", models.StripQuotes(tempCont.S("name").String()))
+			d.Set("tenant_id", models.StripQuotes(tempCont.S("tenantId").String()))
+		}
+		map_template := make(map[string]interface{})
+		map_template["name"] = models.StripQuotes(tempCont.S("name").String())
+		map_template["display_name"] = models.StripQuotes(tempCont.S("displayName").String())
+		map_template["tenant_id"] = models.StripQuotes(tempCont.S("tenantId").String())
+		templates = append(templates, map_template)
 
-		d.Set("template_name", apiTemplate)
-		d.Set("tenant_id", apiTenant)
-		found = true
-		break
 	}
-
-	if !found {
-		d.Set("template_name", "")
-		d.Set("tenant_id", "")
-	}
+	d.Set("template", templates)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

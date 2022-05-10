@@ -28,15 +28,15 @@ const ndAuthPayload = `{
 
 // Client is the main entry point
 type Client struct {
-	BaseURL    *url.URL
-	httpClient *http.Client
-	AuthToken  *Auth
-	username   string
-	password   string
-	insecure   bool
-	proxyUrl   string
-	domain     string
-	platform   string
+	BaseURL            *url.URL
+	httpClient         *http.Client
+	AuthToken          *Auth
+	username           string
+	password           string
+	insecure           bool
+	proxyUrl           string
+	domain             string
+	platform           string
 	skipLoggingPayload bool
 }
 
@@ -158,7 +158,11 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 	if err != nil {
 		return nil, err
 	}
-
+	if method == "PATCH" {
+		validateString := url.Query()
+		validateString.Set("validate", "false")
+		url.RawQuery = validateString.Encode()
+	}
 	fURL := c.BaseURL.ResolveReference(url)
 	var req *http.Request
 	if method == "GET" || method == "DELETE" {
@@ -222,7 +226,7 @@ func (c *Client) Authenticate() error {
 	if err != nil {
 		return err
 	}
-	
+
 	obj, _, err := c.Do(req)
 	c.skipLoggingPayload = false
 	if err != nil {

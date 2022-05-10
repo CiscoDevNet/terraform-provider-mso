@@ -9,26 +9,40 @@ type Schema struct {
 	Sites []map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchema(id, displayName, templateName, tenantId string) *Schema {
-	templateMap := map[string]interface{}{
-		"name":          templateName,
-		"tenantId":      tenantId,
-		"displayName":   templateName,
-		"anps":          []interface{}{},
-		"contracts":     []interface{}{},
-		"vrfs":          []interface{}{},
-		"bds":           []interface{}{},
-		"filters":       []interface{}{},
-		"externalEpgs":  []interface{}{},
-		"serviceGraphs": []interface{}{},
+func NewSchema(id, displayName, templateName, tenantId string, template []interface{}) *Schema {
+	result := []map[string]interface{}{}
+	if templateName != "" {
+		templateMap := map[string]interface{}{
+			"name":          templateName,
+			"tenantId":      tenantId,
+			"displayName":   templateName,
+			"anps":          []interface{}{},
+			"contracts":     []interface{}{},
+			"vrfs":          []interface{}{},
+			"bds":           []interface{}{},
+			"filters":       []interface{}{},
+			"externalEpgs":  []interface{}{},
+			"serviceGraphs": []interface{}{},
+		}
+		result = []map[string]interface{}{
+			templateMap,
+		}
+	} else {
+		for _, map_values := range template {
+			map_template_values := map_values.(map[string]interface{})
+			templateMap := map[string]interface{}{
+				"name":        map_template_values["name"],
+				"tenantId":    map_template_values["tenantId"],
+				"displayName": map_template_values["displayName"],
+			}
+			result = append(result, templateMap)
+		}
 	}
-	templates := []map[string]interface{}{
-		templateMap,
-	}
+
 	return &Schema{
 		Id:          id,
 		DisplayName: displayName,
-		Templates:   templates,
+		Templates:   result,
 		Sites:       []map[string]interface{}{},
 	}
 }
