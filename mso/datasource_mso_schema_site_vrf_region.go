@@ -107,6 +107,12 @@ func dataSourceMSOSchemaSiteVrfRegion() *schema.Resource {
 										Computed:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
+									"name": &schema.Schema{
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringLenBetween(1, 1000),
+									},
 									"zone": &schema.Schema{
 										Type:         schema.TypeString,
 										Optional:     true,
@@ -223,6 +229,9 @@ func dataSourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{})
 
 									subnetMap := make(map[string]interface{})
 									subnetMap["ip"] = subnet["ip"]
+									if subnet["name"] != nil {
+										subnetMap["name"] = subnet["name"]
+									}
 									if subnet["zone"] != nil {
 										subnetMap["zone"] = subnet["zone"]
 									}

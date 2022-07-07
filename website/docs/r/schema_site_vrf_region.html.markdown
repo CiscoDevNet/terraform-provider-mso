@@ -31,6 +31,7 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
     primary = true
     subnet {
       ip    = "1.20.30.4"
+      name  = "subnet1"
       zone  = "us-east-1b"
       usage = "sdfkhsdkf"
     }
@@ -52,7 +53,8 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
 * `cidr.primary` - (Required) Primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
 
 * `cidr.subnet` - (Required) Subnets to associate with cidr.
-* `cidr.subnet.ip` - (Required) Ip address for subnet.
+* `cidr.subnet.ip` - (Required) IP address for the subnet.
+* `cidr.subnet.name` - (Required) Name for the subnet.
 * `cidr.subnet.zone` - (Optional) The name of the availability zone for the subnet. This argument is required for AWS sites.
 * `cidr.subnet.usage` - (Optional) Usage information of particular subnet.
 

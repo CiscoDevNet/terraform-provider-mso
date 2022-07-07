@@ -39,7 +39,8 @@ data "mso_schema_site_vrf_region" "vrfRegion" {
 * `cidr.primary` - (Optional) primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
 
 * `cidr.subnet` - (Optional) subnets to associate with cidr.
-* `cidr.subnet.ip` - (Optional) ip address for subnet.
+* `cidr.subnet.ip` - (Optional) IP address for the subnet.
+* `cidr.subnet.name` - (Optional) Name for the subnet.
 * `cidr.subnet.zone` - (Optional) zone for the subnet.
 * `cidr.subnet.usage` - (Optional) usage information of particular subnet.
 
