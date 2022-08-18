@@ -13,7 +13,7 @@ Clone mso-go-client to `$GOPATH/src/github.com/ciscoecosystem/mso-go-client`.
 
 ```sh
 $ mkdir -p $GOPATH/src/github.com/ciscoecosystem; cd $GOPATH/src/github.com/ciscoecosystem
-$ git clone https://github.com/ciscoecosystem/terraform-provider-mso.git
+$ git clone https://github.com/CiscoDevNet/terraform-provider-mso.git
 $ git clone https://github.com/ciscoecosystem/mso-go-client.git
 ```
 
