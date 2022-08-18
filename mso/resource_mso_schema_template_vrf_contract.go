@@ -24,9 +24,9 @@ func resourceMSOTemplateVRFContract() *schema.Resource {
 		Read:   resourceMSOTemplateVRFContractRead,
 		Delete: resourceMSOTemplateVRFContractDelete,
 
-		// Importer: &schema.ResourceImporter{
-		// 	State: resourceMSOTemplateVrfContractImport,
-		// },
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOTemplateVrfContractImport,
+		},
 
 		SchemaVersion: version,
 
