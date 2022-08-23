@@ -111,11 +111,13 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 									"name": &schema.Schema{
 										Type:         schema.TypeString,
 										Optional:     true,
+										Computed:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
 									"zone": &schema.Schema{
 										Type:         schema.TypeString,
 										Optional:     true,
+										Computed:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
 									"usage": &schema.Schema{
