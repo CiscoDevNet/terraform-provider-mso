@@ -1,3 +1,22 @@
+## 0.7.0 (August 26, 2022)
+IMPROVEMENTS:
+- Ability to add Microsoft and Redhat domains in mso_schema_site_anp_epg_domain (deprecate dn attribute) (#130)
+- Ability to add multiple templates using the resource mso_schema (#135)
+- Add import support for mso_schema_template_vrf_contract
+- Apple M1 support
+- Add name attribute to the subnet in resource_mso_schema_site_vrf_region (#140)
+
+BUG FIXES:
+- Fix import in mso_schema_template_anp_epg which caused configured values to be null (#129)
+- Fix subnet name idempotency issue in mso_schema_template_external_epg_subnet
+- Update example and update documentation for mso_schema_template_external_epg_subnet
+- Fix mso_schema_template_anp_epg if only bd or vrf is provided
+- Fix terraform import of schema_template_external_epg_contract
+- Fix mso_schema_template_bd import issues (#136)
+- Fix mso_schema_template_external_epg_subnet recreation issue when IP was changed
+- Fix bug issue for mso_site import when platform is nd to keep consistency as mso platform (#137)
+- Fix mso_schema_template_external_epg_contract relation type and update example
+
 ## 0.6.0 (March 15, 2022)
 IMPROVEMENTS:
 - Add Service EPG support for cloud sites (#113)
