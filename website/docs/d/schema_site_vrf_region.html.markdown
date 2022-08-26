@@ -35,11 +35,12 @@ data "mso_schema_site_vrf_region" "vrfRegion" {
 * `template_name` - (Optional) Template where Vrf Region to be created.
 
 * `cidr` - (Optional) CIDR to set into region
-* `cidr.cidr_ip` - (Optional) Ip address for cidr.
-* `cidr.primary` - (Optional) primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
+* `cidr.cidr_ip` - (Optional) IP address for CIDR.
+* `cidr.primary` - (Optional) primary flag to set CIDR as primary. Only one CIDR can be set as primary.
 
-* `cidr.subnet` - (Optional) subnets to associate with cidr.
-* `cidr.subnet.ip` - (Optional) ip address for subnet.
+* `cidr.subnet` - (Optional) subnets to associate with CIDR.
+* `cidr.subnet.ip` - (Optional) IP address for the subnet.
+* `cidr.subnet.name` - (Optional) Name for the subnet.
 * `cidr.subnet.zone` - (Optional) zone for the subnet.
 * `cidr.subnet.usage` - (Optional) usage information of particular subnet.
 

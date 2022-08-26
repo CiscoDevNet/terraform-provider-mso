@@ -108,9 +108,16 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 										Required:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
+									"name": &schema.Schema{
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringLenBetween(1, 1000),
+									},
 									"zone": &schema.Schema{
 										Type:         schema.TypeString,
 										Optional:     true,
+										Computed:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
 									"usage": &schema.Schema{
@@ -223,6 +230,9 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 
 									subnetMap := make(map[string]interface{})
 									subnetMap["ip"] = subnet["ip"]
+									if subnet["name"] != nil {
+										subnetMap["name"] = subnet["name"]
+									}
 									if subnet["zone"] != nil {
 										subnetMap["zone"] = subnet["zone"]
 									}
@@ -309,6 +319,9 @@ func resourceMSOSchemaSiteVrfRegionCreate(d *schema.ResourceData, m interface{})
 
 			subnetMap := make(map[string]interface{})
 			subnetMap["ip"] = subnet["ip"]
+			if subnet["name"] != nil {
+				subnetMap["name"] = subnet["name"]
+			}
 			if subnet["zone"] != nil {
 				subnetMap["zone"] = subnet["zone"]
 			}
@@ -389,6 +402,9 @@ func resourceMSOSchemaSiteVrfRegionUpdate(d *schema.ResourceData, m interface{})
 
 			subnetMap := make(map[string]interface{})
 			subnetMap["ip"] = subnet["ip"]
+			if subnet["name"] != nil {
+				subnetMap["name"] = subnet["name"]
+			}
 			if subnet["zone"] != nil {
 				subnetMap["zone"] = subnet["zone"]
 			}
@@ -508,6 +524,9 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 
 									subnetMap := make(map[string]interface{})
 									subnetMap["ip"] = subnet["ip"]
+									if subnet["name"] != nil {
+										subnetMap["name"] = subnet["name"]
+									}
 									if subnet["zone"] != nil {
 										subnetMap["zone"] = subnet["zone"]
 									}
