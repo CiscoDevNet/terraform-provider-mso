@@ -49,10 +49,10 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
 * `template_name` - (Required) Template where Vrf Region to be created.
 
 * `cidr` - (Required) CIDR to set into region
-* `cidr.cidr_ip` - (Required) Ip address for cidr.
-* `cidr.primary` - (Required) Primary flag to set above ip as primary for cidr. Only one ip must be set as primary.
+* `cidr.cidr_ip` - (Required) IP address for CIDR.
+* `cidr.primary` - (Required) Primary flag to set CIDR as primary. Only one CIDR can be set as primary.
 
-* `cidr.subnet` - (Required) Subnets to associate with cidr.
+* `cidr.subnet` - (Required) Subnets to associate with CIDR.
 * `cidr.subnet.ip` - (Required) IP address for the subnet.
 * `cidr.subnet.name` - (Required) Name for the subnet.
 * `cidr.subnet.zone` - (Optional) The name of the availability zone for the subnet. This argument is required for AWS sites.
