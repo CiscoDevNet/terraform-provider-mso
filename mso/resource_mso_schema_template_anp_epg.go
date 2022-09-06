@@ -388,6 +388,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
+	cloudServiceEpgConfig := make(map[string]interface{})
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
@@ -438,7 +439,11 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 		service_type = serviceType.(string)
 	}
 
-	cloudServiceEpgConfig := getcloudServiceEpgConfig(d, access_type, deployment_type, service_type)
+	if epgType == "service" {
+		cloudServiceEpgConfig = getcloudServiceEpgConfig(d, access_type, deployment_type, service_type)
+	} else {
+		cloudServiceEpgConfig = nil
+	}
 
 	vrfRefMap := make(map[string]interface{})
 	if vrfName, ok := d.GetOk("vrf_name"); ok {
@@ -577,6 +582,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
+	cloudServiceEpgConfig := make(map[string]interface{})
 
 	if intra_epg, ok := d.GetOk("intra_epg"); ok {
 		intraEpg = intra_epg.(string)
@@ -626,7 +632,11 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 		service_type = serviceType.(string)
 	}
 
-	cloudServiceEpgConfig := getcloudServiceEpgConfig(d, access_type, deployment_type, service_type)
+	if epgType == "service" {
+		cloudServiceEpgConfig = getcloudServiceEpgConfig(d, access_type, deployment_type, service_type)
+	} else {
+		cloudServiceEpgConfig = nil
+	}
 
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
