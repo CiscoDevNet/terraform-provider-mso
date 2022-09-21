@@ -175,7 +175,7 @@ func resourceMSOSchemaTemplateFilterEntryImport(d *schema.ResourceData, m interf
 							d.SetId(apiFilterEntry)
 							d.Set("entry_name", apiFilterEntry)
 							d.Set("entry_display_name", models.StripQuotes(entriesCont.S("displayName").String()))
-							if entriesCont.Exists("descirption") {
+							if entriesCont.Exists("description") {
 								d.Set("entry_description", models.StripQuotes(entriesCont.S("description").String()))
 							}
 							if entriesCont.Exists("etherType") {
@@ -289,6 +289,8 @@ func resourceMSOSchemaTemplateFilterEntryCreate(d *schema.ResourceData, m interf
 	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
 		tcpSessionRules = tempVar.([]interface{})
 		entryMap["tcpSessionRules"] = tcpSessionRules
+	} else {
+		entryMap["tcpSessionRules"] = append(make([]interface{}, 0), "unspecified")
 	}
 	entries = append(entries, entryMap)
 	foundEntry := false
@@ -424,7 +426,7 @@ func resourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interfac
 							d.SetId(apiFilterEntry)
 							d.Set("entry_name", apiFilterEntry)
 							d.Set("entry_display_name", models.StripQuotes(entriesCont.S("displayName").String()))
-							if entriesCont.Exists("descirption") {
+							if entriesCont.Exists("description") {
 								d.Set("entry_description", models.StripQuotes(entriesCont.S("description").String()))
 							}
 							if entriesCont.Exists("etherType") {
@@ -456,8 +458,6 @@ func resourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interfac
 							}
 							if entriesCont.Exists("tcpSessionRules") {
 								d.Set("tcp_session_rules", entriesCont.S("tcpSessionRules").Data().([]interface{}))
-							} else {
-								d.Set("tcp_session_rules", make([]interface{}, 0))
 							}
 							found = true
 							break
@@ -492,47 +492,38 @@ func resourceMSOSchemaTemplateFilterEntryUpdate(d *schema.ResourceData, m interf
 
 	if tempVar, ok := d.GetOk("entry_description"); ok {
 		entryDescription = tempVar.(string)
-
 	}
 	if tempVar, ok := d.GetOk("ether_type"); ok {
 		etherType = tempVar.(string)
-
 	}
 	if tempVar, ok := d.GetOk("arp_flag"); ok {
 		arpFlag = tempVar.(string)
-
 	}
 	if tempVar, ok := d.GetOk("ip_protocol"); ok {
 		ipProtocol = tempVar.(string)
-
 	}
 	if tempVar, ok := d.GetOk("source_from"); ok {
 		sourceFrom = tempVar.(string)
-
 	}
 	if tempVar, ok := d.GetOk("source_to"); ok {
 		sourceTo = tempVar.(string)
-
 	}
 	if tempVar, ok := d.GetOk("destination_from"); ok {
 		destinationFrom = tempVar.(string)
 	}
 	if tempVar, ok := d.GetOk("destination_to"); ok {
-
 		destinationTo = tempVar.(string)
 	}
 	if tempVar, ok := d.GetOk("match_only_fragments"); ok {
 		matchOnlyFragments = tempVar.(bool)
-
 	}
 	if tempVar, ok := d.GetOk("stateful"); ok {
 		stateful = tempVar.(bool)
-
 	}
 	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
-
 		tcpSessionRules = tempVar.([]interface{})
-
+	} else {
+		tcpSessionRules = append(make([]interface{}, 0), "unspecified")
 	}
 
 	pathf := fmt.Sprintf("/templates/%s/filters/%s/entries/%s", stateTemplate, filterName, entryName)
@@ -605,7 +596,6 @@ func resourceMSOSchemaTemplateFilterEntryDelete(d *schema.ResourceData, m interf
 		entryMap["stateful"] = stateful
 	}
 	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
-
 		tcpSessionRules = tempVar.([]interface{})
 		entryMap["tcpSessionRules"] = tcpSessionRules
 	}
