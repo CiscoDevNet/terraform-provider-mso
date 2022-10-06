@@ -9,16 +9,15 @@ type TemplateAnpEpg struct {
 func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType string, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool, vrfRef, bdRef, cloudServiceEpgConfig map[string]interface{}) *TemplateAnpEpg {
 	var anpepgMap map[string]interface{}
 	anpepgMap = map[string]interface{}{
-		"name":                  name,
-		"displayName":           displayName,
-		"subnets":               []interface{}{},
-		"uSegEpg":               uSegEpg,
-		"intraEpg":              intraEpg,
-		"epgType":               epgType,
-		"mCastSource":           intersiteMulticasteSource,
-		"proxyArp":              proxyArp,
-		"preferredGroup":        preferredGroup,
-		"cloudServiceEpgConfig": cloudServiceEpgConfig,
+		"name":           name,
+		"displayName":    displayName,
+		"subnets":        []interface{}{},
+		"uSegEpg":        uSegEpg,
+		"intraEpg":       intraEpg,
+		"epgType":        epgType,
+		"mCastSource":    intersiteMulticasteSource,
+		"proxyArp":       proxyArp,
+		"preferredGroup": preferredGroup,
 	}
 
 	if _, ok := vrfRef["vrfName"]; ok {
@@ -31,6 +30,10 @@ func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType string, u
 
 	if anpepgMap["intraEpg"] == "" {
 		anpepgMap["intraEpg"] = "unenforced"
+	}
+
+	if cloudServiceEpgConfig != nil {
+		anpepgMap["cloudServiceEpgConfig"] = cloudServiceEpgConfig
 	}
 
 	return &TemplateAnpEpg{
