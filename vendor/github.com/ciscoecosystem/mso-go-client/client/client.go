@@ -28,15 +28,16 @@ const ndAuthPayload = `{
 
 // Client is the main entry point
 type Client struct {
-	BaseURL    *url.URL
-	httpClient *http.Client
-	AuthToken  *Auth
-	username   string
-	password   string
-	insecure   bool
-	proxyUrl   string
-	domain     string
-	platform   string
+	BaseURL            *url.URL
+	httpClient         *http.Client
+	AuthToken          *Auth
+	username           string
+	password           string
+	insecure           bool
+	proxyUrl           string
+	domain             string
+	platform           string
+	skipLoggingPayload bool
 }
 
 // singleton implementation of a client
@@ -71,6 +72,12 @@ func Domain(domain string) Option {
 func Platform(platform string) Option {
 	return func(client *Client) {
 		client.platform = platform
+	}
+}
+
+func SkipLoggingPayload(skipLoggingPayload bool) Option {
+	return func(client *Client) {
+		client.skipLoggingPayload = skipLoggingPayload
 	}
 }
 
@@ -151,7 +158,11 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 	if err != nil {
 		return nil, err
 	}
-
+	if method == "PATCH" {
+		validateString := url.Query()
+		validateString.Set("validate", "false")
+		url.RawQuery = validateString.Encode()
+	}
 	fURL := c.BaseURL.ResolveReference(url)
 	var req *http.Request
 	if method == "GET" || method == "DELETE" {
@@ -163,7 +174,7 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	log.Printf("[DEBUG] HTTP request %s %s", method, path)
+	log.Printf("HTTP request %s %s", method, path)
 
 	if authenticated {
 
@@ -172,7 +183,7 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 			return req, err
 		}
 	}
-	log.Printf("[DEBUG] HTTP request after injection %s %s", method, path)
+	log.Printf("HTTP request after injection %s %s", method, path)
 
 	return req, nil
 }
@@ -209,12 +220,15 @@ func (c *Client) Authenticate() error {
 		}
 	}
 
+	c.skipLoggingPayload = true
+
 	req, err := c.MakeRestRequest(method, path, body, false)
 	if err != nil {
 		return err
 	}
-	
+
 	obj, _, err := c.Do(req)
+	c.skipLoggingPayload = false
 	if err != nil {
 		return err
 	}
@@ -279,17 +293,20 @@ func StrtoInt(s string, startIndex int, bitSize int) (int64, error) {
 
 func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, error) {
 	log.Printf("[DEBUG] Begining DO method %s", req.URL.String())
+	log.Printf("[TRACE] HTTP Request Method and URL: %s %s", req.Method, req.URL.String())
+	if !c.skipLoggingPayload {
+		log.Printf("[TRACE] HTTP Request Body: %v", req.Body)
+	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Printf("[DEBUG] HTTP Request: %s %s", req.Method, req.URL.String())
-	log.Printf("[DEBUG] HTTP Response: %d %s %v", resp.StatusCode, resp.Status, resp)
+	log.Printf("nHTTP Response: %d %s %v", resp.StatusCode, resp.Status, resp)
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	bodyStr := string(bodyBytes)
 	resp.Body.Close()
-	log.Printf("[DEBUG] HTTP response unique string %s %s %s", req.Method, req.URL.String(), bodyStr)
+	log.Printf("\n HTTP response unique string %s %s %s", req.Method, req.URL.String(), bodyStr)
 	if req.Method != "DELETE" && resp.StatusCode != 204 {
 		obj, err := container.ParseJSON(bodyBytes)
 
