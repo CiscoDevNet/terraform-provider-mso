@@ -1,3 +1,8 @@
+## 0.7.1 (October 14, 2022)
+BUG FIXES:
+- Fix Cloud EPG default attribute issue in mso_schema_template_anp_epg
+- Fix mso_schema_template_filter_entry crash when tcp_session_rules attribute is not provided
+
 ## 0.7.0 (August 26, 2022)
 IMPROVEMENTS:
 - Ability to add Microsoft and Redhat domains in mso_schema_site_anp_epg_domain (deprecate dn attribute) (#130)
