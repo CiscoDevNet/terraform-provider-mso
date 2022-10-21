@@ -38,8 +38,8 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
 ```hcl
 
 resource "mso_schema_site_anp_epg_static_port" "static_port" {
-  schema_id            = "5c4d5bb72700000401f80948"
-  site_id              = "5c7c95b25100008f01c1ee3c"
+  schema_id            = mso_schema.schema1.id
+  site_id              = mso_site.site1.id
   template_name        = "Template1"
   anp_name             = "ANP"
   epg_name             = "DB"
@@ -59,8 +59,8 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
 ```hcl
 
 resource "mso_schema_site_anp_epg_static_port" "static_port" {
-  schema_id            = "5c4d5bb72700000401f80948"
-  site_id              = "5c7c95b25100008f01c1ee3c"
+  schema_id            = mso_schema.schema1.id
+  site_id              = mso_site.site1.id
   template_name        = "Template1"
   anp_name             = "ANP"
   epg_name             = "DB"
