@@ -13,13 +13,15 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_site_anp_epg" "site_anp_epg" {
-  schema_id = "5c4d9fca270000a101f8094a"
+  schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  site_id = "5c7c95d9510000cf01c1ee3d"
-  anp_name = "ANP"
-  epg_name = "DB"
+  site_id       = mso_site.site1.id
+  anp_name      = "ANP"
+  epg_name      = "DB"
 }
+
 ```
 
 ## Argument Reference ##

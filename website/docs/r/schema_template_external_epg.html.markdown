@@ -15,7 +15,7 @@ Manages MSO Schema Template External Endpoint Group.
 ```hcl
 
 resource "mso_schema_template_external_epg" "template_externalepg" {
-		schema_id           = "5f043b3b2c0000f47e812a0b"
+		schema_id           = mso_schema.schema1.id
 		template_name       = "Template1"
 		external_epg_name   = "temp_epg"
     external_epg_type   = "cloud"

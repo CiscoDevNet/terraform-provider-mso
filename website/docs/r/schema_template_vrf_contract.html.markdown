@@ -13,8 +13,9 @@ Manages MSO Resource Schema Template Vrf Contract. This resource is supported in
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_vrf_contract" "demovrf01" {
-  schema_id              = "5eff091b0e00008318cff859"
+  schema_id              = mso_schema.schema1.id
   template_name          = "Template1"
   vrf_name               = "myVrf"
   relationship_type      = "provider"
@@ -22,6 +23,7 @@ resource "mso_schema_template_vrf_contract" "demovrf01" {
   contract_schema_id     = "5efd6ea60f00005b0ebbd643"
   contract_template_name = "Template1"
 }
+
 ```
 
 ## Argument Reference ##

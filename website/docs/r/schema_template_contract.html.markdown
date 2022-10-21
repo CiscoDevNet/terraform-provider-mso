@@ -14,7 +14,7 @@ Manages MSO Schema Template Contract.
 
 ```hcl
 resource "mso_schema_template_contract" "template_contract" {
-  schema_id = "5c4d5bb72700000401f80948"
+  schema_id = mso_schema.schema1.id
   template_name = "Template1"
   contract_name = "C1"
   display_name = "C1"

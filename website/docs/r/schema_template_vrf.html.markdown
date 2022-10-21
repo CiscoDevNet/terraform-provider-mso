@@ -13,14 +13,16 @@ Manages MSO Resource Schema Template Vrf
 ## Example Usage ##
 
 ```hcl
-	resource "mso_schema_template_vrf" "vrf1" {
-		schema_id    	= "${mso_schema.schema1.id}"
-		template	 	= "temp3"
-		name         	= "vrf982"
-		display_name 	= "vz1"
-		layer3_multicast= false
-		vzany 			= false
-	}
+
+resource "mso_schema_template_vrf" "vrf1" {
+  schema_id        = mso_schema.schema1.id
+  template         = "temp3"
+  name             = "vrf982"
+  display_name     = "vz1"
+  layer3_multicast = false
+  vzany            = false
+}
+
 ```
 
 ## Argument Reference ##

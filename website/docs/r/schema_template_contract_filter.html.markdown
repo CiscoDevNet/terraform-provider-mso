@@ -13,14 +13,16 @@ Manages MSO Schema Template Contract Filter.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_contract_filter" "filter3" {
-  schema_id = "5c4d5bb72700000401f80948"
+  schema_id     = mso_schema.schema1.id
   template_name = "Template1"
   contract_name = "Web-to-DB"
-  filter_type = "provider_to_consumer"
-  filter_name = "Any"
-  directives = ["none","log"]
+  filter_type   = "provider_to_consumer"
+  filter_name   = "Any"
+  directives    = ["none", "log"]
 }
+
 ```
 
 ## Argument Reference ##

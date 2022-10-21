@@ -13,10 +13,10 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups Selecto
 ## Example Usage ##
 ```hcl
 resource "mso_schema_template_anp_epg_selector" "check" {
-  schema_id     = "${mso_schema_template_anp_epg.anp_epg.schema_id}"
-  template_name = "${mso_schema_template_anp_epg.anp_epg.template_name}"
-  anp_name      = "${mso_schema_template_anp_epg.anp_epg.anp_name}"
-  epg_name      = "${mso_schema_template_anp_epg.anp_epg.name}"
+  schema_id     = mso_schema_template_anp_epg.anp_epg.schema_id
+  template_name = mso_schema_template_anp_epg.anp_epg.template_name
+  anp_name      = mso_schema_template_anp_epg.anp_epg.anp_name
+  epg_name      = mso_schema_template_anp_epg.anp_epg.name
   name          = "check01"
   expressions {
     key         = "one"

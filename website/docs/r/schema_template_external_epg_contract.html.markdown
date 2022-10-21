@@ -13,13 +13,15 @@ Manages MSO Schema Template External Endpoint Group Contract.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_external_epg_contract" "c1" {
-  schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
-  contract_name = "contract1006"
+  schema_id         = mso_schema.schema1.id
+  template_name     = "Template1"
+  contract_name     = "contract1006"
   external_epg_name = "UntitledExternalEPG1"
   relationship_type = "consumer"
 }
+
 ```
 
 ## Argument Reference ##

@@ -13,15 +13,16 @@ Manages MSO Schema Template Application Network Profile Endpoint Group Contract 
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_anp_epg_contract" "contract1" {
-  schema_id = "5c6c16d7270000c710f8094d"
-  template_name = "Template1"
-  anp_name = "WoS-Cloud-Only-2"
-  epg_name = "DB"
-  contract_name = "Internet-access"
+  schema_id         = mso_schema.schema1.id
+  template_name     = "Template1"
+  anp_name          = "WoS-Cloud-Only-2"
+  epg_name          = "DB"
+  contract_name     = "Internet-access"
   relationship_type = "provider"
-  
 }
+
 ```
 
 ## Argument Reference ##

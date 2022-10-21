@@ -13,17 +13,18 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups Subnet.
 ## Example Usage ##
 
 ```hcl
-resource "mso_schema_site_anp_epg_subnet" "subnet1" {
-  schema_id = "5c4d5bb72700000401f80948"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = "Template1"
-  anp_name = "ANP"
-  epg_name = "DB"
-  ip = "10.7.0.1/8"
-  scope = "public"
-  shared = true
 
+resource "mso_schema_site_anp_epg_subnet" "subnet1" {
+  schema_id     = mso_schema.schema1.id
+  site_id       = mso_site.site1.id
+  template_name = "Template1"
+  anp_name      = "ANP"
+  epg_name      = "DB"
+  ip            = "10.7.0.1/8"
+  scope         = "public"
+  shared        = true
 }
+
 ```
 
 ## Argument Reference ##

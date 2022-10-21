@@ -13,8 +13,9 @@ Manages MSO Schema Template Service Graph
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_service_graph" "test_sg" {
-  schema_id          = "5f06a4c40f0000b63dbbd647"
+  schema_id          = mso_schema.schema1.id
   template_name      = "Template1"
   service_graph_name = "sgtf"
   service_node_type  = "firewall"
@@ -24,7 +25,6 @@ resource "mso_schema_template_service_graph" "test_sg" {
     tenant_name = "NkAutomation"
     node_name   = "nk-fw-2"
   }
-
 }
 
 ```

@@ -13,13 +13,15 @@ Manages MSO Schema Site Bridge Domain L3out.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_site_bd_l3out" "bdL3out" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
+  schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  bd_name = "WebServer-Finance"
-  l3out_name = "zzz"
+  site_id       = mso_site.site1.id
+  bd_name       = "WebServer-Finance"
+  l3out_name    = "zzz"
 }
+
 ```
 
 ## Argument Reference ##
