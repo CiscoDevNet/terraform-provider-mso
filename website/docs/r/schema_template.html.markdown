@@ -18,7 +18,7 @@ resource "mso_schema_template" "st1" {
   schema_id    = mso_schema.schema1.id
   name         = "Temp1"
   display_name = "Temp1"
-  tenant_id    = "5c4d9f3d2700007e01f80949"
+  tenant_id    = mso_tenant.tenant1.id
 }
 
 ```
