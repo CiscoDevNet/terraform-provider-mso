@@ -13,11 +13,11 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups Sel
 ```hcl
 
 data "mso_schema_site_anp_epg_selector" "read_check" {
-  schema_id     = "${mso_schema_site_anp_epg.anp_epg.schema_id}"
-  site_id       = "${mso_schema_site_anp_epg.anp_epg.site_id}"
-  template_name = "${mso_schema_site_anp_epg.anp_epg.template_name}"
-  anp_name      = "${mso_schema_site_anp_epg.anp_epg.anp_name}"
-  epg_name      = "${mso_schema_site_anp_epg.anp_epg.epg_name}"
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
+  template_name = "Template1"
+  anp_name      = "anp1"
+  epg_name      = "epg1"
   name          = "check01"
 }
 

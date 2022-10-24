@@ -13,10 +13,12 @@ Manages MSO Label
 ## Example Usage ##
 
 ```hcl
+
  resource "mso_label" "label1" {
-   label = "hello3"
+   label = "label1"
    type  = "site"
  }
+
 ```
 
 ## Argument Reference ##

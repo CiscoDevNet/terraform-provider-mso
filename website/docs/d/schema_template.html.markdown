@@ -13,10 +13,12 @@ Data source for MSO schema template, to fetch the MSO schema template details.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template" "st10" {
-  name = "template-name"
-  schema_id = "schema-id"
+  name      = "template-name"
+  schema_id = data.mso_schema.schema1.id
 }
+
 ```
 
 ## Argument Reference ##

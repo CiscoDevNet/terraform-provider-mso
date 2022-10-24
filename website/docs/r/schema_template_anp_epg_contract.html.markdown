@@ -17,9 +17,9 @@ Manages MSO Schema Template Application Network Profile Endpoint Group Contract 
 resource "mso_schema_template_anp_epg_contract" "contract1" {
   schema_id         = mso_schema.schema1.id
   template_name     = "Template1"
-  anp_name          = "WoS-Cloud-Only-2"
-  epg_name          = "DB"
-  contract_name     = "Internet-access"
+  anp_name          = mso_schema_template_anp_epg.anp_epg.anp_name
+  epg_name          = mso_schema_template_anp_epg.anp_epg.name
+  contract_name     = mso_schema_template_contract_filter.filter3.contract_name
   relationship_type = "provider"
 }
 

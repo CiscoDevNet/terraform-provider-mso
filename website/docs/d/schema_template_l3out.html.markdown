@@ -13,11 +13,13 @@ MSO Schema Template L3Out Data source.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_l3out" "sl3out1" {
-  schema_id = "5c6c16d7270000c710f8094d"
+  schema_id     = "5c6c16d7270000c710f8094d"
   template_name = "Template1"
-  l3out_name = "Internet_L3Out"
+  l3out_name    = "Internet_L3Out"
 }
+
 ```
 
 ## Argument Reference ##

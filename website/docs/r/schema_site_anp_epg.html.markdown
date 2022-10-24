@@ -17,9 +17,9 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups.
 resource "mso_schema_site_anp_epg" "site_anp_epg" {
   schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  site_id       = mso_site.site1.id
-  anp_name      = "ANP"
-  epg_name      = "DB"
+  site_id       = mso_schema_site.schema_site.site_id
+  anp_name      = mso_schema_site_anp.anp1.anp_name
+  epg_name      = mso_schema_template_anp_epg.anp_epg.name
 }
 
 ```

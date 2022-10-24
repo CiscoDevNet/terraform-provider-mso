@@ -20,10 +20,10 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 		external_epg_name   = "temp_epg"
     external_epg_type   = "cloud"
 		display_name        = "temp_epg"
-		vrf_name            = "Myvrf"
-    anp_name            = "ap1"
+		vrf_name            = mso_schema_template_vrf.vrf1.name
+    anp_name            = "anp1"
     l3out_name          = "temp"
-    site_id             = ["5c7c95d9510000cf01c1ee3d"]
+    site_id             = [mso_schema_site.schema_site.site_id]
     selector_name       = "check02"
     selector_ip         = "12.23.34.45"
 }

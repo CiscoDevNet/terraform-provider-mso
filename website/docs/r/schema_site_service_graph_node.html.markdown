@@ -17,10 +17,10 @@ Manages MSO Schema Site Level Service Graph Node.
 resource "mso_schema_site_service_graph_node" "test_sg" {
   schema_id          = mso_schema.schema1.id
   template_name      = "Template1"
-  service_graph_name = "sgtf"
+  service_graph_name = mso_schema_template_service_graph.test_sg.service_graph_name
   service_node_type  = "firewall"
   site_nodes {
-    site_id     = mso_site.site1.id
+    site_id     = mso_schema_site.schema_site.site_id
     tenant_name = "NkAutomation"
     node_name   = "nk-fw-2"
   }

@@ -13,11 +13,13 @@ MSO Schema Template Bridge Domain Data source.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_bd" "bridge_domain" {
-    schema_id              = "5ea809672c00003bc40a2799"
+    schema_id              = data.mso_schema.schema1.id
     template_name          = "Template1"
     name                   = "testBD"
 }
+
 ```
 
 ## Argument Reference ##

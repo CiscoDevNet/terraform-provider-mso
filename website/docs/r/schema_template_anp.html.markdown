@@ -16,7 +16,7 @@ Manages MSO Resource Schema Template Anp
 
 resource "mso_schema_template_anp" "anp1" {
   schema_id    = mso_schema.schema1.id
-  template     = "template99"
+  template     = mso_schema_template.st1.name
   name         = "anp123"
   display_name = "anp1234"
 }

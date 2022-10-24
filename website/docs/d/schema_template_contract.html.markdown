@@ -13,11 +13,13 @@ Data source for MSO Schema Template Contract.
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_template_contract" "scontract1" {
-  schema_id = "5c4d5bb72700000401f80948"
+
+data "mso_schema_template_contract" "contract1" {
+  schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
   contract_name = "c1"
 }
+
 ```
 
 ## Argument Reference ##

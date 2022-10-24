@@ -17,10 +17,10 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups.
 resource "mso_schema_template_anp_epg" "anp_epg" {
   schema_id                  = mso_schema.schema1.id
   template_name              = "Template1"
-  anp_name                   = "ANP"
+  anp_name                   = mso_schema_template_anp.anp1.name
   name                       = "mso_epg1"
-  bd_name                    = "BD1"
-  vrf_name                   = "DEVNET-VRF"
+  bd_name                    = mso_schema_template_bd.bridge_domain.name
+  vrf_name                   = mso_schema_template_vrf.vrf1.name
   display_name               = "mso_epg1"
   useg_epg                   = true
   intra_epg                  = "unenforced"

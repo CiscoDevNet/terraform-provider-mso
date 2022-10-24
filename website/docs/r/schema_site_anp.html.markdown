@@ -16,9 +16,9 @@ description: |-
 
 resource "mso_schema_site_anp" "anp1" {
   schema_id     = mso_schema.schema1.id
-  anp_name      = "AP1234"
+  anp_name      = mso_schema_template_anp.anp1.name
   template_name = "Template1"
-  site_id       = mso_site.site1.id
+  site_id       = mso_schema_site.schema_site.site_id
 }
 
 ```

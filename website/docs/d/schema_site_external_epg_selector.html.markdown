@@ -13,10 +13,10 @@ Data source for MSO Schema Site external Endpoint Groups Selector.
 ```hcl
 
 data "mso_schema_site_external_epg_selector" "check"{
-  schema_id         = "${mso_schema_template_external_epg.template_externalepg.schema_id}"
-  template_name     = "${mso_schema_template_external_epg.template_externalepg.template_name}"
-  site_id           = "${mso_schema_template_external_epg.template_externalepg.site_id}"
-  external_epg_name = "${mso_schema_template_external_epg.template_externalepg.external_epg_name}"
+  schema_id         = data.mso_schema.schema1.id
+  template_name     = "Template1"
+  site_id           = data.mso_site.site1.id
+  external_epg_name = "external_epg1"
   name              = "second"
 }
 

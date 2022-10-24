@@ -13,13 +13,15 @@ MSO Schema Template ANP EPG Contract Data source.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_anp_epg_contract" "contract" {
-  schema_id = "5c6c16d7270000c710f8094d"
+  schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
-  anp_name = "WoS-Cloud-Only-2"
-  epg_name = "DB"
+  anp_name      = "WoS-Cloud-Only-2"
+  epg_name      = "DB"
   contract_name = "Web2-to-DB2"
 }
+
 ```
 
 ## Argument Reference ##

@@ -13,11 +13,13 @@ Data source for MSO schema template Anp, to fetch the MSO schema template Anp de
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_anp" "anp2" {
-  schema_id="${mso_schema.schema1.id}"
-  template= "template99"
-  name = "anp123"
+  schema_id = data.mso_schema.schema1.id
+  template  = "template99"
+  name      = "anp123"
 }
+
 ```
 
 ## Argument Reference ##

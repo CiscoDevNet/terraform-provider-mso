@@ -15,17 +15,18 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups Dom
 ### domain_name used in association with domain_type and vmm_domain_type ###
 
 ```hcl
-data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
-  schema_id = "5c4d9fca270000a101f8094a"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = Template1
-  anp_name = "ANP"
-  epg_name = "Web"
-  domain_name = "VMware-ab"
-  domain_type = "vmmDomain"
-  vmm_domain_type = "VMware"
 
+data "mso_schema_site_anp_epg_domain" "anpEpgDomain" {
+  schema_id       = data.mso_schema.schema1.id
+  site_id         = data.mso_site.site1.id
+  template_name   = "Template1"
+  anp_name        = "ANP"
+  epg_name        = "Web"
+  domain_name     = "VMware-ab"
+  domain_type     = "vmmDomain"
+  vmm_domain_type = "VMware"
 }
+
 ```
 
 ### domain_dn usage ###

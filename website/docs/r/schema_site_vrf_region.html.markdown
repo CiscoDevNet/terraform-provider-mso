@@ -17,8 +17,8 @@ Manages MSO Schema Site Vrf Region.
 resource "mso_schema_site_vrf_region" "vrfRegion" {
   schema_id           = mso_schema.schema1.id
   template_name       = "Template1"
-  site_id             = mso_site.site1.id
-  vrf_name            = "Myvrf"
+  site_id             = mso_schema_site.schema_site.site_id
+  vrf_name            = mso_schema_site_vrf.vrf1.vrf_name
   region_name         = "us-east-1"
   vpn_gateway         = true
   hub_network_enable  = true

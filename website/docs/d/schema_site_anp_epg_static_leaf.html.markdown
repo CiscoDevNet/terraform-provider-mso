@@ -13,14 +13,16 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups Sta
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_site_anp_epg_static_leaf" "st10" {
-  schema_id = "5c4d9fca270000a101f8094a"
+  schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "Web"
-  path= "topology/pod-1/paths-103/pathep-[eth1/111]"
+  site_id       = data.mso_site.site1.id
+  anp_name      = "ANP"
+  epg_name      = "Web"
+  path          = "topology/pod-1/paths-103/pathep-[eth1/111]"
 }
+
 ```
 
 ## Argument Reference ##

@@ -17,10 +17,10 @@ Manages MSO Schema Site Vrf Region Cidr Subnet.
 resource "mso_schema_site_vrf_region_cidr_subnet" "sub1" {
   schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  site_id       = mso_site.site1.id
-  vrf_name      = "Campus"
-  region_name   = "westus"
-  cidr_ip       = "1.1.1.1/24"
+  site_id       = mso_schema_site.schema_site.site_id
+  vrf_name      = mso_schema_site_vrf_region_cidr.vrfRegionCidr.vrf_name
+  region_name   = mso_schema_site_vrf_region_cidr.vrfRegionCidr.region_name
+  cidr_ip       = mso_schema_site_vrf_region_cidr.vrfRegionCidr.ip
   ip            = "203.168.240.1/24"
   zone          = "West"
   usage         = "gateway"

@@ -16,10 +16,10 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups Subnet.
 
 resource "mso_schema_site_anp_epg_subnet" "subnet1" {
   schema_id     = mso_schema.schema1.id
-  site_id       = mso_site.site1.id
+  site_id       = mso_schema_site.schema_site.site_id
   template_name = "Template1"
-  anp_name      = "ANP"
-  epg_name      = "DB"
+  anp_name      = mso_schema_site_anp_epg.site_anp_epg.anp_name
+  epg_name      = mso_schema_site_anp_epg.site_anp_epg.epg_name
   ip            = "10.7.0.1/8"
   scope         = "public"
   shared        = true

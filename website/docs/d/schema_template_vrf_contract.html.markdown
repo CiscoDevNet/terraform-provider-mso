@@ -13,13 +13,15 @@ Data Source for MSO  Schema Template Vrf Contract. This data source is supported
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_vrf_contract" "demovrf01" {
-  schema_id         = "5eff091b0e00008318cff859"
+  schema_id         = data.mso_schema.schema1.id
   template_name     = "Template1"
   vrf_name          = "myVrf"
   relationship_type = "provider"
   contract_name     = "hubcon"
 }
+
 ```
 
 ## Argument Reference ##

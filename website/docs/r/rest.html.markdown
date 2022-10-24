@@ -13,6 +13,7 @@ MSO Rest Resource to manage the MSO objects via REST API.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_rest" "sample_rest" {
     path = "api/v1/schemas/5ebb9f682c0000da45812937"
     method = "PATCH"
@@ -28,9 +29,9 @@ resource "mso_rest" "sample_rest" {
     }
   }
 ]
-EOF
-  
+EOF  
 }
+
 ```
 
 ## Argument Reference ##

@@ -17,9 +17,9 @@ Manages MSO Schema Site Vrf Region Cidr.
 resource "mso_schema_site_vrf_region_cidr" "vrfRegionCidr" {
   schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  site_id       = mso_site.site1.id
-  vrf_name      = "Campus"
-  region_name   = "region1"
+  site_id       = mso_schema_site.schema_site.site_id
+  vrf_name      = mso_schema_site_vrf_region.vrfRegion.vrf_name
+  region_name   = mso_schema_site_vrf_region.vrfRegion.region_name
   ip            = "2.2.2.2/2"
   primary       = false
 }

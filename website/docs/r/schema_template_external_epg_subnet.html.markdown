@@ -17,8 +17,8 @@ Manages MSO Schema Template External EPG Subnet.
 resource "mso_schema_template_external_epg_subnet" "subnet1" {
   schema_id         = mso_schema.schema1.id
   template_name     = "Template1"
-  external_epg_name = "UntitledExternalEPG1"
-  ip                = "10.101.100.0/0"
+  external_epg_name = mso_schema_template_external_epg.template_externalepg.external_epg_name
+  ip                = "10.101.100.0/24"
   name              = "sddfgbany"
   scope             = ["shared-rtctrl", "export-rtctrl"]
   aggregate         = ["shared-rtctrl", "export-rtctrl"]

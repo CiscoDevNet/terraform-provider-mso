@@ -21,9 +21,9 @@ resource "mso_schema_template_contract" "template_contract" {
   filter_type = "bothWay"
   scope = "context"
   filter_relationship {
-    filter_schema_id = "5ea809672c00003bc40a2799"
+    filter_schema_id = mso_schema_template_filter_entry.filter_entry.schema_id
     filter_template_name = "Template1"
-    filter_name = "filter1"
+    filter_name = mso_schema_template_filter_entry.filter_entry.name
   }
   directives = ["none"]
 }

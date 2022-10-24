@@ -13,11 +13,13 @@ Data source for MSO schema template vrf, to fetch the MSO schema template vrf si
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_vrf" "vrf1" {
-  schema_id = "${mso_schema.schema1.id}"
+  schema_id = data.mso_schema.schema1.id
   template  = "Template1"
   name      = "vrf98"
 }
+
 ```
 
 ## Argument Reference ##

@@ -15,8 +15,8 @@ Data source for MSO Schema Template Contract Service Graph.
 ```hcl
 
 data "mso_schema_template_contract_service_graph" "name" {
-  schema_id             = "5f11b0e22c00001c4a812a2a"
-  site_id               = "5c7c95b25100008f01c1ee3c"
+  schema_id             = data.mso_schema.schema1.id
+  site_id               = data.mso_site.site1.id
   template_name         = "Template1"
   contract_name         = "UntitledContract1"
   service_graph_name    = "sg1"  

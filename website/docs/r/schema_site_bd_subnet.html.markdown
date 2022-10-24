@@ -17,8 +17,8 @@ Manages MSO Schema Site Bridge Domain(BD) Subnet.
 resource "mso_schema_site_bd_subnet" "sub1" {
   schema_id          = mso_schema.schema1.id
   template_name      = "Template1"
-  site_id            = mso_site.site1.id
-  bd_name            = "WebServer-Finance"
+  site_id            = mso_schema_site.schema_site.site_id
+  bd_name            = mso_schema_site_bd.bd1.bd_name
   ip                 = "200.168.240.1/24"
   description        = "Subnet 1"
   shared             = false

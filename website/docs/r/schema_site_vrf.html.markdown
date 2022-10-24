@@ -16,9 +16,9 @@ description: |-
 
 resource "mso_schema_site_vrf" "vrf1" {
   template_name = "Template1"
-  site_id       = mso_site.site1.id
+  site_id       = mso_schema_site.schema_site.site_id
   schema_id     = mso_schema.schema1.id
-  vrf_name      = "vrf5810"
+  vrf_name      = mso_shema_template_vrf.vrf1.name
 }
 
 ```

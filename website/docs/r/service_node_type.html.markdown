@@ -13,6 +13,7 @@ Manages MSO Service Node Type
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_service_node_type" "node_type" {
   name         = "tftst"
   display_name = "terrform type"

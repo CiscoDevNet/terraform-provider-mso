@@ -21,7 +21,7 @@ resource "mso_schema_template_service_graph" "test_sg" {
   service_node_type  = "firewall"
   description        = "hello"
   site_nodes {
-    site_id     = "5f05c69f1900002234d0537e"
+    site_id     = mso_schema_site.schema_site.site_id
     tenant_name = "NkAutomation"
     node_name   = "nk-fw-2"
   }

@@ -13,11 +13,11 @@ Data source for MSO Schema Template Application Network Profiles Endpoint Groups
 ```hcl
 
 data "mso_schema_template_anp_epg_selector" "read_check" {
-  schema_id       = "${mso_schema_template_anp_epg.anp_epg.schema_id}"
-  template_name   = "${mso_schema_template_anp_epg.anp_epg.template_name}"
-  anp_name        = "${mso_schema_template_anp_epg.anp_epg.anp_name}"
-  epg_name        = "${mso_schema_template_anp_epg.anp_epg.name}"
-  name            = "check01"
+  schema_id       = data.mso_schema.schema1.id
+  template_name   = "Template1"
+  anp_name        = "anp1"
+  epg_name        = "epg1
+  name            = "subnet1"
 }
 
 ```

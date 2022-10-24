@@ -60,10 +60,10 @@ resource "mso_schema_site_anp_epg_static_port" "static_port" {
 
 resource "mso_schema_site_anp_epg_static_port" "static_port" {
   schema_id            = mso_schema.schema1.id
-  site_id              = mso_site.site1.id
+  site_id              = mso_schema_site.schema_site.site_id
   template_name        = "Template1"
-  anp_name             = "ANP"
-  epg_name             = "DB"
+  anp_name             = mso_schema_site_anp_epg.site_anp_epg.anp_name
+  epg_name             = mso_schema_site_anp_epg.site_anp_epg.epg_name
   path_type            = "dpc"
   deployment_immediacy = "lazy"
   pod                  = "pod-7"

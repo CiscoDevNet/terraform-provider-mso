@@ -13,6 +13,7 @@ Manages MSO Tenant
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_tenant" "tenant1" {
   name = "m3"
   display_name = "m3"

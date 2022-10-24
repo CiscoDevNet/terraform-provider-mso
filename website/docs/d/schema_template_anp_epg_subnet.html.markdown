@@ -13,14 +13,15 @@ Data source for MSO Schema Template Application Network Profiles Endpoint Groups
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_template_anp_epg_subnet" "subnet1" {
-  schema_id = "5c6c16d7270000c710f8094d"
-  anp_name = "WoS-Cloud-Only-2"
-  epg_name ="EPG4"
-  template = "Template1"
-  ip = "31.101.102.0/8"
 
+data "mso_schema_template_anp_epg_subnet" "subnet1" {
+  schema_id = data.mso_schema.schema1.id
+  anp_name  = "WoS-Cloud-Only-2"
+  epg_name  = "EPG4"
+  template  = "Template1"
+  ip        = "31.101.102.0/8"
 }
+
 ```
 
 ## Argument Reference ##

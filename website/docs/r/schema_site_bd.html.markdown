@@ -16,9 +16,9 @@ description: |-
 
 resource "mso_schema_site_bd" "bd1" {
   schema_id     = mso_schema.schema1.id
-  bd_name       = "bd4"
+  bd_name       = mso_schema_template_bd.bridge_domain.name
   template_name = "Template1"
-  site_id       = mso_site.site1.id
+  site_id       = mso_schema_site.schema_site.site_id
   host_route    = false
 }
 

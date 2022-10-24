@@ -13,12 +13,14 @@ Data source for MSO Schema Site Bridge Domain(Bd) Subnet.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_site_bd_subnet" "s1" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  bd_name = "WebServer-Finance"
-  ip = "200.168.240.1/24"
+  schema_id = data.mso_schema.schema1.id
+  site_id   = data.mso_site.site1.id
+  bd_name   = "WebServer-Finance"
+  ip        = "200.168.240.1/24"
 }
+
 ```
 
 ## Argument Reference ##

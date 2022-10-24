@@ -19,7 +19,7 @@ resource "mso_schema_template_l3out" "template_l3out" {
   template_name = "Template1"
   l3out_name    = "l3out1"
   display_name  = "l3out1"
-  vrf_name      = "vrf2"
+  vrf_name      = mso_schema_template_vrf.vrf1.name
 }
 
 ```
