@@ -39,6 +39,7 @@ resource "mso_schema" "schema1" {
 ### When template_name and tenant_id are used(DEPRECATED) ###
 
 ```hcl
+
 resource "mso_schema" "schema1" {
   name          = "nkp12"
   template_name = "template1"
