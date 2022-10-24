@@ -14,16 +14,16 @@ Manages MSO Schema Template External Endpoint Groups Selectors.
 ```hcl
 
 resource "mso_schema_template_external_epg_selector" "selector1" {
-	schema_id           = mso_schema_template_external_epg.template_externalepg.schema_id
-	template_name       = mso_schema_template_external_epg.template_externalepg.template_name
-	external_epg_name   = mso_schema_template_external_epg.template_externalepg.external_epg_name
-	name                = "check"
-    expressions {
-      value = "1.20.30.44"
-    }
-    expressions{
-      value = "5.6.7.8"
-    }
+  schema_id         = mso_schema_template_external_epg.template_externalepg.schema_id
+  template_name     = mso_schema_template_external_epg.template_externalepg.template_name
+  external_epg_name = mso_schema_template_external_epg.template_externalepg.external_epg_name
+  name              = "check"
+  expressions {
+    value = "1.20.30.44"
+  }
+  expressions {
+    value = "5.6.7.8"
+  }
 }
 
 ```
