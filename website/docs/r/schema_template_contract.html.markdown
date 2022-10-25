@@ -13,6 +13,7 @@ Manages MSO Schema Template Contract.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_contract" "template_contract" {
   schema_id = mso_schema.schema1.id
   template_name = "Template1"
@@ -27,6 +28,7 @@ resource "mso_schema_template_contract" "template_contract" {
   }
   directives = ["none"]
 }
+
 ```
 
 ## Argument Reference ##

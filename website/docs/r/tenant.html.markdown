@@ -17,8 +17,8 @@ Manages MSO Tenant
 resource "mso_tenant" "tenant1" {
   name = "m3"
   display_name = "m3"
-  site_associations{site_id = "5c7c95b25100008f01c1ee3c"}
-  user_associations{user_id = "0000ffff0000000000000020"}
+  site_associations{site_id = mso_site.site1.id}
+  user_associations{user_id = mso_user.user1.id}
 }
 
 # With AWS Site Association
@@ -27,7 +27,7 @@ resource "mso_tenant" "tenant02" {
   display_name = "Tango"
   description  = "DemoTenant"
   site_associations {
-    site_id                = "5c7c95b25100008f01c1ee3c"
+    site_id                = mso_site.site1.id
     vendor                 = "aws"
     aws_account_id         = "123456789124"
     is_aws_account_trusted = false
@@ -36,7 +36,7 @@ resource "mso_tenant" "tenant02" {
 
   }
   user_associations {
-    user_id = "0000ffff0000000000000020"
+    user_id = mso_user.user1.id
   }
 }
 
@@ -46,7 +46,7 @@ resource "mso_tenant" "tenant01" {
   display_name = "Tango"
   description  = "DemoTenant"
   site_associations {
-    site_id                   = "5ce2de773700006a008a2678"
+    site_id                   = mso_site.site1.id
     vendor                    = "azure"
     azure_subscription_id     = "subidtf"
     azure_access_type         = "credentials"
@@ -57,7 +57,7 @@ resource "mso_tenant" "tenant01" {
 
   }
   user_associations {
-    user_id = "0000ffff0000000000000020"
+    user_id = mso_user.user1.id
   }
 }
 

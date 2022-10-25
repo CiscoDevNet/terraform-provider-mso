@@ -15,7 +15,7 @@ MSO Schema Template Filter Entry Data source.
 ```hcl
 
 data "mso_schema_template_filter_entry" "filter_entry" {
-  schema_id     = "5c4d5bb72700000401f80948"
+  schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
   name          = "Any"
   entry_name    = "Entry1"

@@ -16,7 +16,7 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups Subnets
 
 resource "mso_schema_template_anp_epg_subnet" "subnet1" {
   schema_id = mso_schema.schema1.id
-  anp_name  = "WoS-Cloud-Only-2"
+  anp_name  = mso_schema_template_anp_epg.anp_epg.anp_name
   epg_name  = mso_schema_template_anp_epg.anp_epg.name
   template  = "Template1"
   ip        = "31.101.102.0/8"

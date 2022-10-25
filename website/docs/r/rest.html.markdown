@@ -15,7 +15,7 @@ MSO Rest Resource to manage the MSO objects via REST API.
 ```hcl
 
 resource "mso_rest" "sample_rest" {
-    path = "api/v1/schemas/5ebb9f682c0000da45812937"
+    path = "api/v1/schemas/${data.mso_schema.schema1.id}"
     method = "PATCH"
     payload = <<EOF
 [
@@ -25,7 +25,7 @@ resource "mso_rest" "sample_rest" {
     "value": {
       "name": "Template3",
       "displayName": "Templat2",
-      "tenantId": "5e9d09482c000068500a269a"
+      "tenantId": "${data.mso_tenant.tenant1.id}"
     }
   }
 ]

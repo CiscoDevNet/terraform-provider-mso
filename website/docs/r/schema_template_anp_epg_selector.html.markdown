@@ -12,6 +12,7 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups Selecto
 
 ## Example Usage ##
 ```hcl
+
 resource "mso_schema_template_anp_epg_selector" "check" {
   schema_id     = mso_schema_template_anp_epg.anp_epg.schema_id
   template_name = mso_schema_template_anp_epg.anp_epg.template_name
@@ -29,6 +30,7 @@ resource "mso_schema_template_anp_epg_selector" "check" {
     value       = "2"
   }
 }
+
 ```
 
 ## Argument Reference ##

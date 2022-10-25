@@ -26,7 +26,7 @@ resource "mso_user" "user1" {
   phone          = "12345678910"
   account_status = "active"
   roles {
-    roleid = "0000ffff0000000000000031"
+    roleid = data.mso_role.role.id
   }
 }
 
