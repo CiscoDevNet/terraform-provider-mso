@@ -13,12 +13,14 @@ MSO Schema Template External Endpoint Group Contract Data source.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_external_epg_contract" "st10" {
- schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
-  contract_name = "contract1006"
-  external_epg_name = "UntitledExternalEPG1"
+  schema_id         = data.mso_schema.schema1.id
+  template_name     = "Template1"
+  contract_name     = "contract1006"
+  external_epg_name = "ExternalEPG1"
 }
+
 ```
 
 ## Argument Reference ##

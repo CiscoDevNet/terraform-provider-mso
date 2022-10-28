@@ -13,20 +13,22 @@ Manages MSO Schema Template Contract.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_contract" "template_contract" {
-  schema_id = "5c4d5bb72700000401f80948"
+  schema_id = mso_schema.schema1.id
   template_name = "Template1"
   contract_name = "C1"
   display_name = "C1"
   filter_type = "bothWay"
   scope = "context"
   filter_relationship {
-    filter_schema_id = "5ea809672c00003bc40a2799"
+    filter_schema_id = mso_schema_template_filter_entry.filter_entry.schema_id
     filter_template_name = "Template1"
-    filter_name = "filter1"
+    filter_name = mso_schema_template_filter_entry.filter_entry.name
   }
   directives = ["none"]
 }
+
 ```
 
 ## Argument Reference ##

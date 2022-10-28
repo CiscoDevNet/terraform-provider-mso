@@ -13,10 +13,12 @@ Data source for MSO tenant
 ## Example Usage ##
 
 ```hcl
+
 data "mso_tenant" "tenant1" {
-  name = "mso"
+  name         = "mso"
   display_name = "mso"
 }
+
 ```
 
 ## Argument Reference ##

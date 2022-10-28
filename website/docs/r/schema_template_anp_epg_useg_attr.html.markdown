@@ -13,10 +13,11 @@ Resource for MSO Schema Template Application Network Profiles Endpoint Groups Us
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
-  schema_id     = "5eafca7d2c000052860a2902"
-  anp_name      = "sanp1"
-  epg_name      = "nkuseg"
+  schema_id     = mso_schema.schema1.id
+  anp_name      = mso_schema_template_anp_epg.anp_epg.anp_name
+  epg_name      = mso_schema_template_anp_epg.anp_epg.name
   template_name = "stemplate1"
   name          = "usg_test"
   useg_type     = "tag"
@@ -25,6 +26,7 @@ resource "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
   value         = "10.2.3.4"
   useg_subnet   = true
 }
+
 ```
 
 ## Argument Reference ##

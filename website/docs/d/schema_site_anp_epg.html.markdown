@@ -13,13 +13,15 @@ Data source for MSO Schema Site Application Network Profiles Endpoint Groups.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_site_anp_epg" "anpEpg" {
-  schema_id = "5c4d5bb72700000401f80948"
+  schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "DB"
+  site_id       = data.mso_site.site1.id
+  anp_name      = "ANP"
+  epg_name      = "DB"
 }
+
 ```
 
 ## Argument Reference ##

@@ -13,9 +13,11 @@ Data source for MSO site
 ## Example Usage ##
 
 ```hcl
+
 data "mso_site" "sample_site" {
   name  = "AWS-West"
 }
+
 ```
 
 ## Argument Reference ##

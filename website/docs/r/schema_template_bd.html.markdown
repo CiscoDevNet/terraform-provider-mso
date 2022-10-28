@@ -13,14 +13,16 @@ Manages MSO Schema Template Bridge Domain.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_bd" "bridge_domain" {
-    schema_id              = "5ea809672c00003bc40a2799"
+    schema_id              = mso_schema.schema1.id
     template_name          = "Template1"
     name                   = "testBD"
     display_name           = "test"
-    vrf_name               = "demo"
+    vrf_name               = mso_schema_template_vrf.vrf1.name
     layer2_unknown_unicast = "proxy" 
 }
+
 ```
 
 ## Argument Reference ##

@@ -13,11 +13,13 @@ description: |-
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_site_vrf" "v1" {
-  site_id = "5c7c95d9510000cf01c1ee3d"
-  schema_id ="5c6c16d7270000c710f8094d"
-  vrf_name = "vrf5810"
+  site_id   = data.mso_site.site1.id
+  schema_id = data.mso_schema.schema1.id
+  vrf_name  = "vrf5810"
 }
+
 ```
 
 ## Argument Reference ##

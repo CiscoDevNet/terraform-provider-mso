@@ -13,12 +13,14 @@ Manages MSO Resource Schema Template Anp
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_anp" "anp1" {
-  schema_id="${mso_schema.schema1.id}"
-  template= "template99"
-  name = "anp123"
-  display_name="anp1234"
+  schema_id    = mso_schema.schema1.id
+  template     = mso_schema_template.st1.name
+  name         = "anp123"
+  display_name = "anp1234"
 }
+
 ```
 
 ## Argument Reference ##

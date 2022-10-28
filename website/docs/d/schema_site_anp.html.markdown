@@ -13,10 +13,11 @@ description: |-
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_site_anp" "st10" {
-  anp_name = "AP1234"
-  schema_id = "5c6c16d7270000c710f8094d"
-  site_id = "5c7c95d9510000cf01c1ee3d"
+  anp_name      = "anp1"
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
   template_name = "Template1"
 }
 

@@ -13,6 +13,7 @@ Data Source for MSO Service Node Type
 ## Example Usage ##
 
 ```hcl
+
 data "mso_service_node_type" "node_data" {
   name = "tftst"
 }

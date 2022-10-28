@@ -14,10 +14,10 @@ Manages MSO Schema site external Endpoint Groups Selectors.
 ```hcl
 
 resource "mso_schema_site_external_epg_selector" "sel1" {
-  schema_id         = "${mso_schema_template_external_epg.template_externalepg.schema_id}"
-  template_name     = "${mso_schema_template_external_epg.template_externalepg.template_name}"
-  site_id           = "${mso_schema_template_external_epg.template_externalepg.site_id}"
-  external_epg_name = "${mso_schema_template_external_epg.template_externalepg.external_epg_name}"
+  schema_id         = mso_schema_template_external_epg.template_externalepg.schema_id
+  template_name     = mso_schema_template_external_epg.template_externalepg.template_name
+  site_id           = mso_schema_template_external_epg.template_externalepg.site_id
+  external_epg_name = mso_schema_template_external_epg.template_externalepg.external_epg_name
   name              = "second"
   ip                = "12.25.70.50"
 }

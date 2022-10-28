@@ -13,10 +13,12 @@ Data source for MSO schema site, to fetch the MSO schema site details.
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_site" "sample_schema_site" {
+
+data "mso_schema_site" "schema_site" {
   name       = "sitename"
-  schema_id  = "schema-id"
+  schema_id  = data.mso_schema.schema1.id
 }
+
 ```
 
 ## Argument Reference ##

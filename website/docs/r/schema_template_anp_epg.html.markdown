@@ -13,24 +13,25 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_anp_epg" "anp_epg" {
-  schema_id = "5c4d5bb72700000401f80948"
-  template_name = "Template1"
-  anp_name = "ANP"
-  name = "mso_epg1"
-  bd_name = "BD1"
-  vrf_name = "DEVNET-VRF"
-  display_name = "mso_epg1"
-  useg_epg = true
-  intra_epg = "unenforced"
+  schema_id                  = mso_schema.schema1.id
+  template_name              = "Template1"
+  anp_name                   = mso_schema_template_anp.anp1.name
+  name                       = "mso_epg1"
+  bd_name                    = mso_schema_template_bd.bridge_domain.name
+  vrf_name                   = mso_schema_template_vrf.vrf1.name
+  display_name               = "mso_epg1"
+  useg_epg                   = true
+  intra_epg                  = "unenforced"
   intersite_multicast_source = false
-  preferred_group = false
-  epg_type = "service"
-  access_type= "private"
-  deployment_type = "cloud_native"
-  service_type = "azure_sql"
-  
+  preferred_group            = false
+  epg_type                   = "service"
+  access_type                = "private"
+  deployment_type            = "cloud_native"
+  service_type               = "azure_sql"
 }
+
 ```
 
 ## Argument Reference ##

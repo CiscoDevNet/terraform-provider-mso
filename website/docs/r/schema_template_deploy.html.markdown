@@ -13,13 +13,14 @@ Manages deploy/undeploy operations for schema template on sites.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_deploy" "template_deployer" {
-  schema_id = "5ebb9f682c0000da45812937"
+  schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  undeploy = true
-  
+  site_id       = mso_site.site1.id
+  undeploy      = true
 }
+
 ```
 
 ## Argument Reference ##

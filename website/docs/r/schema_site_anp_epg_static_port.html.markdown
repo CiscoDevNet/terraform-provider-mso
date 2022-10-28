@@ -15,61 +15,64 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups Static 
 ### path_type: port ###
 
 ```hcl
-resource "mso_schema_site_anp_epg_static_port" "static_port" {
-  schema_id = "5c4d5bb72700000401f80948"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = "Template1"
-  anp_name = "ANP"
-  epg_name = "DB"
-  path_type = "port"
-  deployment_immediacy = "lazy"
-  pod = "pod-7"
-  leaf = "109"
-  path = "eth1/10"
-  vlan = 200
-  mode = "untagged"
 
+resource "mso_schema_site_anp_epg_static_port" "static_port" {
+  schema_id            = mso_schema.schema1.id
+  site_id              = mso_schema_site.schema_site.site_id
+  template_name        = "Template1"
+  anp_name             = mso_schema_site_anp_epg.site_anp_epg.anp_name
+  epg_name             = mso_schema_site_anp_epg.site_anp_epg.epg_name
+  path_type            = "port"
+  deployment_immediacy = "lazy"
+  pod                  = "pod-7"
+  leaf                 = "109"
+  path                 = "eth1/10"
+  vlan                 = 200
+  mode                 = "untagged"
 }
+
 ```
 
 ### path_type: vpc ###
 
 ```hcl
-resource "mso_schema_site_anp_epg_static_port" "static_port" {
-  schema_id = "5c4d5bb72700000401f80948"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = "Template1"
-  anp_name = "ANP"
-  epg_name = "DB"
-  path_type = "port"
-  deployment_immediacy = "lazy"
-  pod = "pod-1"
-  leaf = "101-102"
-  path = "HX-FI-B_PolGrp"
-  vlan = 200
-  mode = "untagged"
 
+resource "mso_schema_site_anp_epg_static_port" "static_port" {
+  schema_id            = mso_schema.schema1.id
+  site_id              = mso_schema_site.schema_site.site_id
+  template_name        = "Template1"
+  anp_name             = mso_schema_site_anp_epg.site_anp_epg.anp_name
+  epg_name             = mso_schema_site_anp_epg.site_anp_epg.epg_name
+  path_type            = "vpc"
+  deployment_immediacy = "lazy"
+  pod                  = "pod-1"
+  leaf                 = "101-102"
+  path                 = "HX-FI-B_PolGrp"
+  vlan                 = 200
+  mode                 = "untagged"
 }
+
 ```
 
 ### path_type: dpc
 
 ```hcl
-resource "mso_schema_site_anp_epg_static_port" "static_port" {
-  schema_id = "5c4d5bb72700000401f80948"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = "Template1"
-  anp_name = "ANP"
-  epg_name = "DB"
-  path_type = "dpc"
-  deployment_immediacy = "lazy"
-  pod = "pod-7"
-  leaf = "109"
-  path = "HX-FI-A_PolGrp"
-  vlan = 200
-  mode = "untagged"
 
+resource "mso_schema_site_anp_epg_static_port" "static_port" {
+  schema_id            = mso_schema.schema1.id
+  site_id              = mso_schema_site.schema_site.site_id
+  template_name        = "Template1"
+  anp_name             = mso_schema_site_anp_epg.site_anp_epg.anp_name
+  epg_name             = mso_schema_site_anp_epg.site_anp_epg.epg_name
+  path_type            = "dpc"
+  deployment_immediacy = "lazy"
+  pod                  = "pod-7"
+  leaf                 = "109"
+  path                 = "HX-FI-A_PolGrp"
+  vlan                 = 200
+  mode                 = "untagged"
 }
+
 ```
 
 ## Argument Reference ##

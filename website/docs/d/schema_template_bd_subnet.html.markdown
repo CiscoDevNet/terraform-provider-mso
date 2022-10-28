@@ -13,12 +13,14 @@ Data source for MSO Schema Template Bridge Domain Subnet.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_bd_subnet" "bridge_domain_subnet" {
-  schema_id = "5ea809672c00003bc40a2799"
+  schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
-  bd_name = "testBD"
-  ip = "10.23.13.0/8"
+  bd_name       = "testBD"
+  ip            = "10.23.13.0/8"
 }
+
 ```
 
 ## Argument Reference ##

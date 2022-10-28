@@ -13,9 +13,11 @@ Data source for MSO schema
 ## Example Usage ##
 
 ```hcl
-data "mso_schema" "sample_schema" {
+
+data "mso_schema" "schema1" {
   name  = "schema1"
 }
+
 ```
 
 ## Argument Reference ##

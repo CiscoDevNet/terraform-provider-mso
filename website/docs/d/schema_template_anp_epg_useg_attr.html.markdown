@@ -13,13 +13,15 @@ Data source for MSO Schema Template Application Network Profiles Endpoint Groups
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
-  schema_id     = "5eafca7d2c000052860a2902"
+  schema_id     = data.mso_schema.schema1.id
   anp_name      = "sanp1"
   epg_name      = "nkuseg"
   template_name = "stemplate1"
   name          = "usg_test"
 }
+
 ```
 
 ## Argument Reference ##

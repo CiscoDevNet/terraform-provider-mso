@@ -13,12 +13,12 @@ Data Source for MSO Schema Template Service Graph
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_service_graph" "test_sg" {
-  schema_id          = "5f06a4c40f0000b63dbbd647"
+  schema_id          = data.mso_schema.schema1.id
   template_name      = "Template1"
   service_graph_name = "sgtf"
   node_index         = 1
-
 }
 
 ```

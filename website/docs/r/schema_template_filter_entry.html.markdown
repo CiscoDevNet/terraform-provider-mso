@@ -13,19 +13,21 @@ Manages MSO Resource Schema Template Filter Entry
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_filter_entry" "filter_entry" {
-		schema_id = "5c4d5bb72700000401f80948"
-		template_name = "Template1"
-		name = "Any"
-		display_name="Any"
-		entry_name = "testAcc"
-		entry_display_name="testAcc"
-		destination_from="unspecified"
-		destination_to="unspecified"
-		source_from="unspecified"
-		source_to="unspecified"
-		arp_flag="unspecified"
+  schema_id          = mso_schema.schema1.id
+  template_name      = "Template1"
+  name               = "Any"
+  display_name       = "Any"
+  entry_name         = "testAcc"
+  entry_display_name = "testAcc"
+  destination_from   = "unspecified"
+  destination_to     = "unspecified"
+  source_from        = "unspecified"
+  source_to          = "unspecified"
+  arp_flag           = "unspecified"
 }
+
 ```
 
 ## Argument Reference ##

@@ -13,17 +13,19 @@ Manages MSO Schema Template Bridge Domain Subnet.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_bd_subnet" "bdsub1" {
-  schema_id = "5ea809672c00003bc40a2799"
-  template_name = "Template1"
-  bd_name = "testBD"
-  ip = "10.23.13.0/8"
-  scope = "public"
-  description = "Description for the subnet"
-  shared = true
+  schema_id          = mso_schema.schema1.id
+  template_name      = "Template1"
+  bd_name            = mso_schema_template_bd.bridge_domain.name
+  ip                 = "10.23.13.0/8"
+  scope              = "public"
+  description        = "Description for the subnet"
+  shared             = true
   no_default_gateway = false
-  querier = true
+  querier            = true
 }
+
 ```
 
 ## Argument Reference ##

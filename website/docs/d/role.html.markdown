@@ -13,9 +13,11 @@ Data source for MSO role
 ## Example Usage ##
 
 ```hcl
-data "mso_role" "sample_role" {
+
+data "mso_role" "role" {
   name  = "UserManager"
 }
+
 ```
 
 ## Argument Reference ##

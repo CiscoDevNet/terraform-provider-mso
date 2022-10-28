@@ -13,13 +13,15 @@ description: |-
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_site_bd" "bd1" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  bd_name = "bd4"
+  schema_id     = mso_schema.schema1.id
+  bd_name       = mso_schema_template_bd.bridge_domain.name
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  host_route = false
+  site_id       = mso_schema_site.schema_site.site_id
+  host_route    = false
 }
+
 ```
 
 ## Argument Reference ##

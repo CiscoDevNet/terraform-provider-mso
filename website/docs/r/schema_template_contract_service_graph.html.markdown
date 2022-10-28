@@ -15,15 +15,15 @@ Manages MSO Schema Template Contract service graph.
 ```hcl
 
 resource "mso_schema_template_contract_service_graph" "one" {
-  schema_id               = "5f11b0e22c00001c4a812a2a"
-  site_id                 = "5c7c95b25100008f01c1ee3c"
+  schema_id               = mso_schema.schema1.id
+  site_id                 = mso_site.site1.id
   template_name           = "Template1"
-  contract_name           = "UntitledContract1"
-  service_graph_name      = "sg1"
-  service_graph_schema_id = "5f16a7c62c00006367812a2f"
+  contract_name           = mso_schema_template_contract.template_contract.contract_name
+  service_graph_name      = mso_schema_template_service_graph.test_sg.service_graph_name
+  service_graph_schema_id = mso_schema_template_service_graph.test_sg.schema_id
   node_relationship {
-    provider_connector_bd_name                = "BD1"
-    consumer_connector_bd_name                = "BD2"
+    provider_connector_bd_name                = mso_schema_template_bd.provider_bridge_domain.name
+    consumer_connector_bd_name                = mso_schema_template_bd.consumer_bridge_domain.name
     provider_connector_cluster_interface      = "test"
     consumer_connector_cluster_interface      = "test"
     provider_connector_redirect_policy_tenant = "NkAutomation"
@@ -34,11 +34,11 @@ resource "mso_schema_template_contract_service_graph" "one" {
     consumer_subnet_ips = ["1.2.3.4/20"]
   }
   node_relationship {
-    provider_connector_bd_name          = "CBD2"
-    provider_connector_bd_schema_id     = "5f16a7c62c00006367812a2f"
+    provider_connector_bd_name          = mso_schema_template_bd.provider_bridge_domain.name
+    provider_connector_bd_schema_id     = mso_schema_template_bd.provider_bridge_domain.schema_id
     provider_connector_bd_template_name = "Template1"
-    consumer_connector_bd_name          = "CBD1"
-    consumer_connector_bd_schema_id     = "5f16a7c62c00006367812a2f"
+    consumer_connector_bd_name          = mso_schema_template_bd.consumer_bridge_domain.name
+    consumer_connector_bd_schema_id     = mso_schema_template_bd.consumer_bridge_domain.schema_id
     consumer_connector_bd_template_name = "Template1"
     provider_connector_cluster_interface = "test"
     consumer_connector_cluster_interface = "test"

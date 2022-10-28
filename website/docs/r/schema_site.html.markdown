@@ -13,11 +13,13 @@ Manages MSO Schema Site
 ## Example Usage ##
 
 ```hcl
-resource "mso_schema_site" "foo_schema_site" {
+
+resource "mso_schema_site" "schema_site" {
   schema_id       =  mso_schema.schema1.id
   site_id         =  mso_site.site_test_1.id
   template_name   =  "template1"
 }
+
 ```
 NOTE: To add multiple sites, the tenant associated to schema must also be associated to the sites.
 

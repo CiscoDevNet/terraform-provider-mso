@@ -13,12 +13,14 @@ description: |-
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_site_bd" "st10" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  bd_name = "bd4"
+  schema_id     = data.mso_schema.schema1.id
+  bd_name       = "bd4"
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
+  site_id       = data.mso_site.site1.id
 }
+
 ```
 
 ## Argument Reference ##

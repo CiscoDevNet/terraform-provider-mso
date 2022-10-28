@@ -15,17 +15,17 @@ Manages MSO Schema Template External Endpoint Group.
 ```hcl
 
 resource "mso_schema_template_external_epg" "template_externalepg" {
-		schema_id           = "5f043b3b2c0000f47e812a0b"
-		template_name       = "Template1"
-		external_epg_name   = "temp_epg"
-    external_epg_type   = "cloud"
-		display_name        = "temp_epg"
-		vrf_name            = "Myvrf"
-    anp_name            = "ap1"
-    l3out_name          = "temp"
-    site_id             = ["5c7c95d9510000cf01c1ee3d"]
-    selector_name       = "check02"
-    selector_ip         = "12.23.34.45"
+  schema_id         = mso_schema.schema1.id
+  template_name     = "Template1"
+  external_epg_name = "temp_epg"
+  external_epg_type = "cloud"
+  display_name      = "temp_epg"
+  vrf_name          = mso_schema_template_vrf.vrf1.name
+  anp_name          = mso_schema_template_anp.anp1.name
+  l3out_name        = mso_schema_template_l3out.template_l3out.l3out_name
+  site_id           = [mso_schema_site.schema_site.site_id]
+  selector_name     = "check02"
+  selector_ip       = "12.23.34.45"
 }
 
 ```

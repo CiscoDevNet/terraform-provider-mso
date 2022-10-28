@@ -13,12 +13,14 @@ description: |-
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_site_vrf" "vrf1" {
   template_name = "Template1"
-  site_id = "5c7c95d9510000cf01c1ee3d"
-  schema_id ="5c6c16d7270000c710f8094d"
-  vrf_name = "vrf5810"
+  site_id       = mso_schema_site.schema_site.site_id
+  schema_id     = mso_schema.schema1.id
+  vrf_name      = mso_shema_template_vrf.vrf1.name
 }
+
 ```
 
 ## Argument Reference ##

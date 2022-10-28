@@ -13,12 +13,14 @@ Data source for MSO Schema Template External EPG Subnet.
 ## Example Usage ##
 
 ```hcl
+
 data "mso_schema_template_external_epg_subnet" "subnet1" {
-  schema_id = "5c6c16d7270000c710f8094d"
-  template_name = "Template1"
+  schema_id         = data.mso_schema.schema1.id
+  template_name     = "Template1"
   external_epg_name = "Internet"
-  ip = "30.1.1.0/24"
+  ip                = "30.1.1.0/24"
 }
+
 ```
 
 ## Argument Reference ##

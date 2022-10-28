@@ -16,19 +16,19 @@ Use ND provider for manipulating users on ND-based MSO/NDO.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_user" "user1" {
-  username      = "name1"
+  username       = "name1"
   user_password  = "password"
-  first_name="first_name"
-  last_name="last_name"
-  email="email@gmail.com"
-  phone="12345678910"
-  account_status="active"
-  roles{
-    roleid="0000ffff0000000000000031"
+  first_name     = "first_name"
+  last_name      = "last_name"
+  email          = "email@gmail.com"
+  phone          = "12345678910"
+  account_status = "active"
+  roles {
+    roleid = data.mso_role.role.id
   }
 }
-
 
 ```
 

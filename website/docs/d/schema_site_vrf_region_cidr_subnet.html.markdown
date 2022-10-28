@@ -13,14 +13,16 @@ description: |-
 ## Example Usage ##
 
 ```hcl
+
  data "mso_schema_site_vrf_region_cidr_subnet" "vrfRegion" {
-  schema_id = "5d5dbf3f2e0000580553ccce"
-  site_id = "5ce2de773700006a008a2678"
-  vrf_name = "Campus"
+  schema_id   = data.mso_schema.schema1.id
+  site_id     = data.mso_site.site1.id
+  vrf_name    = "Campus"
   region_name = "westus"
-  cidr_ip = "1.1.1.1/24"
-  ip = "207.168.240.1/24"
- }
+  cidr_ip     = "1.1.1.1/24"
+  ip          = "207.168.240.1/24"
+}
+
 ```
 
 ## Argument Reference ##

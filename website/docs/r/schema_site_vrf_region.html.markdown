@@ -15,10 +15,10 @@ Manages MSO Schema Site Vrf Region.
 ```hcl
 
 resource "mso_schema_site_vrf_region" "vrfRegion" {
-  schema_id           = "5efd6ea60f00005b0ebbd643"
+  schema_id           = mso_schema.schema1.id
   template_name       = "Template1"
-  site_id             = "5efeb3c4190000cc12d05376"
-  vrf_name            = "Myvrf"
+  site_id             = mso_schema_site.schema_site.site_id
+  vrf_name            = mso_schema_site_vrf.vrf1.vrf_name
   region_name         = "us-east-1"
   vpn_gateway         = true
   hub_network_enable  = true

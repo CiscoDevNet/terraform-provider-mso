@@ -13,19 +13,19 @@ Data source for MSO Schema Site ANP EPG Static Port.
 ## Example Usage ##
 
 ```hcl
-data "mso_schema_site_anp_epg_static_port" "static_port" {
-  schema_id = "5c4d5bb72700000401f80948"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = "Template1"
-  anp_name = "ANP"
-  epg_name = "DB"
-  path_type = "port"
-  pod = "pod-7"
-  leaf = "109"
-  path = "eth1/10"
- 
 
+data "mso_schema_site_anp_epg_static_port" "static_port" {
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
+  template_name = "Template1"
+  anp_name      = "ANP"
+  epg_name      = "DB"
+  path_type     = "port"
+  pod           = "pod-7"
+  leaf          = "109"
+  path          = "eth1/10"
 }
+
 ```
 
 ## Argument Reference ##

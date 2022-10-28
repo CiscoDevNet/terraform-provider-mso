@@ -39,10 +39,11 @@ resource "mso_schema" "schema1" {
 ### When template_name and tenant_id are used(DEPRECATED) ###
 
 ```hcl
-resource "mso_schema" "foo_schema" {
+
+resource "mso_schema" "schema1" {
   name          = "nkp12"
   template_name = "template1"
-  tenant_id     = "5ea000bd2c000058f90a26ab"
+  tenant_id     = mso_tenant.tenant1.id
 }
 
 ```

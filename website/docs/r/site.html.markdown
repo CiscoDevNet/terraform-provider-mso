@@ -13,13 +13,15 @@ Manages MSO Site
 ## Example Usage ##
 
 ```hcl
-resource "mso_site" "foo_site" {
-  name = "mso"
-  username = "admin"
-  password = "dummypass"
+
+resource "mso_site" "site1" {
+  name         = "mso"
+  username     = "admin"
+  password     = "dummypass"
   apic_site_id = "102"
-  urls = [ "mso_host" ]
+  urls         = ["mso_host"]
 }
+
 ```
 
 ## Argument Reference ##

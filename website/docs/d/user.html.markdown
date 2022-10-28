@@ -13,9 +13,11 @@ Data source for MSO User
 ## Example Usage ##
 
 ```hcl
+
 data "mso_user" "schema10" {
   username = "name"
 }
+
 ```
 
 ## Argument Reference ##

@@ -13,13 +13,15 @@ Manages MSO Schema Template L3Out.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_template_l3out" "template_l3out" {
-  schema_id = "5c6c16d7270000c710f8094d"
+  schema_id     = mso_schema.schema1.id
   template_name = "Template1"
-  l3out_name = "l3out1"
-  display_name = "l3out1"
-  vrf_name = "vrf2"
+  l3out_name    = "l3out1"
+  display_name  = "l3out1"
+  vrf_name      = mso_schema_template_vrf.vrf1.name
 }
+
 ```
 
 ## Argument Reference ##

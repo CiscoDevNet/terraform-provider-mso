@@ -13,15 +13,17 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups StaticLeaf.
 ## Example Usage ##
 
 ```hcl
+
 resource "mso_schema_site_anp_epg_static_leaf" "staticleaf1" {
-  schema_id = "5c4d9fca270000a101f8094a"
-  template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "Web"
-  path= "topology/pod-1/node-1001"
+  schema_id       = mso_schema.schema1.id
+  template_name   = "Template1"
+  site_id         = mso_schema_site.schema_site.site_id
+  anp_name        = mso_schema_site_anp_epg.site_anp_epg.anp_name
+  epg_name        = mso_schema_site_anp_epg.site_anp_epg.epg_name
+  path            = "topology/pod-1/node-1001"
   port_encap_vlan = 100
 }
+
 ```
 
 ## Argument Reference ##
