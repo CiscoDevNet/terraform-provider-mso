@@ -33,6 +33,34 @@ resource "mso_schema_template_vrf" "vrf" {
   display_name = "test_bd_vrf"
 }
 
+// MSO versions 3.2 and higher
+
+resource "mso_schema_template_bd" "bd" {
+  schema_id              = mso_schema.schema_1.id
+  template_name          = mso_schema.schema_1.template_name
+  name                   = "bd_demo"
+  display_name           = "bd_demo"
+  vrf_name               = mso_schema_template_vrf.vrf.name
+  vrf_schema_id          = mso_schema_template_vrf.vrf.schema_id
+  vrf_template_name      = mso_schema_template_vrf.vrf.template
+  layer2_unknown_unicast = "proxy"
+  intersite_bum_traffic  = false
+  optimize_wan_bandwidth = true
+  layer2_stretch         = true
+  layer3_multicast       = false
+  multi_destination_flooding = "flood_in_encap"
+  ipv6_unknown_multicast_flooding = "optimized_flooding"
+  unknown_multicast_flooding = "optimized_flooding"
+  dhcp_policies {
+      name = "Policy1"
+      version = 10
+      dhcp_option_policy_name = "Policy10"
+      dhcp_option_policy_version = 12
+  }
+}
+
+// MSO versions below 3.2
+
 resource "mso_schema_template_bd" "bd" {
   schema_id              = mso_schema.schema_1.id
   template_name          = mso_schema.schema_1.template_name
@@ -55,6 +83,4 @@ resource "mso_schema_template_bd" "bd" {
       dhcp_option_policy_name = "Policy10"
       dhcp_option_policy_version = 12
   }
-
-  
 }

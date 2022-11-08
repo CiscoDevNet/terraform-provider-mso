@@ -45,12 +45,19 @@ resource "mso_schema_template_bd" "bridge_domain" {
 * `ipv6_unknown_multicast_flooding` - (Optional) IPv6 Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
 * `multi_destination_flooding` - (Optional) Multi-destination flooding behavior. Allowed values are `flood_in_bd`, `drop` and `flood_in_encap`. Default to `flood_in_bd`.
 * `unknown_multicast_flooding` - (Optional) Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
+* `dhcp_policies` - (Optional) Block to provide dhcp_policy configurations. 
+* `dhcp_policies.name` - (Optional) Dhcp_policy name. Required if you specify the dhcp_policy.
+* `dhcp_policies.version` - (Optional) Version of dhcp_policy. Required if you specify the dhcp_policy.
+* `dhcp_policies.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
+* `dhcp_policies.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy.
+
+### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
+
 * `dhcp_policy` - (Optional) Map to provide dhcp_policy configurations. 
 * `dhcp_policy.name` - (Optional) dhcp_policy name. Required if you specify the dhcp_policy.
 * `dhcp_policy.version` - (Optional) Version of dhcp_policy. Required if you specify the dhcp_policy.
 * `dhcp_policy.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
 * `dhcp_policy.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy. Required if you specify the `dhcp_policy.dhcp_option_policy_name`.
-
 
 ## Attribute Reference ##
 
