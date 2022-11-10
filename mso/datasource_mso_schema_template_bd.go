@@ -110,9 +110,10 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 				Computed: true,
 			},
 			"dhcp_policy": &schema.Schema{
-				Type:     schema.TypeMap,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Configure dhcp policy in versions before NDO 3.2",
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
@@ -121,7 +122,7 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 							Computed: true,
 						},
 						"version": &schema.Schema{
-							Type:     schema.TypeString,
+							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
@@ -131,7 +132,7 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 							Computed: true,
 						},
 						"dhcp_option_policy_version": &schema.Schema{
-							Type:     schema.TypeString,
+							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
@@ -139,8 +140,9 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 				},
 			},
 			"dhcp_policies": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Configure dhcp policies in versions NDO 3.2 and higher",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{

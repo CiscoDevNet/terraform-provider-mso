@@ -41,10 +41,10 @@ data "mso_schema_template_bd" "bridge_domain" {
 * `layer2_stretch` - (Optional) Boolean flag to enable or disable the layer-2 stretch.
 * `layer3_multicast` - (Optional) Boolean flag to enable or disable layer 3 multicast traffic.
 * `dhcp_policies` - (Optional) Block to provide dhcp_policy configurations. 
-* `dhcp_policies.name` - (Optional) Dhcp_policy name. Required if you specify the dhcp_policy.
-* `dhcp_policies.version` - (Optional) Version of dhcp_policy. Required if you specify the dhcp_policy.
-* `dhcp_policies.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
-* `dhcp_policies.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy.
+  * `dhcp_policies.name` - (Optional) Dhcp_policy name. Required if you specify the dhcp_policy.
+  * `dhcp_policies.version` - (Optional) Version of dhcp_policy. Required if you specify the dhcp_policy.
+  * `dhcp_policies.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
+  * `dhcp_policies.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy.
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
 

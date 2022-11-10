@@ -57,6 +57,12 @@ resource "mso_schema_template_bd" "bd" {
       dhcp_option_policy_name = "Policy10"
       dhcp_option_policy_version = 12
   }
+  dhcp_policies {
+      name = "Policy1"
+      version = 20
+      dhcp_option_policy_name = "Policy20"
+      dhcp_option_policy_version = 22
+  }
 }
 
 // MSO versions below 3.2
