@@ -1,12 +1,6 @@
 package models
 
-type TemplateBD struct {
-	Ops   string                 `json:",omitempty"`
-	Path  string                 `json:",omitempty"`
-	Value map[string]interface{} `json:",omitempty"`
-}
-
-func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, multiDstPktAct, v6unkMcastAct, vmac string, intersiteBumTrafficAllow, optimizeWanBandwidth, l2Stretch, l3MCast, arpFlood, unicastRouting bool, vrfRef, dhcpLabel map[string]interface{}) *TemplateBD {
+func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, multiDstPktAct, v6unkMcastAct, vmac string, intersiteBumTrafficAllow, optimizeWanBandwidth, l2Stretch, l3MCast, arpFlood, unicastRouting bool, vrfRef, dhcpLabel map[string]interface{}, dhcpLabels []interface{}) *PatchPayload {
 	var bdMap map[string]interface{}
 	bdMap = map[string]interface{}{
 		"name":                     name,
@@ -24,6 +18,7 @@ func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, mul
 		"l3MCast":                  l3MCast,
 		"vrfRef":                   vrfRef,
 		"dhcpLabel":                dhcpLabel,
+		"dhcpLabels":               dhcpLabels,
 		"subnets":                  []interface{}{},
 	}
 
@@ -51,25 +46,17 @@ func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, mul
 		bdMap["v6unkMcastAct"] = "flood"
 	}
 
+	if bdMap["vmac"] == "" {
+		delete(bdMap, "vmac")
+	}
+
 	if len(dhcpLabel) == 0 {
 		delete(bdMap, "dhcpLabel")
 	}
 
-	return &TemplateBD{
+	return &PatchPayload{
 		Ops:   ops,
 		Path:  path,
 		Value: bdMap,
 	}
-
-}
-
-func (bdAttributes *TemplateBD) ToMap() (map[string]interface{}, error) {
-	bdAttributesMap := make(map[string]interface{})
-	A(bdAttributesMap, "op", bdAttributes.Ops)
-	A(bdAttributesMap, "path", bdAttributes.Path)
-	if bdAttributes.Value != nil {
-		A(bdAttributesMap, "value", bdAttributes.Value)
-	}
-
-	return bdAttributesMap, nil
 }
