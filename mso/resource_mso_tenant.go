@@ -44,6 +44,12 @@ func resourceMSOTenant() *schema.Resource {
 				Computed: true,
 			},
 
+			"orchestrator_only": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+
 			"user_associations": &schema.Schema{
 				Type: schema.TypeSet,
 				Elem: &schema.Resource{
@@ -867,7 +873,8 @@ func resourceMSOTenantDelete(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	dn := d.Id()
-	err := msoClient.DeletebyId(fmt.Sprintf("api/v1/tenants/%v", dn))
+	orchestratorOnly := d.Get("orchestrator_only").(bool)
+	err := msoClient.DeletebyId(fmt.Sprintf("api/v1/tenants/%v?msc-only=%v", dn, orchestratorOnly))
 	if err != nil {
 		return err
 	}

@@ -68,6 +68,7 @@ resource "mso_tenant" "tenant01" {
 * `name` - (Required) The name of the tenant.
 * `display_name` - (Required) The name of the tenant to be displayed in the web UI.
 * `description` - (Optional) The description for this tenant.
+* `orchestrator_only` - (Optional) Option to delete this tenant only from orchestrator or not.
 * `user_associations` - (Optional) A list of associated users for this tenant.
 * `site_association` - (Optional) A list of associated sites for this tenant.
 * `site_association.site_id` - (Optional) Id of site to associate with this Tenant.
