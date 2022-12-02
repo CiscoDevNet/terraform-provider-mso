@@ -271,7 +271,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					if vmac != "{}" {
 						d.Set("virtual_mac_address", vmac)
 					} else {
-						d.Set("virtual_mac_address", "")
+						d.Set("virtual_mac_address", nil)
 					}
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
