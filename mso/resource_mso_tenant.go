@@ -47,7 +47,7 @@ func resourceMSOTenant() *schema.Resource {
 			"orchestrator_only": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  true,
+				Default:  false,
 			},
 
 			"user_associations": &schema.Schema{
