@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -16,6 +17,7 @@ func resourceMSOSchemaSite() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteCreate,
 		Read:   resourceMSOSchemaSiteRead,
+		Update: resourceMSOSchemaSiteUpdate,
 		Delete: resourceMSOSchemaSiteDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -44,6 +46,12 @@ func resourceMSOSchemaSite() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+
+			"undeploy_on_delete": &schema.Schema{
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
 			},
 		}),
 	}
@@ -185,12 +193,42 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+func resourceMSOSchemaSiteUpdate(d *schema.ResourceData, m interface{}) error {
+	d.Set("undeploy_on_delete", d.Get("undeploy_on_delete").(bool))
+	return nil
+}
+
 func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 	siteId := d.Get("site_id").(string)
 	templateName := d.Get("template_name").(string)
+
+	versionInt, err := msoClient.CompareVersion("3.7.0.0")
+
+	if d.Get("undeploy_on_delete").(bool) && versionInt == -1 {
+		payload, err := container.ParseJSON([]byte(fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "undeploy": ["%s"]}`, schemaId, templateName, siteId)))
+		if err != nil {
+			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
+			return err
+		}
+		req, err := msoClient.MakeRestRequest("POST", "mso/api/v1/task", payload, true)
+		if err != nil {
+			log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
+			return err
+		}
+		_, _, err = msoClient.Do(req)
+		if err != nil {
+			log.Printf("[DEBUG] Request failed with err: %s.", err)
+			return err
+		}
+	} else if d.Get("undeploy_on_delete").(bool) && err == nil {
+		_, err := msoClient.GetViaURL(fmt.Sprintf("/api/v1/execute/schema/%s/template/%s?undeploy=%s", schemaId, templateName, siteId))
+		if err != nil {
+			return err
+		}
+	}
 
 	schemasite := models.NewSchemaSite("remove", fmt.Sprintf("/sites/%s-%s", siteId, templateName), siteId, templateName)
 
