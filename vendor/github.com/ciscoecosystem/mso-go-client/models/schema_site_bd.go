@@ -6,10 +6,10 @@ type SiteBd struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaSiteBd(ops, path string, anpRef map[string]interface{},host bool) *SiteBd {
+func NewSchemaSiteBd(ops, path string, anpRef map[string]interface{}, host bool) *SiteBd {
 	var externalepgMap map[string]interface{}
 	externalepgMap = map[string]interface{}{
-		"bdRef":      anpRef,
+		"bdRef":            anpRef,
 		"hostBasedRouting": host,
 	}
 

@@ -6,11 +6,11 @@ type SiteAnpEpgStaticLeaf struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaSiteAnpEpgStaticleaf(ops, path , paths string, port int) *SiteAnpEpgStaticLeaf {
+func NewSchemaSiteAnpEpgStaticleaf(ops, path, paths string, port int) *SiteAnpEpgStaticLeaf {
 	var externalepgMap map[string]interface{}
 	externalepgMap = map[string]interface{}{
-		"path":      paths,
-		"portEncapVlan":port,
+		"path":          paths,
+		"portEncapVlan": port,
 	}
 
 	return &SiteAnpEpgStaticLeaf{

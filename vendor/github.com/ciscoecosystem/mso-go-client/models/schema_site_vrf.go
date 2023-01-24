@@ -9,8 +9,8 @@ type SiteVrf struct {
 func NewSchemaSiteVrf(ops, path string, vrfRef map[string]interface{}) *SiteVrf {
 	var externalepgMap map[string]interface{}
 	externalepgMap = map[string]interface{}{
-		"vrfRef":      vrfRef,
-		"regions":     []interface{}{},
+		"vrfRef":  vrfRef,
+		"regions": []interface{}{},
 	}
 
 	return &SiteVrf{

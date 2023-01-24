@@ -1,42 +1,38 @@
 package models
 
 type User struct {
-	Id           string  `json:",omitempty"`
+	Id           string `json:",omitempty"`
 	User         string `json:",omitempty"`
 	UserPassword string `json:",omitempty"`
 
 	FirstName string `json:",omitempty"`
 
-	LastName string `json:",omitempty"`
-	Email string `json:",omitempty"`
-	Phone string `json:",omitempty"`
-	AccountStatus string `json:",omitempty"`
-	Domain string `json:",omitempty"`
-	Roles []interface{} `json:",omitempty"`
-	
+	LastName      string        `json:",omitempty"`
+	Email         string        `json:",omitempty"`
+	Phone         string        `json:",omitempty"`
+	AccountStatus string        `json:",omitempty"`
+	Domain        string        `json:",omitempty"`
+	Roles         []interface{} `json:",omitempty"`
 }
 
 // type Roles struct {
 // 	RoleId:
-	
+
 // }
 
+func NewUser(id, user, userPassword, firstName, lastName, email, phone, accountStatus, domain string, roles []interface{}) *User {
 
-
-func NewUser (id, user, userPassword, firstName,lastName,email,phone,accountStatus,domain string,roles []interface{}) *User {
-	
 	return &User{
-		Id:  id,
-		User: user,
+		Id:            id,
+		User:          user,
 		UserPassword:  userPassword,
-		FirstName:  firstName,
-		LastName:  lastName,
-		Email: email,
-		Phone:phone,
+		FirstName:     firstName,
+		LastName:      lastName,
+		Email:         email,
+		Phone:         phone,
 		AccountStatus: accountStatus,
-		Domain:       domain,
-		Roles:roles,
-
+		Domain:        domain,
+		Roles:         roles,
 	}
 }
 
@@ -52,7 +48,6 @@ func (user *User) ToMap() (map[string]interface{}, error) {
 	A(userAttributeMap, "accountStatus", user.AccountStatus)
 	A(userAttributeMap, "domainId", user.Domain)
 	A(userAttributeMap, "roles", user.Roles)
-
 
 	return userAttributeMap, nil
 }

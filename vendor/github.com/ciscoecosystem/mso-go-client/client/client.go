@@ -11,9 +11,11 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
+	"github.com/hashicorp/go-version"
 )
 
 const msoAuthPayload = `{
@@ -31,12 +33,14 @@ type Client struct {
 	BaseURL            *url.URL
 	httpClient         *http.Client
 	AuthToken          *Auth
+	Mutex              sync.Mutex
 	username           string
 	password           string
 	insecure           bool
 	proxyUrl           string
 	domain             string
 	platform           string
+	version            string
 	skipLoggingPayload bool
 }
 
@@ -72,6 +76,12 @@ func Domain(domain string) Option {
 func Platform(platform string) Option {
 	return func(client *Client) {
 		client.platform = platform
+	}
+}
+
+func Version(version string) Option {
+	return func(client *Client) {
+		client.version = version
 	}
 }
 
@@ -174,7 +184,7 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	log.Printf("HTTP request %s %s", method, path)
+	log.Printf("[DEBUG] HTTP request %s %s", method, path)
 
 	if authenticated {
 
@@ -183,7 +193,7 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 			return req, err
 		}
 	}
-	log.Printf("HTTP request after injection %s %s", method, path)
+	log.Printf("[DEBUG] HTTP request after injection %s %s", method, path)
 
 	return req, nil
 }
@@ -287,6 +297,52 @@ func (c *Client) GetDomainId(domain string) (string, error) {
 	return "", fmt.Errorf("Unable to find domain id for domain %s", domain)
 }
 
+func (c *Client) GetVersion() (string, error) {
+	req, err := c.MakeRestRequest("GET", "/api/v1/platform/version", nil, true)
+	if err != nil {
+		return "unknown", err
+	}
+
+	obj, _, err := c.Do(req)
+	if err != nil {
+		return "unknown", err
+	}
+
+	err = CheckForErrors(obj, "GET")
+	if err != nil {
+		return "unknown", err
+	}
+
+	version := stripQuotes(obj.Search("version").String())
+	if version == "" {
+		return "unknown", fmt.Errorf("Unable to identify version")
+	}
+	c.version = version
+	return version, nil
+}
+
+// Compares the version to the retrieved version.
+// This returns -1, 0, or 1 if this version is smaller, equal, or larger than the retrieved version, respectively.
+func (c *Client) CompareVersion(v string) (int, error) {
+	if c.version == "" {
+		c.GetVersion()
+	}
+	if c.version == "unknown" {
+		return 0, fmt.Errorf("Could not retrieve version")
+	}
+
+	v1, err := version.NewVersion(c.version)
+	if err != nil {
+		return 0, fmt.Errorf("Could not parse retrieved version")
+	}
+	v2, err := version.NewVersion(v)
+	if err != nil {
+		return 0, fmt.Errorf("Could not parse version")
+	}
+
+	return v2.Compare(v1), nil
+}
+
 func StrtoInt(s string, startIndex int, bitSize int) (int64, error) {
 	return strconv.ParseInt(s, startIndex, bitSize)
 }
@@ -301,12 +357,13 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Printf("nHTTP Response: %d %s %v", resp.StatusCode, resp.Status, resp)
+	log.Printf("[DEBUG] HTTP Request: %s %s", req.Method, req.URL.String())
+	log.Printf("[DEBUG] HTTP Response: %d %s %v", resp.StatusCode, resp.Status, resp)
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	bodyStr := string(bodyBytes)
 	resp.Body.Close()
-	log.Printf("\n HTTP response unique string %s %s %s", req.Method, req.URL.String(), bodyStr)
+	log.Printf("[DEBUG] HTTP response unique string %s %s %s", req.Method, req.URL.String(), bodyStr)
 	if req.Method != "DELETE" && resp.StatusCode != 204 {
 		obj, err := container.ParseJSON(bodyBytes)
 

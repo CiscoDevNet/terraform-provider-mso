@@ -1,8 +1,8 @@
 package models
 
 type TemplateContractFilter struct {
-	Ops   string                 `json:",omitempty"`
-	Path  string                 `json:",omitempty"`
+	Ops   string `json:",omitempty"`
+	Path  string `json:",omitempty"`
 	Value string `json:",omitempty"`
 }
 
@@ -13,7 +13,7 @@ type TemplateContractFilterRelationShip struct {
 }
 
 func NewTemplateContractFilter(ops, path, filterType string) *TemplateContractFilter {
-	
+
 	return &TemplateContractFilter{
 		Ops:   ops,
 		Path:  path,
@@ -26,9 +26,8 @@ func NewTemplateContractFilterRelationShip(ops, path string, filterRef map[strin
 	var contractMap map[string]interface{}
 	if ops != "remove" {
 		contractMap = map[string]interface{}{
-			"filterRef":                              filterRef,
-			"directives":                             directives,
-			
+			"filterRef":  filterRef,
+			"directives": directives,
 		}
 	} else {
 		contractMap = nil
@@ -62,4 +61,3 @@ func (FilterAttributes *TemplateContractFilterRelationShip) ToMap() (map[string]
 
 	return FilterAttributesMap, nil
 }
-

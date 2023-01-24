@@ -9,8 +9,8 @@ type SiteAnp struct {
 func NewSchemaSiteAnp(ops, path string, anpRef map[string]interface{}) *SiteAnp {
 	var externalepgMap map[string]interface{}
 	externalepgMap = map[string]interface{}{
-		"anpRef":      anpRef,
-		"epgs":        []interface{}{},
+		"anpRef": anpRef,
+		"epgs":   []interface{}{},
 	}
 
 	return &SiteAnp{
