@@ -48,7 +48,7 @@ func resourceMSOSchemaSite() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
-			"undeploy_on_delete": &schema.Schema{
+			"undeploy_on_destroy": &schema.Schema{
 				Type:     schema.TypeBool,
 				Default:  false,
 				Optional: true,
@@ -194,7 +194,7 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceMSOSchemaSiteUpdate(d *schema.ResourceData, m interface{}) error {
-	d.Set("undeploy_on_delete", d.Get("undeploy_on_delete").(bool))
+	d.Set("undeploy_on_destroy", d.Get("undeploy_on_destroy").(bool))
 	return nil
 }
 
@@ -207,7 +207,7 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 
 	versionInt, err := msoClient.CompareVersion("3.7.0.0")
 
-	if d.Get("undeploy_on_delete").(bool) && versionInt == -1 {
+	if d.Get("undeploy_on_destroy").(bool) && versionInt == -1 {
 		payload, err := container.ParseJSON([]byte(fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "undeploy": ["%s"]}`, schemaId, templateName, siteId)))
 		if err != nil {
 			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
@@ -223,7 +223,7 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 			log.Printf("[DEBUG] Request failed with err: %s.", err)
 			return err
 		}
-	} else if d.Get("undeploy_on_delete").(bool) && err == nil {
+	} else if d.Get("undeploy_on_destroy").(bool) && err == nil {
 		_, err := msoClient.GetViaURL(fmt.Sprintf("/api/v1/execute/schema/%s/template/%s?undeploy=%s", schemaId, templateName, siteId))
 		if err != nil {
 			return err

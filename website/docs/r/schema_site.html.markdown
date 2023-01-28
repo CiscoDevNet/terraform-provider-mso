@@ -41,9 +41,10 @@ resource "mso_schema_site" "foo_schema_site_2" {
 
 ## Argument Reference ##
 
-* `schema_id`     - (Required) name of the schema.
-* `site_id`       - (Required) Site-id to associate.
-* `template_name` - (Required) Template to be deployed on the site.
+* `schema_id`          - (Required) name of the schema.
+* `site_id`            - (Required) Site-id to associate.
+* `template_name`      - (Required) Template to be deployed on the site.
+* `undeploy_on_destroy` - (Optional) Boolean flag to undeploy templates from site prior to destroy. Default value is set to false. Only supported for NDO version 3.7 and higher.
 
 ## Attribute Reference ##
 
