@@ -1,25 +1,23 @@
 package models
 
 type SchemaTemplateAnp struct {
-	Ops         string `json:",omitempty"`
-	Path         string `json:",omitempty"`
-	Value       map[string]interface{} `json:",omitempty"`
-	
+	Ops   string                 `json:",omitempty"`
+	Path  string                 `json:",omitempty"`
+	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateAnp(ops, path, Name,displayName string) *SchemaTemplateAnp {
+func NewSchemaTemplateAnp(ops, path, Name, displayName string) *SchemaTemplateAnp {
 	var VrfMap map[string]interface{}
-	
-	if ops !="remove" {
+
+	if ops != "remove" {
 		VrfMap = map[string]interface{}{
-			"displayName":     displayName,
-			"name":            Name,
+			"displayName": displayName,
+			"name":        Name,
 			"epgs":        []interface{}{},
-			
 		}
-	}else{
-		
-		VrfMap=nil
+	} else {
+
+		VrfMap = nil
 	}
 
 	return &SchemaTemplateAnp{

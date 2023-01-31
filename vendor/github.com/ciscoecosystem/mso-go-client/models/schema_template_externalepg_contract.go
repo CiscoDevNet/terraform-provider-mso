@@ -8,15 +8,14 @@ type ExternalEpgContract struct {
 
 func NewTemplateExternalEpgContract(ops, path, relationshipType string, contractRefMap map[string]interface{}) *ExternalEpgContract {
 	var contractMap map[string]interface{}
-	if(ops != "remove"){
-	contractMap = map[string]interface{}{
-		"relationshipType":                      relationshipType,
-		"contractRef":                           contractRefMap,
+	if ops != "remove" {
+		contractMap = map[string]interface{}{
+			"relationshipType": relationshipType,
+			"contractRef":      contractRefMap,
+		}
+	} else {
+		contractMap = nil
 	}
-	} else{
-		contractMap = nil;
-	}
-
 
 	return &ExternalEpgContract{
 		Ops:   ops,

@@ -10,9 +10,9 @@ func NewSchemaSiteVrfRegionCidrSubnet(ops, path, ip, zone, usage string) *Schema
 	var bdsubnetMap map[string]interface{}
 	if ops != "remove" {
 		bdsubnetMap = map[string]interface{}{
-			"ip":               ip,
-			"zone":             zone,
-			"usage":            usage,
+			"ip":    ip,
+			"zone":  zone,
+			"usage": usage,
 		}
 	} else {
 		bdsubnetMap = nil

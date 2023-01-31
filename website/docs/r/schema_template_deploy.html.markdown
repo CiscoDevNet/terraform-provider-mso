@@ -10,6 +10,8 @@ description: |-
 
 Manages deploy/undeploy operations for schema template on sites.
 
+This resource is deprecated for NDO v4.1 and later. Use resource mso_schema_template_deploy_ndo instead. 
+
 ## Example Usage ##
 
 ```hcl

@@ -6,7 +6,7 @@ type TemplateFilterEntry struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateFilterEntry(ops, path, entryName, entryDisplayName, entryDescription, etherType, arpFlag, ipProtocol, sourceFrom, sourceTo, destinationFrom, destinationTo string , matchOnlyFragments, stateful bool, tcpSessionRules []interface{}) *TemplateFilterEntry {
+func NewTemplateFilterEntry(ops, path, entryName, entryDisplayName, entryDescription, etherType, arpFlag, ipProtocol, sourceFrom, sourceTo, destinationFrom, destinationTo string, matchOnlyFragments, stateful bool, tcpSessionRules []interface{}) *TemplateFilterEntry {
 	var anpepgMap map[string]interface{}
 
 	anpepgMap = map[string]interface{}{
@@ -26,29 +26,28 @@ func NewTemplateFilterEntry(ops, path, entryName, entryDisplayName, entryDescrip
 		"tcpSessionRules":    tcpSessionRules,
 	}
 
-	if anpepgMap["etherType"]==""{
-		anpepgMap["etherType"]="unspecified"
+	if anpepgMap["etherType"] == "" {
+		anpepgMap["etherType"] = "unspecified"
 	}
-	if anpepgMap["arpFlag"]==""{
-		anpepgMap["arpFlag"]="unspecified"
+	if anpepgMap["arpFlag"] == "" {
+		anpepgMap["arpFlag"] = "unspecified"
 	}
-	if anpepgMap["ipProtocol"]==""{
-		anpepgMap["ipProtocol"]="unspecified"
-	}
-	
-	if anpepgMap["sourceFrom"]==""{
-		anpepgMap["sourceFrom"]="unspecified"
-	}
-	if anpepgMap["sourceTo"]==""{
-		anpepgMap["sourceTo"]="unspecified"
-	}
-	if anpepgMap["destinationTo"]==""{
-		anpepgMap["destinationTo"]="unspecified"
-	}
-	if anpepgMap["destinationFrom"]==""{
-		anpepgMap["destinationFrom"]="unspecified"
+	if anpepgMap["ipProtocol"] == "" {
+		anpepgMap["ipProtocol"] = "unspecified"
 	}
 
+	if anpepgMap["sourceFrom"] == "" {
+		anpepgMap["sourceFrom"] = "unspecified"
+	}
+	if anpepgMap["sourceTo"] == "" {
+		anpepgMap["sourceTo"] = "unspecified"
+	}
+	if anpepgMap["destinationTo"] == "" {
+		anpepgMap["destinationTo"] = "unspecified"
+	}
+	if anpepgMap["destinationFrom"] == "" {
+		anpepgMap["destinationFrom"] = "unspecified"
+	}
 
 	return &TemplateFilterEntry{
 		Ops:   ops,
@@ -84,7 +83,3 @@ func (anpAttributes *TemplateFilterEntry) ToMap() (map[string]interface{}, error
 
 	return anpAttributesMap, nil
 }
-
-
-
-

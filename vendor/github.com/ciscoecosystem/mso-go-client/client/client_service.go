@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -44,7 +45,9 @@ func (c *Client) Put(endpoint string, obj models.Model) (*container.Container, e
 		return nil, err
 	}
 
+	c.Mutex.Lock()
 	cont, _, err := c.Do(req)
+	c.Mutex.Unlock()
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +122,7 @@ func (c *Client) PatchbyID(endpoint string, objList ...models.Model) (*container
 		contJs.ArrayAppend(jsonPayload.Data())
 
 	}
-
+	log.Printf("[DEBUG] Patch Request Container: %v\n", contJs)
 	// URL encoding
 	baseUrl, _ := url.Parse(endpoint)
 	qs := url.Values{}
@@ -131,7 +134,9 @@ func (c *Client) PatchbyID(endpoint string, objList ...models.Model) (*container
 		return nil, err
 	}
 
+	c.Mutex.Lock()
 	cont, _, err := c.Do(req)
+	c.Mutex.Unlock()
 	if err != nil {
 		return nil, err
 	}

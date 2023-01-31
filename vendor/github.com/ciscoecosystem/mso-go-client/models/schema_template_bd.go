@@ -1,5 +1,11 @@
 package models
 
+type TemplateBD struct {
+	Ops   string                 `json:",omitempty"`
+	Path  string                 `json:",omitempty"`
+	Value map[string]interface{} `json:",omitempty"`
+}
+
 func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, multiDstPktAct, v6unkMcastAct, vmac string, intersiteBumTrafficAllow, optimizeWanBandwidth, l2Stretch, l3MCast, arpFlood, unicastRouting bool, vrfRef, dhcpLabel map[string]interface{}, dhcpLabels []interface{}) *PatchPayload {
 	var bdMap map[string]interface{}
 	bdMap = map[string]interface{}{

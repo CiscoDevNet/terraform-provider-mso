@@ -63,8 +63,11 @@ func A(data map[string]interface{}, key string, value interface{}) {
 	}
 }
 
-func G(cont *container.Container, key string) string {
-	return StripQuotes(cont.S(key).String())
+func G(cont *container.Container, key ...string) string {
+	if cont.Exists(key...) {
+		return StripQuotes(cont.S(key...).String())
+	}
+	return ""
 }
 
 func ListFromContainer(cont *container.Container, klass string) []*container.Container {
@@ -84,4 +87,13 @@ func CurlyBraces(value string) string {
 	} else {
 		return value
 	}
+}
+
+func StringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }

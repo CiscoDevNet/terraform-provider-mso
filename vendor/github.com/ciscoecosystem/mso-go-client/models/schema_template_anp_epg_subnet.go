@@ -1,24 +1,23 @@
 package models
 
 type SchemaTemplateAnpEpgSubnet struct {
-	Ops         string `json:",omitempty"`
-	Path         string `json:",omitempty"`
-	Value       map[string]interface{} `json:",omitempty"`
-	
+	Ops   string                 `json:",omitempty"`
+	Path  string                 `json:",omitempty"`
+	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateAnpEpgSubnet(ops, path, ip,scope string,shared bool) *SchemaTemplateAnpEpgSubnet{
+func NewSchemaTemplateAnpEpgSubnet(ops, path, ip, scope string, shared bool) *SchemaTemplateAnpEpgSubnet {
 	var SubnetMap map[string]interface{}
-	
-	if ops !="remove" {
+
+	if ops != "remove" {
 		SubnetMap = map[string]interface{}{
 			"ip":     ip,
-			"scope":    scope,
-			"shared":   shared,
+			"scope":  scope,
+			"shared": shared,
 		}
-	}else{
-		
-		SubnetMap=nil
+	} else {
+
+		SubnetMap = nil
 	}
 
 	return &SchemaTemplateAnpEpgSubnet{
