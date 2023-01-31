@@ -1,3 +1,12 @@
+## 0.8.0 (January 31, 2023)
+BUG FIXES:
+- Fix concurrency issues by implementing a mutex in the MSO/NDO Golang client
+
+IMPROVEMENTS:
+- Add mso_schema_template_deploy_ndo resource to support NDO4.1+ deploy API (#165)
+- Add support for multiple DHCP Label policies in mso_schema_template_bd (#161)
+- Add option in mso_tenant to decide if deleting tenant from mso/ndo only or not (#162)
+
 ## 0.7.1 (October 14, 2022)
 BUG FIXES:
 - Fix Cloud EPG default attribute issue in mso_schema_template_anp_epg

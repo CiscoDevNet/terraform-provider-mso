@@ -419,7 +419,7 @@ func resourceMSOSchemaDelete(d *schema.ResourceData, m interface{}) error {
 	return err
 }
 
-//Helper function 1 for sets
+// Helper function 1 for sets
 func differenceInMaps(mapSlice1, mapSlice2 *schema.Set) []interface{} {
 	var difference []interface{}
 	for i := 0; i < 1; i++ {
@@ -442,7 +442,7 @@ func differenceInMaps(mapSlice1, mapSlice2 *schema.Set) []interface{} {
 	return difference
 }
 
-//Helper function 2 for lists
+// Helper function 2 for lists
 func differenceInLists(mapSlice1, mapSlice2 []interface{}) []interface{} {
 	var difference []interface{}
 	for i := 0; i < 1; i++ {
