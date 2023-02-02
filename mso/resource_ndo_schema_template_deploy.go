@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -19,6 +20,15 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 		Delete: resourceNDOSchemaTemplateDeployDelete,
 
 		SchemaVersion: version,
+
+		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+			// Plan time validation.
+			msoClient := v.(*client.Client)
+			if msoClient.GetPlatform() != "nd" {
+				return errors.New(`The 'mso_schema_template_deploy_ndo' resource is only supported for nd based platforms, 'platform=nd' must be configured in the provider section of your configuration.`)
+			}
+			return nil
+		},
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -52,7 +62,7 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 	log.Printf("[DEBUG] %s: Beginning Template Deploy Execution", d.Id())
 	templateName := d.Get("template_name").(string)
 	schemaId := d.Get("schema_id").(string)
-	path := "mso/api/v1/task"
+	path := "api/v1/task"
 
 	msoClient := m.(*client.Client)
 
@@ -71,9 +81,9 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 		log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 		return err
 	}
-	_, _, err = msoClient.Do(req)
-	if err != nil {
-		log.Printf("[DEBUG] Request failed with err: %s.", err)
+	_, resp, err := msoClient.Do(req)
+	if err != nil || resp.StatusCode != 202 {
+		log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 		return err
 	}
 
