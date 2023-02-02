@@ -14,6 +14,14 @@ Manages deploy and redeploy operations of schema templates for NDO v3.7 and high
 
 ```hcl
 
+provider "mso" {
+  username = "" # <MSO username>
+  password = "" # <MSO pwd>
+  url      = "" # <MSO URL>
+  insecure = true
+  platform = "nd"
+}
+
 resource "mso_schema_template_deploy_ndo" "template_deployer" {
   schema_id     = mso_schema.schema1.id
   template_name = "Template1"
@@ -29,6 +37,7 @@ resource "mso_schema_template_deploy_ndo" "template_deployer" {
 
 ### Notes ###
 
+* This resource requires 'platform = "nd"' to be configured in the provider configuration section.
 * This resource is intentionally created non-idempotent so that it deploys the template in every run, it will not fail if there is no change and we deploy or redeploy the template again. When destroying the resource, no action is taken.
 * Prior to deploy or redeploy a schema validation is executed. When schema validation fails, the resource will fail and deploy or redeploy will not be executed.
 * A template can only be undeployed from a site by disassociating the site from the template with the resource mso_schema_site.

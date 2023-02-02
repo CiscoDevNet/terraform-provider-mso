@@ -6,11 +6,13 @@ terraform {
   }
 }
 
+// mso_schema_template_deploy_ndo resource will only work when platform is set to nd
 provider "mso" {
   username = "" # <MSO username>
   password = "" # <MSO pwd>
   url      = "" # <MSO URL>
   insecure = true
+  platform = "nd"
 }
 
 resource "mso_site" "site_test_1" {

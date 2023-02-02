@@ -213,14 +213,14 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
 			return err
 		}
-		req, err := msoClient.MakeRestRequest("POST", "mso/api/v1/task", payload, true)
+		req, err := msoClient.MakeRestRequest("POST", "api/v1/task", payload, true)
 		if err != nil {
 			log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 			return err
 		}
-		_, _, err = msoClient.Do(req)
-		if err != nil {
-			log.Printf("[DEBUG] Request failed with err: %s.", err)
+		_, resp, err := msoClient.Do(req)
+		if err != nil || resp.StatusCode != 202 {
+			log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 			return err
 		}
 	} else if d.Get("undeploy_on_destroy").(bool) && err == nil {
@@ -228,6 +228,8 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else if d.Get("undeploy_on_destroy").(bool) {
+		log.Printf("[WARNING] Failed to compare version. Template could not be undeployed prior to schema site deletion. Err: %s.", err)
 	}
 
 	schemasite := models.NewSchemaSite("remove", fmt.Sprintf("/sites/%s-%s", siteId, templateName), siteId, templateName)
