@@ -3,4 +3,6 @@
 **/terraform.tfstate
 **/terraform.tfstate.backup
 **/.vscode
+**/.vscode/*
 **/.terraform.lock.hcl
+**/*.log

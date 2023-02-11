@@ -52,6 +52,7 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
+				DefaultFunc: schema.EnvDefaultFunc("MSO_PLATFORM", "mso"),
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
 					"nd",
@@ -90,6 +91,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf":                        resourceMSOSchemaSiteVrf(),
 			"mso_schema_site_vrf_region":                 resourceMSOSchemaSiteVrfRegion(),
 			"mso_schema_site_bd_subnet":                  resourceMSOSchemaSiteBdSubnet(),
+			"mso_schema_site_l3out":                      resourceMSOSchemaSiteL3out(),
 			"mso_rest":                                   resourceMSORest(),
 			"mso_schema_template_deploy":                 resourceMSOSchemaTemplateDeploy(),
 			"mso_schema_template_deploy_ndo":             resourceNDOSchemaTemplateDeploy(),
@@ -144,6 +146,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_vrf":                        dataSourceMSOSchemaSiteVrf(),
 			"mso_schema_site_vrf_region":                 dataSourceMSOSchemaSiteVrfRegion(),
 			"mso_schema_site_bd_subnet":                  dataSourceMSOSchemaSiteBdSubnet(),
+			"mso_schema_site_l3out":                      datasourceMSOSchemaSiteL3out(),
 			"mso_schema_site_vrf_region_cidr_subnet":     dataSourceMSOSchemaSiteVrfRegionCidrSubnet(),
 			"mso_schema_site_vrf_region_cidr":            dataSourceMSOSchemaSiteVrfRegionCidr(),
 			"mso_schema_template_anp_epg_selector":       datasourceMSOSchemaTemplateAnpEpgSelector(),
