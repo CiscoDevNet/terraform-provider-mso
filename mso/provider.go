@@ -51,7 +51,7 @@ func Provider() terraform.ResourceProvider {
 			"platform": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_PLATFORM", nil),
+				DefaultFunc: schema.EnvDefaultFunc("MSO_PLATFORM", "mso"),
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
