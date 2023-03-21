@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strconv"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -20,9 +20,9 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 		Update: resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate,
 		Delete: resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete,
 
-		// Importer: &schema.ResourceImporter{
-		// 	State: resourceMSOSchemaSiteAnpEpgBulkStaticPortImport,
-		// },
+		Importer: &schema.ResourceImporter{
+			State: resourceMSOSchemaSiteAnpEpgBulkStaticPortImport,
+		},
 
 		SchemaVersion: version,
 
@@ -57,67 +57,6 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"path_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"port",
-					"vpc",
-					"dpc",
-				}, false),
-			},
-			"pod": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"leaf": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"path": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"vlan": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"deployment_immediacy": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"immediate",
-					"lazy",
-				}, false),
-			},
-			"fex": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringIsNotEmpty,
-			},
-			"micro_seg_vlan": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
-			},
-			"mode": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"native",
-					"regular",
-					"untagged",
-				}, false),
-			},
 			"static_ports": &schema.Schema{
 				Type: schema.TypeList,
 				Elem: &schema.Resource{
@@ -125,7 +64,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						"path_type": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							Default:  "port",
 							ValidateFunc: validation.StringInSlice([]string{
 								"port",
 								"vpc",
@@ -134,8 +73,8 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						},
 						"pod": {
 							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
+							Required:     true,
+							ForceNew:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"leaf": {
@@ -152,8 +91,8 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						},
 						"vlan": {
 							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
+							Required: true,
+							ForceNew: true,
 						},
 						"deployment_immediacy": {
 							Type:     schema.TypeString,
@@ -193,9 +132,102 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 	}
 }
 
-// func resourceMSOSchemaSiteAnpEpgBulkStaticPortImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceMSOSchemaSiteAnpEpgBulkStaticPortImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 
-// }
+	msoClient := m.(*client.Client)
+
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	stateSite := get_attribute[2]
+	stateTemplate := get_attribute[4]
+	stateAnp := get_attribute[6]
+	stateEpg := get_attribute[8]
+
+	d.SetId(d.Id())
+	d.Set("schema_id", schemaId)
+	log.Printf("CHECK IMPORT ID : %v, SCHEMAID : %v, SITEID : %v, TEMPLATE : %v, ANP : %v, EPG : %v ", d.Id(), schemaId, stateSite, stateTemplate, stateAnp, stateEpg)
+
+	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
+	if err != nil {
+		return nil, err
+	} else {
+		d.Set("site_id", stateSite)
+		d.Set("template_name", stateTemplate)
+	}
+
+	anpCont, err := getSiteAnp(stateAnp, site)
+	if err != nil {
+		return nil, err
+	} else {
+		d.Set("anp_name", stateAnp)
+	}
+
+	epgCont, err := getSiteEpg(stateEpg, anpCont)
+	if err != nil {
+		return nil, err
+	} else {
+		d.Set("epg_name", stateEpg)
+	}
+
+	portCount, err := epgCont.ArrayCount("staticPorts")
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get Static Port list")
+	}
+
+	log.Printf("CHECK IMPORT port Count : %v ", portCount)
+	staticPortsList := make([]interface{}, 0, 1)
+	for i := 0; i < portCount; i++ {
+		portCont, err := epgCont.ArrayElement(i, "staticPorts")
+		if err != nil {
+			return nil, err
+		}
+		staticPortMap := make(map[string]interface{})
+
+		if portCont.Exists("type") {
+			staticPortMap["type"] = models.StripQuotes(portCont.S("type").String())
+		}
+
+		if portCont.Exists("portEncapVlan") {
+			staticPortMap["vlan"] = models.StripQuotes(portCont.S("portEncapVlan").String())
+		}
+		if portCont.Exists("deploymentImmediacy") {
+			staticPortMap["deployment_immediacy"] = models.StripQuotes(portCont.S("deploymentImmediacy").String())
+		}
+		if portCont.Exists("microSegVlan") {
+
+			staticPortMap["micro_seg_vlan"] = models.StripQuotes(portCont.S("microSegVlan").String())
+		}
+		if portCont.Exists("mode") {
+			staticPortMap["mode"] = models.StripQuotes(portCont.S("mode").String())
+		}
+
+		pathValue := models.StripQuotes(portCont.S("path").String())
+
+		matchedMap := make(map[string]string)
+
+		if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-(?P<pathValue>.*))`))
+			staticPortMap["fex"] = matchedMap["fexValue"]
+		} else if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`))
+		} else if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)))
+		}
+
+		staticPortMap["pod"] = matchedMap["podValue"]
+		staticPortMap["leaf"] = matchedMap["leafValue"]
+		staticPortMap["path"] = matchedMap["pathValue"]
+
+		staticPortsList = append(staticPortsList, staticPortMap)
+	}
+	log.Printf("CHECK IMPORT staticPortsList : %v ", staticPortsList)
+	d.Set("static_ports", staticPortsList)
+
+	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
+	log.Printf("CHECK IMPORT RESOURCEDATA : %v ", []*schema.ResourceData{d})
+	return []*schema.ResourceData{d}, nil
+}
 
 func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Static Port Creation")
@@ -206,105 +238,50 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 	stateTemplateName := d.Get("template_name").(string)
 	stateANPName := d.Get("anp_name").(string)
 	stateEpgName := d.Get("epg_name").(string)
-
-	var pathType, pod, leaf, path, deploymentImmediacy, mode, fex, portpath string
-	var vlan, microsegvlan int
-
-	if tempVar, ok := d.GetOk("path_type"); ok {
-		pathType = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("pod"); ok {
-		pod = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("leaf"); ok {
-		leaf = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("path"); ok {
-		path = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("deployment_immediacy"); ok {
-		deploymentImmediacy = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("mode"); ok {
-		mode = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("vlan"); ok {
-		vlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
-		microsegvlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("fex"); ok {
-		fex = tempVar.(string)
-	}
-
+	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	log.Printf("CHECK CREATE staticPortsList : %v ", epgDn)
 	// Make the above  values to map and update the values in static ports. copy the parent map to local staticport map(to avoid overriding thge values for seconfd static port)
 
 	staticPortsList := make([]interface{}, 0, 1)
-	log.Printf("CHECK get staticPort : %v", d.Get("static_ports"))
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		log.Printf("CHECK IN IF ")
 		staticPorts := staticPortsValue.([]interface{})
 		// resest the values
-		log.Printf("CHECK in IF staticPorts : %v", staticPorts)
 		for _, staticPortValue := range staticPorts {
-			log.Printf("CHECK IN FOR ")
 			staticPort := staticPortValue.(map[string]interface{})
-			log.Printf("CHECK staticPort : %v", staticPort)
-
 			staticPortMap := make(map[string]interface{})
 			var static_port_pod, static_port_leaf, static_port_path, static_port_fex string
 
 			if staticPort["path_type"] != nil {
 				staticPortMap["type"] = staticPort["path_type"]
-			} else {
-				staticPortMap["type"] = pathType
 			}
 			if staticPort["deployment_immediacy"] != nil {
-				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacyode"]
-			} else {
-				staticPortMap["deploymentImmediacy"] = deploymentImmediacy
+				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"]
 			}
 			if staticPort["mode"] != nil {
 				staticPortMap["mode"] = staticPort["mode"]
-			} else {
-				staticPortMap["mode"] = mode
 			}
 			if staticPort["vlan"] != nil {
 				staticPortMap["portEncapVlan"] = staticPort["vlan"]
-			} else {
-				staticPortMap["portEncapVlan"] = vlan
 			}
-			if staticPort["micro_seg_vlan"] != nil {
+			if staticPort["micro_seg_vlan"] != 0 {
 				staticPortMap["microSegVlan"] = staticPort["micro_seg_vlan"]
-			} else if microsegvlan != 0 {
-				staticPortMap["microSegVlan"] = microsegvlan
 			}
-
 			if staticPort["pod"] != nil {
 				static_port_pod = staticPort["pod"].(string)
-			} else {
-				static_port_pod = pod
 			}
 			if staticPort["leaf"] != nil {
 				static_port_leaf = staticPort["leaf"].(string)
-			} else {
-				static_port_leaf = leaf
 			}
 			if staticPort["path"] != nil {
 				static_port_path = staticPort["path"].(string)
-			} else {
-				static_port_path = path
 			}
 			if staticPort["fex"] != nil {
 				static_port_fex = staticPort["fex"].(string)
-			} else {
-				static_port_fex = fex
 			}
 
-			log.Printf("CHECK staticPort : %v", staticPort)
+			var portpath string
 
-			if staticPortMap["path_type"] == "port" && fex != "" {
+			if staticPortMap["path_type"] == "port" && staticPort["fex"] != "" {
 				portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
 			} else if staticPortMap["path_type"] == "vpc" {
 				portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
@@ -316,8 +293,6 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 
 			staticPortsList = append(staticPortsList, staticPortMap)
 		}
-		log.Printf("CHECK staticPortsList : %v", staticPortsList)
-
 	}
 
 	foundEpg := false
@@ -330,6 +305,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 		d.Set("site_id", stateSiteId)
 		d.Set("template_name", stateTemplateName)
 	}
+
 	anpCont, err := getSiteAnp(stateANPName, site)
 	if err != nil {
 		return err
@@ -345,9 +321,10 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 		d.Set("epg_name", stateEpgName)
 		foundEpg = true
 	}
-	log.Printf("CHECK READ EPGCONT : %v ", epgCont)
+	log.Printf("CHECK CREATE EPGCONT : %v ", epgCont)
 
 	if foundAnp == true && foundEpg == false {
+		log.Printf("CHECK CREATE FIRST IF ----------------- ")
 		log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
 		anpEpgRefMap := make(map[string]interface{})
 		anpEpgRefMap["schemaId"] = schemaId
@@ -365,6 +342,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 		}
 	}
 	if foundAnp == false && foundEpg == false {
+		log.Printf("CHECK CREATE SECOND  IF ----------------- ")
 		log.Printf("[DEBUG] Site Anp: Beginning Creation")
 
 		anpRefMap := make(map[string]interface{})
@@ -398,39 +376,31 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 		}
 	}
 
-	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/-", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
-	// staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("add", pathsp, staticPortsList)
-	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("add", pathsp, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	log.Printf("CHECK CREATE staticPortsList : %v ", staticPortsList)
+	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("add", pathsp, staticPortsList)
 	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
 	if errs != nil {
 		return errs
 	}
+
+	d.SetId(epgDn)
 	return resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d, m)
 }
 
 func resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("CHECK READ ")
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
-	var fex, pathType string
-	found := false
 
 	schemaId := d.Get("schema_id").(string)
 	stateSite := d.Get("site_id").(string)
 	stateTemplate := d.Get("template_name").(string)
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
-	statepod := d.Get("pod").(string)
-	stateleaf := d.Get("leaf").(string)
-	statepath := d.Get("path").(string)
-	if tempVar, ok := d.GetOk("fex"); ok {
-		fex = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("path_type"); ok {
-		pathType = tempVar.(string)
-	}
+
+	d.SetId(d.Id())
+	d.Set("schema_id", schemaId)
 
 	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
 	if err != nil {
@@ -439,6 +409,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m int
 		d.Set("site_id", stateSite)
 		d.Set("template_name", stateTemplate)
 	}
+
 	anpCont, err := getSiteAnp(stateAnp, site)
 	if err != nil {
 		return err
@@ -452,70 +423,64 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m int
 	} else {
 		d.Set("epg_name", stateEpg)
 	}
-	log.Printf("CHECK READ EPGCONT : %v ", epgCont)
 
 	portCount, err := epgCont.ArrayCount("staticPorts")
 	if err != nil {
 		return fmt.Errorf("Unable to get Static Port list")
 	}
-	for l := 0; l < portCount; l++ {
-		portCont, err := epgCont.ArrayElement(l, "staticPorts")
+
+	log.Printf("CHECK READ port Count : %v ", portCount)
+	staticPortsList := make([]interface{}, 0, 1)
+	for i := 0; i < portCount; i++ {
+		portCont, err := epgCont.ArrayElement(i, "staticPorts")
 		if err != nil {
 			return err
 		}
-		var portpath string
-		if pathType == "port" && fex != "" {
-			portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", statepod, stateleaf, fex, statepath)
-		} else if pathType == "vpc" {
-			portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", statepod, stateleaf, statepath)
-		} else {
-			portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", statepod, stateleaf, statepath)
-		}
-		apiportpath := models.StripQuotes(portCont.S("path").String())
-		apiType := models.StripQuotes(portCont.S("type").String())
-		if portpath == apiportpath && pathType == apiType {
-			d.SetId(apiportpath)
-			if portCont.Exists("type") {
-				d.Set("type", models.StripQuotes(portCont.S("type").String()))
-			}
-			if portCont.Exists("path") {
-				d.Set("pod", statepod)
-				d.Set("leaf", stateleaf)
-				d.Set("path", statepath)
-				d.Set("fex", fex)
-			}
-			if portCont.Exists("portEncapVlan") {
-				tempvar, err := strconv.Atoi(fmt.Sprintf("%v", portCont.S("portEncapVlan")))
-				if err != nil {
-					return err
-				}
-				d.Set("vlan", tempvar)
-			}
-			if portCont.Exists("deploymentImmediacy") {
-				d.Set("deployment_immediacy", models.StripQuotes(portCont.S("deploymentImmediacy").String()))
-			}
-			if portCont.Exists("microSegVlan") {
-				tempvar1, err := strconv.Atoi(fmt.Sprintf("%v", portCont.S("microSegVlan")))
-				if err != nil {
-					return err
-				}
-				d.Set("micro_seg_vlan", tempvar1)
-			}
-			if portCont.Exists("mode") {
-				d.Set("mode", models.StripQuotes(portCont.S("mode").String()))
-			}
-			found = true
-			break
-		}
-	}
 
-	if !found {
-		d.SetId("")
+		staticPortMap := make(map[string]interface{})
+
+		if portCont.Exists("type") {
+			staticPortMap["type"] = models.StripQuotes(portCont.S("type").String())
+		}
+
+		if portCont.Exists("portEncapVlan") {
+			staticPortMap["vlan"] = models.StripQuotes(portCont.S("portEncapVlan").String())
+		}
+		if portCont.Exists("deploymentImmediacy") {
+			staticPortMap["deployment_immediacy"] = models.StripQuotes(portCont.S("deploymentImmediacy").String())
+		}
+		if portCont.Exists("microSegVlan") {
+
+			staticPortMap["micro_seg_vlan"] = models.StripQuotes(portCont.S("microSegVlan").String())
+		}
+		if portCont.Exists("mode") {
+			staticPortMap["mode"] = models.StripQuotes(portCont.S("mode").String())
+		}
+
+		pathValue := models.StripQuotes(portCont.S("path").String())
+
+		matchedMap := make(map[string]string)
+
+		if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-(?P<pathValue>.*))`))
+			staticPortMap["fex"] = matchedMap["fexValue"]
+		} else if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`))
+		} else if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)))
+		}
+
+		staticPortMap["pod"] = matchedMap["podValue"]
+		staticPortMap["leaf"] = matchedMap["leafValue"]
+		staticPortMap["path"] = matchedMap["pathValue"]
+
+		staticPortsList = append(staticPortsList, staticPortMap)
 	}
+	log.Printf("CHECK READ staticPortsList : %v ", staticPortsList)
+	d.Set("static_ports", staticPortsList)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
-
 }
 
 func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m interface{}) error {
@@ -528,125 +493,92 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 	stateANPName := d.Get("anp_name").(string)
 	stateEpgName := d.Get("epg_name").(string)
 
-	var pathType, pod, leaf, path, deploymentImmediacy, mode, fex string
-	var vlan, microsegvlan int
+	// Make the above  values to map and update the values in static ports. copy the parent map to local staticport map(to avoid overriding thge values for seconfd static port)
 
-	if tempVar, ok := d.GetOk("path_type"); ok {
-		pathType = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("pod"); ok {
-		pod = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("leaf"); ok {
-		leaf = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("path"); ok {
-		path = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("deployment_immediacy"); ok {
-		deploymentImmediacy = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("mode"); ok {
-		mode = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("vlan"); ok {
-		vlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
-		microsegvlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("fex"); ok {
-		fex = tempVar.(string)
+	staticPortsList := make([]interface{}, 0, 1)
+	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
+		staticPorts := staticPortsValue.([]interface{})
+		// resest the values
+		for _, staticPortValue := range staticPorts {
+			staticPort := staticPortValue.(map[string]interface{})
+			staticPortMap := make(map[string]interface{})
+			var static_port_pod, static_port_leaf, static_port_path, static_port_fex string
+
+			if staticPort["path_type"] != nil {
+				staticPortMap["type"] = staticPort["path_type"]
+			}
+			if staticPort["deployment_immediacy"] != nil {
+				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"]
+			}
+			if staticPort["mode"] != nil {
+				staticPortMap["mode"] = staticPort["mode"]
+			}
+			if staticPort["vlan"] != nil {
+				staticPortMap["portEncapVlan"] = staticPort["vlan"]
+			}
+			if staticPort["micro_seg_vlan"] != 0 {
+				staticPortMap["microSegVlan"] = staticPort["micro_seg_vlan"]
+			}
+			if staticPort["pod"] != nil {
+				static_port_pod = staticPort["pod"].(string)
+			}
+			if staticPort["leaf"] != nil {
+				static_port_leaf = staticPort["leaf"].(string)
+			}
+			if staticPort["path"] != nil {
+				static_port_path = staticPort["path"].(string)
+			}
+			if staticPort["fex"] != nil {
+				static_port_fex = staticPort["fex"].(string)
+			}
+
+			var portpath string
+
+			if staticPortMap["path_type"] == "port" && staticPort["fex"] != "" {
+				portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
+			} else if staticPortMap["path_type"] == "vpc" {
+				portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
+			} else {
+				portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
+			}
+
+			staticPortMap["path"] = portpath
+
+			staticPortsList = append(staticPortsList, staticPortMap)
+		}
 	}
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSiteId, stateTemplateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("site_id", stateSiteId)
+		d.Set("template_name", stateTemplateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	anpCont, err := getSiteAnp(stateANPName, site)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
+		return err
+	} else {
+		d.Set("anp_name", stateANPName)
 	}
 
-	found := false
-
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return err
-		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
-
-		if apiSite == stateSiteId && apiTemplate == stateTemplateName {
-			anpCount, err := tempCont.ArrayCount("anps")
-			if err != nil {
-				return fmt.Errorf("Unable to get Anp list")
-			}
-			for j := 0; j < anpCount; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "anps")
-				if err != nil {
-					return err
-				}
-				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
-				match := re.FindStringSubmatch(anpRef)
-				if match[3] == stateANPName {
-					epgCount, err := anpCont.ArrayCount("epgs")
-					if err != nil {
-						return fmt.Errorf("Unable to get EPG list")
-					}
-					for k := 0; k < epgCount; k++ {
-						epgCont, err := anpCont.ArrayElement(k, "epgs")
-						if err != nil {
-							return err
-						}
-						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
-						match := re.FindStringSubmatch(apiEpgRef)
-						apiEPG := match[3]
-						if apiEPG == stateEpgName {
-							portCount, err := epgCont.ArrayCount("staticPorts")
-							if err != nil {
-								return fmt.Errorf("Unable to get Static Port list")
-							}
-							for l := 0; l < portCount; l++ {
-								portCont, err := epgCont.ArrayElement(l, "staticPorts")
-								if err != nil {
-									return err
-								}
-								var portpath string
-								if pathType == "port" && fex != "" {
-									portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", pod, leaf, fex, path)
-								} else if pathType == "vpc" {
-									portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", pod, leaf, path)
-								} else {
-									portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
-								}
-								apiportpath := models.StripQuotes(portCont.S("path").String())
-								if portpath == apiportpath {
-									index := l
-									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSiteId, stateTemplateName, stateANPName, stateEpgName, index)
-									anpStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("replace", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
-									_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
-
-									if err != nil {
-										return err
-									}
-									found = true
-									break
-
-								}
-							}
-						}
-
-					}
-				}
-			}
-		}
+	epgCont, err := getSiteEpg(stateEpgName, anpCont)
+	if err != nil {
+		return err
+	} else {
+		d.Set("epg_name", stateEpgName)
 	}
-	if !found {
-		return fmt.Errorf("The specified parameters to update static port entry not found")
+	log.Printf("CHECK UPDATE EPGCONT : %v ", epgCont)
+
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	log.Printf("CHECK UPDATE pathsp : %v ", pathsp)
+	log.Printf("CHECK UPDATE staticPortsList : %v ", staticPortsList)
+	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("replace", pathsp, staticPortsList)
+	log.Printf("CHECK UPDATE staticStruct : %v ", staticStruct)
+	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
+	if errs != nil {
+		return errs
 	}
 
 	return resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d, m)
@@ -657,124 +589,100 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	stateAnp := d.Get("anp_name").(string)
-	stateEpg := d.Get("epg_name").(string)
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	stateSiteId := d.Get("site_id").(string)
+	stateTemplateName := d.Get("template_name").(string)
+	stateANPName := d.Get("anp_name").(string)
+	stateEpgName := d.Get("epg_name").(string)
+
+	// Make the above  values to map and update the values in static ports. copy the parent map to local staticport map(to avoid overriding thge values for seconfd static port)
+
+	staticPortsList := make([]interface{}, 0, 1)
+	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
+		staticPorts := staticPortsValue.([]interface{})
+		// resest the values
+		for _, staticPortValue := range staticPorts {
+			staticPort := staticPortValue.(map[string]interface{})
+			staticPortMap := make(map[string]interface{})
+			var static_port_pod, static_port_leaf, static_port_path, static_port_fex string
+
+			if staticPort["path_type"] != nil {
+				staticPortMap["type"] = staticPort["path_type"]
+			}
+			if staticPort["deployment_immediacy"] != nil {
+				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"]
+			}
+			if staticPort["mode"] != nil {
+				staticPortMap["mode"] = staticPort["mode"]
+			}
+			if staticPort["vlan"] != nil {
+				staticPortMap["portEncapVlan"] = staticPort["vlan"]
+			}
+			if staticPort["micro_seg_vlan"] != 0 {
+				staticPortMap["microSegVlan"] = staticPort["micro_seg_vlan"]
+			}
+			if staticPort["pod"] != nil {
+				static_port_pod = staticPort["pod"].(string)
+			}
+			if staticPort["leaf"] != nil {
+				static_port_leaf = staticPort["leaf"].(string)
+			}
+			if staticPort["path"] != nil {
+				static_port_path = staticPort["path"].(string)
+			}
+			if staticPort["fex"] != nil {
+				static_port_fex = staticPort["fex"].(string)
+			}
+
+			var portpath string
+
+			if staticPortMap["path_type"] == "port" && staticPort["fex"] != "" {
+				portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
+			} else if staticPortMap["path_type"] == "vpc" {
+				portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
+			} else {
+				portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
+			}
+
+			staticPortMap["path"] = portpath
+
+			staticPortsList = append(staticPortsList, staticPortMap)
+		}
+	}
+
+	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSiteId, stateTemplateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("site_id", stateSiteId)
+		d.Set("template_name", stateTemplateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	anpCont, err := getSiteAnp(stateANPName, site)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
+		return err
+	} else {
+		d.Set("anp_name", stateANPName)
 	}
 
-	var pathType, pod, leaf, path, deploymentImmediacy, mode, fex string
-	var vlan, microsegvlan int
+	epgCont, err := getSiteEpg(stateEpgName, anpCont)
+	if err != nil {
+		return err
+	} else {
+		d.Set("epg_name", stateEpgName)
+	}
+	log.Printf("CHECK UPDATE EPGCONT : %v ", epgCont)
 
-	if tempVar, ok := d.GetOk("path_type"); ok {
-		pathType = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("pod"); ok {
-		pod = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("leaf"); ok {
-		leaf = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("path"); ok {
-		path = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("deployment_immediacy"); ok {
-		deploymentImmediacy = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("mode"); ok {
-		mode = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("vlan"); ok {
-		vlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
-		microsegvlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("fex"); ok {
-		fex = tempVar.(string)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	log.Printf("CHECK UPDATE pathsp : %v ", pathsp)
+	log.Printf("CHECK UPDATE staticPortsList : %v ", staticPortsList)
+	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("remove", pathsp, staticPortsList)
+	log.Printf("CHECK UPDATE staticStruct : %v ", staticStruct)
+	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
+	// Ignoring Error with code 141: Resource Not Found when deleting
+	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
+		return err
 	}
 
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return err
-		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
-
-		if apiSite == stateSite && apiTemplate == stateTemplate {
-			anpCount, err := tempCont.ArrayCount("anps")
-			if err != nil {
-				return fmt.Errorf("Unable to get Anp list")
-			}
-			for j := 0; j < anpCount; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "anps")
-				if err != nil {
-					return err
-				}
-				anpRef := models.StripQuotes(anpCont.S("anpRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
-				match := re.FindStringSubmatch(anpRef)
-				if match[3] == stateAnp {
-					epgCount, err := anpCont.ArrayCount("epgs")
-					if err != nil {
-						return fmt.Errorf("Unable to get EPG list")
-					}
-					for k := 0; k < epgCount; k++ {
-						epgCont, err := anpCont.ArrayElement(k, "epgs")
-						if err != nil {
-							return err
-						}
-						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
-						match := re.FindStringSubmatch(apiEpgRef)
-						apiEPG := match[3]
-						if apiEPG == stateEpg {
-							portCount, err := epgCont.ArrayCount("staticPorts")
-							if err != nil {
-								return fmt.Errorf("Unable to get Static Port list")
-							}
-							for l := 0; l < portCount; l++ {
-								portCont, err := epgCont.ArrayElement(l, "staticPorts")
-								if err != nil {
-									return err
-								}
-								var portpath string
-								if pathType == "port" && fex != "" {
-									portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", pod, leaf, fex, path)
-								} else if pathType == "vpc" {
-									portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", pod, leaf, path)
-								} else {
-									portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
-								}
-								apiportpath := models.StripQuotes(portCont.S("path").String())
-								if portpath == apiportpath {
-									index := l
-									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSite, stateTemplate, stateAnp, stateEpg, index)
-									anpStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("remove", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
-									response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
-
-									// Ignoring Error with code 141: Resource Not Found when deleting
-									if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
-										return err
-									}
-									break
-								}
-							}
-						}
-
-					}
-				}
-			}
-		}
-	}
 	d.SetId("")
 	return resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d, m)
 }
@@ -843,4 +751,16 @@ func getSiteEpg(epgName string, anpCont *container.Container) (*container.Contai
 		}
 	}
 	return nil, fmt.Errorf("EPG %v is not found in Site.", epgName)
+}
+
+func getStaticPortPathValues(pathValue string, re *regexp.Regexp) map[string]string {
+	match := re.FindStringSubmatch(pathValue) //list of matched strings
+	result := make(map[string]string)
+	for i, name := range re.SubexpNames() {
+		if i != 0 && name != "" {
+			result[name] = match[i]
+		}
+	}
+
+	return result
 }
