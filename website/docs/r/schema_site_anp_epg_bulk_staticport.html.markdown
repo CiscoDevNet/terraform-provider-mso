@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_anp_epg_bulk_staticport"
 sidebar_current: "docs-mso-resource-schema_site_anp_epg_bulk_staticport"
 description: |-
-  Manages MSO Schema Template Application Network Profiles Endpoint Groups Bulk Static Port.
+  Manages MSO Schema Site Application Network Profiles Endpoint Groups Bulk Static Port.
 ---
 
 # mso_schema_site_anp_epg_bulk_staticport #
 
-Manages MSO Schema Template Application Network Profiles Endpoint Groups Bulk Static Port.
+Manages MSO Schema Site Application Network Profiles Endpoint Groups Bulk Static Port.
 
 ## Example Usage ##
 
@@ -45,19 +45,19 @@ resource "mso_schema_site_anp_epg_bulk_staticport" "static_port" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Static Port.
-* `site_id` - (Required) SiteID under which you want to deploy Static Port.
-* `template_name` - (Required) Template name under which you want to deploy Static Port.
-* `anp_name` - (Required) ANP name under which you want to deploy Static Port.
-* `epg_name` - (Required) EPG name under which you want to deploy Static Port.
-* `static_ports` - (Optional) A block representing a Static Port object. Type: Block.
-    * `path_type` - (Required) The type of the static port. Allowed values are `port`, `vpc` and `dpc`.
+* `schema_id` - (Required) SchemaID under which the Static Port is deployed.
+* `site_id` - (Required) SiteID under which the Static Port is deployed.
+* `template_name` - (Required) Template name under which the Static Port is deployed.
+* `anp_name` - (Required) ANP name under which the Static Port is deployed.
+* `epg_name` - (Required) EPG name under which the Static Port is deployed.
+* `static_ports` - (Optional) A block representing a Static Port object. Type - Block.
+    * `path_type` - (Required) The path type of the static port. Allowed values are `port`, `vpc` and `dpc`. Default to `port`.
     * `pod` - (Required) The pod of the static port.
     * `leaf` - (Required) The leaf of the static port. When `path_type` is `port` or `dpc`, then `leaf` is a string of the leaf ID; Example - '101'. When `path_type` is `vpc`, then `leaf` is a list with both leaf IDs; Example - '101-102'.
     * `path` - (Required) The path of the static port.
     * `mode` - (Required) The mode of the static port. Allowed values are `native`, `regular` and `untagged`.
     * `deployment_immediacy` - (Required) The deployment immediacy of the static port. Allowed values are `immediate` and `lazy`.
-    * `vlan` - (Required) The port encap VLAN id of the static port.
+    * `vlan` - (Required) The port encapsulation VLAN id of the static port.
     * `micro_seg_vlan` - (Optional) The microsegmentation VLAN id of the static port.
     * `fex` - (Optional) Fex-id to be used. This parameter will work only with the `path_type` as `port`.
 

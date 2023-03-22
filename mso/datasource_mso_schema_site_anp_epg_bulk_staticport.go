@@ -132,35 +132,35 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	stateAnp := d.Get("anp_name").(string)
-	stateEpg := d.Get("epg_name").(string)
-	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, stateSite, stateTemplate, stateAnp, stateEpg)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anp := d.Get("anp_name").(string)
+	epg := d.Get("epg_name").(string)
+	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, siteId, templateName, anp, epg)
 
 	d.SetId(epgDn)
 	d.Set("schema_id", schemaId)
 
-	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
 	} else {
-		d.Set("site_id", stateSite)
-		d.Set("template_name", stateTemplate)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
 
-	anpCont, err := getSiteAnp(stateAnp, siteCont)
+	anpCont, err := getSiteAnp(anp, siteCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("anp_name", stateAnp)
+		d.Set("anp_name", anp)
 	}
 
-	epgCont, err := getSiteEpg(stateEpg, anpCont)
+	epgCont, err := getSiteEpg(epg, anpCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("epg_name", stateEpg)
+		d.Set("epg_name", epg)
 	}
 
 	portCount, err := epgCont.ArrayCount("staticPorts")

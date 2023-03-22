@@ -14,12 +14,12 @@ provider "mso" {
 }
 
 // Create multiple Static Ports.
-resource "mso_site" "test_site" {
-  name             = var.site_name
-  username         = var.site_username
-  password         = var.site_password
-  apic_site_id     = 105
-  urls             = ["https://10.23.248.102"]
+resource "mso_site" "site_test" {
+  name         = var.site_name
+  username     = var.site_username
+  password     = var.site_password
+  apic_site_id = 105
+  urls         = ["https://10.23.248.102"]
   # login_domain     = "radius_test"
   # maintenance_mode = true
   location = {
@@ -29,10 +29,10 @@ resource "mso_site" "test_site" {
 }
 
 resource "mso_tenant" "tenant_test" {
-  name = var.tenant_name
+  name         = var.tenant_name
   display_name = var.tenant_name
   site_associations {
-    site_id     = data.mso_site.test_site.id
+    site_id = data.mso_site.test_site.id
   }
 }
 
@@ -101,11 +101,11 @@ resource "mso_schema_site_anp_epg" "site_anp_epg" {
 }
 
 resource "mso_schema_site_anp_epg_bulk_staticport" "bulk_static_port" {
-  schema_id            = mso_schema.schema_test.id
-  site_id              = data.mso_site.test_site.id
-  template_name        = tolist(mso_schema.schema_test.template)[0].name
-  anp_name             = var.anp_name
-  epg_name             = mso_schema_site_anp_epg.site_anp_epg.epg_name
+  schema_id     = mso_schema.schema_test.id
+  site_id       = data.mso_site.test_site.id
+  template_name = tolist(mso_schema.schema_test.template)[0].name
+  anp_name      = var.anp_name
+  epg_name      = mso_schema_site_anp_epg.site_anp_epg.epg_name
   static_ports {
     path_type            = "vpc"
     deployment_immediacy = "lazy"
@@ -128,11 +128,11 @@ resource "mso_schema_site_anp_epg_bulk_staticport" "bulk_static_port" {
 }
 
 data "mso_schema_site_anp_epg_bulk_staticport" "example" {
-  schema_id            = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.schema_id
-  site_id              = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.site_id
-  template_name        = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.template_name
-  anp_name             = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.anp_name
-  epg_name             = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.epg_name
+  schema_id     = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.schema_id
+  site_id       = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.site_id
+  template_name = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.template_name
+  anp_name      = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.anp_name
+  epg_name      = mso_schema_site_anp_epg_bulk_staticport.bulk_static_port.epg_name
 }
 
 output "bulk_static_ports" {

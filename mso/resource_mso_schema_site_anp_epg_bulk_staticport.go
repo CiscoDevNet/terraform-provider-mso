@@ -140,34 +140,33 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortImport(d *schema.ResourceData, m i
 
 	get_attribute := strings.Split(d.Id(), "/")
 	schemaId := get_attribute[0]
-	stateSite := get_attribute[2]
-	stateTemplate := get_attribute[4]
-	stateAnp := get_attribute[6]
-	stateEpg := get_attribute[8]
+	siteId := get_attribute[2]
+	templateName := get_attribute[4]
+	anp := get_attribute[6]
+	epg := get_attribute[8]
 
-	d.SetId(d.Id())
 	d.Set("schema_id", schemaId)
 
-	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return nil, err
 	} else {
-		d.Set("site_id", stateSite)
-		d.Set("template_name", stateTemplate)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
 
-	anpCont, err := getSiteAnp(stateAnp, siteCont)
+	anpCont, err := getSiteAnp(anp, siteCont)
 	if err != nil {
 		return nil, err
 	} else {
-		d.Set("anp_name", stateAnp)
+		d.Set("anp_name", anp)
 	}
 
-	epgCont, err := getSiteEpg(stateEpg, anpCont)
+	epgCont, err := getSiteEpg(epg, anpCont)
 	if err != nil {
 		return nil, err
 	} else {
-		d.Set("epg_name", stateEpg)
+		d.Set("epg_name", epg)
 	}
 
 	portCount, err := epgCont.ArrayCount("staticPorts")
@@ -207,7 +206,6 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortImport(d *schema.ResourceData, m i
 		pathValue := models.StripQuotes(portCont.S("path").String())
 
 		matchedMap := make(map[string]string)
-		// put regex in variable and move it outside the for loop.
 
 		if portPath.MatchString(pathValue) {
 			matchedMap = getStaticPortPathValues(pathValue, portPath)
@@ -235,15 +233,14 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSiteId := d.Get("site_id").(string)
-	stateTemplateName := d.Get("template_name").(string)
-	stateANPName := d.Get("anp_name").(string)
-	stateEpgName := d.Get("epg_name").(string)
-	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anp := d.Get("anp_name").(string)
+	epg := d.Get("epg_name").(string)
+	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, siteId, templateName, anp, epg)
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
 		staticPorts := staticPortsValue.([]interface{})
-		// resest the values
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -296,72 +293,56 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 	foundEpg := false
 	foundAnp := false
 
-	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSiteId, stateTemplateName, msoClient)
+	site, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
 	} else {
-		d.Set("site_id", stateSiteId)
-		d.Set("template_name", stateTemplateName)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
 
-	anpCont, err := getSiteAnp(stateANPName, site)
+	anpCont, err := getSiteAnp(anp, site)
 	if err != nil {
 		return err
 	} else {
-		d.Set("anp_name", stateANPName)
+		d.Set("anp_name", anp)
 		foundAnp = true
 	}
 
-	_, err = getSiteEpg(stateEpgName, anpCont)
+	_, err = getSiteEpg(epg, anpCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("epg_name", stateEpgName)
+		d.Set("epg_name", epg)
 		foundEpg = true
 	}
 
-	if foundAnp == true && foundEpg == false {
-		log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
-		anpEpgRefMap := make(map[string]interface{})
-		anpEpgRefMap["schemaId"] = schemaId
-		anpEpgRefMap["templateName"] = stateTemplateName
-		anpEpgRefMap["anpName"] = stateANPName
-		anpEpgRefMap["epgName"] = stateEpgName
-
-		pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", stateSiteId, stateTemplateName, stateANPName)
-		//private_link_label argument used in resource site_anp_epg is set to nil here
-		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
-
-		_, ers := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
-		if ers != nil {
-			return ers
-		}
-	}
-	if foundAnp == false && foundEpg == false {
+	if !foundAnp {
 		log.Printf("[DEBUG] Site Anp: Beginning Creation")
 
 		anpRefMap := make(map[string]interface{})
 		anpRefMap["schemaId"] = schemaId
-		anpRefMap["templateName"] = stateTemplateName
-		anpRefMap["anpName"] = stateANPName
+		anpRefMap["templateName"] = templateName
+		anpRefMap["anpName"] = anp
 
-		pathAnp := fmt.Sprintf("/sites/%s-%s/anps/-", stateSiteId, stateTemplateName)
+		pathAnp := fmt.Sprintf("/sites/%s-%s/anps/-", siteId, templateName)
 		anpStruct := models.NewSchemaSiteAnp("add", pathAnp, anpRefMap)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
 		if err != nil {
 			return err
 		}
+	}
 
+	if !foundEpg {
 		log.Printf("[DEBUG] Site Anp Epg: Beginning Creation")
-
 		anpEpgRefMap := make(map[string]interface{})
 		anpEpgRefMap["schemaId"] = schemaId
-		anpEpgRefMap["templateName"] = stateTemplateName
-		anpEpgRefMap["anpName"] = stateANPName
-		anpEpgRefMap["epgName"] = stateEpgName
+		anpEpgRefMap["templateName"] = templateName
+		anpEpgRefMap["anpName"] = anp
+		anpEpgRefMap["epgName"] = epg
 
-		pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", stateSiteId, stateTemplateName, stateANPName)
+		pathEpg := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", siteId, templateName, anp)
 		//private_link_label argument used in resource site_anp_epg is set to nil here
 		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", pathEpg, nil, anpEpgRefMap)
 
@@ -371,7 +352,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 		}
 	}
 
-	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", siteId, templateName, anp, epg)
 	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("add", pathsp, staticPortsList)
 	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
 	if errs != nil {
@@ -388,34 +369,34 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m int
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	stateAnp := d.Get("anp_name").(string)
-	stateEpg := d.Get("epg_name").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anp := d.Get("anp_name").(string)
+	epg := d.Get("epg_name").(string)
 
 	d.SetId(d.Id())
 	d.Set("schema_id", schemaId)
 
-	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
 	} else {
-		d.Set("site_id", stateSite)
-		d.Set("template_name", stateTemplate)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
 
-	anpCont, err := getSiteAnp(stateAnp, siteCont)
+	anpCont, err := getSiteAnp(anp, siteCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("anp_name", stateAnp)
+		d.Set("anp_name", anp)
 	}
 
-	epgCont, err := getSiteEpg(stateEpg, anpCont)
+	epgCont, err := getSiteEpg(epg, anpCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("epg_name", stateEpg)
+		d.Set("epg_name", epg)
 	}
 
 	portCount, err := epgCont.ArrayCount("staticPorts")
@@ -482,10 +463,10 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSiteId := d.Get("site_id").(string)
-	stateTemplateName := d.Get("template_name").(string)
-	stateANPName := d.Get("anp_name").(string)
-	stateEpgName := d.Get("epg_name").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anp := d.Get("anp_name").(string)
+	epg := d.Get("epg_name").(string)
 
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
@@ -539,29 +520,29 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 		}
 	}
 
-	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSiteId, stateTemplateName, msoClient)
+	site, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
 	} else {
-		d.Set("site_id", stateSiteId)
-		d.Set("template_name", stateTemplateName)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
 
-	anpCont, err := getSiteAnp(stateANPName, site)
+	anpCont, err := getSiteAnp(anp, site)
 	if err != nil {
 		return err
 	} else {
-		d.Set("anp_name", stateANPName)
+		d.Set("anp_name", anp)
 	}
 
-	_, err = getSiteEpg(stateEpgName, anpCont)
+	_, err = getSiteEpg(epg, anpCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("epg_name", stateEpgName)
+		d.Set("epg_name", epg)
 	}
 
-	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", siteId, templateName, anp, epg)
 	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("replace", pathsp, staticPortsList)
 	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
 	if errs != nil {
@@ -576,17 +557,14 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
-	stateSiteId := d.Get("site_id").(string)
-	stateTemplateName := d.Get("template_name").(string)
-	stateANPName := d.Get("anp_name").(string)
-	stateEpgName := d.Get("epg_name").(string)
-
-	// Make the above  values to map and update the values in static ports. copy the parent map to local staticport map(to avoid overriding thge values for seconfd static port)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anp := d.Get("anp_name").(string)
+	epg := d.Get("epg_name").(string)
 
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
 		staticPorts := staticPortsValue.([]interface{})
-		// resest the values
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -636,29 +614,29 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 		}
 	}
 
-	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSiteId, stateTemplateName, msoClient)
+	site, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
 	} else {
-		d.Set("site_id", stateSiteId)
-		d.Set("template_name", stateTemplateName)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
 
-	anpCont, err := getSiteAnp(stateANPName, site)
+	anpCont, err := getSiteAnp(anp, site)
 	if err != nil {
 		return err
 	} else {
-		d.Set("anp_name", stateANPName)
+		d.Set("anp_name", anp)
 	}
 
-	_, err = getSiteEpg(stateEpgName, anpCont)
+	_, err = getSiteEpg(epg, anpCont)
 	if err != nil {
 		return err
 	} else {
-		d.Set("epg_name", stateEpgName)
+		d.Set("epg_name", epg)
 	}
 
-	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
+	pathsp := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts", siteId, templateName, anp, epg)
 	staticStruct := models.NewSchemaSiteAnpEpgBulkStaticPort("remove", pathsp, staticPortsList)
 	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
 
@@ -679,7 +657,6 @@ func getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName string, msoClie
 	if err != nil {
 		return nil, fmt.Errorf("No Sites found")
 	}
-	// found := false
 
 	for i := 0; i < siteCount; i++ {
 		site, err := schemaObject.ArrayElement(i, "sites")

@@ -26,17 +26,17 @@ data "mso_schema_site_anp_epg_bulk_staticport" "static_port" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Static Port.
-* `site_id` - (Required) SiteID under which you want to deploy Static Port.
-* `template_name` - (Required) Template name under which Static Port is deployed.
-* `anp_name` - (Required) ANP name under which you want to deploy Static Port.
-* `epg_name` - (Required) EPG name under which you want to deploy Static Port.
+* `schema_id` - (Required) SchemaID under which the Static Port is deployed.
+* `site_id` - (Required) SiteID under which the Static Port is deployed.
+* `template_name` - (Required) Template name under which the Static Port is deployed.
+* `anp_name` - (Required) ANP name under which the Static Port is deployed.
+* `epg_name` - (Required) EPG name under which the Static Port is deployed.
 
 
 ## Attribute Reference ##
 
-* `static_ports` - (Optional) A block representing a Static Port object. Type: Block.
-    * `path_type` - (Optional) The type of the static port.
+* `static_ports` - (Optional) A block representing a Static Port object. Type - Block.
+    * `path_type` - (Optional) The path type of the static port.
     * `pod` - (Optional) The pod of the static port.
     * `leaf` - (Optional) The leaf of the static port.
     * `path` - (Optional) The path of the static port.
@@ -44,6 +44,6 @@ data "mso_schema_site_anp_epg_bulk_staticport" "static_port" {
     * `micro_seg_vlan` - (Optional) The microsegmentation VLAN id of the static port.
     * `mode` - (Optional) The mode of the static port.
     * `deployment_immediacy` - (Optional) The deployment immediacy of the static port.
-    * `vlan` - (Optional) The port encap VLAN id of the static port.
+    * `vlan` - (Optional) The port encapsulation VLAN id of the static port.
 
  
