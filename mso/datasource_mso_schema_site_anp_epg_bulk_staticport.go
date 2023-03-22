@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -140,7 +141,7 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 	d.SetId(epgDn)
 	d.Set("schema_id", schemaId)
 
-	site, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, stateSite, stateTemplate, msoClient)
 	if err != nil {
 		return err
 	} else {
@@ -148,7 +149,7 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 		d.Set("template_name", stateTemplate)
 	}
 
-	anpCont, err := getSiteAnp(stateAnp, site)
+	anpCont, err := getSiteAnp(stateAnp, siteCont)
 	if err != nil {
 		return err
 	} else {
@@ -167,30 +168,30 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 		return fmt.Errorf("Unable to get Static Port list")
 	}
 
-	log.Printf("CHECK DATA port Count : %v ", portCount)
+	portPath := regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-\[(?P<pathValue>.*)\])`)
+	vpcPath := regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-\[(?P<pathValue>.*)\])`)
+	dpcPath := regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-\[(?P<pathValue>.*)\])`)
+
 	staticPortsList := make([]interface{}, 0, 1)
 	for i := 0; i < portCount; i++ {
 		portCont, err := epgCont.ArrayElement(i, "staticPorts")
 		if err != nil {
 			return err
 		}
-		log.Printf("CHECK DATA port portCont : %v ", portCont)
 
 		staticPortMap := make(map[string]interface{})
 
 		if portCont.Exists("type") {
-			staticPortMap["type"] = models.StripQuotes(portCont.S("type").String())
+			staticPortMap["path_type"] = models.StripQuotes(portCont.S("type").String())
 		}
-
 		if portCont.Exists("portEncapVlan") {
-			staticPortMap["vlan"] = models.StripQuotes(portCont.S("portEncapVlan").String())
+			staticPortMap["vlan"], _ = strconv.Atoi(fmt.Sprintf("%v", portCont.S("portEncapVlan")))
 		}
 		if portCont.Exists("deploymentImmediacy") {
 			staticPortMap["deployment_immediacy"] = models.StripQuotes(portCont.S("deploymentImmediacy").String())
 		}
 		if portCont.Exists("microSegVlan") {
-
-			staticPortMap["micro_seg_vlan"] = models.StripQuotes(portCont.S("microSegVlan").String())
+			staticPortMap["micro_seg_vlan"], _ = strconv.Atoi(fmt.Sprintf("%v", portCont.S("microSegVlan")))
 		}
 		if portCont.Exists("mode") {
 			staticPortMap["mode"] = models.StripQuotes(portCont.S("mode").String())
@@ -200,13 +201,13 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 
 		matchedMap := make(map[string]string)
 
-		if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
-			matchedMap = getStaticPortPathValues(pathValue, regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-(?P<pathValue>.*))`))
+		if portPath.MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, portPath)
 			staticPortMap["fex"] = matchedMap["fexValue"]
-		} else if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
-			matchedMap = getStaticPortPathValues(pathValue, regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`))
-		} else if (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)).MatchString(pathValue) {
-			matchedMap = getStaticPortPathValues(pathValue, (regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-(?P<pathValue>.*))`)))
+		} else if vpcPath.MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, vpcPath)
+		} else if dpcPath.MatchString(pathValue) {
+			matchedMap = getStaticPortPathValues(pathValue, dpcPath)
 		}
 
 		staticPortMap["pod"] = matchedMap["podValue"]
@@ -219,5 +220,4 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 
 	log.Printf("[DEBUG] %s: Data source finished successfully", epgDn)
 	return nil
-
 }
