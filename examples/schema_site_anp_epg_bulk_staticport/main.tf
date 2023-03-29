@@ -11,6 +11,7 @@ provider "mso" {
   password = "" # <MSO pwd>
   url      = "" # <MSO URL>
   insecure = true
+  platform = "nd"
 }
 
 // Create multiple Static Ports.
@@ -32,7 +33,7 @@ resource "mso_tenant" "tenant_test" {
   name         = var.tenant_name
   display_name = var.tenant_name
   site_associations {
-    site_id = data.mso_site.test_site.id
+    site_id = mso_site.site_test.id
   }
 }
 
@@ -41,7 +42,7 @@ resource "mso_schema" "schema_test" {
   template {
     name         = "Template1"
     display_name = "Template1"
-    tenant_id    = data.mso_tenant.test_tenant.id
+    tenant_id    = mso_tenant.tenant_test.id
   }
 }
 
@@ -81,28 +82,28 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 
 resource "mso_schema_site" "schema_site" {
   schema_id     = mso_schema.schema_test.id
-  site_id       = data.mso_site.test_site.id
+  site_id       = mso_site.site_test.id
   template_name = mso_schema_template_anp_epg.anp_epg.template_name
 }
 
 resource "mso_schema_site_anp" "site_anp" {
   schema_id     = mso_schema.schema_test.id
   template_name = mso_schema_site.schema_site.template_name
-  site_id       = data.mso_site.test_site.id
+  site_id       = mso_site.site_test.id
   anp_name      = mso_schema_template_anp.anp.name
 }
 
 resource "mso_schema_site_anp_epg" "site_anp_epg" {
   schema_id     = mso_schema.schema_test.id
   template_name = mso_schema_site_anp.site_anp.template_name
-  site_id       = data.mso_site.test_site.id
+  site_id       = mso_site.site_test.id
   anp_name      = mso_schema_site_anp.site_anp.anp_name
   epg_name      = mso_schema_template_anp_epg.anp_epg.name
 }
 
 resource "mso_schema_site_anp_epg_bulk_staticport" "bulk_static_port" {
   schema_id     = mso_schema.schema_test.id
-  site_id       = data.mso_site.test_site.id
+  site_id       = mso_site.site_test.id
   template_name = tolist(mso_schema.schema_test.template)[0].name
   anp_name      = var.anp_name
   epg_name      = mso_schema_site_anp_epg.site_anp_epg.epg_name
