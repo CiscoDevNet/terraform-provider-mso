@@ -10,3 +10,5 @@ func toStringList(configured interface{}) []string {
 	}
 	return vs
 }
+
+// CHANGE TO UTILS IF YOU ADD MORE FUNCTIONS
