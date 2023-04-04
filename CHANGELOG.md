@@ -1,3 +1,7 @@
+## 0.9.0 (April 3, 2023)
+IMPROVEMENTS:
+- Add mso_schema_site_anp_epg_bulk_staticport resource and data source
+
 ## 0.8.1 (February 2, 2023)
 BUG FIXES:
 - Fix issue with platform set to nd and require platform set to nd when using mso_schema_template_deploy_ndo
