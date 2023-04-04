@@ -37,13 +37,13 @@ func resourceMSOSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-				Deprecated:   "use template by specifying a name, display_name and tenant_id instead",
+				Deprecated:   "use template block with name, display_name and tenant_id instead",
 			},
 			"tenant_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-				Deprecated:   "use template by specifying a name, display_name and tenant_id instead",
+				Deprecated:   "use template block with name, display_name and tenant_id instead",
 			},
 			"template": &schema.Schema{
 				Type:     schema.TypeSet,
