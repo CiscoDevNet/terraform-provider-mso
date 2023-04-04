@@ -33,4 +33,6 @@ data "mso_schema_template_vrf" "vrf1" {
 * `display_name` - (Optional) The name as displayed on the MSO web interface.
 * `layer3_multicast` - (Optional) Whether to enable L3 multicast.
 * `vzany` - (Optional) Whether to enable vzany.
+* `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled or disabled. Allowed values are `disabled`and `enabled`.
+* `preferred_group` - (Optional) Whether to enable preferred Endpoint Group.
 

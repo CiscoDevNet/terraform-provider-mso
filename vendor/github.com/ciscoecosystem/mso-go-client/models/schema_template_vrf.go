@@ -6,15 +6,17 @@ type SchemaTemplateVrf struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateVrf(ops, path, Name, displayName string, l3m, vzany bool) *SchemaSite {
+func NewSchemaTemplateVrf(ops, path, Name, displayName, ipDataPlaneLearning string, l3m, vzany, preferredGroup bool) *SchemaSite {
 	var VrfMap map[string]interface{}
 
 	if ops != "remove" {
 		VrfMap = map[string]interface{}{
-			"displayName":  displayName,
-			"name":         Name,
-			"l3MCast":      l3m,
-			"vzAnyEnabled": vzany,
+			"displayName":         displayName,
+			"name":                Name,
+			"l3MCast":             l3m,
+			"vzAnyEnabled":        vzany,
+			"ipDataPlaneLearning": ipDataPlaneLearning,
+			"preferredGroup":      preferredGroup,
 		}
 	} else {
 

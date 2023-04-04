@@ -7,13 +7,16 @@ type SchemaSiteAnpEpgDomain struct {
 }
 
 func NewSchemaSiteAnpEpgDomain(ops, path, domainType, dn, deploymentImmediacy, resolutionImmediacy string, vmmDomainProperties map[string]interface{}) *SchemaSiteAnpEpgDomain {
-	var siteAnpEpgDomainMap map[string]interface{}
-	siteAnpEpgDomainMap = map[string]interface{}{
+	siteAnpEpgDomainMap := map[string]interface{}{
 		"domainType":          domainType,
 		"dn":                  dn,
 		"deploymentImmediacy": deploymentImmediacy,
 		"resolutionImmediacy": resolutionImmediacy,
 		"vmmDomainProperties": vmmDomainProperties,
+	}
+
+	if len(vmmDomainProperties) > 0 {
+		injectVmmDomainProperties(siteAnpEpgDomainMap, vmmDomainProperties)
 	}
 
 	return &SchemaSiteAnpEpgDomain{
@@ -22,6 +25,20 @@ func NewSchemaSiteAnpEpgDomain(ops, path, domainType, dn, deploymentImmediacy, r
 		Value: siteAnpEpgDomainMap,
 	}
 
+}
+
+func injectVmmDomainProperties(siteAnpEpgDomainMap, vmmDomainProperties map[string]interface{}) {
+
+	properties := []string{"allowMicroSegmentation", "epgLagPol", "switchType", "switchingMode", "vlanEncapMode", "portEncapVlan", "microSegVlan"}
+	for _, property := range properties {
+		value, exists := vmmDomainProperties[property]
+		if exists {
+			siteAnpEpgDomainMap[property] = value
+			if property == "epgLagPol" {
+				siteAnpEpgDomainMap["lacpPolicy"] = value.(map[string]interface{})["enhancedLagPol"].(map[string]interface{})["dn"]
+			}
+		}
+	}
 }
 
 func (siteAnpEpgDomainAttributes *SchemaSiteAnpEpgDomain) ToMap() (map[string]interface{}, error) {
