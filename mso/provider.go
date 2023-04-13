@@ -33,7 +33,7 @@ func Provider() terraform.ResourceProvider {
 			"insecure": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
+				DefaultFunc: schema.EnvDefaultFunc("MSO_INSECURE", true),
 				Description: "Allow insecure HTTPS client",
 			},
 			"domain": &schema.Schema{
@@ -51,6 +51,7 @@ func Provider() terraform.ResourceProvider {
 			"platform": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MSO_PLATFORM", nil),
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
