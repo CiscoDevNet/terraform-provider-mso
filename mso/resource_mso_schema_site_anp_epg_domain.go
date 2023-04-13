@@ -935,13 +935,11 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		log.Print("Passing Blank Value to the Model")
 	}
 
-	id := d.Id()
-
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
-	index, err := indexCount(cont, siteId, anpName, epgName, id)
+	index, err := indexCount(cont, siteId, anpName, epgName, DN)
 	if err != nil {
 		return err
 	}
@@ -1102,12 +1100,11 @@ func resourceMSOSchemaSiteAnpEpgDomainDelete(d *schema.ResourceData, m interface
 		log.Print("Passing Blank Value to the Model")
 	}
 
-	id := d.Id()
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
-	index, err := indexCount(cont, siteId, anpName, epgName, id)
+	index, err := indexCount(cont, siteId, anpName, epgName, DN)
 	if err != nil {
 		return err
 	}
