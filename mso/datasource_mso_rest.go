@@ -23,14 +23,14 @@ func datasourceMSORest() *schema.Resource {
 			},
 			"content": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
 }
 
 func datasourceMSORestRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
+	log.Printf("[DEBUG] Beginning Read")
 
 	path := d.Get("path").(string)
 	msoClient := m.(*client.Client)

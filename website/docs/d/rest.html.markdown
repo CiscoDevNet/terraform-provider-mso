@@ -24,4 +24,4 @@ data "mso_rest" "system_config" {
 
 ## Attribute Reference ##
 
-* `content` - (Optional) JSON response as a string.
+* `content` - (Read-Only) JSON response as a string.
