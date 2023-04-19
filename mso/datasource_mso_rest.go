@@ -30,9 +30,9 @@ func datasourceMSORest() *schema.Resource {
 }
 
 func datasourceMSORestRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Beginning Read")
-
 	path := d.Get("path").(string)
+	log.Printf("[DEBUG] %s: Beginning Read", path)
+
 	msoClient := m.(*client.Client)
 	content, err := MakeRestRequest(msoClient, path, "GET", "{}")
 	if err != nil {
@@ -41,6 +41,6 @@ func datasourceMSORestRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(path)
 	d.Set("content", content.String())
 
-	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
+	log.Printf("[DEBUG] %s: Read finished successfully", path)
 	return nil
 }
