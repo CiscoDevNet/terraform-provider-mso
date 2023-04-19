@@ -9,6 +9,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceMSOSchemaTemplateVrf() *schema.Resource {
@@ -54,6 +55,22 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 			},
 
 			"vzany": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"disabled",
+					"enabled",
+				}, false),
+			},
+
+			"preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
@@ -109,6 +126,13 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) (
 						vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
 						d.Set("vzany", vzAnyEnabled)
 					}
+					if vrfCont.Exists("ipDataPlaneLearning") {
+						d.Set("ip_data_plane_learning", models.StripQuotes(vrfCont.S("ipDataPlaneLearning").String()))
+					}
+					if vrfCont.Exists("preferredGroup") {
+						preferredGroup, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("preferredGroup").String()))
+						d.Set("preferred_group", preferredGroup)
+					}
 					found = true
 					break
 				}
@@ -162,7 +186,17 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) e
 		vzany = vzAny.(bool)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", "/templates/"+templateName+"/vrfs/-", Name, displayName, l3m, vzany)
+	var ipDataPlaneLearning string
+	if ip_data_plane_learning, ok := d.GetOk("ip_data_plane_learning"); ok {
+		ipDataPlaneLearning = ip_data_plane_learning.(string)
+	}
+
+	var preferredGroup bool
+	if preferred_group, ok := d.GetOk("preferred_group"); ok {
+		preferredGroup = preferred_group.(bool)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", fmt.Sprintf("/templates/%s/vrfs/-", templateName), Name, displayName, ipDataPlaneLearning, l3m, vzany, preferredGroup)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -210,7 +244,17 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) e
 		vzany = vzAny.(bool)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", "/templates/"+templateName+"/vrfs/"+Name, Name, displayName, l3m, vzany)
+	var ipDataPlaneLearning string
+	if ip_data_plane_learning, ok := d.GetOk("ip_data_plane_learning"); ok {
+		ipDataPlaneLearning = ip_data_plane_learning.(string)
+	}
+
+	var preferredGroup bool
+	if preferred_group, ok := d.GetOk("preferred_group"); ok {
+		preferredGroup = preferred_group.(bool)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", fmt.Sprintf("/templates/%s/vrfs/%s", templateName, Name), Name, displayName, ipDataPlaneLearning, l3m, vzany, preferredGroup)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -280,6 +324,13 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) err
 						vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
 						d.Set("vzany", vzAnyEnabled)
 					}
+					if vrfCont.Exists("ipDataPlaneLearning") {
+						d.Set("ip_data_plane_learning", models.StripQuotes(vrfCont.S("ipDataPlaneLearning").String()))
+					}
+					if vrfCont.Exists("preferredGroup") {
+						preferredGroup, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("preferredGroup").String()))
+						d.Set("preferred_group", preferredGroup)
+					}
 
 					found = true
 					break
@@ -305,18 +356,9 @@ func resourceMSOSchemaTemplateVrfDelete(d *schema.ResourceData, m interface{}) e
 	schemaId := d.Get("schema_id").(string)
 	template := d.Get("template").(string)
 	name := d.Get("name").(string)
-	var l3m bool
-	if L3M, ok := d.GetOk("layer3_multicast"); ok {
-		l3m = L3M.(bool)
-	}
 
-	var vzany bool
-	if vzAny, ok := d.GetOk("vzany"); ok {
-		vzany = vzAny.(bool)
-	}
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("remove", "/templates/"+template+"/vrfs/"+name, "", "", l3m, vzany)
-
-	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
+	vrfRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/vrfs/%s", template, name))
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRemovePatchPayload)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting
 	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {

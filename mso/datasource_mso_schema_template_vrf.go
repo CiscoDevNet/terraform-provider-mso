@@ -36,16 +36,31 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 
 			"layer3_multicast": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
 			},
 
 			"vzany": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
+			},
+
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"preferred_group": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
@@ -96,6 +111,13 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 					if vrfCont.Exists("vzAnyEnabled") {
 						vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
 						d.Set("vzany", vzAnyEnabled)
+					}
+					if vrfCont.Exists("ipDataPlaneLearning") {
+						d.Set("ip_data_plane_learning", models.StripQuotes(vrfCont.S("ipDataPlaneLearning").String()))
+					}
+					if vrfCont.Exists("preferredGroup") {
+						preferredGroup, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("preferredGroup").String()))
+						d.Set("preferred_group", preferredGroup)
 					}
 					found = true
 					break
