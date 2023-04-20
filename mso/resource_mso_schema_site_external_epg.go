@@ -164,15 +164,27 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 
 	siteEpgMap["externalEpgRef"] = externalEpgRefMap
 
-	path := fmt.Sprintf("/sites/%s-%s/externalEpgs/-", siteId, templateName)
-	siteExternalEpgStruct := models.NewSchemaSiteExternalEpg("add", path, siteEpgMap)
-	log.Printf("[DETAILS] %s: ", siteExternalEpgStruct)
+	versionInt, err := msoClient.CompareVersion("4.0.0.0")
+	if err != nil {
+		return err
+	}
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
+	if versionInt != 1 {
+		path := fmt.Sprintf("/sites/%s-%s/externalEpgs/%s", siteId, templateName, externalEpgName)
+		siteExternalEpgStruct := models.NewSchemaSiteExternalEpg("replace", path, siteEpgMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
+	}
+
+	if versionInt == 1 || err != nil {
+		path := fmt.Sprintf("/sites/%s-%s/externalEpgs/-", siteId, templateName)
+		siteExternalEpgStruct := models.NewSchemaSiteExternalEpg("add", path, siteEpgMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), siteExternalEpgStruct)
+	}
 
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOSchemaSiteExternalEpgRead(d, m)
 }
 

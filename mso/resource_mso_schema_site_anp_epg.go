@@ -162,8 +162,6 @@ func resourceMSOSchemaSiteAnpEpgCreate(d *schema.ResourceData, m interface{}) er
 	anpEpgRefMap["anpName"] = anpName
 	anpEpgRefMap["epgName"] = epgName
 
-	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", siteId, templateName, anpName)
-
 	privateLinkLabel := make(map[string]interface{})
 	if val, ok := d.GetOk("private_link_label"); ok {
 		map_private_link_label := make(map[string]interface{})
@@ -172,8 +170,24 @@ func resourceMSOSchemaSiteAnpEpgCreate(d *schema.ResourceData, m interface{}) er
 	} else {
 		privateLinkLabel = nil
 	}
-	anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, privateLinkLabel, anpEpgRefMap)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+
+	versionInt, err := msoClient.CompareVersion("4.0.0.0")
+	if err != nil {
+		return err
+	}
+
+	if versionInt != 1 {
+		path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s", siteId, templateName, anpName, epgName)
+		anpEpgStruct := models.NewSchemaSiteAnpEpg("replace", path, privateLinkLabel, anpEpgRefMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	}
+
+	if versionInt == 1 || err != nil {
+		path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/-", siteId, templateName, anpName)
+		anpEpgStruct := models.NewSchemaSiteAnpEpg("add", path, privateLinkLabel, anpEpgRefMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	}
+
 	if err != nil {
 		return err
 	}

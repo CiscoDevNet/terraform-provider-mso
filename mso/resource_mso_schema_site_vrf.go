@@ -131,14 +131,27 @@ func resourceMSOSchemaSiteVrfCreate(d *schema.ResourceData, m interface{}) error
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
-	path := fmt.Sprintf("/sites/%s-%s/vrfs/-", siteId, templateName)
-	vrfStruct := models.NewSchemaSiteVrf("add", path, vrfRefMap)
+	versionInt, err := msoClient.CompareVersion("4.0.0.0")
+	if err != nil {
+		return err
+	}
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfStruct)
+	if versionInt != 1 {
+		path := fmt.Sprintf("/sites/%s-%s/vrfs/%s", siteId, templateName, vrfName)
+		vrfStruct := models.NewSchemaSiteVrf("replace", path, vrfRefMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfStruct)
+	}
+
+	if versionInt == 1 || err != nil {
+		path := fmt.Sprintf("/sites/%s-%s/vrfs/-", siteId, templateName)
+		vrfStruct := models.NewSchemaSiteVrf("add", path, vrfRefMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfStruct)
+	}
 
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOSchemaSiteVrfRead(d, m)
 }
 
