@@ -10,7 +10,8 @@ func NewSchemaSiteAnpEpgDomain(ops, path, domainType, dn, deploymentImmediacy, r
 	siteAnpEpgDomainMap := map[string]interface{}{
 		"domainType":          domainType,
 		"dn":                  dn,
-		"deploymentImmediacy": deploymentImmediacy,
+		"deploymentImmediacy": deploymentImmediacy, // keeping for backworths compatibility
+		"deployImmediacy":     deploymentImmediacy, // rename of deploymentImmediacy
 		"resolutionImmediacy": resolutionImmediacy,
 		"vmmDomainProperties": vmmDomainProperties,
 	}
@@ -34,9 +35,6 @@ func injectVmmDomainProperties(siteAnpEpgDomainMap, vmmDomainProperties map[stri
 		value, exists := vmmDomainProperties[property]
 		if exists {
 			siteAnpEpgDomainMap[property] = value
-			if property == "epgLagPol" {
-				siteAnpEpgDomainMap["lacpPolicy"] = value.(map[string]interface{})["enhancedLagPol"].(map[string]interface{})["dn"]
-			}
 		}
 	}
 }
