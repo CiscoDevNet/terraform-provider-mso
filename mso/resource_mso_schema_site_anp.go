@@ -131,14 +131,27 @@ func resourceMSOSchemaSiteAnpCreate(d *schema.ResourceData, m interface{}) error
 	anpRefMap["templateName"] = anp_template_name
 	anpRefMap["anpName"] = anpName
 
-	path := fmt.Sprintf("/sites/%s-%s/anps/-", siteId, templateName)
-	anpStruct := models.NewSchemaSiteAnp("add", path, anpRefMap)
+	versionInt, err := msoClient.CompareVersion("4.0.0.0")
+	if err != nil {
+		return err
+	}
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+	if versionInt != 1 {
+		path := fmt.Sprintf("/sites/%s-%s/anps/%s", siteId, templateName, anpName)
+		anpStruct := models.NewSchemaSiteAnp("replace", path, anpRefMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+	}
+
+	if versionInt == 1 || err != nil {
+		path := fmt.Sprintf("/sites/%s-%s/anps/-", siteId, templateName)
+		anpStruct := models.NewSchemaSiteAnp("add", path, anpRefMap)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
+	}
 
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOSchemaSiteAnpRead(d, m)
 }
 

@@ -142,14 +142,27 @@ func resourceMSOSchemaSiteBdCreate(d *schema.ResourceData, m interface{}) error 
 	bdRefMap["templateName"] = bd_template_name
 	bdRefMap["bdName"] = bdName
 
-	path := fmt.Sprintf("/sites/%s-%s/bds/-", siteId, templateName)
-	bdStruct := models.NewSchemaSiteBd("add", path, bdRefMap, host)
+	versionInt, err := msoClient.CompareVersion("4.0.0.0")
+	if err != nil {
+		return err
+	}
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
+	if versionInt != 1 {
+		path := fmt.Sprintf("/sites/%s-%s/bds/%s", siteId, templateName, bdName)
+		bdStruct := models.NewSchemaSiteBd("replace", path, bdRefMap, host)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
+	}
+
+	if versionInt == 1 || err != nil {
+		path := fmt.Sprintf("/sites/%s-%s/bds/-", siteId, templateName)
+		bdStruct := models.NewSchemaSiteBd("add", path, bdRefMap, host)
+		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
+	}
 
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOSchemaSiteBdRead(d, m)
 }
 
