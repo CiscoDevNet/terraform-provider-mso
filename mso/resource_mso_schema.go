@@ -364,7 +364,12 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	dn := d.Id()
 	con, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/" + dn))
 	if err != nil {
-		return err
+		if con.S("code").String() == "404" {
+			d.SetId("")
+			return nil
+		} else {
+			return err
+		}
 	}
 
 	d.SetId(models.StripQuotes(con.S("id").String()))
