@@ -96,12 +96,12 @@ func resourceMSORestDelete(d *schema.ResourceData, m interface{}) error {
 	var method, path, payload string
 	path = d.Get("path").(string)
 	payload = d.Get("payload").(string)
-	
-	if tempVar, ok := d.GetOk("method"); !ok {
+
+	if _, ok := d.GetOk("method"); !ok {
 		method = "DELETE"
 		msoClient := m.(*client.Client)
 		_, err := MakeRestRequest(msoClient, path, method, payload)
-	
+
 		if err != nil {
 			return err
 		}
