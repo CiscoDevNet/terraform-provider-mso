@@ -6,13 +6,23 @@ type SchemaSiteVrfRegionCidrSubnet struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaSiteVrfRegionCidrSubnet(ops, path, ip, zone, usage string) *SchemaSiteVrfRegionCidrSubnet {
+func NewSchemaSiteVrfRegionCidrSubnet(ops, path, name, ip, zone, usage, subnetGroup string) *SchemaSiteVrfRegionCidrSubnet {
 	var bdsubnetMap map[string]interface{}
 	if ops != "remove" {
 		bdsubnetMap = map[string]interface{}{
-			"ip":    ip,
-			"zone":  zone,
-			"usage": usage,
+			"ip": ip,
+		}
+		if name != "" {
+			bdsubnetMap["name"] = name
+		}
+		if zone != "" {
+			bdsubnetMap["zone"] = zone
+		}
+		if usage != "" {
+			bdsubnetMap["usage"] = usage
+		}
+		if subnetGroup != "" {
+			bdsubnetMap["subnetGroup"] = subnetGroup
 		}
 	} else {
 		bdsubnetMap = nil
