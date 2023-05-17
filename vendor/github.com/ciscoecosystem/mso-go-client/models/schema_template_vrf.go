@@ -11,15 +11,16 @@ func NewSchemaTemplateVrf(ops, path, Name, displayName, ipDataPlaneLearning stri
 
 	if ops != "remove" {
 		VrfMap = map[string]interface{}{
-			"displayName":         displayName,
-			"name":                Name,
-			"l3MCast":             l3m,
-			"vzAnyEnabled":        vzany,
-			"ipDataPlaneLearning": ipDataPlaneLearning,
-			"preferredGroup":      preferredGroup,
+			"displayName":    displayName,
+			"name":           Name,
+			"l3MCast":        l3m,
+			"vzAnyEnabled":   vzany,
+			"preferredGroup": preferredGroup,
+		}
+		if ipDataPlaneLearning != "" {
+			VrfMap["ipDataPlaneLearning"] = ipDataPlaneLearning
 		}
 	} else {
-
 		VrfMap = nil
 	}
 

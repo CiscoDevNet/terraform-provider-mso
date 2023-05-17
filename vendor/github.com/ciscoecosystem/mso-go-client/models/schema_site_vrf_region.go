@@ -6,13 +6,14 @@ type SchemaSiteVrfRegion struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaSiteVrfRegion(ops, path, name string, vpnGateway, hubNetwork bool, hubNetworkMap map[string]interface{}, cidrs []interface{}) *SchemaSiteVrfRegion {
-	var siteVrfRegionMap map[string]interface{}
-	siteVrfRegionMap = map[string]interface{}{
+func NewSchemaSiteVrfRegion(ops, path, name, vpcGroup string, vpnGateway, hubNetwork bool, hubNetworkMap map[string]interface{}, cidrs []interface{}) *SchemaSiteVrfRegion {
+
+	siteVrfRegionMap := map[string]interface{}{
 		"name":               name,
 		"isVpnGatewayRouter": vpnGateway,
 		"isTGWAttachment":    hubNetwork,
 		"cidrs":              cidrs,
+		"vpcGroup":           vpcGroup,
 	}
 
 	if hubNetwork {
