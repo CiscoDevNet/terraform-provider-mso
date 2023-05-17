@@ -68,6 +68,12 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
 			"zone": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -76,6 +82,12 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 			"usage": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"subnet_group": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
@@ -175,6 +187,12 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetImport(d *schema.ResourceData, m in
 											if subnetCont.Exists("usage") {
 												d.Set("usage", models.StripQuotes(subnetCont.S("usage").String()))
 											}
+											if subnetCont.Exists("subnetGroup") {
+												d.Set("subnet_group", models.StripQuotes(subnetCont.S("subnetGroup").String()))
+											}
+											if subnetCont.Exists("name") {
+												d.Set("name", models.StripQuotes(subnetCont.S("name").String()))
+											}
 											found = true
 											break
 										}
@@ -214,13 +232,21 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetCreate(d *schema.ResourceData, m in
 	regionName := d.Get("region_name").(string)
 	cidrIp := d.Get("cidr_ip").(string)
 	ip := d.Get("ip").(string)
-	var zone, usage string
+	var zone, usage, subnetGroup, name string
 	if tempvar, ok := d.GetOk("zone"); ok {
 		zone = tempvar.(string)
 	}
 
 	if tempvar, ok := d.GetOk("usage"); ok {
 		usage = tempvar.(string)
+	}
+
+	if tempvar, ok := d.GetOk("subnet_group"); ok {
+		subnetGroup = tempvar.(string)
+	}
+
+	if tempvar, ok := d.GetOk("name"); ok {
+		name = tempvar.(string)
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -289,7 +315,7 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetCreate(d *schema.ResourceData, m in
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s/cidrs/%v/subnets/-", siteId, templateName, vrfName, regionName, cindex)
-	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("add", path, ip, zone, usage)
+	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("add", path, name, ip, zone, usage, subnetGroup)
 
 	_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
 	if err1 != nil {
@@ -391,6 +417,12 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m inte
 											if subnetCont.Exists("usage") {
 												d.Set("usage", models.StripQuotes(subnetCont.S("usage").String()))
 											}
+											if subnetCont.Exists("subnetGroup") {
+												d.Set("subnet_group", models.StripQuotes(subnetCont.S("subnetGroup").String()))
+											}
+											if subnetCont.Exists("name") {
+												d.Set("name", models.StripQuotes(subnetCont.S("name").String()))
+											}
 											found = true
 											break
 										}
@@ -411,7 +443,6 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m inte
 		d.Set("template_name", "")
 		d.Set("region_name", "")
 		d.Set("vrf_name", "")
-
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
@@ -431,13 +462,21 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetUpdate(d *schema.ResourceData, m in
 	cidrIp := d.Get("cidr_ip").(string)
 	ip := d.Get("ip").(string)
 
-	var zone, usage string
+	var zone, usage, subnetGroup, name string
 	if tempvar, ok := d.GetOk("zone"); ok {
 		zone = tempvar.(string)
 	}
 
 	if tempvar, ok := d.GetOk("usage"); ok {
 		usage = tempvar.(string)
+	}
+
+	if tempvar, ok := d.GetOk("subnet_group"); ok {
+		subnetGroup = tempvar.(string)
+	}
+
+	if tempvar, ok := d.GetOk("name"); ok {
+		name = tempvar.(string)
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -520,7 +559,7 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetUpdate(d *schema.ResourceData, m in
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s/cidrs/%v/subnets/%v", siteId, templateName, vrfName, regionName, cindex, index)
-	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("replace", path, ip, zone, usage)
+	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("replace", path, name, ip, zone, usage, subnetGroup)
 
 	_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
 	if err1 != nil {
@@ -540,15 +579,6 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetDelete(d *schema.ResourceData, m in
 	regionName := d.Get("region_name").(string)
 	cidrIp := d.Get("cidr_ip").(string)
 	ip := d.Get("ip").(string)
-
-	var zone, usage string
-	if tempvar, ok := d.GetOk("zone"); ok {
-		zone = tempvar.(string)
-	}
-
-	if tempvar, ok := d.GetOk("usage"); ok {
-		usage = tempvar.(string)
-	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
@@ -635,8 +665,7 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetDelete(d *schema.ResourceData, m in
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s/cidrs/%v/subnets/%v", siteId, templateName, vrfName, regionName, cindex, index)
-	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("remove", path, ip, zone, usage)
-
+	vrfRegionStruct := models.NewSchemaSiteVrfRegionCidrSubnet("remove", path, "", ip, "", "", "")
 	response, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting

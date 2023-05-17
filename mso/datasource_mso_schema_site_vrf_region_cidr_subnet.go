@@ -55,6 +55,12 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -69,6 +75,12 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 			"usage": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"subnet_group": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
@@ -166,6 +178,12 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 											}
 											if subnetCont.Exists("usage") {
 												d.Set("usage", models.StripQuotes(subnetCont.S("usage").String()))
+											}
+											if subnetCont.Exists("subnetGroup") {
+												d.Set("subnet_group", models.StripQuotes(subnetCont.S("subnetGroup").String()))
+											}
+											if subnetCont.Exists("name") {
+												d.Set("name", models.StripQuotes(subnetCont.S("name").String()))
 											}
 											found = true
 											break

@@ -39,7 +39,9 @@ description: |-
 
 * `template_name` - (Optional) Template where Vrf Region Cidr Subnet to be created.
 * `zone` - (Optional) The name of the zone for the region CIDR subnet.
+* `name` - (Optional) The name for the region CIDR Subnet.
 * `usage` - (Optional) The usage for the region CIDR Subnet.
+* `subnet_group` - (Optional) The subnet group for the region CIDR Subnet.
 
 ## Note ##
 Multiple Subnets with same Ip are allowed, but the operations will take place on the first found Subnet with the given Ip.

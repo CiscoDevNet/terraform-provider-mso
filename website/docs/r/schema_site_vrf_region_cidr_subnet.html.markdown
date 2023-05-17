@@ -38,7 +38,9 @@ resource "mso_schema_site_vrf_region_cidr_subnet" "sub1" {
 * `cidr_ip` - (Required) The IP range of for the region CIDR where Vrf Region Cidr Subnet to be created.
 * `ip` - (Required) The IP subnet of this region CIDR.
 * `zone` - (Optional) The name of the availability zone for the region CIDR subnet. This argument is required for AWS sites.
+* `name` - (Optional) The name for the region CIDR Subnet.
 * `usage` - (Optional) The usage for the region CIDR Subnet.
+* `subnet_group` - (Optional) The subnet group for the region CIDR Subnet.
 
 ## Attribute Reference ##
 
