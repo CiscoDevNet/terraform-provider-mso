@@ -126,6 +126,12 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 										Computed:     true,
 										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
+									"subnet_group": &schema.Schema{
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringLenBetween(1, 1000),
+									},
 								},
 							},
 						},
@@ -239,6 +245,9 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 									if subnet["usage"] != nil {
 										subnetMap["usage"] = subnet["usage"]
 									}
+									if subnet["subnetGroup"] != nil {
+										subnetMap["subnet_group"] = subnet["subnetGroup"]
+									}
 
 									subnetList = append(subnetList, subnetMap)
 								}
@@ -328,6 +337,9 @@ func resourceMSOSchemaSiteVrfRegionCreate(d *schema.ResourceData, m interface{})
 			if subnet["usage"] != nil {
 				subnetMap["usage"] = subnet["usage"]
 			}
+			if subnet["subnet_group"] != nil {
+				subnetMap["subnetGroup"] = subnet["subnet_group"]
+			}
 
 			subnetList = append(subnetList, subnetMap)
 		}
@@ -338,7 +350,7 @@ func resourceMSOSchemaSiteVrfRegionCreate(d *schema.ResourceData, m interface{})
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/-", siteId, templateName, vrfName)
-	vrfRegionStruct := models.NewSchemaSiteVrfRegion("add", path, regionName, vpnGateway, hubEnable, hubNetworkMap, cidrsList)
+	vrfRegionStruct := models.NewSchemaSiteVrfRegion("add", path, regionName, vrfName, vpnGateway, hubEnable, hubNetworkMap, cidrsList)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
 	if err != nil {
@@ -411,6 +423,9 @@ func resourceMSOSchemaSiteVrfRegionUpdate(d *schema.ResourceData, m interface{})
 			if subnet["usage"] != nil {
 				subnetMap["usage"] = subnet["usage"]
 			}
+			if subnet["subnet_group"] != nil {
+				subnetMap["subnetGroup"] = subnet["subnet_group"]
+			}
 
 			subnetList = append(subnetList, subnetMap)
 		}
@@ -421,7 +436,7 @@ func resourceMSOSchemaSiteVrfRegionUpdate(d *schema.ResourceData, m interface{})
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s", siteId, templateName, vrfName, regionName)
-	vrfRegionStruct := models.NewSchemaSiteVrfRegion("replace", path, regionName, vpnGateway, hubEnable, hubNetworkMap, cidrsList)
+	vrfRegionStruct := models.NewSchemaSiteVrfRegion("replace", path, regionName, vrfName, vpnGateway, hubEnable, hubNetworkMap, cidrsList)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
 	if err != nil {
@@ -533,6 +548,9 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 									if subnet["usage"] != nil {
 										subnetMap["usage"] = subnet["usage"]
 									}
+									if subnet["subnetGroup"] != nil {
+										subnetMap["subnet_group"] = subnet["subnetGroup"]
+									}
 
 									subnetList = append(subnetList, subnetMap)
 								}
@@ -575,9 +593,7 @@ func resourceMSOSchemaSiteVrfRegionDelete(d *schema.ResourceData, m interface{})
 	regionName := d.Get("region_name").(string)
 
 	path := fmt.Sprintf("/sites/%s-%s/vrfs/%s/regions/%s", siteId, templateName, vrfName, regionName)
-	vrfRegionStruct := models.NewSchemaSiteVrfRegion("remove", path, regionName, false, false, nil, nil)
-
-	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), vrfRegionStruct)
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), models.GetRemovePatchPayload(path))
 
 	// Ignoring Error with code 141: Resource Not Found when deleting
 	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {

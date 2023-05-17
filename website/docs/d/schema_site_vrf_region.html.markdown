@@ -43,6 +43,7 @@ data "mso_schema_site_vrf_region" "vrfRegion" {
 * `cidr.subnet.name` - (Optional) Name for the subnet.
 * `cidr.subnet.zone` - (Optional) zone for the subnet.
 * `cidr.subnet.usage` - (Optional) usage information of particular subnet.
+* `cidr.subnet.subnet_group` - (Optional) The name of the subnet group label for the subnet.
 
 * `vpn_gateway` - (Optional) VPN gateway flag.
 * `hub_network_enable` - (Optional) Hub Network enable flag. To set hub network in region, this attribute should be true. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
