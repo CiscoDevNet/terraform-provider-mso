@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -84,7 +85,53 @@ func resourceMSOTenant() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{
 								"aws",
 								"azure",
+								"gcp",
 							}, false),
+						},
+						"gcp_project_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"gcp_access_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"unmanaged",
+								"managed",
+							}, false),
+						},
+						"gcp_name": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"gcp_key_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"gcp_private_key": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"gcp_client_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+						},
+						"gcp_email": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"aws_account_id": {
 							Type:         schema.TypeString,
@@ -174,6 +221,94 @@ func StringLenValidator(lengt int) schema.SchemaValidateFunc {
 	}
 }
 
+func readAwsAccountDataFromSchema(sitesCont *container.Container, mapSite map[string]interface{}) {
+	awsCont, err := sitesCont.ArrayElement(0, "awsAccount")
+	mapSite["aws_account_id"] = ""
+	mapSite["aws_access_key_id"] = ""
+	mapSite["aws_secret_key"] = ""
+	mapSite["is_aws_account_trusted"] = false
+	if err == nil {
+		mapSite["vendor"] = "aws"
+		mapSite["aws_account_id"] = models.StripQuotes(awsCont.S("accountId").String())
+		if awsCont.Exists("isTrusted") {
+			mapSite["is_aws_account_trusted"] = awsCont.S("isTrusted").Data().(bool)
+		}
+		accessKey := models.StripQuotes(awsCont.S("accessKeyId").String())
+		if accessKey != "{}" {
+			mapSite["aws_access_key_id"] = accessKey
+		}
+		secretKey := models.StripQuotes(awsCont.S("secretKey").String())
+		if secretKey != "{}" {
+			mapSite["aws_secret_key"] = secretKey
+		}
+	}
+}
+
+func readAzureAccountDataFromSchema(sitesCont *container.Container, mapSite map[string]interface{}) {
+	azureCont, err := sitesCont.ArrayElement(0, "azureAccount")
+	mapSite["azure_access_type"] = ""
+	mapSite["azure_client_secret"] = ""
+	mapSite["azure_active_directory_id"] = ""
+	mapSite["azure_subscription_id"] = ""
+	mapSite["azure_application_id"] = ""
+	if err == nil {
+		mapSite["vendor"] = "azure"
+		mapSite["azure_access_type"] = models.StripQuotes(azureCont.S("accessType").String())
+		mapSite["azure_subscription_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudSubscriptionId").String())
+		if mapSite["azure_access_type"] == "credentials" {
+			mapSite["azure_application_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudApplicationId").String())
+			appCont, err := azureCont.ArrayElement(0, "cloudApplication")
+			if err == nil {
+				mapSite["azure_client_secret"] = models.StripQuotes(appCont.S("secretKey").String())
+				mapSite["azure_active_directory_id"] = models.StripQuotes(appCont.S("cloudActiveDirectoryId").String())
+			}
+		}
+	}
+}
+
+func readGcpAccountDataFromSchema(sitesCont *container.Container, mapSite map[string]interface{}) {
+	gcpCont, err := sitesCont.ArrayElement(0, "gcpAccount")
+	mapSite["gcp_project_id"] = ""
+	mapSite["gcp_access_type"] = ""
+	mapSite["gcp_client_id"] = ""
+	mapSite["gcp_email"] = ""
+	mapSite["gcp_name"] = ""
+	mapSite["gcp_key_id"] = ""
+	mapSite["gcp_private_key"] = ""
+	if err == nil {
+		mapSite["vendor"] = "gcp"
+		mapSite["gcp_project_id"] = models.StripQuotes(gcpCont.S("projectID").String())
+		mapSite["gcp_access_type"] = models.StripQuotes(gcpCont.S("accessType").String())
+		if models.StripQuotes(gcpCont.S("accessType").String()) == "unmanaged" {
+			mapSite["gcp_client_id"] = models.StripQuotes(gcpCont.S("cloudCredentials", "clientId").String())
+			mapSite["gcp_email"] = models.StripQuotes(gcpCont.S("cloudCredentials", "email").String())
+			mapSite["gcp_name"] = models.StripQuotes(gcpCont.S("cloudCredentials", "name").String())
+			mapSite["gcp_key_id"] = models.StripQuotes(gcpCont.S("cloudCredentials", "keyId").String())
+			mapSite["gcp_private_key"] = models.StripQuotes(gcpCont.S("cloudCredentials", "rsaPrivateKey").String())
+		}
+	}
+}
+
+func setGcpAccountDetails(mapSite, accountDetails map[string]interface{}, tenant string, new bool) {
+	gcpAccountMap := make(map[string]interface{})
+	gcpAccountMap["vendor"] = "gcp"
+	gcpAccountMap["isNew"] = new
+	gcpAccountMap["projectID"] = accountDetails["gcp_project_id"]
+	gcpAccountMap["securityDomains"] = make([]interface{}, 0)
+	gcpAccountMap["accessType"] = accountDetails["gcp_access_type"]
+	if accountDetails["gcp_access_type"] == "unmanaged" {
+		cloudCredentials := make(map[string]interface{})
+		cloudCredentials["clientId"] = accountDetails["gcp_client_id"]
+		cloudCredentials["email"] = accountDetails["gcp_email"]
+		cloudCredentials["keyId"] = accountDetails["gcp_key_id"]
+		cloudCredentials["name"] = accountDetails["gcp_name"]
+		cloudCredentials["rsaPrivateKey"] = accountDetails["gcp_private_key"]
+		gcpAccountMap["cloudCredentials"] = cloudCredentials
+	}
+	mapSite["cloudAccount"] = fmt.Sprintf("uni/tn-%s/act-[%s]-vendor-gcp", tenant, accountDetails["gcp_project_id"])
+	mapSite["gcpAccount"] = [...]interface{}{gcpAccountMap}
+}
+
 func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] Tenant: Beginning Import")
 	msoClient := m.(*client.Client)
@@ -195,114 +330,13 @@ func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		mapSite := make(map[string]interface{})
 		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
 		mapSite["security_domains"] = sitesCont.S("securityDomains").Data().([]interface{})
-		awsCount, err := sitesCont.ArrayCount("awsAccount")
-		if err == nil {
-			if awsCount > 0 {
-				awsCont, err := sitesCont.ArrayElement(0, "awsAccount")
-				if err == nil {
-					mapSite["aws_account_id"] = models.StripQuotes(awsCont.S("accountId").String())
-					if awsCont.Exists("isTrusted") {
-						mapSite["is_aws_account_trusted"] = awsCont.S("isTrusted").Data().(bool)
-					}
-					mapSite["vendor"] = "aws"
-					accessKey := models.StripQuotes(awsCont.S("accessKeyId").String())
-					secretKey := models.StripQuotes(awsCont.S("secretKey").String())
 
-					if accessKey != "{}" {
-						mapSite["aws_access_key_id"] = accessKey
-					}
+		readGcpAccountDataFromSchema(sitesCont, mapSite)
+		readAwsAccountDataFromSchema(sitesCont, mapSite)
+		readAzureAccountDataFromSchema(sitesCont, mapSite)
 
-					if secretKey != "{}" {
-						mapSite["aws_secret_key"] = secretKey
-					}
-
-				} else {
-					log.Printf("Unable to load AWS credentials")
-				}
-			} else {
-				mapSite["aws_account_id"] = ""
-				mapSite["aws_access_key_id"] = ""
-				mapSite["aws_secret_key"] = ""
-				mapSite["is_aws_account_trusted"] = false
-			}
-		} else {
-			log.Printf("Error occurred while loading AWS creds")
-			mapSite["aws_account_id"] = ""
-			mapSite["aws_access_key_id"] = ""
-			mapSite["aws_secret_key"] = ""
-			mapSite["is_aws_account_trusted"] = false
-
-		}
-
-		azureCount, err := sitesCont.ArrayCount("azureAccount")
-		if err == nil {
-			if azureCount > 0 {
-				azureCont, err := sitesCont.ArrayElement(0, "azureAccount")
-				if err == nil {
-					mapSite["vendor"] = "azure"
-					mapSite["azure_access_type"] = models.StripQuotes(azureCont.S("accessType").String())
-					mapSite["azure_subscription_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudSubscriptionId").String())
-					if mapSite["azure_access_type"] == "credentials" {
-						mapSite["azure_application_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudApplicationId").String())
-
-						applicationCount, err := azureCont.ArrayCount("cloudApplication")
-						if err == nil {
-							if applicationCount > 0 {
-								appCont, err := azureCont.ArrayElement(0, "cloudApplication")
-								if err == nil {
-									mapSite["azure_client_secret"] = models.StripQuotes(appCont.S("secretKey").String())
-									mapSite["azure_active_directory_id"] = models.StripQuotes(appCont.S("cloudActiveDirectoryId").String())
-								} else {
-									mapSite["azure_client_secret"] = ""
-									mapSite["azure_active_directory_id"] = ""
-								}
-							} else {
-								// Set to empty string
-								mapSite["azure_client_secret"] = ""
-								mapSite["azure_active_directory_id"] = ""
-							}
-						} else {
-							// Set to empty string
-							mapSite["azure_client_secret"] = ""
-							mapSite["azure_active_directory_id"] = ""
-						}
-					}
-
-				} else {
-					if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
-						mapSite["azure_access_type"] = "shared"
-						cldAcc := strings.Split(models.StripQuotes(sitesCont.S("cloudAccount").String()), "/")
-						accInfo := strings.Split(cldAcc[2], "-")
-
-						mapSite["vendor"] = accInfo[3]
-						mapSite["azure_shared_account_id"] = (accInfo[1])[1 : len(accInfo[1])-1]
-
-					} else {
-						mapSite["azure_access_type"] = ""
-
-					}
-					mapSite["azure_client_secret"] = ""
-					mapSite["azure_active_directory_id"] = ""
-					mapSite["azure_subscription_id"] = ""
-					mapSite["azure_application_id"] = ""
-				}
-
-			} else {
-				log.Printf("Error occurred while loading count for azureAccount.")
-				mapSite["azure_client_secret"] = ""
-				mapSite["azure_active_directory_id"] = ""
-				mapSite["azure_access_type"] = ""
-				mapSite["azure_subscription_id"] = ""
-				mapSite["azure_application_id"] = ""
-				mapSite["azure_shared_account_id"] = ""
-			}
-		} else {
-			log.Printf("Error ocurred while loading azure credentials")
-			mapSite["azure_client_secret"] = ""
-			mapSite["azure_active_directory_id"] = ""
-			mapSite["azure_access_type"] = ""
-			mapSite["azure_subscription_id"] = ""
-			mapSite["azure_application_id"] = ""
+		if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
+			setCloudAccountInfo(strings.Split(sitesCont.S("cloudAccount").String(), "/")[2], mapSite)
 		}
 
 		site_associations = append(site_associations, mapSite)
@@ -355,7 +389,15 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 				mapSite["siteId"] = fmt.Sprintf("%v", inner["site_id"])
 			}
 			if inner["vendor"] != "" {
-				if inner["vendor"] == "aws" {
+				if inner["vendor"] == "gcp" {
+
+					if inner["gcp_project_id"] == "" {
+						return fmt.Errorf("gcp_project_id is required with vendor = gcp")
+					}
+
+					setGcpAccountDetails(mapSite, inner, tenantAttr.Name, true)
+
+				} else if inner["vendor"] == "aws" {
 
 					awsAccountMap := make(map[string]interface{})
 
@@ -546,7 +588,15 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 				mapSite["siteId"] = fmt.Sprintf("%v", inner["site_id"])
 			}
 			if inner["vendor"] != "" {
-				if inner["vendor"] == "aws" {
+				if inner["vendor"] == "gcp" {
+
+					if inner["gcp_project_id"] == "" {
+						return fmt.Errorf("gcp_project_id is required with vendor = gcp")
+					}
+
+					setGcpAccountDetails(mapSite, inner, tenantAttr.Name, false)
+
+				} else if inner["vendor"] == "aws" {
 
 					awsAccountMap := make(map[string]interface{})
 
@@ -703,6 +753,14 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 	return resourceMSOTenantRead(d, m)
 }
 
+func setCloudAccountInfo(accInfo string, mapSite map[string]interface{}) {
+	if strings.Contains(accInfo, "azure") {
+		mapSite["vendor"] = "azure"
+		mapSite["azure_access_type"] = "shared"
+		mapSite["azure_shared_account_id"] = accInfo[strings.Index(accInfo, "[")+1 : strings.Index(accInfo, "]")]
+	}
+}
+
 func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 	msoClient := m.(*client.Client)
@@ -730,114 +788,13 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 		mapSite := make(map[string]interface{})
 		mapSite["site_id"] = models.StripQuotes(sitesCont.S("siteId").String())
 		mapSite["security_domains"] = sitesCont.S("securityDomains").Data().([]interface{})
-		awsCount, err := sitesCont.ArrayCount("awsAccount")
-		if err == nil {
-			if awsCount > 0 {
-				awsCont, err := sitesCont.ArrayElement(0, "awsAccount")
-				if err == nil {
-					mapSite["aws_account_id"] = models.StripQuotes(awsCont.S("accountId").String())
-					if awsCont.Exists("isTrusted") {
-						mapSite["is_aws_account_trusted"] = awsCont.S("isTrusted").Data().(bool)
-					}
-					mapSite["vendor"] = "aws"
-					accessKey := models.StripQuotes(awsCont.S("accessKeyId").String())
-					secretKey := models.StripQuotes(awsCont.S("secretKey").String())
 
-					if accessKey != "{}" {
-						mapSite["aws_access_key_id"] = accessKey
-					}
+		readGcpAccountDataFromSchema(sitesCont, mapSite)
+		readAwsAccountDataFromSchema(sitesCont, mapSite)
+		readAzureAccountDataFromSchema(sitesCont, mapSite)
 
-					if secretKey != "{}" {
-						mapSite["aws_secret_key"] = secretKey
-					}
-
-				} else {
-					log.Printf("Unable to load AWS credentials")
-				}
-			} else {
-				mapSite["aws_account_id"] = ""
-				mapSite["aws_access_key_id"] = ""
-				mapSite["aws_secret_key"] = ""
-				mapSite["is_aws_account_trusted"] = false
-			}
-		} else {
-			log.Printf("Error occurred while loading AWS creds")
-			mapSite["aws_account_id"] = ""
-			mapSite["aws_access_key_id"] = ""
-			mapSite["aws_secret_key"] = ""
-			mapSite["is_aws_account_trusted"] = false
-
-		}
-
-		azureCount, err := sitesCont.ArrayCount("azureAccount")
-		if err == nil {
-			if azureCount > 0 {
-				azureCont, err := sitesCont.ArrayElement(0, "azureAccount")
-				if err == nil {
-					mapSite["vendor"] = "azure"
-					mapSite["azure_access_type"] = models.StripQuotes(azureCont.S("accessType").String())
-					mapSite["azure_subscription_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudSubscriptionId").String())
-					if mapSite["azure_access_type"] == "credentials" {
-						mapSite["azure_application_id"] = models.StripQuotes(azureCont.S("cloudSubscription", "cloudApplicationId").String())
-
-						applicationCount, err := azureCont.ArrayCount("cloudApplication")
-						if err == nil {
-							if applicationCount > 0 {
-								appCont, err := azureCont.ArrayElement(0, "cloudApplication")
-								if err == nil {
-									mapSite["azure_client_secret"] = models.StripQuotes(appCont.S("secretKey").String())
-									mapSite["azure_active_directory_id"] = models.StripQuotes(appCont.S("cloudActiveDirectoryId").String())
-								} else {
-									mapSite["azure_client_secret"] = ""
-									mapSite["azure_active_directory_id"] = ""
-								}
-							} else {
-								// Set to empty string
-								mapSite["azure_client_secret"] = ""
-								mapSite["azure_active_directory_id"] = ""
-							}
-						} else {
-							// Set to empty string
-							mapSite["azure_client_secret"] = ""
-							mapSite["azure_active_directory_id"] = ""
-						}
-					}
-
-				} else {
-					if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
-						mapSite["azure_access_type"] = "shared"
-						cldAcc := strings.Split(models.StripQuotes(sitesCont.S("cloudAccount").String()), "/")
-						accInfo := strings.Split(cldAcc[2], "-")
-
-						mapSite["vendor"] = accInfo[3]
-						mapSite["azure_shared_account_id"] = (accInfo[1])[1 : len(accInfo[1])-1]
-
-					} else {
-						mapSite["azure_access_type"] = ""
-
-					}
-					mapSite["azure_client_secret"] = ""
-					mapSite["azure_active_directory_id"] = ""
-					mapSite["azure_subscription_id"] = ""
-					mapSite["azure_application_id"] = ""
-				}
-
-			} else {
-				log.Printf("Error occurred while loading count for azureAccount.")
-				mapSite["azure_client_secret"] = ""
-				mapSite["azure_active_directory_id"] = ""
-				mapSite["azure_access_type"] = ""
-				mapSite["azure_subscription_id"] = ""
-				mapSite["azure_application_id"] = ""
-				mapSite["azure_shared_account_id"] = ""
-			}
-		} else {
-			log.Printf("Error ocurred while loading azure credentials")
-			mapSite["azure_client_secret"] = ""
-			mapSite["azure_active_directory_id"] = ""
-			mapSite["azure_access_type"] = ""
-			mapSite["azure_subscription_id"] = ""
-			mapSite["azure_application_id"] = ""
+		if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
+			setCloudAccountInfo(strings.Split(sitesCont.S("cloudAccount").String(), "/")[2], mapSite)
 		}
 
 		site_associations = append(site_associations, mapSite)
