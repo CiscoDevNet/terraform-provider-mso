@@ -364,12 +364,7 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	dn := d.Id()
 	con, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/" + dn))
 	if err != nil {
-		if con.S("code").String() == "404" {
-			d.SetId("")
-			return nil
-		} else {
-			return err
-		}
+		return errorForObjectNotFound(err, dn, con, d)
 	}
 
 	d.SetId(models.StripQuotes(con.S("id").String()))
