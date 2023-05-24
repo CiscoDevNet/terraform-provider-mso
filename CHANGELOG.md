@@ -1,3 +1,16 @@
+## 0.10.0 (May 24, 2023)
+BUG FIXES:
+- Fix mso_schema read issue when the object is not present in the MSO/NDO
+- Skip delete if method set explicitely in mso_rest resource (#191)
+- Fix mso_schema resource example template reference and remove deprecated usage of mso_schema resource (#202)
+- Fix enhanced_lag_policy for vmm domain attribute in mso_schema_site_anp_epg_domain (#180)
+
+IMPROVEMENTS:
+- Add support for NDO4.1+ to mso_schema_site_anp, mso_schema_site_anp_epg, mso_schema_site_bd, mso_schema_site_external_epg and mso_schema_site_vrf (#188)
+- Add mso_rest data source (#184)
+- Add ip_data_plane_learning and preferred_group arguments to mso_schema_template_vrf resource (#177)
+- Add missing provider level environment variables
+
 ## 0.9.0 (April 3, 2023)
 IMPROVEMENTS:
 - Add mso_schema_site_anp_epg_bulk_staticport resource and data source
