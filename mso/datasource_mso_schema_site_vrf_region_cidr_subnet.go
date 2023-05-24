@@ -22,66 +22,53 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"vrf_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"region_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"cidr_ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"zone": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"usage": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"subnet_group": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		}),
 	}
@@ -104,6 +91,7 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 	}
 
 	stateSite := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateVrf := d.Get("vrf_name").(string)
 	stateRegion := d.Get("region_name").(string)
@@ -116,8 +104,9 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
