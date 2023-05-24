@@ -12,7 +12,7 @@ Data source for MSO Schema Site External Endpoint Groups.
 
 ```hcl
 
-data "mso_schema_site_external_epg" "external_epg_1"{
+data "mso_schema_site_external_epg" "external_epg_1" {
   schema_id         = data.mso_schema.schema1.id
   template_name     = "Template1"
   site_id           = data.mso_site.site1.id
@@ -30,4 +30,4 @@ data "mso_schema_site_external_epg" "external_epg_1"{
 
 ## Attribute Reference ##
 
-* `l3out_name` - (Optional) Name of the L3Out.
+* `l3out_name` - (Read-Only) Name of the L3Out.
