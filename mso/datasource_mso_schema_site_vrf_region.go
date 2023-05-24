@@ -137,7 +137,7 @@ func dataSourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{})
 	stateVrf := d.Get("vrf_name").(string)
 	stateRegion := d.Get("region_name").(string)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -150,7 +150,7 @@ func dataSourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{})
 			if err != nil {
 				return fmt.Errorf("Unable to get Vrf list")
 			}
-			for j := 0; j < vrfCount; j++ {
+			for j := 0; j < vrfCount && !found; j++ {
 				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
 				if err != nil {
 					return err
