@@ -85,22 +85,22 @@ resource "mso_schema_site_vrf_region" "vrf_region_aws" {
     cidr_ip = "2.2.2.2/10"
     primary = true
     subnet {
-      ip    = "1.20.30.4"
-      name  = "subnet1"
-      zone  = "us-east-1b"
+      ip   = "1.20.30.4"
+      name = "subnet1"
+      zone = "us-east-1b"
     }
   }
 }
 
 // GCP specific example
 resource "mso_schema_site_vrf_region" "vrf_region_gcp" {
-  schema_id              = mso_schema.abr_schema.id
-  template_name          = one(mso_schema.abr_schema.template).name
-  site_id = data.mso_site.demo_site.id
+  schema_id          = mso_schema.abr_schema.id
+  template_name      = one(mso_schema.abr_schema.template).name
+  site_id            = data.mso_site.demo_site.id
   region_name        = "southamerica-east1"
   vrf_name           = mso_schema_template_vrf.vrf1.name
   hub_network_enable = true
-  hub_network        = {
+  hub_network = {
     name        = "default"
     tenant_name = "infra"
   }
@@ -108,8 +108,8 @@ resource "mso_schema_site_vrf_region" "vrf_region_gcp" {
     cidr_ip = "1.1.1.0/24"
     primary = true
     subnet {
-      ip = "1.1.1.0/28"
-      name = "subnet1"
+      ip           = "1.1.1.0/28"
+      name         = "subnet1"
       subnet_group = "test_group"
     }
   }
