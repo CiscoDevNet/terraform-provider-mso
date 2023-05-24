@@ -62,6 +62,7 @@ func dataSourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{
 		return fmt.Errorf("No Sites found")
 	}
 	stateSiteId := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateExternalEpg := d.Get("external_epg_name").(string)
 	for i := 0; i < count; i++ {
@@ -71,7 +72,8 @@ func dataSourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{
 		}
 		apiSiteId := models.StripQuotes(siteCont.S("siteId").String())
 
-		if apiSiteId == stateSiteId {
+		apiTemplate := models.StripQuotes(siteCont.S("templateName").String())
+		if apiSiteId == stateSiteId && apiTemplate == stateTemplate {
 			externalEpgCount, err := siteCont.ArrayCount("externalEpgs")
 			if err != nil {
 				return fmt.Errorf("Unable to get External EPG list")
