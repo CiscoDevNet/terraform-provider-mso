@@ -98,7 +98,7 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 	stateCidr := d.Get("cidr_ip").(string)
 	stateIp := d.Get("ip").(string)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -112,7 +112,7 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 			if err != nil {
 				return fmt.Errorf("Unable to get Vrf list")
 			}
-			for j := 0; j < vrfCount; j++ {
+			for j := 0; j < vrfCount && !found; j++ {
 				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
 				if err != nil {
 					return err
@@ -125,7 +125,7 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 					if err != nil {
 						return fmt.Errorf("Unable to get Regions list")
 					}
-					for k := 0; k < regionCount; k++ {
+					for k := 0; k < regionCount && !found; k++ {
 						regionCont, err := vrfCont.ArrayElement(k, "regions")
 						if err != nil {
 							return err
@@ -136,7 +136,7 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 							if err != nil {
 								return fmt.Errorf("Unable to get Cidr list")
 							}
-							for l := 0; l < cidrCount; l++ {
+							for l := 0; l < cidrCount && !found; l++ {
 								cidrCont, err := regionCont.ArrayElement(l, "cidrs")
 								if err != nil {
 									return err
