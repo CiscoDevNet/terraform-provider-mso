@@ -76,7 +76,7 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 	stateSiteId := get_attribute[2]
 	found := false
 	stateExternalEpg := get_attribute[4]
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return nil, err
@@ -218,7 +218,7 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 	stateSiteId := d.Get("site_id").(string)
 	found := false
 	stateExternalEpg := d.Get("external_epg_name").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err

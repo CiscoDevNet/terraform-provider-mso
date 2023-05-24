@@ -65,7 +65,7 @@ func dataSourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{
 	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateExternalEpg := d.Get("external_epg_name").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
