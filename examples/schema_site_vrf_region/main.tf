@@ -48,7 +48,7 @@ resource "mso_schema_template_vrf" "vrf1" {
 resource "mso_schema_site_vrf_region" "vrf_region_azure" {
   schema_id          = mso_schema.demo_schema.id
   template_name      = one(mso_schema.demo_schema.template).name
-  site_id            = data.mso_site.demo_site.id
+  site_id            = mso_schema_site.demo_schema_site.id
   vrf_name           = mso_schema_template_vrf.vrf1.name
   region_name        = "us-east-1"
   vpn_gateway        = true
@@ -72,7 +72,7 @@ resource "mso_schema_site_vrf_region" "vrf_region_azure" {
 resource "mso_schema_site_vrf_region" "vrf_region_aws" {
   schema_id          = mso_schema.demo_schema.id
   template_name      = one(mso_schema.demo_schema.template).name
-  site_id            = data.mso_site.demo_site.id
+  site_id            = mso_schema_site.demo_schema_site.id
   vrf_name           = mso_schema_template_vrf.vrf1.name
   region_name        = "us-east-1"
   vpn_gateway        = true
@@ -96,7 +96,7 @@ resource "mso_schema_site_vrf_region" "vrf_region_aws" {
 resource "mso_schema_site_vrf_region" "vrf_region_gcp" {
   schema_id          = mso_schema.abr_schema.id
   template_name      = one(mso_schema.abr_schema.template).name
-  site_id            = data.mso_site.demo_site.id
+  site_id            = mso_schema_site.demo_schema_site.id
   region_name        = "southamerica-east1"
   vrf_name           = mso_schema_template_vrf.vrf1.name
   hub_network_enable = true
