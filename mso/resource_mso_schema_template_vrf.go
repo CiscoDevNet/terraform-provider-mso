@@ -189,7 +189,7 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) e
 	var ipDataPlaneLearning string
 	if ip_data_plane_learning, ok := d.GetOk("ip_data_plane_learning"); ok {
 		ipDataPlaneLearning = ip_data_plane_learning.(string)
-	}
+	} else {ipDataPlaneLearning = "enabled"}
 
 	var preferredGroup bool
 	if preferred_group, ok := d.GetOk("preferred_group"); ok {
@@ -247,7 +247,7 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) e
 	var ipDataPlaneLearning string
 	if ip_data_plane_learning, ok := d.GetOk("ip_data_plane_learning"); ok {
 		ipDataPlaneLearning = ip_data_plane_learning.(string)
-	}
+	} else {ipDataPlaneLearning = "enabled"}
 
 	var preferredGroup bool
 	if preferred_group, ok := d.GetOk("preferred_group"); ok {
