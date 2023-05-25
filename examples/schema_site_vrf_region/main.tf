@@ -19,6 +19,7 @@ data "mso_site" "demo_site" {
 
 resource "mso_tenant" "demo_tenant" {
   name = "demo_tenant"
+  display_name = "demo_tenant"
 }
 
 resource "mso_schema" "demo_schema" {
@@ -94,8 +95,8 @@ resource "mso_schema_site_vrf_region" "vrf_region_aws" {
 
 // GCP specific example
 resource "mso_schema_site_vrf_region" "vrf_region_gcp" {
-  schema_id          = mso_schema.abr_schema.id
-  template_name      = one(mso_schema.abr_schema.template).name
+  schema_id          = mso_schema.demo_schema.id
+  template_name      = one(mso_schema.demo_schema.template).name
   site_id            = mso_schema_site.demo_schema_site.id
   region_name        = "southamerica-east1"
   vrf_name           = mso_schema_template_vrf.vrf1.name
