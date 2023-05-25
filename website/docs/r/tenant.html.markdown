@@ -82,8 +82,8 @@ resource "mso_tenant" "tenant4" {
     gcp_project_id  = "10"
     gcp_access_type = "unmanaged"
     gcp_email       = "demo@tenant.com"
-		gcp_name        = "demo_name"
-		gcp_key_id      = "demo_key"
+    gcp_name        = "demo_name"
+    gcp_key_id      = "demo_key"
     gcp_private_key = "demo_private_key"
     gcp_client_id   = "demo_client_id"
   }
