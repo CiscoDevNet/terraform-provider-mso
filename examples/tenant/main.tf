@@ -25,11 +25,11 @@ data "mso_user" "user1" {
 resource "mso_tenant" "tenant1" {
   name         = "tenant1"
   display_name = "tenant1"
-  site_associations { 
-    site_id = data.mso_site.site1.id 
+  site_associations {
+    site_id = data.mso_site.site1.id
   }
-  user_associations { 
-    user_id = data.mso_user.user1.id 
+  user_associations {
+    user_id = data.mso_user.user1.id
   }
 }
 
@@ -81,8 +81,8 @@ resource "mso_tenant" "gcp_tenant" {
     gcp_project_id  = "10"
     gcp_access_type = "unmanaged"
     gcp_email       = "demo@tenant.com"
-		gcp_name        = "demo_name"
-		gcp_key_id      = "demo_key"
+    gcp_name        = "demo_name"
+    gcp_key_id      = "demo_key"
     gcp_private_key = "demo_private_key"
     gcp_client_id   = "demo_client_id"
   }
