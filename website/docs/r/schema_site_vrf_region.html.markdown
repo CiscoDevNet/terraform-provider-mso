@@ -44,9 +44,9 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Vrf Region.
 * `site_id` - (Required) SiteID under which you want to deploy Vrf Region.
+* `template_name` - (Required) Template under which you want to deploy Vrf Region.
 * `vrf_name` - (Required) Name of Vrf.
 * `region_name` - (Required) Name of Region to manage.
-* `template_name` - (Required) Template where Vrf Region to be created.
 
 * `cidr` - (Required) CIDR to set into region
 * `cidr.cidr_ip` - (Required) IP address for CIDR.
@@ -60,9 +60,9 @@ resource "mso_schema_site_vrf_region" "vrfRegion" {
 * `cidr.subnet.subnet_group` - (Optional) The name of the subnet group label for the subnet. This argument is required for GCP sites.
 
 * `vpn_gateway` - (Optional) VPN gateway flag.
-* `hub_network_enable` - (Optional) Hub Network enable flag. To set hub network in region, this attribute should be true. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
+* `hub_network_enable` - (Optional) Hub Network enable flag. To set hub network in region, this attribute should be true. This parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
 
-* `hub_network` - (Optional) Hub Network to set into the region. this parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
+* `hub_network` - (Optional) Hub Network to set into the region. This parameter is supported in MSO v3.0 or higher with Cloud APIC version 5.0 or higher.
 * `hub_network.name` - (Required) The name of the hub network.
 * `hub_network.tenant_name` - (Required) Tenant name for the hub network.
 
