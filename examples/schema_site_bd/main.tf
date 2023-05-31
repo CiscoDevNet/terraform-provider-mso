@@ -18,5 +18,6 @@ resource "mso_schema_site_bd" "foo_schema_site_bd" {
   bd_name       = "bd4"
   template_name = "Template1"
   site_id       = "5c7c95b25100008f01c1ee3c"
-  host_route          = false
+  host_route    = false
+  svi_mac       = "00:22:BD:F8:19:FF"
 }
