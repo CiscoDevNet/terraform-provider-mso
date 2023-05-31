@@ -32,9 +32,9 @@ resource "mso_schema_site_vrf_region_cidr_subnet" "sub1" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Vrf Region Cidr Subnet.
 * `site_id` - (Required) SiteID under which you want to deploy Vrf Region Cidr Subnet.
+* `template_name` - (Required)  Template under which you want to deploy Vrf Region.
 * `vrf_name` - (Required) Name of Vrf.
 * `region_name` - (Required) Name of Region to manage.
-* `template_name` - (Required) Template where Vrf Region Cidr Subnet to be created.
 * `cidr_ip` - (Required) The IP range of for the region CIDR where Vrf Region Cidr Subnet to be created.
 * `ip` - (Required) The IP subnet of this region CIDR.
 * `zone` - (Optional) The name of the availability zone for the region CIDR subnet. This argument is required for AWS sites.

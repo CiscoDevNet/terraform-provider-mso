@@ -29,7 +29,7 @@ description: |-
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Vrf Region Cidr Subnet.
 * `site_id` - (Required) SiteID under which you want to deploy Vrf Region Cidr Subnet.
-* `template_name` - (Required) Template where Vrf Region Cidr Subnet to be created.
+* `template_name` - (Required)  Template under which you want to deploy Vrf Region.
 * `vrf_name` - (Required) Name of Vrf.
 * `region_name` - (Required) Name of Region to manage.
 * `cidr_ip` - (Required) The IP range of for the region CIDR where Vrf Region Cidr Subnet to be created.
@@ -38,7 +38,7 @@ description: |-
 
 ## Attribute Reference ##
 
-* `zone` - (Read-Only) The name of the zone for the region CIDR subnet.
+* `zone` - (Read-Only) The name of the availability zone for the region CIDR subnet. 
 * `name` - (Read-Only) The name for the region CIDR Subnet.
 * `usage` - (Read-Only) The usage for the region CIDR Subnet.
 * `subnet_group` - (Read-Only) The subnet group for the region CIDR Subnet.
