@@ -112,9 +112,10 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetImport(d *schema.ResourceData, m in
 	}
 
 	stateSite := get_attribute[2]
+	stateTemplate := get_attribute[4]
 	found := false
-	stateVrf := get_attribute[4]
-	stateRegion := get_attribute[6]
+	stateVrf := get_attribute[6]
+	stateRegion := get_attribute[8]
 	stateCidr := import_split[1]
 	stateIp := import_split[2]
 
@@ -124,8 +125,8 @@ func resourceMSOSchemaSiteVrfRegionCidrSubnetImport(d *schema.ResourceData, m in
 			return nil, err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-
-		if apiSite == stateSite {
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
