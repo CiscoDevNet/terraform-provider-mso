@@ -26,49 +26,69 @@ func resourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 		},
 
 		Schema: (map[string]*schema.Schema{
-
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"scope": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"public",
+					"private",
+				}, false),
 			},
-
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
+			},
+			"querier": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"description": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"no_default_gateway": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"primary": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
@@ -96,7 +116,7 @@ func resourceMSOSchemaTemplateAnpEpgSubnetImport(d *schema.ResourceData, m inter
 	ip := import_split[2]
 	found := false
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -111,30 +131,26 @@ func resourceMSOSchemaTemplateAnpEpgSubnetImport(d *schema.ResourceData, m inter
 			if err != nil {
 				return nil, fmt.Errorf("No Anp found")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 
 				if err != nil {
 					return nil, err
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
-				log.Println("currentanpname", currentAnpName)
 				if currentAnpName == anpName {
-					log.Println("found correct anpname")
 					d.Set("anp_name", currentAnpName)
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return nil, fmt.Errorf("No Epg found")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return nil, err
 						}
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
-						log.Println("currentepgname", currentEpgName)
 						if currentEpgName == epgName {
-							log.Println("found correct epgname")
 							d.Set("epg_name", currentEpgName)
 							subnetCount, err := epgCont.ArrayCount("subnets")
 							if err != nil {
@@ -146,10 +162,9 @@ func resourceMSOSchemaTemplateAnpEpgSubnetImport(d *schema.ResourceData, m inter
 									return nil, err
 								}
 								currentIp := models.StripQuotes(subnetCont.S("ip").String())
-								log.Println("currentip", currentIp)
 								if currentIp == ip {
-									log.Println("found correct ip")
 									d.SetId(currentIp)
+									d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
 									d.Set("ip", currentIp)
 									if subnetCont.Exists("scope") {
 										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
@@ -157,6 +172,18 @@ func resourceMSOSchemaTemplateAnpEpgSubnetImport(d *schema.ResourceData, m inter
 									if subnetCont.Exists("shared") {
 										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))
 										d.Set("shared", shared)
+									}
+									if subnetCont.Exists("primary") {
+										primary, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("primary").String()))
+										d.Set("primary", primary)
+									}
+									if subnetCont.Exists("noDefaultGateway") {
+										noDefaultGateway, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("noDefaultGateway").String()))
+										d.Set("no_default_gateway", noDefaultGateway)
+									}
+									if subnetCont.Exists("querier") {
+										querier, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("querier").String()))
+										d.Set("querier", querier)
 									}
 
 									found = true
@@ -218,6 +245,11 @@ func resourceMSOSchemaTemplateAnpEpgSubnetCreate(d *schema.ResourceData, m inter
 		ip = tempVar.(string)
 	}
 
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
 	scope := "private"
 	if tempVar, ok := d.GetOk("scope"); ok {
 		scope = tempVar.(string)
@@ -228,7 +260,22 @@ func resourceMSOSchemaTemplateAnpEpgSubnetCreate(d *schema.ResourceData, m inter
 		shared = tempVar.(bool)
 	}
 
-	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("add", "/templates/"+templateName+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/-", ip, scope, shared)
+	querier := false
+	if tempVar, ok := d.GetOk("querier"); ok {
+		querier = tempVar.(bool)
+	}
+
+	primary := false
+	if tempVar, ok := d.GetOk("primary"); ok {
+		primary = tempVar.(bool)
+	}
+
+	noDefaultGateway := false
+	if tempVar, ok := d.GetOk("no_default_gateway"); ok {
+		noDefaultGateway = tempVar.(bool)
+	}
+
+	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("add", fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/-", templateName, anpName, epgName), ip, description, scope, shared, noDefaultGateway, querier, primary)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
 	if err != nil {
@@ -273,6 +320,11 @@ func resourceMSOSchemaTemplateAnpEpgSubnetUpdate(d *schema.ResourceData, m inter
 		ip = tempVar.(string)
 	}
 
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
 	scope := "private"
 	if tempVar, ok := d.GetOk("scope"); ok {
 		scope = tempVar.(string)
@@ -281,6 +333,21 @@ func resourceMSOSchemaTemplateAnpEpgSubnetUpdate(d *schema.ResourceData, m inter
 	shared := false
 	if tempVar, ok := d.GetOk("shared"); ok {
 		shared = tempVar.(bool)
+	}
+
+	primary := false
+	if tempVar, ok := d.GetOk("primary"); ok {
+		primary = tempVar.(bool)
+	}
+
+	querier := false
+	if tempVar, ok := d.GetOk("querier"); ok {
+		querier = tempVar.(bool)
+	}
+
+	noDefaultGateway := false
+	if tempVar, ok := d.GetOk("no_default_gateway"); ok {
+		noDefaultGateway = tempVar.(bool)
 	}
 
 	conts, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -299,7 +366,7 @@ func resourceMSOSchemaTemplateAnpEpgSubnetUpdate(d *schema.ResourceData, m inter
 
 	indexs := strconv.Itoa(index)
 
-	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("replace", "/templates/"+templateName+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/"+indexs, ip, scope, shared)
+	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("replace", fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/%s", templateName, anpName, epgName, indexs), ip, description, scope, shared, noDefaultGateway, querier, primary)
 
 	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
 	if err != nil {
@@ -333,7 +400,7 @@ func resourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m interfa
 	ip := d.Get("ip").(string)
 	found := false
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -348,30 +415,26 @@ func resourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m interfa
 			if err != nil {
 				return fmt.Errorf("No Anp found")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 
 				if err != nil {
 					return err
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
-				log.Println("currentanpname", currentAnpName)
 				if currentAnpName == anpName {
-					log.Println("found correct anpname")
 					d.Set("anp_name", currentAnpName)
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return fmt.Errorf("No Epg found")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
 						}
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
-						log.Println("currentepgname", currentEpgName)
 						if currentEpgName == epgName {
-							log.Println("found correct epgname")
 							d.Set("epg_name", currentEpgName)
 							subnetCount, err := epgCont.ArrayCount("subnets")
 							if err != nil {
@@ -383,17 +446,28 @@ func resourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m interfa
 									return err
 								}
 								currentIp := models.StripQuotes(subnetCont.S("ip").String())
-								log.Println("currentip", currentIp)
 								if currentIp == ip {
-									log.Println("found correct ip")
 									d.SetId(currentIp)
 									d.Set("ip", currentIp)
+									d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
 									if subnetCont.Exists("scope") {
 										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
 									}
 									if subnetCont.Exists("shared") {
 										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))
 										d.Set("shared", shared)
+									}
+									if subnetCont.Exists("primary") {
+										primary, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("primary").String()))
+										d.Set("primary", primary)
+									}
+									if subnetCont.Exists("noDefaultGateway") {
+										noDefaultGateway, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("noDefaultGateway").String()))
+										d.Set("no_default_gateway", noDefaultGateway)
+									}
+									if subnetCont.Exists("querier") {
+										querier, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("querier").String()))
+										d.Set("querier", querier)
 									}
 
 									found = true
@@ -448,7 +522,7 @@ func resourceMSOSchemaTemplateAnpEpgSubnetDelete(d *schema.ResourceData, m inter
 		return nil
 	}
 	indexs := strconv.Itoa(index)
-	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("remove", "/templates/"+template+"/anps/"+anpName+"/epgs/"+epgName+"/subnets/"+indexs, "", "", false)
+	schemaTemplateAnpEpgSubnetApp := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/%s", template, anpName, epgName, indexs))
 	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting
@@ -469,7 +543,7 @@ func fetchIndex(cont *container.Container, templateName, anpName, epgName, ip st
 	if err != nil {
 		return index, fmt.Errorf("No Template found")
 	}
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -484,30 +558,25 @@ func fetchIndex(cont *container.Container, templateName, anpName, epgName, ip st
 			if err != nil {
 				return index, fmt.Errorf("No Anp found")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 
 				if err != nil {
 					return index, err
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
-				log.Println("currentanpname", currentAnpName)
 				if currentAnpName == anpName {
-					log.Println("found correct anpname")
-
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return index, fmt.Errorf("No Epg found")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return index, err
 						}
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
-						log.Println("currentepgname", currentEpgName)
 						if currentEpgName == epgName {
-							log.Println("found correct epgname")
 
 							subnetCount, err := epgCont.ArrayCount("subnets")
 							if err != nil {
@@ -519,9 +588,7 @@ func fetchIndex(cont *container.Container, templateName, anpName, epgName, ip st
 									return index, err
 								}
 								currentIp := models.StripQuotes(subnetCont.S("ip").String())
-								log.Println("currentip", currentIp)
 								if currentIp == ip {
-									log.Println("found correct ip")
 									index = s
 									found = true
 									break

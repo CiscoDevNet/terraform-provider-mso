@@ -68,13 +68,18 @@ func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 				Computed: true,
 			},
 			"scope": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"public",
+					"private",
+				}, false),
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -82,6 +87,11 @@ func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 				Computed: true,
 			},
 			"querier": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"primary": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
@@ -183,6 +193,9 @@ func resourceMSOSchemaSiteAnpEpgSubnetImport(d *schema.ResourceData, m interface
 									if subnetCont.Exists("querier") {
 										d.Set("querier", subnetCont.S("querier").Data().(bool))
 									}
+									if subnetCont.Exists("primary") {
+										d.Set("primary", subnetCont.S("primary").Data().(bool))
+									}
 									found = true
 									break
 								}
@@ -238,6 +251,10 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 	var Desc string
 	if d, ok := d.GetOk("description"); ok {
 		Desc = d.(string)
+	}
+	var Primary bool
+	if d, ok := d.GetOk("primary"); ok {
+		Primary = d.(bool)
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -350,7 +367,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/subnets/-", stateSiteId, stateTemplateName, stateANPName, stateEpgName)
-	AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+	AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary)
 	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), AnpEpgSubnetStruct)
 	if errs != nil {
 		return errs
@@ -449,6 +466,9 @@ func resourceMSOSchemaSiteAnpEpgSubnetRead(d *schema.ResourceData, m interface{}
 									if subnetCont.Exists("querier") {
 										d.Set("querier", subnetCont.S("querier").Data().(bool))
 									}
+									if subnetCont.Exists("primary") {
+										d.Set("primary", subnetCont.S("primary").Data().(bool))
+									}
 									found = true
 									break
 								}
@@ -508,6 +528,10 @@ func resourceMSOSchemaSiteAnpEpgSubnetUpdate(d *schema.ResourceData, m interface
 	var Desc string
 	if d, ok := d.GetOk("description"); ok {
 		Desc = d.(string)
+	}
+	var Primary bool
+	if d, ok := d.GetOk("primary"); ok {
+		Primary = d.(bool)
 	}
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
@@ -574,7 +598,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetUpdate(d *schema.ResourceData, m interface
 								if IP == apiIP {
 									index := l
 									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/subnets/%v", statesiteId, stateTemplateName, stateANPName, stateEpgName, index)
-									AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("replace", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+									AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("replace", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary)
 									_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), AnpEpgSubnetStruct)
 									if err != nil {
 										return err
@@ -611,30 +635,6 @@ func resourceMSOSchemaSiteAnpEpgSubnetDelete(d *schema.ResourceData, m interface
 	var IP string
 	if ip, ok := d.GetOk("ip"); ok {
 		IP = ip.(string)
-	}
-
-	var Scope string
-	if scope, ok := d.GetOk("scope"); ok {
-		Scope = scope.(string)
-	}
-
-	var Shared bool
-	if shared, ok := d.GetOk("shared"); ok {
-		Shared = shared.(bool)
-	}
-
-	var NoDefaultGateway bool
-	if ndg, ok := d.GetOk("no_default_gateway"); ok {
-		NoDefaultGateway = ndg.(bool)
-	}
-
-	var Querier bool
-	if qr, ok := d.GetOk("querier"); ok {
-		Querier = qr.(bool)
-	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -694,7 +694,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetDelete(d *schema.ResourceData, m interface
 								if IP == apiIP {
 									index := l
 									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/subnets/%v", stateSite, stateTemplate, stateAnp, stateEpg, index)
-									AnpEpgSubnetStruct := models.NewSchemaSiteAnpEpgSubnet("remove", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+									AnpEpgSubnetStruct := models.GetRemovePatchPayload(path)
 									response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), AnpEpgSubnetStruct)
 
 									// Ignoring Error with code 141: Resource Not Found when deleting

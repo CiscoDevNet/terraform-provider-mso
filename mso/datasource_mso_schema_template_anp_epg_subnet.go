@@ -17,50 +17,54 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 		Read: dataSourceMSOSchemaTemplateAnpEpgSubnetRead,
 
 		Schema: (map[string]*schema.Schema{
-
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"scope": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
-
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"no_default_gateway": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
+			},
+			"querier": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"primary": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
 			},
 		}),
 	}
@@ -86,14 +90,13 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 	ip := d.Get("ip").(string)
 	found := false
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
 		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
-
 		if currentTemplateName == templateName {
 			d.Set("template", currentTemplateName)
 			anpCount, err := tempCont.ArrayCount("anps")
@@ -101,30 +104,26 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 			if err != nil {
 				return fmt.Errorf("No Anp found")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 
 				if err != nil {
 					return err
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
-				log.Println("currentanpname", currentAnpName)
 				if currentAnpName == anpName {
-					log.Println("found correct anpname")
 					d.Set("anp_name", currentAnpName)
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return fmt.Errorf("No Epg found")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
 						}
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
-						log.Println("currentepgname", currentEpgName)
 						if currentEpgName == epgName {
-							log.Println("found correct epgname")
 							d.Set("epg_name", currentEpgName)
 							subnetCount, err := epgCont.ArrayCount("subnets")
 							if err != nil {
@@ -136,17 +135,29 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 									return err
 								}
 								currentIp := models.StripQuotes(subnetCont.S("ip").String())
-								log.Println("currentip", currentIp)
 								if currentIp == ip {
-									log.Println("found correct ip")
 									d.SetId(currentIp)
 									d.Set("ip", currentIp)
+									d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
+
 									if subnetCont.Exists("scope") {
 										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
 									}
 									if subnetCont.Exists("shared") {
 										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))
 										d.Set("shared", shared)
+									}
+									if subnetCont.Exists("primary") {
+										primary, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("primary").String()))
+										d.Set("primary", primary)
+									}
+									if subnetCont.Exists("noDefaultGateway") {
+										noDefaultGateway, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("noDefaultGateway").String()))
+										d.Set("no_default_gateway", noDefaultGateway)
+									}
+									if subnetCont.Exists("querier") {
+										querier, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("querier").String()))
+										d.Set("querier", querier)
 									}
 
 									found = true
