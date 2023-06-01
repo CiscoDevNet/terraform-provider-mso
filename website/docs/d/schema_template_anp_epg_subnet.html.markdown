@@ -26,13 +26,17 @@ data "mso_schema_template_anp_epg_subnet" "subnet1" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg Subnet.
-* `template` - (Required) Template where Anp Epg Subnet to be created.
-* `anp_name` - (Required) Name of Application Network Profiles.
-* `epg_name` - (Required) Name of Endpoint Group.
-* `ip` - (Required) Ip Address of Subnet.
+* `schema_id` - (Required) SchemaID under which you want to deploy Subnet.
+* `template_name` - (Required) Template name under which you want to deploy Subnet.
+* `anp_name` - (Required) ANP name under which you want to deploy Subnet.
+* `epg_name` - (Required) EPG name under which you want to deploy Subnet.
+* `ip` - (Required) The IP range in CIDR notation.
 
 ## Attribute Reference ##
 
-* `scope` - (Optional) Scope of Subnet.
-* `shared` - (Optional) Whether the subnet should be shared or not.
+* `description` - (Read-Only) The description of this subnet.
+* `scope` - (Read-Only) The scope of the subnet. Allowed values are `private` and `public`.
+* `shared` - (Read-Only) Whether this subnet is shared between VRFs.
+* `querier` - (Read-Only) Whether this subnet is an IGMP querier.
+* `no_default_gateway` - (Read-Only) Whether this subnet has a default gateway.
+* `primary` - (Read-Only) Whether this subnet is the primary subnet.

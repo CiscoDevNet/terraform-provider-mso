@@ -22,63 +22,55 @@ func datasourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"scope": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"querier": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
+			},
+			"primary": &schema.Schema{
+				Type:     schema.TypeBool,
 				Computed: true,
 			},
 		}),
@@ -106,7 +98,7 @@ func datasourceMSOSchemaSiteAnpEpgSubnetRead(d *schema.ResourceData, m interface
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
 	stateIp := d.Get("ip").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -121,7 +113,7 @@ func datasourceMSOSchemaSiteAnpEpgSubnetRead(d *schema.ResourceData, m interface
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 				if err != nil {
 					return err
@@ -135,7 +127,7 @@ func datasourceMSOSchemaSiteAnpEpgSubnetRead(d *schema.ResourceData, m interface
 					if err != nil {
 						return fmt.Errorf("Unable to get EPG list")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
@@ -172,6 +164,9 @@ func datasourceMSOSchemaSiteAnpEpgSubnetRead(d *schema.ResourceData, m interface
 									}
 									if subnetCont.Exists("noDefaultGateway") {
 										d.Set("no_default_gateway", subnetCont.S("noDefaultGateway").Data().(bool))
+									}
+									if subnetCont.Exists("primary") {
+										d.Set("primary", subnetCont.S("primary").Data().(bool))
 									}
 									if subnetCont.Exists("querier") {
 										d.Set("querier", subnetCont.S("querier").Data().(bool))
