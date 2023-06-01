@@ -159,9 +159,10 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 	}
 
 	stateSite := get_attribute[2]
+	stateTemplate := get_attribute[4]
 	found := false
-	stateVrf := get_attribute[4]
-	stateRegion := get_attribute[6]
+	stateVrf := get_attribute[6]
+	stateRegion := get_attribute[8]
 
 	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -169,8 +170,8 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 			return nil, err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-
-		if apiSite == stateSite {
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get Vrf list")
