@@ -230,7 +230,7 @@ func resourceMSOSchemaSiteVrfRouteLeakRead(d *schema.ResourceData, m interface{}
 	schemaId := d.Get("schema_id").(string)
 	schemaCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
-		return err
+		return errorForObjectNotFound(err, d.Id(), schemaCont, d)
 	}
 	setRouteLeakFromSchema(d, schemaCont, schemaId, d.Get("site_id").(string), d.Get("template_name").(string), d.Get("vrf_name").(string), getTargetVrfRef(d))
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
