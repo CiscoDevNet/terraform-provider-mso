@@ -15,12 +15,13 @@ description: |-
 ```hcl
 
  data "mso_schema_site_vrf_region_cidr_subnet" "vrfRegion" {
-  schema_id   = data.mso_schema.schema1.id
-  site_id     = data.mso_site.site1.id
-  vrf_name    = "Campus"
-  region_name = "westus"
-  cidr_ip     = "1.1.1.1/24"
-  ip          = "207.168.240.1/24"
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
+  template_name = "Template1"
+  vrf_name      = "Campus"
+  region_name   = "westus"
+  cidr_ip       = "1.1.1.1/24"
+  ip            = "207.168.240.1/24"
 }
 
 ```
