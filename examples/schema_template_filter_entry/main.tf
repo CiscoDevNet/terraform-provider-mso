@@ -13,22 +13,34 @@ provider "mso" {
   insecure = true
 }
 
+resource "mso_tenant" "tf_tenant" {
+  name         = "tf_tenant"
+  display_name = "tf_tenant"
+}
+
+resource "mso_schema" "tf_schema" {
+  name = "tf_schema"
+  template {
+    name         = "Template1"
+    display_name = "Template1"
+    tenant_id    = mso_tenant.tf_tenant.id
+  }
+}
+
 resource "mso_schema_template_filter_entry" "filter_entry" {
-    schema_id           = "5c4d5bb72700000401f80948"
-	template_name       = "Template1"
-	name                = "Any"
-	display_name        = "Any"
-	entry_name          = "testAcc"
-	entry_display_name  = "testAcc"
-    entry_description   = "DemoEntry"
-    ether_type          = "arp"
-    ip_protocol         = "eigrp"
-    tcp_session_rules   = ["acknowledgement"]
-	destination_from    ="unspecified"
-	destination_to      ="unspecified"
-	source_from         ="unspecified"
-	source_to           ="unspecified"
-	arp_flag            ="unspecified"
-    stateful            = true
-    match_only_fragments= false
+  schema_id            = mso_schema.tf_schema.id
+  template_name        = "Template1"
+  name                 = "Any"
+  display_name         = "Any"
+  entry_name           = "testAcc"
+  entry_display_name   = "testAcc"
+  entry_description    = "DemoEntry"
+  ether_type           = "arp"
+  ip_protocol          = "eigrp"
+  destination_from     = "unspecified"
+  destination_to       = "unspecified"
+  source_from          = "unspecified"
+  source_to            = "unspecified"
+  arp_flag             = "unspecified"
+  match_only_fragments = false
 }

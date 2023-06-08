@@ -256,7 +256,7 @@ func resourceMSOSchemaSiteExternalEpgSelectorRead(d *schema.ResourceData, m inte
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
-		return err
+		return errorForObjectNotFound(err, dn, cont, d)
 	}
 
 	found := false

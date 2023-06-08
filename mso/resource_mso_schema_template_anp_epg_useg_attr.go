@@ -436,7 +436,7 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m inter
 	schemaId := d.Get("schema_id").(string)
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
-		return err
+		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
 	count, err := cont.ArrayCount("templates")

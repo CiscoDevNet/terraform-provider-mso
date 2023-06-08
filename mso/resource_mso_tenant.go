@@ -711,7 +711,7 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 
 	con, err := msoClient.GetViaURL("api/v1/tenants/" + dn)
 	if err != nil {
-		return err
+		return errorForObjectNotFound(err, dn, con, d)
 	}
 
 	d.SetId(models.StripQuotes(con.S("id").String()))
