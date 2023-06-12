@@ -62,7 +62,7 @@ resource "mso_schema_template_anp" "demo_ap" {
 }
 
 resource "mso_schema_template_anp_epg" "demo_epg" {
-  schema_id     = mso_schema.schema1.id
+  schema_id     = mso_schema.demo_schema.id
   template_name = one(mso_schema.demo_schema.template).name
   anp_name      = mso_schema_template_anp.demo_ap.name
   name          = "demo_epg"
@@ -72,8 +72,8 @@ resource "mso_schema_template_anp_epg" "demo_epg" {
 }
 
 resource "mso_schema_site_anp_epg_subnet" "subnet1" {
-  schema_id          = mso_schema.schema1.id
-  site_id            = data.mso_site.azure_site.id
+  schema_id          = mso_schema.demo_schema.id
+  site_id            = data.mso_site.demo_site.id
   template           = one(mso_schema.demo_schema.template).name
   anp_name           = mso_schema_template_anp.demo_ap.name
   epg_name           = mso_schema_template_anp_epg.demo_epg.name
