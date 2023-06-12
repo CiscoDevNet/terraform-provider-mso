@@ -32,10 +32,10 @@ data "mso_schema_site_bd_subnet" "s1" {
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) Template name under which you want to deploy Subnet.
-* `scope` - (Optional) The scope of the subnet.
-* `shared` - (Optional) Whether this subnet is shared between VRFs.
-* `querier` - (Optional) Whether this subnet is an IGMP querier.
-* `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
-* `description` - (Optional) The description of this subnet. 
+* `template_name` - (Read-Only) Template name under which you want to deploy Subnet.
+* `scope` - (Read-Only) The scope of the subnet.
+* `shared` - (Read-Only) Whether this subnet is shared between VRFs.
+* `querier` - (Read-Only) Whether this subnet is an IGMP querier.
+* `no_default_gateway` - (Read-Only) Whether this subnet has a default gateway.
+* `description` - (Read-Only) The description of this subnet. 
 

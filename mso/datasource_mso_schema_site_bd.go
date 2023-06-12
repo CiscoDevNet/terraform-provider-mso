@@ -22,24 +22,20 @@ func dataSourceMSOSchemaSiteBd() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Required: true,
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"host_route": &schema.Schema{
@@ -86,7 +82,7 @@ func dataSourceMSOSchemaSiteBdRead(d *schema.ResourceData, m interface{}) error 
 			if err != nil {
 				return fmt.Errorf("Unable to get bd list")
 			}
-			for j := 0; j < bdCount && !found; j++ {
+			for j := 0; j < bdCount; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err

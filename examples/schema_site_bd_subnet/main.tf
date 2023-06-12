@@ -13,11 +13,61 @@ provider "mso" {
   insecure = true
 }
 
-resource "mso_schema_site_bd_subnet" "foo_schema_site_bd_subnet" {
-  schema_id          = "5d5dbf3f2e0000580553ccce"
-  template_name      = "Template1"
-  site_id            = "5c7c95b25100008f01c1ee3c"
-  bd_name            = "WebServer-Finance"
+data "mso_site" "demo_site" {
+  name = "demo_site"
+}
+
+resource "mso_tenant" "demo_tenant" {
+  name         = "demo_tenant"
+  display_name = "demo_tenant"
+}
+
+resource "mso_schema" "demo_schema" {
+  name = "demo_schema"
+  template {
+    name         = "Template1"
+    display_name = "Template1"
+    tenant_id    = mso_tenant.demo_tenant.id
+  }
+}
+
+resource "mso_schema_site" "demo_schema_site" {
+  schema_id     = mso_schema.demo_schema.id
+  template_name = one(mso_schema.demo_schema.template).name
+  site_id       = data.mso_site.demo_site.id
+}
+
+resource "mso_schema_template_vrf" "demo_vrf" {
+  schema_id              = mso_schema.demo_schema.id
+  template               = one(mso_schema.demo_schema.template).name
+  name                   = "demo_vrf"
+  display_name           = "demo_vrf"
+  ip_data_plane_learning = "enabled"
+}
+
+resource "mso_schema_template_bd" "demo_bd" {
+  schema_id     = mso_schema.demo_schema.id
+  template_name = one(mso_schema.demo_schema.template).name
+  name          = "demo_bd"
+  display_name  = "demo_bd"
+  vrf_name      = mso_schema_template_vrf.demo_vrf.name
+  arp_flooding  = true
+}
+
+resource "mso_schema_site_bd" "demo_schema_site_bd" {
+  schema_id     = mso_schema.demo_schema.id
+  bd_name       = mso_schema_template_bd.demo_bd.name
+  template_name = one(mso_schema.demo_schema.template).name
+  site_id       = data.mso_site.demo_site.id
+  host_route    = false
+  svi_mac       = "00:22:BD:F8:19:FF"
+}
+
+resource "mso_schema_site_bd_subnet" "demo_schema_site_bd_subnet" {
+  schema_id          = mso_schema.demo_schema.id
+  template_name      = one(mso_schema.demo_schema.template).name
+  site_id            = data.mso_site.demo_site.id
+  bd_name            = mso_schema_site_bd.demo_schema_site_bd.id
   ip                 = "200.168.240.1/24"
   description        = "This is schema site bd subnet."
   shared             = false

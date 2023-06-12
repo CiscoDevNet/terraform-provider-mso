@@ -77,11 +77,10 @@ func resourceMSOSchemaSiteBdImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("No Sites found")
 	}
-	site_template := regexp.MustCompile("-").Split(get_attribute[2], 2)
-	stateSite := site_template[0]
-	stateTemplate := site_template[1]
+	stateSite := get_attribute[1]
+	stateTemplate := get_attribute[2]
 	found := false
-	statebd := get_attribute[4]
+	statebd := get_attribute[3]
 	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
@@ -95,7 +94,7 @@ func resourceMSOSchemaSiteBdImport(d *schema.ResourceData, m interface{}) ([]*sc
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get bd list")
 			}
-			for j := 0; j < bdCount && !found; j++ {
+			for j := 0; j < bdCount; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return nil, err
@@ -215,7 +214,7 @@ func resourceMSOSchemaSiteBdRead(d *schema.ResourceData, m interface{}) error {
 			if err != nil {
 				return fmt.Errorf("Unable to get bd list")
 			}
-			for j := 0; j < bdCount && !found; j++ {
+			for j := 0; j < bdCount; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err
