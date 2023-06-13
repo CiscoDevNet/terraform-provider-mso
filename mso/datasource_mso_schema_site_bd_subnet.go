@@ -26,7 +26,7 @@ func dataSourceMSOSchemaSiteBdSubnet() *schema.Resource {
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
@@ -85,6 +85,7 @@ func dataSourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) 
 		return fmt.Errorf("No Sites found")
 	}
 	stateSite := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateBd := d.Get("bd_name").(string)
 	stateIp := d.Get("ip").(string)
@@ -94,8 +95,9 @@ func dataSourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) 
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			d.Set("site_id", apiSite)
 			d.Set("template_name", models.StripQuotes(tempCont.S("templateName").String()))
 			bdCount, err := tempCont.ArrayCount("bds")
