@@ -21,25 +21,28 @@ func datasourceMSOSchemaTemplate() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"tenant_id": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"display_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"template_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		}),
 	}
@@ -75,8 +78,10 @@ func datasourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) erro
 	dataCon := cont.S("templates").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("name").String()))
 	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
+	d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 	d.Set("display_name", models.StripQuotes(dataCon.S("displayName").String()))
 	d.Set("tenant_id", models.StripQuotes(dataCon.S("tenantId").String()))
+	d.Set("template_type", getSchemaTemplateType(dataCon))
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

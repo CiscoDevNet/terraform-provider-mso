@@ -14,8 +14,8 @@ Data source for MSO schema
 
 ```hcl
 
-data "mso_schema" "schema1" {
-  name  = "schema1"
+data "mso_schema" "demo_schema" {
+  name = "demo_schema"
 }
 
 ```
@@ -26,10 +26,13 @@ data "mso_schema" "schema1" {
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) **Deprecated**. Name of template attached to the schema.
-* `tenant_id` - (Optional) **Deprecated**. tenant_id for the schema.
-* `template` - (Optional) A block that represents the template associated with the schema. Type - Block.
-  * `name` - Name of template.
-  * `display_name` - Display name for the template.
-  * `tenant_id` - tenant_id for the template.
+* `template_name` - (Read-Only) **Deprecated**. Name of template attached to the schema.
+* `tenant_id` - (Read-Only) **Deprecated**. tenant_id for the schema.
+* `description` - (Read-Only) The description of the schema.
+* `template` - (Read-Only) A block that represents the template associated with the schema. Type - Block.
+  * `name` - (Read-Only) The name of the template.
+  * `display_name` - (Read-Only) The display name of the template.
+  * `description` - (Read-Only) The description of the template.
+  * `tenant_id` - (Read-Only) The tenant-id to associate with the template.
+  * `template_type` - (Read-Only) The template type of the template.
 

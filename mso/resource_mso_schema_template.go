@@ -32,24 +32,34 @@ func resourceMSOSchemaTemplate() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"tenant_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"description": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
 			"display_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"template_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice(getSchemaTemplateTypes(), false),
 			},
 		}),
 	}
@@ -85,8 +95,10 @@ func resourceMSOSchemaTemplateImport(d *schema.ResourceData, m interface{}) ([]*
 	dataCon := cont.S("templates").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("name").String()))
 	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
+	d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 	d.Set("display_name", models.StripQuotes(dataCon.S("displayName").String()))
 	d.Set("tenant_id", models.StripQuotes(dataCon.S("tenantId").String()))
+	d.Set("template_type", getSchemaTemplateType(dataCon))
 
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -95,18 +107,20 @@ func resourceMSOSchemaTemplateImport(d *schema.ResourceData, m interface{}) ([]*
 func resourceMSOSchemaTemplateCreate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
-	Name := d.Get("name").(string)
+	name := d.Get("name").(string)
 	tenantId := d.Get("tenant_id").(string)
 	displayName := d.Get("display_name").(string)
-
-	schematemplate := models.NewSchemaTemplate("add", "/templates/-", tenantId, Name, displayName)
+	description := d.Get("description").(string)
+	templateType := getTemplateType(d.Get("template_type").(string))
+	templateSubType := getTemplateSubType(d.Get("template_type").(string))
+	schematemplate := models.NewSchemaTemplate("add", "/templates/-", tenantId, name, displayName, description, templateType, templateSubType)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
 	if err != nil {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%v", Name))
+	d.SetId(fmt.Sprintf("%v", name))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateRead(d, m)
@@ -146,7 +160,9 @@ func resourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) error 
 			d.SetId(apiTemplateName)
 			d.Set("tenant_id", apiTenantId)
 			d.Set("name", apiTemplateName)
-			d.Set("display_name", apiTemplateDisplayName)
+			d.Set("name", apiTemplateName)
+			d.Set("description", models.StripQuotes(tempCont.S("description").String()))
+			d.Set("template_type", getSchemaTemplateType(tempCont))
 			found = true
 		}
 
@@ -157,6 +173,7 @@ func resourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) error 
 		d.Set("tenant_id", "")
 		d.Set("name", "")
 		d.Set("display_name", "")
+		d.Set("template_type", "")
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
@@ -166,20 +183,22 @@ func resourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) error 
 func resourceMSOSchemaTemplateUpdate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
-	Name := d.Get("name").(string)
+	name := d.Get("name").(string)
 
-	if d.HasChange("display_name") {
+	if d.HasChange("display_name") || d.HasChange("description") {
 		tenantId := d.Get("tenant_id").(string)
 		displayName := d.Get("display_name").(string)
-
-		schematemplate := models.NewSchemaTemplate("replace", fmt.Sprintf("/templates/%s", Name), tenantId, Name, displayName)
+		description := d.Get("description").(string)
+		templateType := getTemplateType(d.Get("template_type").(string))
+		templateSubType := getTemplateSubType(d.Get("template_type").(string))
+		schematemplate := models.NewSchemaTemplate("replace", fmt.Sprintf("/templates/%s", name), tenantId, name, displayName, description, templateType, templateSubType)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
 		if err != nil {
 			return err
 		}
 
-		d.SetId(fmt.Sprintf("%v", Name))
+		d.SetId(fmt.Sprintf("%v", name))
 		log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
 	}
 
@@ -189,14 +208,8 @@ func resourceMSOSchemaTemplateUpdate(d *schema.ResourceData, m interface{}) erro
 func resourceMSOSchemaTemplateDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
-	schemaId := d.Get("schema_id").(string)
-	tenantId := d.Get("tenant_id").(string)
-	templateName := d.Get("name").(string)
-	templateDisplayName := d.Get("display_name").(string)
-
-	schematemplate := models.NewSchemaTemplate("remove", fmt.Sprintf("/templates/%s", templateName), tenantId, templateName, templateDisplayName)
-
-	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schematemplate)
+	path := fmt.Sprintf("/templates/%s", d.Get("name").(string))
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", d.Get("schema_id").(string)), models.GetRemovePatchPayload(path))
 
 	// Ignoring Error with code 141: Resource Not Found when deleting
 	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
