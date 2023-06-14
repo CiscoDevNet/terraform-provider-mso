@@ -25,7 +25,6 @@ func datasourceMSOSchema() *schema.Resource {
 			},
 			"template_name": &schema.Schema{
 				Type:       schema.TypeString,
-				Optional:   true,
 				Computed:   true,
 				Deprecated: "see template",
 			},
@@ -35,13 +34,12 @@ func datasourceMSOSchema() *schema.Resource {
 			},
 			"tenant_id": &schema.Schema{
 				Type:       schema.TypeString,
-				Optional:   true,
 				Computed:   true,
 				Deprecated: "see template",
 			},
 			"template": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
+				// type set is not allowing more than one assignment thus in datasource the type difference from resource
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -102,18 +100,15 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("name", models.StripQuotes(dataCon.S("displayName").String()))
 	d.Set("description", models.StripQuotes(con.S("description").String()))
 
-	// Commented block so it can be used when templates container is initialized as empty list
-	// Currently in NDO 4.x the templates container is initialized as null instead of empty list
+	// Currently in NDO 4.1 the templates container is initialized as null instead of empty list
 	//  so when no templates are provided during create or import it is impossible to PATCH add a template
-	// NDO 4.x allows us to specify schema without templates thus skipping error of no templates provided and version >=4.x
-	// versionInt, err := msoClient.CompareVersion("4.0.0.0")
-	// if err != nil {
-	// 	return err
-	// }
-	// countTemplate, err := dataCon.ArrayCount("templates")
-	// if err != nil && versionInt == 1 {
-	countTemplate, err := dataCon.ArrayCount("templates")
+	// NDO 4.2 allows us to specify schema without templates thus skipping error of no templates provided and version >=4.2
+	versionInt, err := msoClient.CompareVersion("4.2.0.0")
 	if err != nil {
+		return err
+	}
+	countTemplate, err := dataCon.ArrayCount("templates")
+	if err != nil && versionInt == 1 {
 		return fmt.Errorf("No Template found")
 	}
 
@@ -124,7 +119,7 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return fmt.Errorf("Unable to parse the template list")
 		}
-		if i == 0 {
+		if i == 0 && countTemplate == 1 {
 			d.Set("template_name", models.StripQuotes(tempCont.S("name").String()))
 			d.Set("tenant_id", models.StripQuotes(tempCont.S("tenantId").String()))
 		}

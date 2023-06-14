@@ -151,17 +151,14 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 	tempVarTemplateName, ok_template_name := d.GetOk("template_name")
 	tempVarTemplates, ok_templates := d.GetOk("template")
 
-	// Commented block so it can be used when templates container is initialized as empty list
-	// Currently in NDO 4.x the templates container is initialized as null instead of empty list
+	// Currently in NDO 4.1 the templates container is initialized as null instead of empty list
 	//  so when no templates are provided during create or import it is impossible to PATCH add a template
-	// NDO 4.x allows us to specify schema without templates thus skipping error of no templates provided and version >=4.x
-	// versionInt, err := msoClient.CompareVersion("4.0.0.0")
-	// if err != nil {
-	// 	return err
-	// }
-	// if !ok_template_name && !ok_templates && versionInt == 1 {
-
-	if !ok_template_name && !ok_templates {
+	// NDO 4.2 allows us to specify schema without templates thus skipping error of no templates provided and version >=4.2
+	versionInt, err := msoClient.CompareVersion("4.2.0.0")
+	if err != nil {
+		return err
+	}
+	if !ok_template_name && !ok_templates && versionInt == 1 {
 		return fmt.Errorf("template_name or a template block with its name, tenant_id and display_name are required.")
 	}
 
@@ -217,18 +214,15 @@ func resourceMSOSchemaImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	d.Set("name", models.StripQuotes(con.S("displayName").String()))
 	d.Set("description", models.StripQuotes(con.S("description").String()))
 
-	// Commented block so it can be used when templates container is initialized as empty list
-	// Currently in NDO 4.x the templates container is initialized as null instead of empty list
+	// Currently in NDO 4.1 the templates container is initialized as null instead of empty list
 	//  so when no templates are provided during create or import it is impossible to PATCH add a template
-	// NDO 4.x allows us to specify schema without templates thus skipping error of no templates provided and version >=4.x
-	// versionInt, err := msoClient.CompareVersion("4.0.0.0")
-	// if err != nil {
-	// 	return err
-	// }
-	// count, err := con.ArrayCount("templates")
-	// if err != nil && versionInt == 1 {
-	count, err := con.ArrayCount("templates")
+	// NDO 4.2 allows us to specify schema without templates thus skipping error of no templates provided and version >=4.2
+	versionInt, err := msoClient.CompareVersion("4.2.0.0")
 	if err != nil {
+		return nil, err
+	}
+	count, err := con.ArrayCount("templates")
+	if err != nil && versionInt == 1 {
 		return nil, fmt.Errorf("No Template found")
 	}
 	templates := make([]interface{}, 0)
@@ -264,17 +258,14 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 	_, ok_template_name := d.GetOk("template_name")
 	_, ok_templates := d.GetOk("template")
 
-	// Commented block so it can be used when templates container is initialized as empty list
-	// Currently in NDO 4.x the templates container is initialized as null instead of empty list
+	// Currently in NDO 4.1 the templates container is initialized as null instead of empty list
 	//  so when no templates are provided during create or import it is impossible to PATCH add a template
-	// NDO 4.x allows us to specify schema without templates thus skipping error of no templates provided and version >=4.x
-	// versionInt, err := msoClient.CompareVersion("4.0.0.0")
-	// if err != nil {
-	// 	return err
-	// }
-	// if !ok_template_name && !ok_templates && versionInt == 1 {
-
-	if !ok_template_name && !ok_templates {
+	// NDO 4.2 allows us to specify schema without templates thus skipping error of no templates provided and version >=4.2
+	versionInt, err := msoClient.CompareVersion("4.2.0.0")
+	if err != nil {
+		return err
+	}
+	if !ok_template_name && !ok_templates && versionInt == 1 {
 		return fmt.Errorf("template_name or a template block with its name, tenant_id and display_name are required.")
 	} else if ok_template_name {
 		old, new := d.GetChange("template_name")
@@ -525,18 +516,15 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("name", models.StripQuotes(con.S("displayName").String()))
 	d.Set("description", models.StripQuotes(con.S("description").String()))
 
-	/// Commented block so it can be used when templates container is initialized as empty list
-	// Currently in NDO 4.x the templates container is initialized as null instead of empty list
+	// Currently in NDO 4.1 the templates container is initialized as null instead of empty list
 	//  so when no templates are provided during create or import it is impossible to PATCH add a template
-	// NDO 4.x allows us to specify schema without templates thus skipping error of no templates provided and version >=4.x
-	// versionInt, err := msoClient.CompareVersion("4.0.0.0")
-	// if err != nil {
-	// 	return err
-	// }
-	// count, err := con.ArrayCount("templates")
-	// if err != nil && versionInt == 1 {
-	count, err := con.ArrayCount("templates")
+	// NDO 4.2 allows us to specify schema without templates thus skipping error of no templates provided and version >=4.2
+	versionInt, err := msoClient.CompareVersion("4.2.0.0")
 	if err != nil {
+		return err
+	}
+	count, err := con.ArrayCount("templates")
+	if err != nil && versionInt == 1 {
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
