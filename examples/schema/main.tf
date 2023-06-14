@@ -18,23 +18,32 @@ data "mso_tenant" "demo_tenant" {
   display_name = "demo_tenant"
 }
 
-// create resource with three template blocks
+// create resource with four template blocks
 resource "mso_schema" "schema_blocks" {
   name = "demo_schema_blocks"
   template {
     name         = "Template1"
     display_name = "TEMP1"
     tenant_id    = data.mso_tenant.demo_tenant.id
+    template_type = "aci_multi_site"
   }
   template {
     name         = "Template2"
     display_name = "TEMP2"
     tenant_id    = data.mso_tenant.demo_tenant.id
+    template_type = "aci_autonomous"
   }
   template {
     name         = "Template3"
     display_name = "TEMP3"
     tenant_id    = data.mso_tenant.demo_tenant.id
+    template_type = "cloud_local"
+  }
+  template {
+    name         = "Template4"
+    display_name = "TEMP4"
+    tenant_id    = data.mso_tenant.demo_tenant.id
+    template_type = "ndfc"
   }
 }
 

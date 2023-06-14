@@ -14,7 +14,7 @@ Data source for MSO schema template, to fetch the MSO schema template details.
 
 ```hcl
 
-data "mso_schema_template" "st10" {
+data "mso_schema_template" "demo_template" {
   name      = "template-name"
   schema_id = data.mso_schema.schema1.id
 }
@@ -23,10 +23,12 @@ data "mso_schema_template" "st10" {
 
 ## Argument Reference ##
 
-* `name` - (Required) name of the template to fetch.
+* `name` - (Required) The name of the template.
 * `schema_id` - (Required) The schema-id where template is associated.
 
 ## Attribute Reference ##
 
-* `tenant_id` - (Optional) Tenant id is set to the MSO template UUID.
-* `display_name` - (Optional) The display name of the template deployed to the site
+* `tenant_id` - (Read-Only) The tenant-id to associate with the template.
+* `display_name` - (Read-Only) The display name of the template.
+* `template_type` - (Read-Only) The template type of the template.
+* `description` - (Read-Only) The description of the template.

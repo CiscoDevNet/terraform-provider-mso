@@ -15,22 +15,25 @@ Manages MSO Schema
 ### When template blocks are provided ###
 
 ```hcl
-resource "mso_schema" "schema1" {
-  name          = "Schema3"
+resource "mso_schema" "demo_schema" {
+  name          = "demo_schema"
   template {
     name          = "Template1"
     display_name  = "TEMP1"
     tenant_id     = "623316531d0000abdd50343a"
+    template_type = "aci_multi_site"
   }
   template {
     name          = "Template2"
     display_name  = "TEMP2"
     tenant_id     = "623316531d0000abdd50343a"
+    template_type = "ndfc"
   }
   template {
     name          = "Template3"
     display_name  = "TEMP3"
     tenant_id     = "0000ffff0000000000000010"
+    template_type = "cloud_local"
   }
 }  
 
@@ -40,23 +43,26 @@ resource "mso_schema" "schema1" {
 
 ```hcl
 
-resource "mso_schema" "schema1" {
-  name          = "nkp12"
-  template_name = "template1"
-  tenant_id     = mso_tenant.tenant1.id
+resource "mso_schema" "demo_schema" {
+  name          = "demo_schema"
+  template_name = "Template1"
+  tenant_id     = mso_tenant.demo_tenant.id
 }
 
 ```
 
 ## Argument Reference ##
 
-* `name` - (Required) name of the schema.
+* `name` - (Required) The name of the schema.
 * `template_name` - (Optional) **Deprecated**. Name of template attached to the schema.
 * `tenant_id` - (Optional) **Deprecated**. tenant_id for the schema.
+* `description` - (Optional) The description of the schema.
 * `template` - (Optional) A block that represents the template associated with the schema. Multiple templates can be created using this attribute. Type - Block.
-  * `name` - Name of template.
-  * `display_name` - Display name for the template.
-  * `tenant_id` - tenant_id for the template.
+  * `name` - (Required) The name of the template.
+  * `display_name` - (Required) The display name of the template.
+  * `description` - (Optional) The description of the template.
+  * `tenant_id` - (Required) The tenant-id to associate with the template.
+  * `template_type` - (Required) The template type of the template.
 
 ## Attribute Reference ##
 
