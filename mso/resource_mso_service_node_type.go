@@ -122,7 +122,7 @@ func resourceMSOServiceNodeTypeRead(d *schema.ResourceData, m interface{}) error
 
 	cont, err := msoClient.GetViaURL("api/v1/schemas/service-node-types")
 	if err != nil {
-		return err
+		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
 	nodesCount, err := cont.ArrayCount("serviceNodeTypes")
