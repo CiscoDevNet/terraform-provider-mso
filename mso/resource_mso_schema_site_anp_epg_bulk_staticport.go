@@ -247,13 +247,13 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 			var static_port_pod, static_port_leaf, static_port_path, static_port_fex string
 
 			if staticPort["path_type"] != nil {
-				staticPortMap["type"] = staticPort["path_type"]
+				staticPortMap["type"] = staticPort["path_type"].(string)
 			}
 			if staticPort["deployment_immediacy"] != nil {
-				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"]
+				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"].(string)
 			}
 			if staticPort["mode"] != nil {
-				staticPortMap["mode"] = staticPort["mode"]
+				staticPortMap["mode"] = staticPort["mode"].(string)
 			}
 			if staticPort["vlan"] != nil {
 				staticPortMap["portEncapVlan"] = staticPort["vlan"]
@@ -276,9 +276,9 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 
 			var portpath string
 
-			if staticPortMap["path_type"] == "port" && staticPort["fex"] != "" {
+			if staticPortMap["type"] == "port" && static_port_fex != "" {
 				portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
-			} else if staticPortMap["path_type"] == "vpc" {
+			} else if staticPortMap["type"] == "vpc" {
 				portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
 			} else {
 				portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
@@ -477,13 +477,13 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 			var static_port_pod, static_port_leaf, static_port_path, static_port_fex string
 
 			if staticPort["path_type"] != nil {
-				staticPortMap["type"] = staticPort["path_type"]
+				staticPortMap["type"] = staticPort["path_type"].(string)
 			}
 			if staticPort["deployment_immediacy"] != nil {
-				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"]
+				staticPortMap["deploymentImmediacy"] = staticPort["deployment_immediacy"].(string)
 			}
 			if staticPort["mode"] != nil {
-				staticPortMap["mode"] = staticPort["mode"]
+				staticPortMap["mode"] = staticPort["mode"].(string)
 			}
 			if staticPort["vlan"] != nil {
 				staticPortMap["portEncapVlan"] = staticPort["vlan"]
@@ -506,9 +506,9 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 
 			var portpath string
 
-			if staticPortMap["path_type"] == "port" && staticPort["fex"] != "" {
+			if staticPortMap["type"] == "port" && static_port_fex != "" {
 				portpath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
-			} else if staticPortMap["path_type"] == "vpc" {
+			} else if staticPortMap["type"] == "vpc" {
 				portpath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
 			} else {
 				portpath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
