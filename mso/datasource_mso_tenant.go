@@ -42,7 +42,7 @@ func datasourceMSOTenant() *schema.Resource {
 			},
 
 			"user_associations": &schema.Schema{
-				Type: schema.TypeSet,
+				Type: schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"user_id": {
