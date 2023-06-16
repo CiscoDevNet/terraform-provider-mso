@@ -21,7 +21,7 @@ data "mso_user" "user1" {
   username = "user1"
 }
 
-# With No Site Association
+# With Non-Cloud Site Association
 resource "mso_tenant" "tenant1" {
   name         = "tenant1"
   display_name = "tenant1"

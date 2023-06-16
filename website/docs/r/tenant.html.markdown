@@ -22,7 +22,7 @@ data "mso_user" "user1" {
   username = "user1"
 }
 
-# With No Site Association
+# With Non-Cloud Site Association
 resource "mso_tenant" "tenant1" {
   name         = "tenant1"
   display_name = "tenant1"
@@ -124,7 +124,7 @@ resource "mso_tenant" "tenant4" {
 * `site_association.gcp_client_id` - (Optional) GCP Client Id. This parameter will only have effect with `vendor` = gcp.
 * `site_association.gcp_email` - (Optional) GCP Email. It must be provided if the GCP account is not managed. This parameter will only have effect with `vendor` = gcp.
 
-NOTE: AWS, Azure or GCP credentials will be used based on whatever is passed in `vendor` argument if both (AWS + Azure + GCP) Credentials are provided.
+NOTE: AWS, Azure or GCP credentials will be used based on whatever is passed in `vendor` argument if more than one (AWS + Azure + GCP) Credentials are provided.
 
 ## Attribute Reference ##
 
