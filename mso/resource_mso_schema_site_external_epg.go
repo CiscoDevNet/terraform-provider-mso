@@ -76,7 +76,7 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 	stateSiteId := get_attribute[2]
 	found := false
 	stateExternalEpg := get_attribute[4]
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return nil, err
@@ -86,7 +86,7 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 		if apiSiteId == stateSiteId {
 			externalEpgCount, err := siteCont.ArrayCount("externalEpgs")
 			if err != nil {
-				return nil, fmt.Errorf("Unable to get Externalepg list")
+				return nil, fmt.Errorf("Unable to get External EPG list")
 			}
 			for j := 0; j < externalEpgCount; j++ {
 				externalEpgCont, err := siteCont.ArrayElement(j, "externalEpgs")
@@ -94,22 +94,34 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 					return nil, err
 				}
 				externalEpgRef := models.StripQuotes(externalEpgCont.S("externalEpgRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/externalEpgs/(.*)")
+				re := regexp.MustCompile("/schemas/(.*?)/templates/(.*?)/externalEpgs/(.*)")
 				match := re.FindStringSubmatch(externalEpgRef)
-				if match[3] == stateExternalEpg {
-					d.SetId(match[3])
-					d.Set("external_epg_name", match[3])
-					d.Set("schema_id", match[1])
-					d.Set("template_name", match[2])
-					d.Set("site_id", apiSiteId)
+				log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead externalEpgRef: %s match: %s", externalEpgRef, match)
+				if len(match) >= 4 {
+					if match[3] == stateExternalEpg {
+						d.SetId(match[3])
+						d.Set("external_epg_name", match[3])
+						d.Set("schema_id", match[1])
+						d.Set("template_name", match[2])
+						d.Set("site_id", apiSiteId)
 
-					l3outRef := models.StripQuotes(externalEpgCont.S("l3outRef").String())
-					reL3out := regexp.MustCompile("/schemas/(.*)/templates/(.*)/l3outs/(.*)")
-					matchL3out := reL3out.FindStringSubmatch(l3outRef)
-					d.Set("l3out_name", matchL3out[3])
+						l3outRef := models.StripQuotes(externalEpgCont.S("l3outRef").String())
+						if l3outRef != "{}" && l3outRef != "" {
+							reL3out := regexp.MustCompile("/schemas/(.*?)/templates/(.*?)/l3outs/(.*)")
+							matchL3out := reL3out.FindStringSubmatch(l3outRef)
+							log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead l3outRef: %s matchL3out: %s", l3outRef, matchL3out)
+							if len(matchL3out) >= 4 {
+								d.Set("l3out_name", matchL3out[3])
+							} else {
+								return nil, fmt.Errorf("Error in parsing l3outRef to get L3Out name")
+							}
+						}
 
-					found = true
-					break
+						found = true
+						break
+					}
+				} else {
+					return nil, fmt.Errorf("Error in parsing externalEpgRef to get External EPG name")
 				}
 			}
 		}
@@ -206,7 +218,7 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 	stateSiteId := d.Get("site_id").(string)
 	found := false
 	stateExternalEpg := d.Get("external_epg_name").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
