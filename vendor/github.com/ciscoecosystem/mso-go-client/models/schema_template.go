@@ -6,13 +6,16 @@ type SchemaTemplate struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplate(ops, path, tenantId, templateName, templateDisplayName string) *SchemaTemplate {
+func NewSchemaTemplate(ops, path, tenantId, templateName, templateDisplayName, description, templateType string, templateSubTypes []string) *SchemaTemplate {
 	var templateMap map[string]interface{}
 	if ops != "remove" {
 		templateMap = map[string]interface{}{
 			"tenantId":        tenantId,
 			"name":            templateName,
 			"displayName":     templateDisplayName,
+			"templateType":    templateType,
+			"templateSubType": templateSubTypes,
+			"description":     description,
 			"anps":            []interface{}{},
 			"bds":             []interface{}{},
 			"contracts":       []interface{}{},

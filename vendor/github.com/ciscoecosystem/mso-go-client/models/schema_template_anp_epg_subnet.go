@@ -6,14 +6,18 @@ type SchemaTemplateAnpEpgSubnet struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateAnpEpgSubnet(ops, path, ip, scope string, shared bool) *SchemaTemplateAnpEpgSubnet {
+func NewSchemaTemplateAnpEpgSubnet(ops, path, ip, desc, scope string, shared, noDefaultGateway, querier, primary bool) *SchemaTemplateAnpEpgSubnet {
 	var SubnetMap map[string]interface{}
 
 	if ops != "remove" {
 		SubnetMap = map[string]interface{}{
-			"ip":     ip,
-			"scope":  scope,
-			"shared": shared,
+			"ip":               ip,
+			"description":      desc,
+			"scope":            scope,
+			"shared":           shared,
+			"noDefaultGateway": noDefaultGateway,
+			"querier":          querier,
+			"primary":          primary,
 		}
 	} else {
 
