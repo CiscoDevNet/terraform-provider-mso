@@ -38,25 +38,26 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg.
 * `template_name` - (Required) Template where Anp Epg to be created.
-* `anp_name` - (Required) Name of Application Network Profiles.
-* `name` - (Required) Name of Endpoint Group to manage.
-* `bd_name` - (Optional) Name of Bridge Domain. It is required when using on-premise sites.
+* `anp_name` - (Required) Name of the Application Network Profiles.
+* `name` - (Required) Name of the Endpoint Group to manage.
+* `bd_name` - (Optional) Name of the Bridge Domain. It is required when using on-premise sites.
 * `bd_schema_id` - (Opional) The schemaID that defines the referenced BD.
 * `bd_template_name` - (Optional) The template that defines the referenced BD.
-* `vrf_name` - (Optional) Name of Vrf. It is required when using cloud sites.
+* `vrf_name` - (Optional) Name of the Vrf. It is required when using cloud sites.
 * `vrf_schema_id` - (Optional) The schemaID that defines the referenced VRF.
 * `vrf_template_name` - (Optional) The template that defines the referenced VRF.
 * `display_name` - (Optional) The name as displayed on the MSO web interface.
+* `description` - (Optional) Description of the Anp Epg.
 * `useg_epg` - (Optional) Boolean flag to enable or disable whether this is a USEG EPG. Default value is set to false.
 * `intra_epg` - (Optional) Whether intra EPG isolation is enforced. choices: [ enforced, unenforced ]
 * `intersite_multicast_source` - (Optional) Whether intersite multicast source is enabled. Default to false.
 * `proxy_arp` - (Optional) Whether to enable Proxy ARP or not. (For Forwarding control) Default to false.
 * `preferred_group` - (Optional) Boolean flag to enable or disable whether this EPG is added to preferred group.      Default value is set to false.
 * `epg_type` - (Optional) EPG Type. Allowed values are `application` and `service`. Default is `application`.
-* `access_type` - Access Type. Allowed values are `private`, `public` and `public_and_private`.
-* `deployment_type` - Deployment Type. Allowed values are `cloud_native`, `cloud_native_managed` and `third_party`.
-* `service_type` - Service Type. Allowed values are `azure_api_management_services`, `azure_cosmos_db`, `azure_databricks`, `azure_sql`, `azure_storage`, `azure_storage_blob`, `azure_storage_file`, `azure_storage_queue`, `azure_storage_table`, `azure_kubernetes_services`, `azure_ad_domain_services`, `azure_contain_registry`, `azure_key_vault`, `redis_cache`, `custom`.
-* `custom_service_type` - Custom Service Type. This argument is required when `service_type` is set to `custom`.
+* `access_type` - (Optional) Access Type of the EPG. Allowed values are `private`, `public` and `public_and_private`.
+* `deployment_type` - (Optional) Deployment Type of the EPG. Allowed values are `cloud_native`, `cloud_native_managed` and `third_party`.
+* `service_type` - (Optional) Service Type of the EPG. Allowed values are `azure_api_management_services`, `azure_cosmos_db`, `azure_databricks`, `azure_sql`, `azure_storage`, `azure_storage_blob`, `azure_storage_file`, `azure_storage_queue`, `azure_storage_table`, `azure_kubernetes_services`, `azure_ad_domain_services`, `azure_contain_registry`, `azure_key_vault`, `redis_cache`, `custom`.
+* `custom_service_type` - (Optional) Custom Service Type of the EPG. This argument is required when `service_type` is set to `custom`.
 
 ## Attribute Reference ##
 

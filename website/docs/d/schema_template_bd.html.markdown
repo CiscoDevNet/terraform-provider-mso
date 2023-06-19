@@ -29,27 +29,35 @@ data "mso_schema_template_bd" "bridge_domain" {
 * `name` - (Required) Name of Bridge Domain.
 
 
-
 ## Attribute Reference ##
-* `display_name` - (Required) Display Name of the Bridge Domain on the MSO UI.
-* `vrf_name` - (Required) Name of VRF attached with Bridge Domain.
-* `vrf_schema_id` - (Optional) SchemaID of VRF.
-* `vrf_template_name` - (Optional) Template Name of VRF.
-* `layer2_unknown_unicast` - (Optional) Type of layer 2 unknown unicast.
-* `intersite_bum_traffic` - (Optional) Boolean Flag to enable or disable intersite bum traffic.
-* `optimize_wan_bandwidth` - (Optional) Boolean flag to enable or disable the wan bandwidth optimization.
-* `layer2_stretch` - (Optional) Boolean flag to enable or disable the layer-2 stretch.
-* `layer3_multicast` - (Optional) Boolean flag to enable or disable layer 3 multicast traffic.
-* `dhcp_policies` - (Optional) Block to provide dhcp_policy configurations. 
-  * `dhcp_policies.name` - (Optional) Dhcp_policy name. Required if you specify the dhcp_policy.
-  * `dhcp_policies.version` - (Optional) Version of dhcp_policy. Required if you specify the dhcp_policy.
-  * `dhcp_policies.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
-  * `dhcp_policies.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy.
+* `display_name` - (Read-Only) Display Name of the Bridge Domain on the MSO UI.
+* `description` - (Read-Only) Description of the Bridge Domain on the MSO UI.
+* `vrf_name` - (Read-Only) Name of the VRF attached with Bridge Domain on the MSO UI.
+* `vrf_schema_id` - (Read-Only) SchemaID of the VRF.
+* `vrf_template_name` - (Read-Only) Template Name of the VRF.
+* `layer2_unknown_unicast` - (Read-Only) Type of the layer 2 unknown unicast.
+* `intersite_bum_traffic` - (Read-Only) Enable or Disable - boolean flag of the intersite bum traffic.
+* `optimize_wan_bandwidth` - (Read-Only) Enable or Disable - boolean flag of the wan bandwidth optimization.
+* `layer2_stretch` - (Read-Only) Enable or Disable - boolean flag of the layer-2 stretch.
+* `layer3_multicast` - (Read-Only) Enable or Disable - boolean flag of the layer 3 multicast traffic.
+* `dhcp_policies` - (Read-Only) Block to provide dhcp_policy configurations. Type: Block.
+  * `name` - (Read-Only) DHCP Policy name of the Bridge Domain on the MSO UI.
+  * `version` - (Read-Only) DHCP Policy version of the Bridge Domain on the MSO UI.
+  * `dhcp_option_policy_name` - (Read-Only) DHCP Option Policy name of the Bridge Domain on the MSO UI.
+  * `dhcp_option_policy_version` - (Read-Only) DHCP Option Policy version of the Bridge Domain on the MSO UI.
+* `unknown_multicast_flooding` - (Read-Only) Unknown Multicast flooding of the Bridge Domain on the MSO UI.
+* `multi_destination_flooding` - (Read-Only) Multi destination flooding of the Bridge Domain on the MSO UI.
+* `ipv6_unknown_multicast_flooding` - (Read-Only) IPv6 unknown multicast flooding of the Bridge Domain on the MSO UI.
+* `arp_flooding` - (Read-Only) ARP flooding of the Bridge Domain on the MSO UI.
+* `virtual_mac_address` - (Read-Only) Virtual Mac Address of the Bridge Domain on the MSO UI.
+* `unicast_routing` - (Read-Only) Unicast Routing of the Bridge Domain on the MSO UI.
+
+			
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
 
-* `dhcp_policy` - (Optional) Map to provide dhcp_policy configurations.
-* `dhcp_policy.name` - (Optional) dhcp_policy name.
-* `dhcp_policy.version` - (Optional) Version of dhcp_policy.
-* `dhcp_policy.dhcp_option_policy_name` - (Optional) Name of dhcp_option_policy. 
-* `dhcp_policy.dhcp_option_policy_version` - (Optional) Version of dhcp_option_policy. 
+* `dhcp_policy` - (Read-Only) Map to provide dhcp_policy configurations. Type: Block.
+  * `name` - (Read-Only) DHCP Policy name of the Bridge Domain on the MSO UI.
+  * `version` - (Read-Only) DHCP Policy version of the Bridge Domain on the MSO UI.
+  * `dhcp_option_policy_name` - (Read-Only) DHCP Option Policy name of the Bridge Domain on the MSO UI.
+  * `dhcp_option_policy_version` - (Read-Only) DHCP Option Policy version of the Bridge Domain on the MSO UI.

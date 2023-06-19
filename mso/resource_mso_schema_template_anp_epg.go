@@ -87,6 +87,11 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 128),
+			},
 			"useg_epg": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -224,6 +229,7 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 							d.SetId(apiEPG)
 							d.Set("name", apiEPG)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
+							d.Set("description", models.StripQuotes(epgCont.S("description").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
 							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
 							if epgCont.Exists("mCastSource") {
@@ -385,6 +391,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	anpName := d.Get("anp_name").(string)
 	Name := d.Get("name").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
@@ -460,7 +467,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	}
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/-", templateName, anpName)
-	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
+	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, epgType, description, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -524,6 +531,7 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 							d.Set("name", apiEPG)
 							d.Set("template_name", apiTemplate)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
+							d.Set("description", models.StripQuotes(epgCont.S("description").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
 							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
 							if epgCont.Exists("mCastSource") {
@@ -579,6 +587,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdName := d.Get("bd_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
@@ -649,7 +658,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
+	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, epgType, description, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -735,7 +744,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
+	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, epgType, "", uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
 
 	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 

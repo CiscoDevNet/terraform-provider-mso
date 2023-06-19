@@ -21,87 +21,93 @@ func datasourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(0, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"bd_schema_id": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"bd_template_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"vrf_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"vrf_schema_id": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"vrf_template_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
+			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"useg_epg": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"intra_epg": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"intersite_multicast_source": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"proxy_arp": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
+			},
+			"epg_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"access_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"deployment_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"service_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"custom_service_type": {
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 		}),
@@ -162,6 +168,7 @@ func dataSourceMSOTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) erro
 							d.Set("name", apiEPG)
 							d.Set("template_name", apiTemplate)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
+							d.Set("description", models.StripQuotes(epgCont.S("description").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
 							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
 							if epgCont.Exists("mCastSource") {
