@@ -27,7 +27,7 @@ data "mso_schema_template_anp_epg_subnet" "subnet1" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Subnet.
-* `template_name` - (Required) Template name under which you want to deploy Subnet.
+* `template` - (Required) Template name under which you want to deploy Subnet.
 * `anp_name` - (Required) ANP name under which you want to deploy Subnet.
 * `epg_name` - (Required) EPG name under which you want to deploy Subnet.
 * `ip` - (Required) The IP range in CIDR notation.
