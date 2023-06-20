@@ -6,7 +6,7 @@ type TemplateBD struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, multiDstPktAct, v6unkMcastAct, vmac string, intersiteBumTrafficAllow, optimizeWanBandwidth, l2Stretch, l3MCast, arpFlood, unicastRouting bool, vrfRef, dhcpLabel map[string]interface{}, dhcpLabels []interface{}) *PatchPayload {
+func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, multiDstPktAct, v6unkMcastAct, vmac, description string, intersiteBumTrafficAllow, optimizeWanBandwidth, l2Stretch, l3MCast, arpFlood, unicastRouting bool, vrfRef, dhcpLabel map[string]interface{}, dhcpLabels []interface{}) *PatchPayload {
 	var bdMap map[string]interface{}
 	bdMap = map[string]interface{}{
 		"name":                     name,
@@ -26,6 +26,7 @@ func NewTemplateBD(ops, path, name, displayName, layer2Unicast, unkMcastAct, mul
 		"dhcpLabel":                dhcpLabel,
 		"dhcpLabels":               dhcpLabels,
 		"subnets":                  []interface{}{},
+		"description":              description,
 	}
 
 	if bdMap["l2UnknownUnicast"] == "" {
