@@ -15,6 +15,7 @@ Manages MSO Schema
 ### When template blocks are provided ###
 
 ```hcl
+
 resource "mso_schema" "demo_schema" {
   name          = "demo_schema"
   template {
@@ -35,18 +36,6 @@ resource "mso_schema" "demo_schema" {
     tenant_id     = "0000ffff0000000000000010"
     template_type = "cloud_local"
   }
-}  
-
-```
-
-### When template_name and tenant_id are used(DEPRECATED) ###
-
-```hcl
-
-resource "mso_schema" "demo_schema" {
-  name          = "demo_schema"
-  template_name = "Template1"
-  tenant_id     = mso_tenant.demo_tenant.id
 }
 
 ```
