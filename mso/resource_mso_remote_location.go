@@ -105,10 +105,6 @@ func resourceMSORemoteLocation() *schema.Resource {
 
 func setAuthenticationInState(d *schema.ResourceData) {
 
-	d.Set("password", "")
-	d.Set("ssh_key", "")
-	d.Set("passphrase", "")
-
 	if d.Get("store_in_statefile").(bool) {
 		password := d.Get("password").(string)
 		if password != "" {
@@ -122,6 +118,10 @@ func setAuthenticationInState(d *schema.ResourceData) {
 		if passphrase != "" {
 			d.Set("passphrase", passphrase)
 		}
+	} else {
+		d.Set("password", "")
+		d.Set("ssh_key", "")
+		d.Set("passphrase", "")
 	}
 }
 
