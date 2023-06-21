@@ -76,5 +76,5 @@ The only attribute exported with this resource is `id`. Which is set to the id o
 An existing MSO User can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_user.mso_remote_location {remote-location-id}
+terraform import mso_remote_location.example {remote-location-id}
 ```
