@@ -32,5 +32,5 @@ data "mso_schema_site_bd" "st10" {
 
 ## Attribute Reference ##
 
-* `host_route` - (Read-Only) Value to check whether host-based routing is enabled. Default value is `false`.
+* `host_route` - (Read-Only) Value to check whether host-based routing is enabled.
 * `svi_mac` - (Read-Only) Value of the SVI MAC Address.
