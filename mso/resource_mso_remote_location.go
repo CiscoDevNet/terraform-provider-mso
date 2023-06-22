@@ -72,21 +72,15 @@ func resourceMSORemoteLocation() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"ssh_key": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 			"passphrase": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"store_in_statefile": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
 			},
 		}),
 		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
@@ -105,23 +99,17 @@ func resourceMSORemoteLocation() *schema.Resource {
 
 func setAuthenticationInState(d *schema.ResourceData) {
 
-	if d.Get("store_in_statefile").(bool) {
-		password := d.Get("password").(string)
-		if password != "" {
-			d.Set("password", password)
-		}
-		ssh_key := d.Get("ssh_key").(string)
-		if ssh_key != "" {
-			d.Set("ssh_key", ssh_key)
-		}
-		passphrase := d.Get("passphrase").(string)
-		if passphrase != "" {
-			d.Set("passphrase", passphrase)
-		}
-	} else {
-		d.Set("password", "")
-		d.Set("ssh_key", "")
-		d.Set("passphrase", "")
+	password := d.Get("password").(string)
+	if password != "" {
+		d.Set("password", password)
+	}
+	ssh_key := d.Get("ssh_key").(string)
+	if ssh_key != "" {
+		d.Set("ssh_key", ssh_key)
+	}
+	passphrase := d.Get("passphrase").(string)
+	if passphrase != "" {
+		d.Set("passphrase", passphrase)
 	}
 }
 
@@ -175,9 +163,6 @@ func resourceMSORemoteLocationImport(d *schema.ResourceData, m interface{}) ([]*
 		return nil, err
 	}
 
-	d.Set("store_in_statefile", false)
-	setAuthenticationInState(d)
-
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
 
@@ -195,6 +180,7 @@ func resourceMSORemoteLocationCreate(d *schema.ResourceData, m interface{}) erro
 	}
 
 	d.SetId(models.StripQuotes(cont.S("id").String()))
+	setAuthenticationInState(d)
 
 	return resourceMSORemoteLocationRead(d, m)
 }
@@ -210,6 +196,8 @@ func resourceMSORemoteLocationUpdate(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
+	setAuthenticationInState(d)
+
 	return resourceMSORemoteLocationRead(d, m)
 }
 
@@ -223,7 +211,6 @@ func resourceMSORemoteLocationRead(d *schema.ResourceData, m interface{}) error 
 		return errorForObjectNotFound(err, d.Id(), remoteLocation, d)
 	}
 	setRemoteLocation(d, remoteLocation.Data().(map[string]interface{}))
-	setAuthenticationInState(d)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

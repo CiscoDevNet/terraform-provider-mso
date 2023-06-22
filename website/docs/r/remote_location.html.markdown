@@ -10,7 +10,7 @@ description: |-
 
 Manages MSO Remote Location.
 
-The default behaviour of the `mso_remote_location` resource stores no sensitive attributes `password`, `ssh_key`, and `passphrase` into the statefile. A change is always detected for the sensitive attributes provided during the plan execution when `store_in_statefile` is not explicitly set to `true`.
+The `mso_remote_location` resource stores sensitive attributes `password`, `ssh_key`, and `passphrase` into the statefile.
 
 ## Example Usage ##
 
@@ -39,18 +39,6 @@ resource "mso_remote_location" "ssh" {
   passphrase  = "passphrase"
 }
 
-# remote location with password authentication that stores sensitive attributes to statefile
-resource "mso_remote_location" "password" {
-  name               = "remote_location_password"
-  description        = "remote location with password authentication"
-  protocol           = "scp"
-  hostname           = "10.0.0.1"
-  path               = "/tmp"
-  username           = "admin"
-  password           = "password"
-  store_in_statefile = true
-}
-
 ```
 
 ## Argument Reference ##
@@ -65,7 +53,6 @@ resource "mso_remote_location" "password" {
 * `password` - (Optional) The password used to log in to the Remote Location.
 * `ssh_key` - (Optional) The private ssh key (PEM format) used to log in to the Remote Location.
 * `passphrase` - (Optional) The private ssh key passphrase used to log in to the Remote Location.
-* `store_in_statefile` - (Optional) Store sensitive attributes `password`, `ssh_key`, and `passphrase` into the statefile. Default to `false`.
 
 ## Attribute Reference ##
 
