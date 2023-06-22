@@ -36,15 +36,3 @@ resource "mso_remote_location" "ssh" {
   passphrase  = "passphrase"
 }
 
-# remote location with password authentication that stores sensitive attributes to statefile
-resource "mso_remote_location" "password" {
-  name               = "remote_location_password"
-  description        = "remote location with password authentication"
-  protocol           = "scp"
-  hostname           = "10.0.0.1"
-  path               = "/tmp"
-  username           = "admin"
-  password           = "password"
-  store_in_statefile = true
-}
-
