@@ -53,6 +53,12 @@ func resourceMSOSchemaSiteBd() *schema.Resource {
 			"host_route": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
+			},
+			"svi_mac": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
@@ -71,17 +77,19 @@ func resourceMSOSchemaSiteBdImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("No Sites found")
 	}
-	stateSite := get_attribute[2]
+	stateSite := get_attribute[1]
+	stateTemplate := get_attribute[2]
 	found := false
-	statebd := get_attribute[4]
-	for i := 0; i < count; i++ {
+	statebd := get_attribute[3]
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return nil, err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			bdCount, err := tempCont.ArrayCount("bds")
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get bd list")
@@ -102,6 +110,9 @@ func resourceMSOSchemaSiteBdImport(d *schema.ResourceData, m interface{}) ([]*sc
 					d.Set("site_id", apiSite)
 					if bdCont.Exists("hostBasedRouting") {
 						d.Set("host_route", bdCont.S("hostBasedRouting").Data().(bool))
+					}
+					if bdCont.Exists("mac") {
+						d.Set("svi_mac", models.StripQuotes(bdCont.S("mac").String()))
 					}
 					found = true
 					break
@@ -128,9 +139,14 @@ func resourceMSOSchemaSiteBdCreate(d *schema.ResourceData, m interface{}) error 
 	bdName := d.Get("bd_name").(string)
 
 	var host bool
+	var mac string
 
 	if tempvar, ok := d.GetOk("host_route"); ok {
 		host = tempvar.(bool)
+	}
+
+	if tempvar, ok := d.GetOk("svi_mac"); ok {
+		mac = tempvar.(string)
 	}
 
 	var bd_schema_id, bd_template_name string
@@ -149,13 +165,13 @@ func resourceMSOSchemaSiteBdCreate(d *schema.ResourceData, m interface{}) error 
 
 	if versionInt != 1 {
 		path := fmt.Sprintf("/sites/%s-%s/bds/%s", siteId, templateName, bdName)
-		bdStruct := models.NewSchemaSiteBd("replace", path, bdRefMap, host)
+		bdStruct := models.NewSchemaSiteBd("replace", path, mac, bdRefMap, host)
 		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
 	}
 
 	if versionInt == 1 || err != nil {
 		path := fmt.Sprintf("/sites/%s-%s/bds/-", siteId, templateName)
-		bdStruct := models.NewSchemaSiteBd("add", path, bdRefMap, host)
+		bdStruct := models.NewSchemaSiteBd("add", path, mac, bdRefMap, host)
 		_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
 	}
 
@@ -182,16 +198,18 @@ func resourceMSOSchemaSiteBdRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("No Sites found")
 	}
 	stateSite := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	found := false
 	statebd := d.Get("bd_name").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			bdCount, err := tempCont.ArrayCount("bds")
 			if err != nil {
 				return fmt.Errorf("Unable to get bd list")
@@ -212,6 +230,9 @@ func resourceMSOSchemaSiteBdRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("site_id", apiSite)
 					if bdCont.Exists("hostBasedRouting") {
 						d.Set("host_route", bdCont.S("hostBasedRouting").Data().(bool))
+					}
+					if bdCont.Exists("mac") {
+						d.Set("svi_mac", models.StripQuotes(bdCont.S("mac").String()))
 					}
 					found = true
 					break
@@ -239,9 +260,14 @@ func resourceMSOSchemaSiteBdUpdate(d *schema.ResourceData, m interface{}) error 
 	bdName := d.Get("bd_name").(string)
 
 	var host bool
+	var mac string
 
 	if tempvar, ok := d.GetOk("host_route"); ok {
 		host = tempvar.(bool)
+	}
+
+	if tempvar, ok := d.GetOk("svi_mac"); ok {
+		mac = tempvar.(string)
 	}
 
 	var bd_schema_id, bd_template_name string
@@ -254,7 +280,7 @@ func resourceMSOSchemaSiteBdUpdate(d *schema.ResourceData, m interface{}) error 
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/sites/%s-%s/bds/%s", siteId, templateName, bdName)
-	bdStruct := models.NewSchemaSiteBd("replace", path, bdRefMap, host)
+	bdStruct := models.NewSchemaSiteBd("replace", path, mac, bdRefMap, host)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
 
@@ -274,9 +300,14 @@ func resourceMSOSchemaSiteBdDelete(d *schema.ResourceData, m interface{}) error 
 	bdName := d.Get("bd_name").(string)
 
 	var host bool
+	var mac string
 
 	if tempvar, ok := d.GetOk("host_route"); ok {
 		host = tempvar.(bool)
+	}
+
+	if tempvar, ok := d.GetOk("svi_mac"); ok {
+		mac = tempvar.(string)
 	}
 
 	var bd_schema_id, bd_template_name string
@@ -288,7 +319,7 @@ func resourceMSOSchemaSiteBdDelete(d *schema.ResourceData, m interface{}) error 
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/sites/%s-%s/bds/%s", siteId, templateName, bdName)
-	bdStruct := models.NewSchemaSiteBd("remove", path, bdRefMap, host)
+	bdStruct := models.NewSchemaSiteBd("remove", path, mac, bdRefMap, host)
 
 	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
 

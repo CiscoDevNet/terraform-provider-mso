@@ -6,7 +6,7 @@ type TemplateAnpEpg struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType string, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool, vrfRef, bdRef, cloudServiceEpgConfig map[string]interface{}) *TemplateAnpEpg {
+func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType, description string, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool, vrfRef, bdRef, cloudServiceEpgConfig map[string]interface{}) *TemplateAnpEpg {
 	var anpepgMap map[string]interface{}
 	anpepgMap = map[string]interface{}{
 		"name":           name,
@@ -18,6 +18,7 @@ func NewTemplateAnpEpg(ops, path, name, displayName, intraEpg, epgType string, u
 		"mCastSource":    intersiteMulticasteSource,
 		"proxyArp":       proxyArp,
 		"preferredGroup": preferredGroup,
+		"description":    description,
 	}
 
 	if _, ok := vrfRef["vrfName"]; ok {

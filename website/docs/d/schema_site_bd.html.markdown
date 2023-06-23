@@ -25,11 +25,12 @@ data "mso_schema_site_bd" "st10" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Site Bd.
-* `site_id` - (Required) SiteID under which you want to deploy Bd.
-* `bd_name` - (Required) Name of Site Bd. The name of the Bd should be present in the Bd list of the given `schema_id` and `template_name`
+* `schema_id` - (Required) SchemaID under which you want to deploy the Site bridge domain.
+* `site_id` - (Required) SiteID under which you want to deploy the bridge domain.
+* `template_name` - (Required) Template where Site Bd is to be created.
+* `bd_name` - (Required) Name of the Site bridge domain. The name of the bridge domain should be present in the bridge domain list of the given `schema_id` and `template_name`.
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) Template where Site Bd to be created.
-* `host_route` - (Optional) Value to check whether host-based routing is enabled. Default value is `false`.
+* `host_route` - (Read-Only) Value to check whether host-based routing is enabled.
+* `svi_mac` - (Read-Only) Value of the SVI MAC Address.

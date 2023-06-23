@@ -101,25 +101,27 @@ func resourceMSOSchemaSiteBdSubnetImport(d *schema.ResourceData, m interface{}) 
 	if err != nil {
 		return nil, fmt.Errorf("No Sites found")
 	}
-	stateSite := get_attribute[2]
+	stateSite := get_attribute[1]
+	stateTemplate := get_attribute[2]
 	found := false
-	stateBd := get_attribute[4]
+	stateBd := get_attribute[3]
 	stateIp := import_split[2]
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return nil, err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			d.Set("site_id", apiSite)
-			d.Set("template_name", models.StripQuotes(tempCont.S("templateName").String()))
+			d.Set("template_name", apiTemplate)
 			bdCount, err := tempCont.ArrayCount("bds")
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get Bd list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return nil, err
@@ -243,7 +245,7 @@ func resourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) er
 	stateTemplate := d.Get("template_name").(string)
 	stateBd := d.Get("bd_name").(string)
 	stateIp := d.Get("ip").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
@@ -258,7 +260,7 @@ func resourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) er
 			if err != nil {
 				return fmt.Errorf("Unable to get Bd list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err

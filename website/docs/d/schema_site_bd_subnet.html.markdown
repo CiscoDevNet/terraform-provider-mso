@@ -25,17 +25,17 @@ data "mso_schema_site_bd_subnet" "s1" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Subnet.
-* `site_id` - (Required) SiteID under which you want to deploy Subnet.
-* `bd_name` - (Required) Bd name under which you want to deploy Subnet.
-* `ip` - (Required) The IP of the Subnet.
+* `schema_id` - (Required) SchemaID under which you want to deploy the subnet.
+* `site_id` - (Required) SiteID under which you want to deploy the subnet.
+* `bd_name` - (Required) Bd name under which you want to deploy the subnet.
+* `ip` - (Required) The IP of the subnet.
+* `template_name` - (Required) Template name under which you want to deploy the subnet.
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) Template name under which you want to deploy Subnet.
-* `scope` - (Optional) The scope of the subnet.
-* `shared` - (Optional) Whether this subnet is shared between VRFs.
-* `querier` - (Optional) Whether this subnet is an IGMP querier.
-* `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
-* `description` - (Optional) The description of this subnet. 
+* `scope` - (Read-Only) The scope of the subnet.
+* `shared` - (Read-Only) Whether this subnet is shared between VRFs.
+* `querier` - (Read-Only) Whether this subnet is an IGMP querier.
+* `no_default_gateway` - (Read-Only) Whether this subnet has a default gateway.
+* `description` - (Read-Only) The description of this subnet. 
 

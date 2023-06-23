@@ -22,56 +22,47 @@ func dataSourceMSOSchemaSiteBdSubnet() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"scope": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"querier": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 		}),
@@ -94,24 +85,26 @@ func dataSourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) 
 		return fmt.Errorf("No Sites found")
 	}
 	stateSite := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateBd := d.Get("bd_name").(string)
 	stateIp := d.Get("ip").(string)
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			d.Set("site_id", apiSite)
 			d.Set("template_name", models.StripQuotes(tempCont.S("templateName").String()))
 			bdCount, err := tempCont.ArrayCount("bds")
 			if err != nil {
 				return fmt.Errorf("Unable to get Bd list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err
