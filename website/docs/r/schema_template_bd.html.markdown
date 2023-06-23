@@ -32,9 +32,9 @@ resource "mso_schema_template_bd" "bridge_domain" {
 * `name` - (Required) Name of the Bridge Domain.
 * `display_name` - (Required) Display Name of the Bridge Domain on the MSO UI.
 * `description` - (Optional) Description of the Bridge Domain on the MSO UI.
-* `vrf_name` - (Required) Name of the VRF to attach with Bridge Domain. VRF must exist.
-* `vrf_schema_id` - (Optional) SchemaID of the VRF. schema_id of Bridge Domain will be used if not provided. Should use this parameter when VRF is in different schema than BD.
-* `vrf_template_name` - (Optional) Template Name of the VRF. template_name of Bridge Domain will be used if not provided. Should use this parameter when VRF is in different schema than BD.
+* `vrf_name` - (Required) Name of the VRF to attach with the Bridge Domain. VRF must exist in order to do this.
+* `vrf_schema_id` - (Optional) SchemaID of the VRF. schema_id of the Bridge Domain will be used if not provided. This parameter is required when the VRF is in a schema which is different from the schema of the BD.
+* `vrf_template_name` - (Optional) Template Name of the VRF. template_name of the Bridge Domain will be used if not provided. This parameter is required when the VRF is in a schema which is different from the schema of the BD.
 * `layer2_unknown_unicast` - (Optional) Type of the layer 2 unknown unicast. Allowed values are `flood` and `proxy`. Default to `flood`.
 * `intersite_bum_traffic` - (Optional) Boolean Flag to enable or disable intersite bum traffic. Default to false.
 * `optimize_wan_bandwidth` - (Optional) Boolean flag to enable or disable the wan bandwidth optimization. Default to false.
