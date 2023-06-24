@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -86,6 +87,11 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+			},
+			"description": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 128),
 			},
 			"useg_epg": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -168,31 +174,16 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 	}
 }
 
-func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-
-	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
-
-	msoClient := m.(*client.Client)
-
-	get_attribute := strings.Split(d.Id(), "/")
-	schemaId := get_attribute[0]
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
-	if err != nil {
-		return nil, err
-	}
-	d.Set("schema_id", schemaId)
+func resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG string, cont *container.Container, d *schema.ResourceData) error {
+	found := false
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
-		return nil, fmt.Errorf("No Template found")
+		return fmt.Errorf("No Template found")
 	}
-	stateTemplate := get_attribute[2]
-	found := false
-	stateANP := get_attribute[4]
-	stateEPG := get_attribute[6]
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
-			return nil, err
+			return err
 		}
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
@@ -200,30 +191,31 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 			d.Set("template_name", apiTemplate)
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
-				return nil, fmt.Errorf("Unable to get ANP list")
+				return fmt.Errorf("Unable to get ANP list")
 			}
 			for j := 0; j < anpCount; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 				if err != nil {
-					return nil, err
+					return err
 				}
 				apiANP := models.StripQuotes(anpCont.S("name").String())
 				if apiANP == stateANP {
 					d.Set("anp_name", apiANP)
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
-						return nil, fmt.Errorf("Unable to get EPG list")
+						return fmt.Errorf("Unable to get EPG list")
 					}
 					for k := 0; k < epgCount; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
-							return nil, err
+							return err
 						}
 						apiEPG := models.StripQuotes(epgCont.S("name").String())
 						if apiEPG == stateEPG {
 							d.SetId(apiEPG)
 							d.Set("name", apiEPG)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
+							d.Set("description", models.StripQuotes(epgCont.S("description").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
 							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
 							if epgCont.Exists("mCastSource") {
@@ -311,14 +303,35 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 			}
 		}
 	}
-
 	if !found {
-		return nil, fmt.Errorf("Unable to find the EPG %s", stateEPG)
+		return fmt.Errorf("Unable to find the EPG %s", stateEPG)
 	}
+	return nil
+}
 
+func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
+
+	msoClient := m.(*client.Client)
+
+	get_attribute := strings.Split(d.Id(), "/")
+	schemaId := get_attribute[0]
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return nil, err
+	}
+	d.Set("schema_id", schemaId)
+
+	stateTemplate := get_attribute[2]
+	stateANP := get_attribute[4]
+	stateEPG := get_attribute[6]
+
+	err = resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG, cont, d)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
-
 }
 
 func getcloudServiceEpgConfig(d *schema.ResourceData, access_type, deployment_type, service_type string) map[string]interface{} {
@@ -385,6 +398,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	anpName := d.Get("anp_name").(string)
 	Name := d.Get("name").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
@@ -460,7 +474,7 @@ func resourceMSOSchemaTemplateAnpEpgCreate(d *schema.ResourceData, m interface{}
 	}
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/-", templateName, anpName)
-	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
+	anpEpgStruct := models.NewTemplateAnpEpg("add", path, Name, displayName, intraEpg, epgType, description, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -481,86 +495,16 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
-	count, err := cont.ArrayCount("templates")
-	if err != nil {
-		return fmt.Errorf("No Template found")
-	}
+
 	stateTemplate := d.Get("template_name").(string)
-	found := false
 	stateANP := d.Get("anp_name").(string)
 	stateEPG := d.Get("name").(string)
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return err
-		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
-		if apiTemplate == stateTemplate {
-			anpCount, err := tempCont.ArrayCount("anps")
-			if err != nil {
-				return fmt.Errorf("Unable to get ANP list")
-			}
-			for j := 0; j < anpCount; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "anps")
-				if err != nil {
-					return err
-				}
-				apiANP := models.StripQuotes(anpCont.S("name").String())
-				if apiANP == stateANP {
-					epgCount, err := anpCont.ArrayCount("epgs")
-					if err != nil {
-						return fmt.Errorf("Unable to get EPG list")
-					}
-					for k := 0; k < epgCount; k++ {
-						epgCont, err := anpCont.ArrayElement(k, "epgs")
-						if err != nil {
-							return err
-						}
-						apiEPG := models.StripQuotes(epgCont.S("name").String())
-						if apiEPG == stateEPG {
-							d.SetId(apiEPG)
-							d.Set("schema_id", schemaId)
-							d.Set("name", apiEPG)
-							d.Set("template_name", apiTemplate)
-							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
-							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))
-							d.Set("useg_epg", epgCont.S("uSegEpg").Data().(bool))
-							if epgCont.Exists("mCastSource") {
-								d.Set("intersite_multicast_source", epgCont.S("mCastSource").Data().(bool))
-							}
-							if epgCont.Exists("proxyArp") {
-								d.Set("proxy_arp", epgCont.S("proxyArp").Data().(bool))
-							}
-							d.Set("preferred_group", epgCont.S("preferredGroup").Data().(bool))
+	err = resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG, cont, d)
 
-							vrfRef := models.StripQuotes(epgCont.S("vrfRef").String())
-							re_vrf := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
-							match_vrf := re_vrf.FindStringSubmatch(vrfRef)
-							if len(match_vrf) == 3 {
-								d.Set("vrf_name", match_vrf[3])
-								d.Set("vrf_schema_id", match_vrf[1])
-								d.Set("vrf_template_name", match_vrf[2])
-							}
-							bdRef := models.StripQuotes(epgCont.S("bdRef").String())
-							re_bd := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
-							match_bd := re_bd.FindStringSubmatch(bdRef)
-							if len(match_bd) == 3 {
-								d.Set("bd_name", match_bd[3])
-								d.Set("bd_schema_id", match_bd[1])
-								d.Set("bd_template_name", match_bd[2])
-							}
-							found = true
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if !found {
+	if err != nil {
 		d.SetId("")
+		return err
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
@@ -579,6 +523,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdName := d.Get("bd_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 
 	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
 	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
@@ -649,7 +594,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	bdRefMap["bdName"] = bdName
 
 	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
+	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, epgType, description, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -660,89 +605,19 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 }
 
 func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template Anp Epg: Beginning Delete")
+	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
-	Name := d.Get("name").(string)
-	bdName := d.Get("bd_name").(string)
-	vrfName := d.Get("vrf_name").(string)
-	displayName := d.Get("display_name").(string)
-
-	var intraEpg, vrf_schema_id, vrf_template_name, bd_schema_id, bd_template_name, epgType, access_type, deployment_type, service_type string
-	var uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp bool
-
-	if intra_epg, ok := d.GetOk("intra_epg"); ok {
-		intraEpg = intra_epg.(string)
-	}
-	if useg_epg, ok := d.GetOk("useg_epg"); ok {
-		uSegEpg = useg_epg.(bool)
-	}
-	if intersite_multicast_source, ok := d.GetOk("intersite_multicast_source"); ok {
-		intersiteMulticasteSource = intersite_multicast_source.(bool)
-	}
-	if proxy_arp, ok := d.GetOk("proxy_arp"); ok {
-		proxyArp = proxy_arp.(bool)
-	}
-	if preferred_group, ok := d.GetOk("preferred_group"); ok {
-		preferredGroup = preferred_group.(bool)
-	}
-	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
-		vrf_schema_id = tempVar.(string)
-	} else {
-		vrf_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("vrf_template_name"); ok {
-		vrf_template_name = tempVar.(string)
-	} else {
-		vrf_template_name = templateName
-	}
-	if tempVar, ok := d.GetOk("bd_schema_id"); ok {
-		bd_schema_id = tempVar.(string)
-	} else {
-		bd_schema_id = schemaId
-	}
-	if tempVar, ok := d.GetOk("bd_template_name"); ok {
-		bd_template_name = tempVar.(string)
-	} else {
-		bd_template_name = templateName
-	}
-	if epg_type, ok := d.GetOk("epg_type"); ok {
-		epgType = epg_type.(string)
-	}
-	if accessType, ok := d.GetOk("access_type"); ok {
-		access_type = accessType.(string)
-	}
-	if deploymentType, ok := d.GetOk("deployment_type"); ok {
-		deployment_type = deploymentType.(string)
-	}
-	if serviceType, ok := d.GetOk("service_type"); ok {
-		service_type = serviceType.(string)
-	}
-
-	cloudServiceEpgConfig := getcloudServiceEpgConfig(d, access_type, deployment_type, service_type)
-
-	vrfRefMap := make(map[string]interface{})
-	vrfRefMap["schemaId"] = vrf_schema_id
-	vrfRefMap["templateName"] = vrf_template_name
-	vrfRefMap["vrfName"] = vrfName
-
-	bdRefMap := make(map[string]interface{})
-	bdRefMap["schemaId"] = bd_schema_id
-	bdRefMap["templateName"] = bd_template_name
-	bdRefMap["bdName"] = bdName
-
-	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("remove", path, Name, displayName, intraEpg, epgType, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
-
-	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
+	anpEpgRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id()))
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgRemovePatchPayload)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting
 	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
 	}
+	log.Printf("[DEBUG] %s: Destroy finished successfully", d.Id())
 	d.SetId("")
 	return nil
 }

@@ -21,72 +21,76 @@ resource "mso_tenant" "tenant_1" {
 }
 
 resource "mso_schema" "schema_1" {
-  name          = "test_bd_schema"
-  template_name = "test_bd"
-  tenant_id     = mso_tenant.tenant_1.id
+  name = "test_bd_schema"
+  template {
+    name         = "Template1"
+    display_name = "Template1"
+    tenant_id    = mso_tenant.tenant_1.id
+  }
 }
 
 resource "mso_schema_template_vrf" "vrf" {
-  schema_id     = mso_schema.schema_1.id
-  template      = mso_schema.schema_1.template_name
-  name          = "test_bd_vrf"
+  schema_id    = mso_schema.schema_1.id
+  template     = one(mso_schema.schema_1.template).name
+  name         = "test_bd_vrf"
   display_name = "test_bd_vrf"
 }
 
 // MSO versions 3.2 and higher
-
 resource "mso_schema_template_bd" "bd" {
-  schema_id              = mso_schema.schema_1.id
-  template_name          = mso_schema.schema_1.template_name
-  name                   = "bd_demo"
-  display_name           = "bd_demo"
-  vrf_name               = mso_schema_template_vrf.vrf.name
-  vrf_schema_id          = mso_schema_template_vrf.vrf.schema_id
-  vrf_template_name      = mso_schema_template_vrf.vrf.template
-  layer2_unknown_unicast = "proxy"
-  intersite_bum_traffic  = false
-  optimize_wan_bandwidth = true
-  layer2_stretch         = true
-  layer3_multicast       = false
-  multi_destination_flooding = "flood_in_encap"
+  schema_id                       = mso_schema.schema_1.id
+  template_name                   = one(mso_schema.schema_1.template).name
+  name                            = "bd_demo"
+  display_name                    = "bd_demo"
+  vrf_name                        = mso_schema_template_vrf.vrf.name
+  vrf_schema_id                   = mso_schema_template_vrf.vrf.schema_id
+  vrf_template_name               = mso_schema_template_vrf.vrf.template
+  layer2_unknown_unicast          = "proxy"
+  intersite_bum_traffic           = false
+  optimize_wan_bandwidth          = true
+  layer2_stretch                  = false
+  layer3_multicast                = false
+  multi_destination_flooding      = "flood_in_encap"
   ipv6_unknown_multicast_flooding = "optimized_flooding"
-  unknown_multicast_flooding = "optimized_flooding"
+  unknown_multicast_flooding      = "optimized_flooding"
   dhcp_policies {
-      name = "Policy1"
-      version = 10
-      dhcp_option_policy_name = "Policy10"
-      dhcp_option_policy_version = 12
+    name                       = "Policy1"
+    version                    = 10
+    dhcp_option_policy_name    = "Policy10"
+    dhcp_option_policy_version = 12
   }
   dhcp_policies {
-      name = "Policy1"
-      version = 20
-      dhcp_option_policy_name = "Policy20"
-      dhcp_option_policy_version = 22
+    name                       = "Policy1"
+    version                    = 20
+    dhcp_option_policy_name    = "Policy20"
+    dhcp_option_policy_version = 22
   }
+  description = "bd_description"
 }
 
 // MSO versions below 3.2
 
-resource "mso_schema_template_bd" "bd" {
-  schema_id              = mso_schema.schema_1.id
-  template_name          = mso_schema.schema_1.template_name
-  name                   = "bd_demo"
-  display_name           = "bd_demo"
-  vrf_name               = mso_schema_template_vrf.vrf.name
-  vrf_schema_id          = mso_schema_template_vrf.vrf.schema_id
-  vrf_template_name      = mso_schema_template_vrf.vrf.template
-  layer2_unknown_unicast = "proxy"
-  intersite_bum_traffic  = false
-  optimize_wan_bandwidth = true
-  layer2_stretch         = true
-  layer3_multicast       = false
-  multi_destination_flooding = "flood_in_encap"
+resource "mso_schema_template_bd" "bd1" {
+  schema_id                       = mso_schema.schema_1.id
+  template_name                   = one(mso_schema.schema_1.template).name
+  name                            = "bd_demo1"
+  display_name                    = "bd_demo1"
+  vrf_name                        = mso_schema_template_vrf.vrf.name
+  vrf_schema_id                   = mso_schema_template_vrf.vrf.schema_id
+  vrf_template_name               = mso_schema_template_vrf.vrf.template
+  layer2_unknown_unicast          = "proxy"
+  intersite_bum_traffic           = false
+  optimize_wan_bandwidth          = true
+  layer2_stretch                  = false
+  layer3_multicast                = false
+  multi_destination_flooding      = "flood_in_encap"
   ipv6_unknown_multicast_flooding = "optimized_flooding"
-  unknown_multicast_flooding = "optimized_flooding"
+  unknown_multicast_flooding      = "optimized_flooding"
   dhcp_policy = {
-      name = "Policy1"
-      version = 10
-      dhcp_option_policy_name = "Policy10"
-      dhcp_option_policy_version = 12
+    name                       = "Policy1"
+    version                    = 10
+    dhcp_option_policy_name    = "Policy10"
+    dhcp_option_policy_version = 12
   }
+  description = "bd1_description"
 }

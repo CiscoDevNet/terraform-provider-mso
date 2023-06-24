@@ -52,6 +52,11 @@ func resourceMSOTemplateBD() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"description": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 128),
+			},
 			"intersite_bum_traffic": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -247,6 +252,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(bdCont.S("description").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
 					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
 						d.Set("unknown_multicast_flooding", "optimized_flooding")
@@ -390,6 +396,7 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	schemaID := d.Get("schema_id").(string)
 	name := d.Get("name").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
@@ -498,7 +505,7 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/-", templateName)
-	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
+	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, description, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
 	if err != nil {
@@ -551,6 +558,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(bdCont.S("description").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
 					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
 						d.Set("unknown_multicast_flooding", "optimized_flooding")
@@ -629,7 +637,10 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 							}
 							dhcpPolicyMap := make(map[string]interface{})
 							dhcpPolicyMap["name"] = models.StripQuotes(dhcpPolicy.S("name").String())
-							version, err := strconv.Atoi(models.StripQuotes(dhcpPolicy.S("version").String()))
+							var version int
+							if dhcpPolicy.Exists("version") {
+								version, err = strconv.Atoi(models.StripQuotes(dhcpPolicy.S("version").String()))
+							}
 							if err != nil {
 								return err
 							}
@@ -690,6 +701,7 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	schemaID := d.Get("schema_id").(string)
 	name := d.Get("name").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 	templateName := d.Get("template_name").(string)
 	vrfName := d.Get("vrf_name").(string)
 
@@ -798,7 +810,7 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
-	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
+	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, description, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
 	if err != nil {
