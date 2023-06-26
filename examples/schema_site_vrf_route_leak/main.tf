@@ -103,7 +103,7 @@ resource "mso_schema_site_vrf_region" "vrf_region_azure" {
 resource "mso_schema_site_vrf_route_leak" "vrf1" {
   schema_id       = mso_schema.demo_schema.id
   template_name   = one(mso_schema.demo_schema.template).name
-  site_id         = data.mso_site.demo_site.id
+  site_id         = mso_schema_site.demo_schema_site.id
   vrf_name        = mso_schema_template_vrf.vrf1.name
   target_vrf_name = mso_schema_template_vrf.vrf2.name
   tenant_name     = data.mso_tenant.demo_tenant.name
@@ -113,7 +113,7 @@ resource "mso_schema_site_vrf_route_leak" "vrf1" {
 resource "mso_schema_site_vrf_route_leak" "vrf1" {
   schema_id       = mso_schema.demo_schema.id
   template_name   = one(mso_schema.demo_schema.template).name
-  site_id         = data.mso_site.demo_site.id
+  site_id         = mso_schema_site.demo_schema_site.id
   vrf_name        = mso_schema_template_vrf.vrf1.name
   target_vrf_name = mso_schema_template_vrf.vrf2.name
   tenant_name     = data.mso_tenant.demo_tenant.name
