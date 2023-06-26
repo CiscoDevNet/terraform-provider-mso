@@ -79,7 +79,8 @@ func resourceMSOSchema() *schema.Resource {
 						},
 						"template_type": &schema.Schema{
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
+							Computed: true,
 							// validation func does not work inside typeset
 							ValidateFunc: validation.StringInSlice(getSchemaTemplateTypes(), false),
 						},

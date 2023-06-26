@@ -57,7 +57,8 @@ func resourceMSOSchemaTemplate() *schema.Resource {
 			},
 			"template_type": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(getSchemaTemplateTypes(), false),
 			},

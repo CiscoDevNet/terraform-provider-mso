@@ -49,9 +49,9 @@ resource "mso_schema" "demo_schema" {
 * `template` - (Optional) A block that represents the template associated with the schema. Multiple templates can be created using this attribute. Type - Block.
   * `name` - (Required) The name of the template.
   * `display_name` - (Required) The display name of the template.
-  * `description` - (Optional) The description of the template.
   * `tenant_id` - (Required) The tenant-id to associate with the template.
-  * `template_type` - (Required) The template type of the template.
+  * `description` - (Optional) The description of the template.
+  * `template_type` - (Optional) The template type of the template. Allowed values are `aci_multi_site`, `aci_autonomous`, `ndfc`, `cloud_local`, and `sr_mpls`. NDO defaults to `aci_multi_site` when attribute is unset during creation.
 
 ## Attribute Reference ##
 
@@ -62,5 +62,5 @@ The only Attribute exposed for this resource is `id`. Which is set to the id of 
 An existing MSO Schema can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema.schema1 {schema_id}
+terraform import mso_schema.demo_schema {schema_id}
 ```
