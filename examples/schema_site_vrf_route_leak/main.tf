@@ -45,7 +45,7 @@ resource "mso_schema_template_vrf" "vrf1" {
   ip_data_plane_learning = "enabled"
 }
 
-resource "mso_schema_site_vrf_region" "vrf_region_azure" {
+resource "mso_schema_site_vrf_region" "vrf_region_azure1" {
   schema_id          = mso_schema.demo_schema.id
   template_name      = one(mso_schema.demo_schema.template).name
   site_id            = mso_schema_site.demo_schema_site.id
@@ -76,7 +76,7 @@ resource "mso_schema_template_vrf" "vrf2" {
   ip_data_plane_learning = "enabled"
 }
 
-resource "mso_schema_site_vrf_region" "vrf_region_azure" {
+resource "mso_schema_site_vrf_region" "vrf_region_azure2" {
   schema_id          = mso_schema.demo_schema.id
   template_name      = one(mso_schema.demo_schema.template).name
   site_id            = mso_schema_site.demo_schema_site.id
@@ -104,19 +104,19 @@ resource "mso_schema_site_vrf_route_leak" "vrf1" {
   schema_id       = mso_schema.demo_schema.id
   template_name   = one(mso_schema.demo_schema.template).name
   site_id         = mso_schema_site.demo_schema_site.id
-  vrf_name        = mso_schema_template_vrf.vrf1.name
-  target_vrf_name = mso_schema_template_vrf.vrf2.name
-  tenant_name     = data.mso_tenant.demo_tenant.name
+  vrf_name        = mso_schema_site_vrf_region.vrf_region_azure1.vrf_name
+  target_vrf_name = mso_schema_site_vrf_region.vrf_region_azure2.vrf_name
+  tenant_name     = mso_tenant.demo_tenant.name
 }
 
 # Subnet IP all example
-resource "mso_schema_site_vrf_route_leak" "vrf1" {
+resource "mso_schema_site_vrf_route_leak" "vrf2" {
   schema_id       = mso_schema.demo_schema.id
   template_name   = one(mso_schema.demo_schema.template).name
   site_id         = mso_schema_site.demo_schema_site.id
-  vrf_name        = mso_schema_template_vrf.vrf1.name
-  target_vrf_name = mso_schema_template_vrf.vrf2.name
-  tenant_name     = data.mso_tenant.demo_tenant.name
+  vrf_name        = mso_schema_site_vrf_region.vrf_region_azure2.vrf_name
+  target_vrf_name = mso_schema_site_vrf_region.vrf_region_azure1.vrf_name
+  tenant_name     = mso_tenant.demo_tenant.name
   type            = "subnet_ip"
   subnet_ips      = ["2.0.0.1/32", "2.0.0.2/32"]
 }
