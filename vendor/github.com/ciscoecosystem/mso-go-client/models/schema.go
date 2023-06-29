@@ -31,12 +31,14 @@ func NewSchema(id, displayName, description, templateName, tenantId string, temp
 		for _, map_values := range template {
 			map_template_values := map_values.(map[string]interface{})
 			templateMap := map[string]interface{}{
-				"name":            map_template_values["name"],
-				"tenantId":        map_template_values["tenantId"],
-				"displayName":     map_template_values["displayName"],
-				"description":     map_template_values["description"],
-				"templateType":    map_template_values["templateType"],
-				"templateSubType": map_template_values["templateSubType"],
+				"name":        map_template_values["name"],
+				"tenantId":    map_template_values["tenantId"],
+				"displayName": map_template_values["displayName"],
+				"description": map_template_values["description"],
+			}
+			if map_template_values["templateType"] != "" {
+				templateMap["templateType"] = map_template_values["templateType"]
+				templateMap["templateSubType"] = map_template_values["templateSubType"]
 			}
 			result = append(result, templateMap)
 		}

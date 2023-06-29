@@ -13,8 +13,6 @@ func NewSchemaTemplate(ops, path, tenantId, templateName, templateDisplayName, d
 			"tenantId":        tenantId,
 			"name":            templateName,
 			"displayName":     templateDisplayName,
-			"templateType":    templateType,
-			"templateSubType": templateSubTypes,
 			"description":     description,
 			"anps":            []interface{}{},
 			"bds":             []interface{}{},
@@ -27,6 +25,11 @@ func NewSchemaTemplate(ops, path, tenantId, templateName, templateDisplayName, d
 		}
 	} else {
 		templateMap = nil
+	}
+
+	if templateType != "" {
+		templateMap["templateType"] = templateType
+		templateMap["templateSubType"] = templateSubTypes
 	}
 
 	return &SchemaTemplate{
