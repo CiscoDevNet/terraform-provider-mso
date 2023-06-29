@@ -19,7 +19,7 @@ resource "mso_schema_template" "demo_template" {
   name          = "Template1"
   display_name  = "Template1"
   tenant_id     = mso_tenant.demo_tenant.id
-  template_type = "aci_multi_cloud"
+  template_type = "aci_multi_site"
 }
 
 ```
