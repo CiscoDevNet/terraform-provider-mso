@@ -15,7 +15,7 @@ Data source for MSO Remote Location
 ```hcl
 
 data "mso_remote_location" "password" {
-  name = "remote_location_password"
+  name = "remote_location_name"
 }
 
 ```
