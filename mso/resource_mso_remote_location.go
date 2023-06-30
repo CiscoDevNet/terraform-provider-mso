@@ -87,10 +87,10 @@ func resourceMSORemoteLocation() *schema.Resource {
 			_, password_ok := diff.GetOk("password")
 			_, ssh_key_ok := diff.GetOk("ssh_key")
 			if password_ok && ssh_key_ok {
-				return errors.New(`"password" and "ssh_key" cannot be provided in the same resource.`)
+				return errors.New(`"password" and "ssh_key" cannot be provided for the same MSO remote location.`)
 			}
 			if !password_ok && !ssh_key_ok {
-				return errors.New(`"password" or "ssh_key" must be provided in the same resource.`)
+				return errors.New(`"password" or "ssh_key" is required to manage the MSO remote location.`)
 			}
 			return nil
 		},
