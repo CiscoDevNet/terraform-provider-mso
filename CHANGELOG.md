@@ -1,3 +1,25 @@
+## 0.11.0 (July 1, 2023)
+BUG FIXES:
+- Fix conditional to set password when store in statefile is false
+- Allow multiple user association to be set in statefile from mso_tenant data source
+- Template selection fix for import statements of site_vrf_region and site_vrf_region_cidr_subnet
+- Ensure correct information is retrieved with template/site combination for mso_schema_site_vrf_region and mso_schema_site_vrf_region_cidr_subnet datasource
+- Fix import and read functionality  and add documentation for mso_schema_site_external_epg (#204)
+- Fix path calculation for VPC and FEX type ports in resource mso_schema_site_anp_epg_bulk_staticport (#218)
+- Fix MSO resources state file refresh issue when the terraform managed objects were missing from the MSO/NDO (#216)
+
+IMPROVEMENTS:
+- Add resource and datasource for mso_remote_location
+- Add resource and data source mso_schema_site_vrf_route_leak for site local vrf route leaking support
+- Allow schemas to be created without templates in ndo4.2 releases and above
+- Add template type attribute to mso_schema and mso_schema_template resources and datasources
+- Add description attribute to schema_template_bd and schema_template_anp_epg resources
+- Add svi_mac attribute to  mso_schema_site_bd and make template_name attribute mandatory (#214)
+- Add missing primary, description and no_default_gateway attributes to mso_site_anp_epg_subnet and mso_template_anp_epg_subnet resource and data source
+- Add gcp specific attributes to mso_site_vrf_region_cidr_subnet resource and datasource
+- Add gcp specific attributes to mso_site_vrf_region resource and datasource
+- Add gcp specific attributes to mso_tenant resource and datasource
+
 ## 0.10.0 (May 24, 2023)
 BUG FIXES:
 - Fix mso_schema read issue when the object is not present in the MSO/NDO
