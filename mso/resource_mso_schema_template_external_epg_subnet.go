@@ -131,9 +131,16 @@ func resourceMSOTemplateExtenalepgSubnetImport(d *schema.ResourceData, m interfa
 							d.SetId(idSubnet[0])
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
 							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
-							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
-							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
-
+							if subnetsCont.S("scope").Data() == nil {
+								d.Set("scope", make([]interface{}, 0))
+							} else {
+								d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
+							}
+							if subnetsCont.S("aggregate").Data() == nil {
+								d.Set("aggregate", make([]interface{}, 0))
+							} else {
+								d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+							}
 							found = true
 							break
 						}
@@ -254,8 +261,16 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 							} else {
 								d.Set("name", name)
 							}
-							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
-							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+							if subnetsCont.S("scope").Data() == nil {
+								d.Set("scope", make([]interface{}, 0))
+							} else {
+								d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
+							}
+							if subnetsCont.S("aggregate").Data() == nil {
+								d.Set("aggregate", make([]interface{}, 0))
+							} else {
+								d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+							}
 							found = true
 							break
 						}
