@@ -128,6 +128,7 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 							}
 							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
 							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+
 							found = true
 							break
 						}

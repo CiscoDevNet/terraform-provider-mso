@@ -256,6 +256,7 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 							}
 							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
 							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+
 							found = true
 							break
 						}
