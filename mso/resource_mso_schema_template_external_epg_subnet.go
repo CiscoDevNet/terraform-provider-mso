@@ -168,7 +168,8 @@ func resourceMSOTemplateExtenalepgSubnetCreate(d *schema.ResourceData, m interfa
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string
-	var Scope, Aggregate []interface{}
+	Aggregate := make([]interface{}, 0)
+	Scope := make([]interface{}, 0)
 
 	if tempVar, ok := d.GetOk("ip"); ok {
 		IP = tempVar.(string)
@@ -291,7 +292,8 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string
-	var Scope, Aggregate []interface{}
+	Aggregate := make([]interface{}, 0)
+	Scope := make([]interface{}, 0)
 
 	if tempVar, ok := d.GetOk("ip"); ok {
 		IP = tempVar.(string)
