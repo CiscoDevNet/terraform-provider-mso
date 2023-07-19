@@ -133,6 +133,7 @@ func resourceMSOTemplateExtenalepgSubnetImport(d *schema.ResourceData, m interfa
 							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
 							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
 							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+
 							found = true
 							break
 						}
