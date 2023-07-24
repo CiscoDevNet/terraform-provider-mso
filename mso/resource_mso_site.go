@@ -62,7 +62,7 @@ func resourceMSOSite() *schema.Resource {
 			"location": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
-				Computed: true,
+				// Computed: true -> Removed, as it creates discrepancy for idempotency.
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
@@ -103,7 +103,6 @@ func resourceMSOSite() *schema.Resource {
 			"maintenance_mode": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
 				Default:  false,
 			},
 
