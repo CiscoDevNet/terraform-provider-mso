@@ -79,12 +79,12 @@ func (c *Client) Save(endpoint string, obj models.Model) (*container.Container, 
 func CheckForErrors(cont *container.Container, method string) error {
 
 	if cont.Exists("code") && cont.Exists("message") {
-
 		return errors.New(fmt.Sprintf("%s%s", cont.S("message"), cont.S("info")))
+	} else if cont.Exists("error") {
+		return errors.New(fmt.Sprintf("%s %s", models.StripQuotes(cont.S("error").String()), models.StripQuotes(cont.S("error_code").String())))
 	} else {
 		return nil
 	}
-
 	return nil
 }
 
