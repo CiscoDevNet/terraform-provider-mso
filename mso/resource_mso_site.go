@@ -37,11 +37,14 @@ func resourceMSOSite() *schema.Resource {
 			"username": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 
 			"password": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"apic_site_id": &schema.Schema{
@@ -59,6 +62,7 @@ func resourceMSOSite() *schema.Resource {
 			"location": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
+				// Computed: true -> Removed, as it creates discrepancy for idempotency.
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
@@ -79,6 +83,7 @@ func resourceMSOSite() *schema.Resource {
 			"urls": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 

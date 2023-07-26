@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
+	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -21,7 +22,7 @@ func toStringList(configured interface{}) []string {
 
 func errorForObjectNotFound(err error, dn string, con *container.Container, d *schema.ResourceData) error {
 	if err != nil {
-		if con.S("code").String() == "404" || strings.HasSuffix(err.Error(), "not found") {
+		if con.S("code").String() == "404" || strings.HasSuffix(err.Error(), "not found") || strings.HasSuffix(models.StripQuotes(con.S("error").String()), "no documents in result") {
 			log.Printf("[WARN] %s, removing from state: %s", err, dn)
 			d.SetId("")
 			return nil
