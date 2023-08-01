@@ -1,3 +1,10 @@
+## 0.11.1 (July 31, 2023)
+BUG FIXES:
+- Fix for mso_site to detect changes to a site, after manually changing it to unmanaged (#231)
+- Fix errorForObjectNotFound function in utils to error out when new "error" payload is found. (#231)
+- Fix DHCP Policies issue in mso_schema_template_bd on NDO 4.1+ (#230)
+- Fix creation without aggregate or scope in mso_schema_template_external_epg_subnet for NDO4.1 (#228)
+
 ## 0.11.0 (July 1, 2023)
 BUG FIXES:
 - Fix conditional to set password when store in statefile is false
