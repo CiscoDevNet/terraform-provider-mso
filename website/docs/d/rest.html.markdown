@@ -3,24 +3,26 @@ layout: "mso"
 page_title: "MSO: mso_rest"
 sidebar_current: "docs-mso-data-source-rest"
 description: |-
-  MSO Rest data source to read MSO objects via REST API.
+  Data source for reading MSO objects via REST API.
 ---
 
 # mso_rest #
 
-MSO Rest data source to read MSO objects via REST API.
+Data source for reading MSO objects via REST API.
 
 ## Example Usage ##
 
 ```hcl
-data "mso_rest" "system_config" {
+
+data "mso_rest" "example" {
   path = "api/v1/platform/systemConfig"
 }
+
 ```
 
 ## Argument Reference ##
 
-* `path` - (Required) MSO REST endpoint, where the data is being read.
+* `path` - (Required) The MSO REST endpoint, where the data is being read.
 
 ## Attribute Reference ##
 
