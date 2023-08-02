@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_role"
 sidebar_current: "docs-mso-data-source-role"
 description: |-
-  Data source for MSO Role
+  Data source for MSO Role.
 ---
 
 # mso_role #
 
-Data source for MSO role  
+Data source for MSO Role. Not supported on ND-based MSO/NDO.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_role" "role" {
+data "mso_role" "example" {
   name  = "UserManager"
 }
 
@@ -22,32 +22,11 @@ data "mso_role" "role" {
 
 ## Argument Reference ##
 
-* `name` - (Required) name of the schema.
+* `name` - (Required) The name of the Role.
 
-## Attribute Reference ##
+## Attribute Reference #
 
-* `display_name` - (Optional) Name displayed associated to this Role.
-* `read_permissions` - (Optional) Read permissions assigned to the role.
-Choices for read_permissions:
-        "view-sites",
-        "view-tenants",
-        "view-schemas",
-        "view-tenant-schemas",
-        "view-users",
-        "view-roles",
-        "view-all-audit-records",
-        "view-backup",
-        "view-labels"
-* `write_permissions` - (Optional) Write permissions assigned to the role.
-Choices for write_permissions:
-        "manage-sites",
-        "manage-tenants",
-        "manage-labels",
-        "manage-schemas",
-        "manage-tenant-schemas",
-        "manage-users",
-        "manage-roles",
-        "manage-audit-records",
-        "manage-backup",
-        "manage-labels"
-* `description` - (Optional) Description for this role.
+* `description` - (Read-Only) The description of the Role.
+* `display_name` - (Read-Only) The name of the Role as displayed on the MSO UI.
+* `read_permissions` - (Read-Only) The read permissions assigned to the Role.
+* `write_permissions` - (Read-Only) The write permissions assigned to the Role.

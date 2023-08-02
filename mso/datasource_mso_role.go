@@ -7,6 +7,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func datasourceMSORole() *schema.Resource {
@@ -18,29 +19,25 @@ func datasourceMSORole() *schema.Resource {
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"read_permissions": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-
 			"write_permissions": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -56,6 +53,11 @@ func datasourceMSORoleRead(d *schema.ResourceData, m interface{}) error {
 	con, err := msoClient.GetViaURL("api/v1/roles")
 	if err != nil {
 		return err
+	}
+
+	if con.Exists("status") && con.S("status").Data().(float64) == 404 {
+		version, _ := msoClient.GetVersion()
+		return fmt.Errorf(fmt.Sprintf("%s MSO version '%s' not supported. Please use this datasource only on a non ND-based version of MSO.", con.S("message").Data().(string), version))
 	}
 
 	data := con.S("roles").Data().([]interface{})
