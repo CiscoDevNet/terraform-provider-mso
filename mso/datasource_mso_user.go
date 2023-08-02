@@ -22,55 +22,65 @@ func datasourceMSOUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-
 			"user_password": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"first_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"last_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"email": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"phone": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"account_status": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"domain": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"roles": &schema.Schema{
-				Type: schema.TypeSet,
+				Type: schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"roleid": {
 							Type:     schema.TypeString,
-							Required: true,
+							Computed: true,
 						},
 						"access_type": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Computed: true,
 						},
 					},
 				},
-				Optional: true,
+				Computed: true,
+			},
+			"user_rbac": &schema.Schema{
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"user_priv": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+				Computed: true,
 			},
 		}),
 	}
@@ -136,6 +146,8 @@ func datasourceMSOUserRead(d *schema.ResourceData, m interface{}) error {
 	}
 	if dataCon.Exists("emailAddress") {
 		d.Set("email", models.StripQuotes(dataCon.S("emailAddress").String()))
+	} else if dataCon.Exists("email") {
+		d.Set("email", models.StripQuotes(dataCon.S("email").String()))
 	}
 	if dataCon.Exists("phoneNumber") {
 		d.Set("phone", models.StripQuotes(dataCon.S("phoneNumber").String()))
