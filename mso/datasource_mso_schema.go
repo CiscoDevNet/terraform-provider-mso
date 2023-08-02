@@ -98,7 +98,7 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	dataCon := con.S("schemas").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 	d.Set("name", models.StripQuotes(dataCon.S("displayName").String()))
-	d.Set("description", models.StripQuotes(con.S("description").String()))
+	d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 
 	// Currently in NDO 4.1 the templates container is initialized as null instead of empty list
 	//  so when no templates are provided during create or import it is impossible to PATCH add a template
@@ -127,7 +127,9 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		map_template["name"] = models.StripQuotes(tempCont.S("name").String())
 		map_template["display_name"] = models.StripQuotes(tempCont.S("displayName").String())
 		map_template["tenant_id"] = models.StripQuotes(tempCont.S("tenantId").String())
-		map_template["description"] = models.StripQuotes(tempCont.S("description").String())
+		if tempCont.Exists("description") {
+			d.Set("description", models.StripQuotes(tempCont.S("description").String()))
+		}
 		map_template["template_type"] = getSchemaTemplateType(tempCont)
 		templates = append(templates, map_template)
 
