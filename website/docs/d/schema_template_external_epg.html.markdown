@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_external_epg"
 sidebar_current: "docs-mso-data-source-schema_template_external_epg"
 description: |-
-  MSO Schema Template External Endpoint Group Data source.
+  Data source for MSO Schema Template External End Point Group.
 ---
 
 # mso_schema_template_external_epg #
 
-MSO Schema Template External Endpoint Group Data source.
+Data source for MSO Schema Template External End Point Group.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_template_external_epg" "externalEpg" {
+data "mso_schema_template_external_epg" "example" {
   schema_id         = data.mso_schema.schema1.id
   template_name     = "Template1"
   external_epg_name = "ExternalEPG1"
@@ -24,20 +24,22 @@ data "mso_schema_template_external_epg" "externalEpg" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy External-epg.
-* `template_name` - (Required) Template where External-epg to be created.
-* `external_epg_name` - (Required) Name of External-epg.
+* `schema_id` - (Required) The schema ID of the External EPG.
+* `template_name` - (Required) The template name of the External EPG.
+* `external_epg_name` - (Required) The name of the External EPG.
 
 ## Attribute Reference ##
 
-* `display_name` - (Optional) Display Name of the External-epg on the MSO UI.
-* `vrf_name` - (Optional) The VRF associated to this External-epg. VRF must exist.
-* `vrf_schema_id` - (Optional) SchemaID of VRF. schema_id of External-epg will be used if not provided. Should use this parameter when VRF is in different schema than external-epg.
-* `vrf_template_name` - (Optional) Template Name of VRF. template_name of External-epg will be used if not provided.
-* `anp_name` - (Optional) Name of anp to attach.
-* `anp_schema_id` - (Optional) SchemaId of anp. `schema_id` will be used if not provided.
-* `anp_template_name` - (Optional) Template name of anp. `template_name` will be used if not provided.
-
-* `site_id` - (Optional) List of ids of sites associated with the schema. Required when `external_epg_type` is "cloud".
-* `selector_name` - (Optional) name of the selector for external epg. Required when `external_epg_type` is "cloud".
-* `selector_ip` - (Optional) ip address for expression in selector. Required when `external_epg_type` is "cloud".
+* `display_name` - (Read-Only) The name of the External EPG as displayed on the MSO UI.
+* `external_epg_type` - (Read-Only) The type of the External EPG.
+* `vrf_name` - (Read-Only) The name of the VRF associated with the External EPG.
+* `vrf_schema_id` - (Read-Only) The schema ID of the VRF associated with the External EPG.
+* `vrf_template_name` - (Read-Only) The template name of the VRF associated with the External EPG.
+* `anp_name` - (Read-Only) The name of the ANP associated with the External EPG.
+* `anp_schema_id` - (Read-Only) The schema ID of the ANP associated with the External EPG.
+* `anp_template_name` - (Read-Only) The template name of the ANP associated with the External EPG.
+* `l3out_name` - (Read-Only) The name of the L3out associated with the External EPG.
+* `l3out_schema_id` - (Read-Only) The schema ID of the L3out associated with the External EPG.
+* `l3out_template_name` - (Read-Only) The template name of the L3out associated with the External EPG.
+* `selector_name` - (Read-Only) The name of the External EPG selector.
+* `selector_ip` - (Read-Only) The ip address of the External EPG selector.
