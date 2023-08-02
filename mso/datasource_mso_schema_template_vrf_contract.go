@@ -22,25 +22,21 @@ func dataSourceMSOTemplateVRFContract() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"vrf_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"relationship_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"provider",
 					"consumer",
@@ -49,22 +45,15 @@ func dataSourceMSOTemplateVRFContract() *schema.Resource {
 			"contract_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_schema_id": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"contract_template_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		}),
 	}
