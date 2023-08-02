@@ -7,6 +7,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func datasourceMSOSite() *schema.Resource {
@@ -18,62 +19,82 @@ func datasourceMSOSite() *schema.Resource {
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"username": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"password": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
+			"type": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"group_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"version": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"status": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"reprovision": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"proxy": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"sr_l3out": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"template_count": &schema.Schema{
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
 			"apic_site_id": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
-
 			"labels": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
-
 			"location": &schema.Schema{
 				Type:     schema.TypeMap,
-				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-
 						"lat": &schema.Schema{
 							Type:     schema.TypeFloat,
-							Optional: true,
 							Computed: true,
 						},
 						"long": &schema.Schema{
 							Type:     schema.TypeFloat,
-							Optional: true,
 							Computed: true,
 						},
 					},
 				},
 			},
-
 			"urls": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
-
 			"cloud_providers": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
@@ -124,6 +145,15 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 
 	if platform == "nd" {
+
+		if dataCon.Exists("isSrL3OutEnabled") {
+			d.Set("sr_l3out", dataCon.S("isSrL3OutEnabled").Data().(bool))
+		}
+
+		if dataCon.Exists("templateCount") {
+			d.Set("template_count", dataCon.S("templateCount").Data().(float64))
+		}
+
 		dataConAttr := dataCon.S("common")
 
 		d.Set("name", models.StripQuotes(dataConAttr.S("name").String()))
@@ -138,6 +168,30 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 
 		if dataConAttr.Exists("username") {
 			d.Set("username", models.StripQuotes(dataConAttr.S("username").String()))
+		}
+
+		if dataConAttr.Exists("platformType") {
+			d.Set("type", models.StripQuotes(dataConAttr.S("platformType").String()))
+		}
+
+		if dataConAttr.Exists("siteGroup") {
+			d.Set("group_id", models.StripQuotes(dataConAttr.S("siteGroup").String()))
+		}
+
+		if dataConAttr.Exists("siteVersion") {
+			d.Set("version", models.StripQuotes(dataConAttr.S("siteVersion").String()))
+		}
+
+		if dataConAttr.Exists("siteConnectivityStatus") {
+			d.Set("status", models.StripQuotes(dataConAttr.S("siteConnectivityStatus").String()))
+		}
+
+		if dataConAttr.Exists("useProxy") {
+			d.Set("proxy", dataConAttr.S("useProxy").Data().(bool))
+		}
+
+		if dataConAttr.Exists("needsReprovision") {
+			d.Set("reprovision", dataConAttr.S("needsReprovision").Data().(bool))
 		}
 
 		if dataConAttr.Exists("latitude") || dataConAttr.Exists("longitude") {
