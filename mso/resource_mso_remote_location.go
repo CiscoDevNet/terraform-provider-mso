@@ -120,8 +120,10 @@ func setRemoteLocation(d *schema.ResourceData, remote map[string]interface{}) {
 
 	d.SetId(remote["id"].(string))
 	d.Set("name", remote["name"].(string))
-	d.Set("description", remote["description"].(string))
-
+	description, ok := remote["description"].(string)
+	if ok {
+		d.Set("description", description)
+	}
 	credential := remote["credential"].(map[string]interface{})
 	d.Set("protocol", credential["protocolType"].(string))
 	d.Set("hostname", credential["hostname"].(string))
