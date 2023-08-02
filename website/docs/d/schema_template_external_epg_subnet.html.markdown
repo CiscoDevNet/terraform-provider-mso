@@ -14,7 +14,7 @@ Data source for MSO Schema Template External EPG Subnet.
 
 ```hcl
 
-data "mso_schema_template_external_epg_subnet" "subnet1" {
+data "mso_schema_template_external_epg_subnet" "example" {
   schema_id         = data.mso_schema.schema1.id
   template_name     = "Template1"
   external_epg_name = "Internet"
@@ -25,13 +25,13 @@ data "mso_schema_template_external_epg_subnet" "subnet1" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy External EPG Subnet.
-* `template_name` - (Required) Template where External EPG Subnet to be created.
-* `external_epg_name` - (Required) Name of External EPG.
-* `ip` - (Required) The IP range in CIDR notation.
+* `schema_id` - (Required) The schema ID of the External EPG.
+* `template_name` - (Required) The template name of the External EPG.
+* `external_epg_name` - (Required) The name of the External EPG.
+* `ip` - (Required) The IP range of the External EPG in CIDR notation.
 
 ## Attribute Reference ##
 
-* `name` - (Optional) Name of Subnet.
-* `scope` - (Optional) The scope of the subnet. Allowed values are `shared-rtctrl`, `export-rtctrl`, `shared-security`, `import-rtctrl`, `import-security`.
-* `aggregate` - (Optional) The aggregate of the subnet. Allowed values are `shared-rtctrl`, `export-rtctrl`, `shared-security`, `import-rtctrl`. Aggregate should be enabled only if shared-rtctrl is enabled in Scope.
+* `name` - (Read-Only) The name of Subnet.
+* `scope` - (Read-Only) The scope of the subnet.
+* `aggregate` - (Read-Only) The aggregate of the subnet.
