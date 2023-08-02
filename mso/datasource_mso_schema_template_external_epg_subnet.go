@@ -22,41 +22,34 @@ func dataSourceMSOTemplateExternalEpgSubnet() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"external_epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-				ForceNew:     true,
 			},
 			"name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
 			"aggregate": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
@@ -146,7 +139,7 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("External Epg Subnet Not Found")
+		return fmt.Errorf("Unable to find the External Epg %s with Ip %s", stateExternalepg, stateIP)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
