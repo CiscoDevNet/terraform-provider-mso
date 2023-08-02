@@ -8,6 +8,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func datasourceMSOSchemaTemplateVrf() *schema.Resource {
@@ -17,49 +18,39 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 
 		SchemaVersion: version,
 		Schema: (map[string]*schema.Schema{
-
 			"schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
-
 			"layer3_multicast": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
-
 			"vzany": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
-
 			"ip_data_plane_learning": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
-
 			"preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 		}),

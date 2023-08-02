@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_vrf"
 sidebar_current: "docs-mso-data-source-schema_template_vrf"
 description: |-
-  Data source for MSO Schema Template Vrf
+  Data source for MSO Schema Template VRF.
 ---
 
 # mso_schema_template_vrf #
 
-Data source for MSO schema template vrf, to fetch the MSO schema template vrf site details.
+Data source for MSO Schema Template VRF.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_template_vrf" "vrf1" {
+data "mso_schema_template_vrf" "example" {
   schema_id = data.mso_schema.schema1.id
   template  = "Template1"
   name      = "vrf98"
@@ -24,15 +24,14 @@ data "mso_schema_template_vrf" "vrf1" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The schema-id where vrf is associated.
-* `name` - (Required) name of the vrf to add.
-* `template` - (Required) template associated with the vrf.
+* `schema_id` - (Required) The schema ID of the VRF.
+* `template` - (Required) The template name of the VRF.
+* `name` - (Required) The name of the VRF.
 
 ## Attribute Reference ##
 
-* `display_name` - (Optional) The name as displayed on the MSO web interface.
-* `layer3_multicast` - (Optional) Whether to enable L3 multicast.
-* `vzany` - (Optional) Whether to enable vzany.
-* `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled or disabled. Allowed values are `disabled`and `enabled`.
-* `preferred_group` - (Optional) Whether to enable preferred Endpoint Group.
-
+* `display_name` - (Read-Only) The name of the VRF as displayed on the MSO UI.
+* `layer3_multicast` - (Read-Only) Whether L3 multicast is enabled.
+* `vzany` - (Read-Only) Whether vzany is enabled.
+* `ip_data_plane_learning` - (Read-Only) Whether IP data plane learning is enabled.
+* `preferred_group` - (Read-Only) Whether to preferred group is enabled.
