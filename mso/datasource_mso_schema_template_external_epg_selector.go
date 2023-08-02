@@ -17,56 +17,39 @@ func datasourceSchemaTemplateExternalEPGSelector() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"external_epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"expressions": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"operator": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"value": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},
@@ -166,7 +149,7 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 		d.Set("schema_id", schemaID)
 	} else {
 		d.SetId("")
-		return fmt.Errorf("External Epg Selector not found for given name")
+		return fmt.Errorf("Unable to find the External Epg %s with Selector %s", externalEpgName, name)
 	}
 	return nil
 }
