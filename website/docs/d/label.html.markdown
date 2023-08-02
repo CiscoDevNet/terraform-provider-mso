@@ -13,15 +13,17 @@ Data source for MSO Label
 ## Example Usage ##
 
 ```hcl
-data "mso_label" "label1" {
+
+data "mso_label" "example" {
   label = "hello3"
 }
+
 ```
 
 ## Argument Reference ##
 
-* `label` - (Required) name of the label.
+* `label` - (Required) The name of the Label.
 
 ## Attribute Reference ##
 
-* `type` - (Optional) type of the label.
+* `type` - (Read-Only) The type of the Label.
