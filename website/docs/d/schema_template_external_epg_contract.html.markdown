@@ -3,35 +3,35 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_external_epg_contract"
 sidebar_current: "docs-mso-data-source-schema_template_external_epg_contract"
 description: |-
-  MSO Schema Template External Endpoint Group Contract Data source.
+  MSO Schema Template External End Point Group Contract Data source.
 ---
 
 # mso_schema_template_external_epg_contract #
 
-MSO Schema Template External Endpoint Group Contract Data source.
+MSO Schema Template External End Point Group Contract Data source.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_template_external_epg_contract" "st10" {
+data "mso_schema_template_external_epg_contract" "example" {
   schema_id         = data.mso_schema.schema1.id
   template_name     = "Template1"
-  contract_name     = "contract1006"
   external_epg_name = "ExternalEPG1"
+  contract_name     = "contract1006"
 }
 
 ```
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy External-epg.
-* `template_name` - (Required) Template where External-epg to be created.
-* `external_epg_name` - (Required) Name of External-epg.
-* `contract_name` - (Required) Name of Contract.
+* `schema_id` - (Required) The schema ID of the External EPG.
+* `template_name` - (Required) The template name of the External EPG.
+* `external_epg_name` - (Required) The name of the External EPG.
+* `contract_name` - (Required) The name of the Contract.
 
 ## Attribute Reference ##
 
-* `relationship_type` - (Optional) RelationType of the Contract. Values that can be used is provider or consumer
-* `contract_schema_id` - (Optional) SchemaID of Contract. schema_id of External-epg will be used if not provided. Should use this parameter when Contract is in different schema than external-epg.
-* `contract_template_name` - (Optional) Template Name of Contract. template_name of External-epg will be used if not provided.
+* `relationship_type` - (Read-Only) The relationship type of the Contract.
+* `contract_schema_id` - (Read-Only) The schema ID of the Contract.
+* `contract_template_name` - (Read-Only) The template name of the Contract.
