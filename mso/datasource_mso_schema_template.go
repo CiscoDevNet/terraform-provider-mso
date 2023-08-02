@@ -23,14 +23,14 @@ func datasourceMSOSchemaTemplate() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"tenant_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"tenant_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
