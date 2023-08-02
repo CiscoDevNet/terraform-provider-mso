@@ -3,37 +3,36 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_service_graph"
 sidebar_current: "docs-mso-data-source-schema_template_service_graph"
 description: |-
-  Data Source for MSO Schema Template Service Graph
+  Data Source for MSO Schema Template Service Graph.
 ---
 
 # mso_schema_template_service_graph #
 
-Data Source for MSO Schema Template Service Graph
+Data Source for MSO Schema Template Service Graph.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_template_service_graph" "test_sg" {
+data "mso_schema_template_service_graph" "example" {
   schema_id          = data.mso_schema.schema1.id
   template_name      = "Template1"
   service_graph_name = "sgtf"
-  node_index         = 1
 }
 
 ```
 
 ## Argument Reference ##
-* `schema_id` - (Required) Schema ID where Service Graph is created.
-* `template_name` - (Required) Template Name where Service Graph is created.
-* `service_graph_name` - (Required) Name of Service Graph.
-* `node_index` - (Required) Integer node index of service nodes.
+
+* `schema_id` - (Required) The schema ID of the Service Graph.
+* `template_name` - (Required) The template name of the Service Graph.
+* `service_graph_name` - (Required) The name of the Service Graph.
 
 ## Attribute Reference ##
 
-* `service_node_type` - (Optional) Type of Service Node attached to this Graph at index provided by `node_index`. Allowed values are `firewall`, `load-balancer` , `other`.
-* `site_nodes` - (Optional) List of maps to Hold Site level Node association. 
-* `site_nodes.site_id` - (Optional) Site-Id Attached with the template. Where Service Graph is created. 
-* `site_nodes.tenant_name` - (Optional) Name of Tenant holding the Service Node. 
-* `site_nodes.node_name` - (Optional) Name of Site level Service Node/Device Name.
-
+* `site_nodes` - (Read-Only) A list of site nodes for the Service Graph.
+    * `node_index` - (Read-Only) The index of the Service Node.
+    * `service_node_type` - (Read-Only) The type of the Service Node.
+    * `site_id` - (Read-Only) The site ID of the Service Node.
+    * `tenant_name` - (Read-Only) The tenant name of the Service Node.
+    * `node_name` - (Read-Only) The name of the site level Service Node.
