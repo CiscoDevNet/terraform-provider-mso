@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_remote_location"
 sidebar_current: "docs-mso-resource-remote-location"
 description: |-
-  Data source for MSO Remote Location
+  Data source for MSO Remote Location.
 ---
 
 # mso_user #
 
-Data source for MSO Remote Location
+Data source for MSO Remote Location.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_remote_location" "password" {
+data "mso_remote_location" "example" {
   name = "remote_location_name"
 }
 
