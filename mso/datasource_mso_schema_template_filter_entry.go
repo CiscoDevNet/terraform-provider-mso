@@ -21,13 +21,11 @@ func dataSourceMSOSchemaTemplateFilterEntry() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"name": &schema.Schema{
@@ -35,77 +33,63 @@ func dataSourceMSOSchemaTemplateFilterEntry() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"display_name": &schema.Schema{
+			"entry_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"entry_name": &schema.Schema{
+			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Computed: true,
 			},
 			"entry_display_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"entry_description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"ether_type": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"arp_flag": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"ip_protocol": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"match_only_fragments": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"stateful": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"source_from": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"source_to": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"destination_from": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"destination_to": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"tcp_session_rules": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
 			},
 		}),
 	}
@@ -210,7 +194,7 @@ func dataSourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interf
 	}
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the filter entry")
+		return fmt.Errorf("Unable to find the filter %s with entry %s", stateFilter, stateFilterEntry)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
