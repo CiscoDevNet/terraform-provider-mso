@@ -21,66 +21,58 @@ func dataSourceMSOTemplateContract() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"filter_type": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"filter_relationships": {
-				Type: schema.TypeMap,
+				Type:     schema.TypeList,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-
 						"filter_schema_id": &schema.Schema{
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
 						},
 						"filter_template_name": &schema.Schema{
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
 						},
 						"filter_name": &schema.Schema{
 							Type:     schema.TypeString,
-							Optional: true,
+							Computed: true,
+						},
+						"action": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"directives": {
+							Type:     schema.TypeList,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 							Computed: true,
 						},
 					},
 				},
-				Optional: true,
-				Computed: true,
-			},
-			"directives": {
-				Type:     schema.TypeList,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
-				Computed: true,
 			},
 		}),
 	}
@@ -131,23 +123,24 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 					d.Set("filter_type", models.StripQuotes(contractCont.S("filterType").String()))
 					d.Set("scope", models.StripQuotes(contractCont.S("scope").String()))
 
+					var filterList []interface{}
 					count, _ := contractCont.ArrayCount("filterRelationships")
-					filterMap := make(map[string]interface{})
 					for i := 0; i < count; i++ {
+						filterMap := make(map[string]interface{})
 						filterCont, err := contractCont.ArrayElement(i, "filterRelationships")
 						if err != nil {
 							return fmt.Errorf("Unable to parse the filter Relationships list")
 						}
-
-						d.Set("directives", filterCont.S("directives").Data().([]interface{}))
 						filRef := filterCont.S("filterRef").Data()
 						split := strings.Split(filRef.(string), "/")
-
 						filterMap["filter_schema_id"] = fmt.Sprintf("%s", split[2])
 						filterMap["filter_template_name"] = fmt.Sprintf("%s", split[4])
 						filterMap["filter_name"] = fmt.Sprintf("%s", split[6])
+						filterMap["directives"] = filterCont.S("directives").Data().([]interface{})
+						filterMap["action"] = filterCont.S("action").Data().(string)
+						filterList = append(filterList, filterMap)
 					}
-					d.Set("filter_relationships", filterMap)
+					d.Set("filter_relationships", filterList)
 
 					found = true
 					break

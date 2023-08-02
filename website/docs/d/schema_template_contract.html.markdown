@@ -14,7 +14,7 @@ Data source for MSO Schema Template Contract.
 
 ```hcl
 
-data "mso_schema_template_contract" "contract1" {
+data "mso_schema_template_contract" "example" {
   schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
   contract_name = "c1"
@@ -24,23 +24,18 @@ data "mso_schema_template_contract" "contract1" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Contract.
-* `template_name` - (Required) Template where Contract to be created.
-* `contract_name` - (Required) The name of the contract to manage.
+* `schema_id` - (Required) The schema ID of the Contract.
+* `template_name` - (Required) The template name of the Contract.
+* `contract_name` - (Required) The name of the Contract.
 
 ## Attribute Reference ##
 
-* `display_name` - (Optional) Display Name of the contract on the MSO UI.
-* `filter_type` - (Optional) The type of filters defined in this contract. Allowed values are `bothWay` and `oneWay`. Default to `bothWay`
-* `scope` - (Optional) The scope of the contract.
-* `filter_relationships` - **Deprecated** (Required if filter_relationship is not used) Map to provide Filter Relationships. This attribute is deprecated, use `filter_relationship` instead.
-  * `filter_relationships.filter_schema_id` - (Optional) The schemaId in which the filter is located.
-  * `filter_relationships.filter_template_name` - (Optional) The template name in which the filter is located.
-  * `filter_relationships.filter_name` - (Required) The filter to associate with this contract.
-
-* `filter_relationship` - (Required if filter_relationships is not used) Map to provide Filter Relationships.
-  * `filter_relationship.filter_schema_id` - (Optional) The schemaId in which the filter is located.
-  * `filter_relationship.filter_template_name` - (Optional) The template name in which the filter is located.
-  * `filter_relationship.filter_name` - (Required) The filter to associate with this contract.
-
-* `directives` - (Optional) A list of filter directives. Allowed values are `log` and `none`.
+* `display_name` - (Read-Only) The name of the Contract as displayed on the MSO UI.
+* `filter_type` - (Read-Only) The type of the Filter. 
+* `scope` - (Read-Only) The scope of the Contract.
+* `filter_relationships` - A map for the Filter relationship.
+    * `filter_schema_id` - (Read-Only) The schema ID of the Filter.
+    * `filter_template_name` - (Read-Only) The template name of the Filter.
+    * `filter_name` - (Read-Only) The name of the Filter.
+    * `action` - (Read-Only) The action of the Filter.
+    * `directives` - (Read-Only) The directives of the Filter.
