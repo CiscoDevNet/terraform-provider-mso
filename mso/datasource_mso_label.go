@@ -21,10 +21,9 @@ func datasourceMSOLabel() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-
 			"type": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
