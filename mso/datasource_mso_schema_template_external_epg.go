@@ -22,86 +22,69 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"external_epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"external_epg_type": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"on-premise",
-					"cloud",
-				}, false),
 			},
 			"display_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"vrf_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"vrf_schema_id": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"vrf_template_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"anp_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"anp_schema_id": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"anp_template_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"site_id": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
+				Type:     schema.TypeString,
 				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"l3out_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"l3out_schema_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"l3out_template_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"selector_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"selector_ip": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		}),
 	}
@@ -159,7 +142,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 					d.Set("vrf_template_name", match[2])
 
 					anpRef := models.StripQuotes(externalepgCont.S("anpRef").String())
-					if anpRef != "{}" {
+					if anpRef != "{}" && anpRef != "" {
 						tokens := strings.Split(anpRef, "/")
 						d.Set("anp_name", tokens[len(tokens)-1])
 						d.Set("anp_schema_id", tokens[len(tokens)-5])
@@ -170,17 +153,36 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 						d.Set("anp_template_name", "")
 					}
 
+					l3outRef := models.StripQuotes(externalepgCont.S("l3outRef").String())
+					if l3outRef != "{}" && l3outRef != "" {
+						tokens := strings.Split(l3outRef, "/")
+						d.Set("l3out_name", tokens[len(tokens)-1])
+						d.Set("l3out_schema_id", tokens[len(tokens)-5])
+						d.Set("l3out_template_name", tokens[len(tokens)-3])
+					} else {
+						d.Set("l3out_name", "")
+						d.Set("l3out_schema_id", "")
+						d.Set("l3out_template_name", "")
+					}
+
 					epgType := d.Get("external_epg_type").(string)
 					if epgType == "cloud" {
 						selList := externalepgCont.S("selectors").Data().([]interface{})
-
-						selector := selList[0].(map[string]interface{})
-						d.Set("selector_name", selector["name"])
-						expList := selector["expressions"].([]interface{})
-						exp := expList[0].(map[string]interface{})
-						d.Set("selector_ip", exp["value"])
+						if len(selList) > 0 {
+							selector := selList[0].(map[string]interface{})
+							d.Set("selector_name", selector["name"])
+							expList := selector["expressions"].([]interface{})
+							if len(expList) > 0 {
+								exp := expList[0].(map[string]interface{})
+								d.Set("selector_ip", exp["value"])
+							} else {
+								d.Set("selector_ip", "")
+							}
+						} else {
+							d.Set("selector_name", "")
+							d.Set("selector_ip", "")
+						}
 					} else {
-						d.Set("site_id", make([]interface{}, 0, 1))
 						d.Set("selector_name", "")
 						d.Set("selector_ip", "")
 					}
