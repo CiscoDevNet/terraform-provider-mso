@@ -26,8 +26,10 @@ data "mso_schema_site_bd_l3out" "example" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The schema ID under which the L3out is deployed.
-* `site_id` - (Required) The site ID under which the L3out is deployed.
-* `template_name` - (Required) The template name under which the L3out is deployed.
-* `bd_name` - (Required)  The bridge domain name under which the L3out is deployed.
+* `schema_id` - (Required) The schema ID under which the BD is deployed.
+* `site_id` - (Required) The site ID under which the BD is deployed.
+* `template_name` - (Required) The template name under which the BD is deployed.
+* `bd_name` - (Required)  The name of the BD.
 * `l3out_name` - (Required) The name of the L3out.
+* `l3out_schema_id` - (Optional) The schema ID of the L3out. The `schema_id` of the BD will be used if not provided. 
+* `l3out_template_name` - (Optional) The template name of the L3out. The `template_name` of the BD will be used if not provided. 

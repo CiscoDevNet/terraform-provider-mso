@@ -42,6 +42,18 @@ func dataSourceMSOSchemaSiteBdL3out() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"l3out_schema_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"l3out_template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
 		}),
 	}
 }
@@ -54,7 +66,15 @@ func dataSourceMSOSchemaSiteBdL3outRead(d *schema.ResourceData, m interface{}) e
 	siteId := d.Get("site_id").(string)
 	templateName := d.Get("template_name").(string)
 	bd := d.Get("bd_name").(string)
-	l3out := d.Get("l3out_name").(string)
+	l3outName := d.Get("l3out_name").(string)
+	l3outSchemaId := d.Get("l3out_schema_id").(string)
+	if l3outSchemaId == "" {
+		l3outSchemaId = schemaId
+	}
+	l3outTemplateName := d.Get("l3out_template_name").(string)
+	if l3outTemplateName == "" {
+		l3outTemplateName = templateName
+	}
 
 	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
@@ -72,28 +92,24 @@ func dataSourceMSOSchemaSiteBdL3outRead(d *schema.ResourceData, m interface{}) e
 		d.Set("bd_name", bd)
 	}
 
-	l3outCount, err := bdCont.ArrayCount("l3Outs")
-	if err != nil {
-		return fmt.Errorf("Unable to get l3Outs list")
-	}
-
 	found := false
-	for k := 0; k < l3outCount; k++ {
-		l3outCont, err := bdCont.ArrayElement(k, "l3Outs")
-		if err != nil {
-			return err
-		}
-		currentL3out := strings.Trim(l3outCont.String(), "\"")
-		if currentL3out == l3out {
-			found = true
-			d.SetId(fmt.Sprintf("%s/sites/%s-%s/bds/%s/l3outs/%s", schemaId, siteId, templateName, bd, currentL3out))
-			d.Set("l3out_name", currentL3out)
-			break
+	if bdCont.Exists("l3OutRefs") {
+		l3OutRefs := bdCont.S("l3OutRefs").Data()
+		for _, l3OutRef := range l3OutRefs.([]interface{}) {
+			splitl3OutRef := strings.Split(l3OutRef.(string), "/")
+			if splitl3OutRef[6] == l3outName && splitl3OutRef[4] == l3outTemplateName && splitl3OutRef[2] == l3outSchemaId {
+				found = true
+				d.SetId(fmt.Sprintf("%s/sites/%s-%s/bds/%s/l3outs/%s-%s-%s", schemaId, siteId, templateName, bd, l3outSchemaId, l3outTemplateName, l3outName))
+				d.Set("l3out_name", splitl3OutRef[6])
+				d.Set("l3out_template_name", splitl3OutRef[4])
+				d.Set("l3out_schema_id", splitl3OutRef[2])
+				break
+			}
 		}
 	}
 
 	if !found {
-		return fmt.Errorf("Unable to find the Site BD L3out: %s", l3out)
+		return fmt.Errorf("Unable to find the Site BD L3out %s in Template %s of Schema Id %s ", l3outName, l3outTemplateName, l3outSchemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

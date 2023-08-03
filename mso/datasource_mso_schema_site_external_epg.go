@@ -38,7 +38,19 @@ func dataSourceMSOSchemaSiteExternalEpg() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"l3out_dn": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"l3out_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"l3out_schema_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"l3out_template_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -78,9 +90,15 @@ func dataSourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{
 		currentL3out := re.FindStringSubmatch(l3outRef)
 		if len(currentL3out) >= 4 {
 			d.Set("l3out_name", currentL3out[3])
+			d.Set("l3out_schema_id", currentL3out[1])
+			d.Set("l3out_template_name", currentL3out[2])
 		} else {
 			return fmt.Errorf("Error in parsing l3outRef to get L3Out name")
 		}
+	}
+
+	if externalEpgCont.Exists("l3outDn") {
+		d.Set("l3out_dn", models.StripQuotes(externalEpgCont.S("l3outDn").String()))
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

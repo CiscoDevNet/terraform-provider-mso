@@ -29,9 +29,9 @@ data "mso_schema_template_external_epg_contract" "example" {
 * `template_name` - (Required) The template name of the External EPG.
 * `external_epg_name` - (Required) The name of the External EPG.
 * `contract_name` - (Required) The name of the Contract.
+* `contract_schema_id` - (Optional) The schema ID of the Contract. The `schema_id` of the External EPG. will be used if not provided. 
+* `contract_template_name` - (Optional) The template name of the Contract. The `contract_template_name` of the External EPG. will be used if not provided. 
 
 ## Attribute Reference ##
 
 * `relationship_type` - (Read-Only) The relationship type of the Contract.
-* `contract_schema_id` - (Read-Only) The schema ID of the Contract.
-* `contract_template_name` - (Read-Only) The template name of the Contract.

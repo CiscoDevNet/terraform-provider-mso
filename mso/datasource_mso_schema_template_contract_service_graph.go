@@ -37,9 +37,16 @@ func datasourceTemplateContractServiceGraph() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"service_graph_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"service_graph_schema_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"service_graph_template_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"node_relationship": &schema.Schema{
 				Type:     schema.TypeList,
@@ -117,13 +124,13 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 	foundTemp := false
 	foundSite := false
 
-	schemaID := d.Get("schema_id").(string)
-	siteID := d.Get("site_id").(string)
+	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
-	serviceGraph := d.Get("service_graph_name").(string)
+	var serviceGraph, serviceGraphSchemaId, serviceGraphTemplateName string
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
@@ -160,7 +167,12 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 
 						graphRef := models.StripQuotes(graphRelation.S("serviceGraphRef").String())
 						tokens := strings.Split(graphRef, "/")
-						d.Set("service_graph_name", tokens[len(tokens)-1])
+						serviceGraph = tokens[len(tokens)-1]
+						serviceGraphTemplateName = tokens[len(tokens)-3]
+						serviceGraphSchemaId = tokens[len(tokens)-5]
+						d.Set("service_graph_name", serviceGraph)
+						d.Set("service_graph_schema_id", serviceGraphSchemaId)
+						d.Set("service_graph_template_name", serviceGraphTemplateName)
 
 						nodeCount, err := graphRelation.ArrayCount("serviceNodesRelationship")
 						if err != nil {
@@ -214,7 +226,7 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 
 		site := models.StripQuotes(siteCont.S("siteId").String())
 		temp := models.StripQuotes(siteCont.S("templateName").String())
-		if siteID == site && temp == templateName {
+		if siteId == site && temp == templateName {
 			contractCount, err := siteCont.ArrayCount("contracts")
 			if err != nil {
 				return fmt.Errorf("No contracts found in site")
@@ -351,21 +363,12 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 
 			nodeList = append(nodeList, allMap)
 		}
-		d.Set("schema_id", schemaID)
-		d.Set("site_id", siteID)
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
 		d.Set("template_name", templateName)
 		d.Set("node_relationship", nodeList)
 		d.Set("contract_name", contractName)
-
-		if d.Get("service_graph_name") == serviceGraph {
-			d.SetId(serviceGraph)
-		} else {
-			d.SetId("")
-			return fmt.Errorf("Unable to find the Contract %s with Service Graph %s", contractName, serviceGraph)
-		}
-	} else {
-		d.SetId("")
-		return fmt.Errorf("Unable to find the Contract %s with Service Graph %s", contractName, serviceGraph)
+		d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s/serviceGraphRelationship/%s-%s-%s", schemaId, templateName, contractName, serviceGraphTemplateName, serviceGraphSchemaId, templateName))
 	}
 
 	log.Printf("[DEBUG] Completed Read Template Contract Service Graph")

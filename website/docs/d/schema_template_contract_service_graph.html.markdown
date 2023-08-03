@@ -16,25 +16,22 @@ Data source for MSO Schema Template Contract Service Graph.
 
 data "mso_schema_template_contract_service_graph" "example" {
   schema_id             = data.mso_schema.schema1.id
-  site_id               = data.mso_site.site1.id
   template_name         = "Template1"
   contract_name         = "UntitledContract1"
-  service_graph_name    = "sg1"  
 }
 
 ```
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The schema ID of the Service Graph.
-* `site_id` - (Required) The site ID of the Service Graph.
-* `template_name` - (Required) The template name of the Service Graph.
+* `schema_id` - (Required) The schema ID of the Contract.
+* `template_name` - (Required) The template name of the Contract.
 * `contract_name` - (Required) The name of the Contract.
-* `service_graph_name` - (Required) The name of Service Graph.
-
 
 ## Attribute Reference ##
-
+* `service_graph_name` - (Read-Only) The name of Service Graph.
+* `service_graph_schema_id` - (Read-Only) The schema ID of the Service Graph.
+* `service_graph_template_name` - (Read-Only) The template_name of the Service Graph.
 * `node_relationship` - (Read-Only) A list of node relationships of the Service Graph.
     * `provider_connector_bd_name` - (Read-Only) The BD name of the provider connector at template level.
     * `provider_connector_bd_schema_id` - (Read-Only) The BD schema ID of the provider connector at template level.

@@ -31,8 +31,5 @@ data "mso_schema_template_vrf_contract" "example" {
 * `vrf_name` - (Required) The name of the VRF.
 * `relationship_type` - (Required) The relationship type of the VRF with Contract. Allowed values are `provider` and `consumer`.
 * `contract_name` - (Required) The name of the Contract.
-
-## Attribute Reference ##
-
-* `contract_schema_id` - (Read-Only) The schema ID of the Contract.
-* `contract_template_name` - (Read-Only) The template name of the Contract.
+* `contract_schema_id` - (Optional) The schema ID of the Contract. The `schema_id` of the VRF will be used if not provided. 
+* `contract_template_name` - (Optional) The template name of the Contract. The `contract_template_name` of the VRF will be used if not provided. 
