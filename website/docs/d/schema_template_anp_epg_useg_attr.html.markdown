@@ -3,22 +3,22 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_anp_epg_useg_attr"
 sidebar_current: "docs-mso-data-source-schema_template_anp_epg_useg_attr"
 description: |-
-  Data source for MSO Schema Template Application Network Profiles Endpoint Groups Useg Attributes.
+  Data source for MSO Schema Template Application Network Profiles Endpoint Group uSeg Attribute.
 ---
 
 # mso_schema_template_anp_epg_useg_attr #
 
-Data source for MSO Schema Template Application Network Profiles Endpoint Groups Useg Attributes.
+Data source for MSO Schema Template Application Network Profiles Endpoint Group uSeg Attribute.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
+data "mso_schema_template_anp_epg_useg_attr" "example" {
   schema_id     = data.mso_schema.schema1.id
-  anp_name      = "sanp1"
+  template_name = "template1"
+  anp_name      = "anp1"
   epg_name      = "nkuseg"
-  template_name = "stemplate1"
   name          = "usg_test"
 }
 
@@ -26,17 +26,17 @@ data "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to create Anp Epg Useg Attributes .
-* `template_name` - (Required) Template where Anp Epg Useg Attributes to be created.
-* `anp_name` - (Required) Name of Application Network Profiles.
-* `epg_name` - (Required) Name of Endpoint Group.
-* `name` - (Required) Name of Useg Attributes.
+* `schema_id` - (Required) The schema ID of the uSeg Attribute.
+* `template_name` - (Required) The template name of the uSeg Attribute.
+* `anp_name` - (Required) The name of the ANP.
+* `epg_name` - (Required) The name of the EPG.
+* `name` - (Required) The name of the uSeg Attribute.
 
 ## Attribute Reference ##
 
-* `useg_type` - (Optional) Type of Useg Attribute.
-* `description` - (Optional) String which describes this Useg Attribute.
-* `operator` - (Optional) Comparison Operator used in the Useg Attribute.
-* `category` - (Optional) Classifier Category. It's used with useg_type `tag`.
-* `value` - (Optional) Value of Useg-Attribute.
-* `useg_subnet` - (Optional) Whether the Useg Subnet is enabled or not. This field only works with the `useg_type` Ip.
+* `useg_type` - (Read-Only) The type of the uSeg Attribute.
+* `description` - (Read-Only) The description of the uSeg Attribute.
+* `operator` - (Read-Only) The operator of the uSeg Attribute.
+* `category` - (Read-Only) The category of the uSeg Attribute.
+* `value` - (Read-Only) The value of the uSeg Attribute.
+* `useg_subnet` - (Read-Only) Whether the uSeg Subnet is enabled.
