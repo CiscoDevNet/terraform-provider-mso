@@ -23,35 +23,37 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"filter_type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"bothWay",
+					"provider_to_consumer",
+					"consumer_to_provider",
+				}, false),
 			},
 			"filter_schema_id": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"filter_template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"filter_name": &schema.Schema{
@@ -59,11 +61,10 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"directives": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
@@ -213,7 +214,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the given Contract Filter")
+		return fmt.Errorf("Unable to find the Contract %s with Filter %s", stateContract, stateName)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
