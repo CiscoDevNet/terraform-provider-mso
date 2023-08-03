@@ -19,112 +19,90 @@ func datasourceTemplateContractServiceGraph() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"contract_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"service_graph_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"node_relationship": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"provider_connector_bd_name": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
+						"provider_connector_bd_schema_id": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"provider_connector_bd_template_name": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"consumer_connector_bd_name": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
+						"consumer_connector_bd_schema_id": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"consumer_connector_bd_template_name": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"provider_connector_cluster_interface": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"provider_connector_redirect_policy_tenant": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"provider_connector_redirect_policy": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"provider_subnet_ips": &schema.Schema{
 							Type:     schema.TypeList,
-							Optional: true,
-							Computed: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
+							Computed: true,
 						},
-
 						"consumer_connector_cluster_interface": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"consumer_connector_redirect_policy_tenant": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"consumer_connector_redirect_policy": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-
 						"consumer_subnet_ips": &schema.Schema{
 							Type:     schema.TypeList,
-							Optional: true,
-							Computed: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
+							Computed: true,
 						},
 					},
 				},
@@ -201,10 +179,14 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 							probdRef := models.StripQuotes(node.S("providerConnector", "bdRef").String())
 							probdRefTokens := strings.Split(probdRef, "/")
 							relationMap["provider_connector_bd_name"] = probdRefTokens[len(probdRefTokens)-1]
+							relationMap["provider_connector_bd_schema_id"] = probdRefTokens[len(probdRefTokens)-5]
+							relationMap["provider_connector_bd_template_name"] = probdRefTokens[len(probdRefTokens)-3]
 
 							conbdRef := models.StripQuotes(node.S("consumerConnector", "bdRef").String())
 							conbdRefTokens := strings.Split(conbdRef, "/")
 							relationMap["consumer_connector_bd_name"] = conbdRefTokens[len(conbdRefTokens)-1]
+							relationMap["consumer_connector_bd_schema_id"] = conbdRefTokens[len(conbdRefTokens)-5]
+							relationMap["consumer_connector_bd_template_name"] = conbdRefTokens[len(conbdRefTokens)-3]
 
 							temprelationList = append(temprelationList, relationMap)
 						}
@@ -329,7 +311,11 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 
 			allMap := make(map[string]interface{})
 			allMap["provider_connector_bd_name"] = tempMap["provider_connector_bd_name"]
+			allMap["provider_connector_bd_schema_id"] = tempMap["provider_connector_bd_schema_id"]
+			allMap["provider_connector_bd_template_name"] = tempMap["provider_connector_bd_template_name"]
 			allMap["consumer_connector_bd_name"] = tempMap["consumer_connector_bd_name"]
+			allMap["consumer_connector_bd_schema_id"] = tempMap["consumer_connector_bd_schema_id"]
+			allMap["consumer_connector_bd_template_name"] = tempMap["consumer_connector_bd_template_name"]
 
 			tp := strings.Split(siteMap["provider_connector_cluster_interface"].(string), "/")
 			token := strings.Split(tp[len(tp)-1], "-")
@@ -375,11 +361,11 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 			d.SetId(serviceGraph)
 		} else {
 			d.SetId("")
-			return fmt.Errorf("No service graph found for given name")
+			return fmt.Errorf("Unable to find the Contract %s with Service Graph %s", contractName, serviceGraph)
 		}
 	} else {
 		d.SetId("")
-		return fmt.Errorf("No service graph found for given name")
+		return fmt.Errorf("Unable to find the Contract %s with Service Graph %s", contractName, serviceGraph)
 	}
 
 	log.Printf("[DEBUG] Completed Read Template Contract Service Graph")

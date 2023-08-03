@@ -14,7 +14,7 @@ Data source for MSO Schema Template Contract Service Graph.
 
 ```hcl
 
-data "mso_schema_template_contract_service_graph" "name" {
+data "mso_schema_template_contract_service_graph" "example" {
   schema_id             = data.mso_schema.schema1.id
   site_id               = data.mso_site.site1.id
   template_name         = "Template1"
@@ -26,24 +26,27 @@ data "mso_schema_template_contract_service_graph" "name" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Contract Service Graph.
-* `site_id` - (Required) SiteID under which you want to deploy Contract Service Graph.
-* `template_name` - (Required) Template where Contract Service Graph to be created.
-* `contract_name` - (Required) The name of the contract to manage. There should be an existing contract with this name.
-* `service_graph_name` - (Required) The name of service graph.
+* `schema_id` - (Required) The schema ID of the Service Graph.
+* `site_id` - (Required) The site ID of the Service Graph.
+* `template_name` - (Required) The template name of the Service Graph.
+* `contract_name` - (Required) The name of the Contract.
+* `service_graph_name` - (Required) The name of Service Graph.
 
 
 ## Attribute Reference ##
 
-* `node_relationship` - (Optional) Service graph node relationship information.
-* `node_relationship.provider_connector_bd_name` - (Optional) bd name for provider connector at template level.
-* `node_relationship.consumer_connector_bd_name` - (Optional) bd name for consumer connector at template level.
-* `node_relationship.provider_connector_cluster_interface` - (Optional) cluster interface for provider connector to attach with node at site level. 
-* `node_relationship.consumer_connector_cluster_interface` - (Optional) cluster interface for consumer connector to attach with node at site level.
-* `node_relationship.provider_connector_redirect_policy_tenant` - (Optional) tenant for redirection policy for provider connector at site level. It is required to set redirection policy for provider connector.
-* `node_relationship.provider_connector_redirect_policy` - (Optional) redirection policy for provider connector at site level.
-* `node_relationship.consumer_connector_redirect_policy_tenant` - (Optional) tenant for redirection policy for consumer connector at site level. It is required to set redirection policy for consumer connector.
-* `node_relationship.consumer_connector_redirect_policy` - (Optional) redirection policy for consumer connector at site level.
-* `node_relationship.provider_subnet_ips` - (Optional) subnet ips which will be associated with provider connector at site level. It should be in CIDR format.
-* `node_relationship.consumer_subnet_ips` - (Optional) subnet ips which will be associated with consumer connector at site level. It should be in CIDR format.
-
+* `node_relationship` - (Read-Only) A list of node relationships of the Service Graph.
+    * `provider_connector_bd_name` - (Read-Only) The BD name of the provider connector at template level.
+    * `provider_connector_bd_schema_id` - (Read-Only) The BD schema ID of the provider connector at template level.
+    * `provider_connector_bd_template_name` - (Read-Only) The BD template name of the provider connector at template level.
+    * `consumer_connector_bd_name` - (Read-Only) The BD name of the consumer connector at template level.
+    * `consumer_connector_bd_schema_id` - (Read-Only) The BD schema ID of the consumer connector at template level.
+    * `consumer_connector_bd_template_name` - (Read-Only) The BD template name of the consumer connector at template level.
+    * `provider_connector_cluster_interface` - (Read-Only) The cluster interface for the provider connector at site level. 
+    * `consumer_connector_cluster_interface` - (Read-Only) The cluster interface for the consumer connector at site level.
+    * `provider_connector_redirect_policy_tenant` - (Read-Only) The tenant redirection policy for the provider connector at site level. 
+    * `provider_connector_redirect_policy` - (Read-Only) The redirection policy for the provider connector at site level.
+    * `consumer_connector_redirect_policy_tenant` - (Read-Only) The tenant redirection policy for the consumer connector at site level. 
+    * `consumer_connector_redirect_policy` - (Read-Only) The redirection policy for the consumer connector at site level.
+    * `provider_subnet_ips` - (Read-Only) A list of subnet ips associated with the provider connector at site level.
+    * `consumer_subnet_ips` - (Read-Only) A list of subnet ips associated with the consumer connector at site level.
