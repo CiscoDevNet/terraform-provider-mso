@@ -30,23 +30,23 @@ data "mso_schema_site_anp_epg_static_port" "static_port" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Static Port.
-* `site_id` - (Required) SiteID under which you want to deploy Static Port.
-* `template_name` - (Required) Template name under which Static Port is deployed.
-* `anp_name` - (Required) ANP name under which you want to deploy Static Port.
-* `epg_name` - (Required) EPG name under which you want to deploy Static Port.
-* `path_type` - (Required) The type of the static port.
-* `pod` - (Required) The pod of the static port.
-* `leaf` - (Required) The leaf of the static port.
-* `path` - (Required) The path of the static port.
-* `fex` - (Optional) Fex-id to be used. This parameter will work only with the `path_type` as `port`.
+* `schema_id` - (Required) The schema ID under which the Static Port is deployed.
+* `site_id` - (Required) The site ID under which the Static Port is deployed.
+* `template_name` - (Required) The template name under which the Static Port is deployed.
+* `anp_name` - (Required) The ANP name under which the Static Port is deployed.
+* `epg_name` - (Required) The EPG name under which the Static Port is deployed.
+* `path_type` - (Required) The type of the Static Port.
+* `pod` - (Required) The pod of the Static Port.
+* `leaf` - (Required) The leaf of the Static Port.
+* `path` - (Required) The path of the Static Port.
+* `fex` - (Optional) The fex ID of the Static Port. This parameter will work only with the `path_type` as `port`.
 
 
 ## Attribute Reference ##
 
-* `micro_seg_vlan` - (Optional) The microsegmentation VLAN id of the static port.
-* `mode` - (Optional) The mode of the static port.
-* `deployment_immediacy` - (Optional) The deployment immediacy of the static port.
-* `vlan` - (Optional) The port encap VLAN id of the static port.
+* `micro_seg_vlan` - (Read-Only) The microsegmentation VLAN ID of the Static Port.
+* `mode` - (Read-Only) The mode of the Static Port.
+* `deployment_immediacy` - (Read-Only) The deployment immediacy of the Static Port.
+* `vlan` - (Read-Only) The VLAN ID of the Static Port.
 
  
