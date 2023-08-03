@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -23,41 +22,36 @@ func dataSourceMSOSchemaSiteAnpEpgStaticleaf() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"path": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"port_encap_vlan": &schema.Schema{
 				Type:     schema.TypeInt,
-				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
@@ -67,98 +61,61 @@ func dataSourceMSOSchemaSiteAnpEpgStaticleafRead(d *schema.ResourceData, m inter
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	anp := d.Get("anp_name").(string)
+	epg := d.Get("epg_name").(string)
+	path := d.Get("path").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	anpCont, err := getSiteAnp(anp, siteCont)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
+		return err
+	} else {
+		d.Set("anp_name", anp)
 	}
 
-	stateSite := d.Get("site_id").(string)
-	found := false
-	stateAnp := d.Get("anp_name").(string)
-	stateEpg := d.Get("epg_name").(string)
-	statePath := d.Get("path").(string)
+	epgCont, err := getSiteEpg(epg, anpCont)
+	if err != nil {
+		return err
+	} else {
+		d.Set("epg_name", epg)
+	}
 
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
+	staticLeafCount, err := epgCont.ArrayCount("staticLeafs")
+	if err != nil {
+		return fmt.Errorf("Unable to get Static Leaf list")
+	}
+
+	found := false
+	for s := 0; s < staticLeafCount; s++ {
+		staticLeafCont, err := epgCont.ArrayElement(s, "staticLeafs")
 		if err != nil {
 			return err
 		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-
-		if apiSite == stateSite {
-			anpCount, err := tempCont.ArrayCount("anps")
-			if err != nil {
-				return fmt.Errorf("Unable to get Anp list")
-			}
-			for j := 0; j < anpCount; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "anps")
-				if err != nil {
-					return err
-				}
-				apiAnpRef := models.StripQuotes(anpCont.S("anpRef").String())
-				split := strings.Split(apiAnpRef, "/")
-				apiAnp := split[6]
-				if apiAnp == stateAnp {
-					epgCount, err := anpCont.ArrayCount("epgs")
-					if err != nil {
-						return fmt.Errorf("Unable to get EPG list")
-					}
-					for k := 0; k < epgCount; k++ {
-						epgCont, err := anpCont.ArrayElement(k, "epgs")
-						if err != nil {
-							return err
-						}
-						apiEpgRef := models.StripQuotes(epgCont.S("epgRef").String())
-						split := strings.Split(apiEpgRef, "/")
-						apiEPG := split[8]
-						if apiEPG == stateEpg {
-							staticLeafCount, err := epgCont.ArrayCount("staticLeafs")
-							if err != nil {
-								return fmt.Errorf("Unable to get Static Leaf list")
-							}
-							for s := 0; s < staticLeafCount; s++ {
-								staticLeafCont, err := epgCont.ArrayElement(s, "staticLeafs")
-								if err != nil {
-									return err
-								}
-								apiPath := models.StripQuotes(staticLeafCont.S("path").String())
-								if apiPath == statePath {
-									d.SetId(apiPath)
-									d.Set("path", apiPath)
-									d.Set("site_id", apiSite)
-									d.Set("schema_id", split[2])
-									d.Set("template_name", split[4])
-									d.Set("anp_name", split[6])
-									d.Set("epg_name", apiEPG)
-									apiPort, _ := strconv.Atoi(staticLeafCont.S("portEncapVlan").String())
-									d.Set("port_encap_vlan", apiPort)
-									found = true
-									break
-								}
-							}
-						}
-					}
-				}
-			}
+		currentPath := models.StripQuotes(staticLeafCont.S("path").String())
+		if currentPath == path {
+			found = true
+			d.SetId(fmt.Sprintf("%s/sites/%s-%s/anps/%s/epgs/%s/staticLeafs/%s", schemaId, siteId, templateName, anp, epg, path))
+			d.Set("path", path)
+			port, _ := strconv.Atoi(staticLeafCont.S("portEncapVlan").String())
+			d.Set("port_encap_vlan", port)
+			break
 		}
 	}
 
 	if !found {
 		d.SetId("")
-		d.Set("schema_id", "")
-		d.Set("site_id", "")
-		d.Set("template_name", "")
-		d.Set("epg_name", "")
-		d.Set("anp_name", "")
-		d.Set("path", "")
-		return fmt.Errorf("Unable to find the given Anp Epg StaticLeaf")
+		return fmt.Errorf("Unable to find the Site ANP EPG Static Leaf: %s", path)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_anp_epg_static_leaf"
 sidebar_current: "docs-mso-data-source-schema_site_anp_epg_static_leaf"
 description: |-
-  Data source for MSO Schema Site Application Network Profiles Endpoint Groups StaticLeaf.
+  Data source for MSO Schema Site Application Network Profiles End Point Group Static Leaf.
 ---
 
 # mso_schema_site_anp_epg_static_leaf #
 
-Data source for MSO Schema Site Application Network Profiles Endpoint Groups StaticLeaf.
+Data source for MSO Schema Site Application Network Profiles End Point Group Static Leaf.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_site_anp_epg_static_leaf" "st10" {
+data "mso_schema_site_anp_epg_static_leaf" "example" {
   schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
   site_id       = data.mso_site.site1.id
@@ -27,16 +27,13 @@ data "mso_schema_site_anp_epg_static_leaf" "st10" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Anp Epg StaticLeaf.
-* `site_id` - (Required) SiteID under which you want to deploy Anp Epg StaticLeaf.
-* `anp_name` - (Required) Name of Application Network Profiles.
-* `epg_name` - (Required) Name of Endpoint Group to manage.
-* `path` - (Required) Path Given to the StaticLeaf.
-
+* `schema_id` - (Required) The schema ID under which the Static Leaf is deployed.
+* `site_id` - (Required) The site ID under which the Static Leaf is deployed.
+* `template_name` - (Required) The template name under which the Static Leaf is deployed.
+* `anp_name` - (Required) The ANP name under which the Static Leaf is deployed.
+* `epg_name` - (Required) The EPG name under which the Static Leaf is deployed.
+* `path` - (Required) The Path of the Static Leaf.
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) Template where Anp Epg StaticLeaf to be created.
-* `port_encap_vlan` - (Optional) The VLAN id of the static leaf.
-
-
+* `port_encap_vlan` - (Read-Only) The port encapsulation VLAN ID of the Static Leaf.
