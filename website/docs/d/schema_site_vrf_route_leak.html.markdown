@@ -14,7 +14,7 @@ Data source for MSO Schema Site VRF Route Leak.
 
 ```hcl
 
-data "mso_schema_site_vrf_route_leak" "vrf1" {
+data "mso_schema_site_vrf_route_leak" "example" {
   schema_id       = mso_schema.demo_schema.id
   template_name   = "Template1"
   site_id         = mso_schema_site.demo_site.site_id
@@ -26,16 +26,16 @@ data "mso_schema_site_vrf_route_leak" "vrf1" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy VRF Route Leak.
-* `template_name` - (Required) Template under which you want to deploy VRF Route Leak.
-* `site_id` - (Required) SiteID under which you want to deploy VRF Route Leak.
-* `vrf_name` - (Required) VRF under which you want to deploy VRF Route Leak.
-* `target_vrf_schema_id` - (Optional)  SchemaID of the target vrf. The `schema_id` of the VRF will be used if not provided. 
-* `target_vrf_template_name` - (Optional) Template name of the target vrf. The `template_name` of the VRF will be used if not provided. 
-* `target_vrf_name` - (Required) Name of the target VRF.
+* `schema_id` - (Required) The schema ID under which the Route Leak is deployed.
+* `site_id` - (Required) The site ID under which the Route Leak is deployed.
+* `template_name` - (Required) The template name under which the Route Leak is deployed.
+* `vrf_name` - (Required) The name of the VRF under which the Route Leak is deployed.
+* `target_vrf_schema_id` - (Optional)  The schema ID of the target vrf. The `schema_id` of the VRF will be used if not provided. 
+* `target_vrf_template_name` - (Optional) The template name of the target vrf. The `template_name` of the VRF will be used if not provided. 
+* `target_vrf_name` - (Required) The name of the target VRF.
 
 ## Attribute Reference ##
 
-* `tenant_name` - (Read-Only) Name of the tenant.
-* `type` - (Read-Only) Type of the VRF Route Leak. 
-* `subnet_ips` - (Read-Only) List of subnet ips which need to be leaked.
+* `tenant_name` - (Read-Only) The name of the tenant.
+* `type` - (Read-Only) The type of the Route Leak. 
+* `subnet_ips` - (Read-Only) The list of subnet ips which need to be leaked.
