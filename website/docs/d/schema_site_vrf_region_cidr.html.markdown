@@ -3,20 +3,21 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_vrf_region_cidr"
 sidebar_current: "docs-mso-data-source-schema_site_vrf_region_cidr"
 description: |-
-  Data source for MSO Schema Site Vrf Region Cidr.
+  Data source for MSO Schema Site VRF Region CIDR.
 ---
 
 # mso_schema_site_vrf_region_cidr #
 
-Data source for MSO Schema Site Vrf Region Cidr.
+Data source for MSO Schema Site VRF Region CIDR.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_site_vrf_region_cidr" "vrfRegionCidr" {
+data "mso_schema_site_vrf_region_cidr" "example" {
   schema_id   = data.mso_schema.schema1.id
   site_id     = data.mso_site.site1.id
+  template_name = "Template1"
   vrf_name    = "Campus"
   region_name = "westus"
   ip          = "192.168.241.0/24"
@@ -26,13 +27,13 @@ data "mso_schema_site_vrf_region_cidr" "vrfRegionCidr" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Vrf Region.
-* `site_id` - (Required) SiteID under which you want to deploy Vrf Region.
-* `vrf_name` - (Required) Name of Vrf.
-* `region_name` - (Required) Name of Region to manage.
-* `ip` - (Required) The name of the region CIDR to manage.
+* `schema_id` - (Required) The schema ID under which the CIDR is deployed.
+* `site_id` - (Required) The site ID under which the CIDR is deployed.
+* `template_name` - (Required) The template name under which the CIDR is deployed.
+* `vrf_name` - (Required) The name of the VRF under which the CIDR is deployed.
+* `region_name` - (Required) The name of the VRF Region under which the CIDR is deployed.
+* `ip` - (Required) The IP range of the VRF Region in CIDR notation.
 
 ## Attribute Reference ##
 
-* `template_name` - (Optional) Template where Vrf Region to be created.
-* `primary` - (Optional) Whether this is the primary CIDR.
+* `primary` - (Read-Only) Whether this is the primary CIDR.
