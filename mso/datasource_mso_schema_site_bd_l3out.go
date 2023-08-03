@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -21,24 +20,21 @@ func dataSourceMSOSchemaSiteBdL3out() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"l3out_name": &schema.Schema{
@@ -54,73 +50,50 @@ func dataSourceMSOSchemaSiteBdL3outRead(d *schema.ResourceData, m interface{}) e
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	bd := d.Get("bd_name").(string)
+	l3out := d.Get("l3out_name").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	bdCont, err := getSiteBd(bd, siteCont)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
+		return err
+	} else {
+		d.Set("bd_name", bd)
 	}
 
-	stateSite := d.Get("site_id").(string)
-	found := false
-	stateBd := d.Get("bd_name").(string)
-	stateL3out := d.Get("l3out_name").(string)
+	l3outCount, err := bdCont.ArrayCount("l3Outs")
+	if err != nil {
+		return fmt.Errorf("Unable to get l3Outs list")
+	}
 
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
+	found := false
+	for k := 0; k < l3outCount; k++ {
+		l3outCont, err := bdCont.ArrayElement(k, "l3Outs")
 		if err != nil {
 			return err
 		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-
-		if apiSite == stateSite {
-			bdCount, err := tempCont.ArrayCount("bds")
-			if err != nil {
-				return fmt.Errorf("Unable to get Bd list")
-			}
-			for j := 0; j < bdCount; j++ {
-				bdCont, err := tempCont.ArrayElement(j, "bds")
-				if err != nil {
-					return err
-				}
-				apiBdRef := models.StripQuotes(bdCont.S("bdRef").String())
-				split := strings.Split(apiBdRef, "/")
-				apiBd := split[6]
-				if apiBd == stateBd {
-					d.Set("site_id", apiSite)
-					d.Set("schema_id", split[2])
-					d.Set("template_name", split[4])
-					d.Set("bd_name", split[6])
-					l3outCount, err := bdCont.ArrayCount("l3Outs")
-					if err != nil {
-						return fmt.Errorf("Unable to get l3Outs list")
-					}
-					for k := 0; k < l3outCount; k++ {
-						l3outCont, err := bdCont.ArrayElement(k, "l3Outs")
-						if err != nil {
-							return err
-						}
-						tempVar := l3outCont.String()
-						apiL3out := strings.Trim(tempVar, "\"")
-						if apiL3out == stateL3out {
-							d.SetId(stateL3out)
-							d.Set("l3out_name", apiL3out)
-							found = true
-							break
-						}
-					}
-				}
-			}
+		currentL3out := strings.Trim(l3outCont.String(), "\"")
+		if currentL3out == l3out {
+			found = true
+			d.SetId(fmt.Sprintf("%s/sites/%s-%s/bds/%s/l3outs/%s", schemaId, siteId, templateName, bd, currentL3out))
+			d.Set("l3out_name", currentL3out)
+			break
 		}
 	}
 
 	if !found {
-		return fmt.Errorf("Unable to find the Site L3out %s", stateL3out)
+		return fmt.Errorf("Unable to find the Site BD L3out: %s", l3out)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
