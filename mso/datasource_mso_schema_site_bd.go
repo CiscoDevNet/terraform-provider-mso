@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"regexp"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -55,64 +54,33 @@ func dataSourceMSOSchemaSiteBdRead(d *schema.ResourceData, m interface{}) error 
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	bd := d.Get("bd_name").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	bdCont, err := getSiteBd(bd, siteCont)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
-	}
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	found := false
-	statebd := d.Get("bd_name").(string)
-	for i := 0; i < count && !found; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return err
-		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
-
-		if apiSite == stateSite && apiTemplate == stateTemplate {
-			bdCount, err := tempCont.ArrayCount("bds")
-			if err != nil {
-				return fmt.Errorf("Unable to get bd list")
-			}
-			for j := 0; j < bdCount; j++ {
-				bdCont, err := tempCont.ArrayElement(j, "bds")
-				if err != nil {
-					return err
-				}
-				bdRef := models.StripQuotes(bdCont.S("bdRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/bds/(.*)")
-				match := re.FindStringSubmatch(bdRef)
-				if match[3] == statebd {
-					d.SetId(match[3])
-					d.Set("bd_name", match[3])
-					d.Set("schema_id", match[1])
-					d.Set("template_name", match[2])
-					d.Set("site_id", apiSite)
-					if bdCont.Exists("hostBasedRouting") {
-						d.Set("host_route", bdCont.S("hostBasedRouting").Data().(bool))
-					}
-					if bdCont.Exists("mac") {
-						d.Set("svi_mac", models.StripQuotes(bdCont.S("mac").String()))
-					}
-					found = true
-					break
-				}
-			}
-		}
+		return err
+	} else {
+		d.SetId(fmt.Sprintf("%s/sites/%s-%s/bds/%s", schemaId, siteId, templateName, bd))
+		d.Set("bd_name", bd)
 	}
 
-	if !found {
-		d.SetId("")
-		return fmt.Errorf("Unable to find the given Schema Site Bd")
+	if bdCont.Exists("hostBasedRouting") {
+		d.Set("host_route", bdCont.S("hostBasedRouting").Data().(bool))
+	}
+	if bdCont.Exists("mac") {
+		d.Set("svi_mac", models.StripQuotes(bdCont.S("mac").String()))
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
