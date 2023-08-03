@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_vrf_region"
 sidebar_current: "docs-mso-data-source-schema_site_vrf_region"
 description: |-
-  Data source for MSO Schema Site Vrf Region.
+  Data source for MSO Schema Site VRF Region.
 ---
 
 # mso_schema_site_vrf_region #
 
-Data source for MSO Schema Site Vrf Region.
+Data source for MSO Schema Site VRF Region.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_site_vrf_region" "vrfRegion" {
+data "mso_schema_site_vrf_region" "example" {
   schema_id     = data.mso_schema.schema1.id
   site_id       = data.mso_site.site1.id
   template_name = "Template1"
@@ -26,28 +26,25 @@ data "mso_schema_site_vrf_region" "vrfRegion" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Vrf Region.
-* `site_id` - (Required) SiteID under which you want to deploy Vrf Region.
-* `template_name` - (Required) Template under which you want to deploy Vrf Region.
-* `vrf_name` - (Required) Name of Vrf.
-* `region_name` - (Required) Name of Region to manage.
+* `schema_id` - (Required) The schema ID under which the Region is deployed.
+* `site_id` - (Required) The site ID under which the Region is deployed.
+* `template_name` - (Required) The template name under which the Region is deployed.
+* `vrf_name` - (Required) The name of the VRF under which the Region is deployed.
+* `region_name` - (Required) The name of the Region.
 
 ## Attribute Reference ##
 
-* `cidr` - (Read-Only) CIDR to set into region
-* `cidr.cidr_ip` - (Read-Only) IP address for CIDR.
-* `cidr.primary` - (Read-Only) Primary flag to set CIDR as primary.
-
-* `cidr.subnet` - (Read-Only) Subnets to associate with CIDR.
-* `cidr.subnet.ip` - (Read-Only) IP address for the subnet.
-* `cidr.subnet.name` - (Read-Only) Name for the subnet.
-* `cidr.subnet.zone` - (Read-Only) The name of the availability zone for the subnet.
-* `cidr.subnet.usage` - (Read-Only) Usage information of particular subnet.
-* `cidr.subnet.subnet_group` - (Read-Only) The name of the subnet group label for the subnet.
-
-* `vpn_gateway` - (Read-Only) VPN gateway flag.
-* `hub_network_enable` - (Read-Only) Hub Network enable flag.
-
-* `hub_network` - (Read-Only) Hub Network to set into the region.
-* `hub_network.name` - (Read-Only) Name of the hub network.
-* `hub_network.tenant_name` - (Read-Only) Tenant name for the hub network.
+* `vpn_gateway` - (Read-Only) The VPN gateway flag of the Region.
+* `hub_network_enable` - (Read-Only) The Hub Network enable flag of the Region.
+* `cidr` - (Read-Only) A list of CIDRs for the Region.
+    * `cidr_ip` - (Read-Only) The IP range of the Region.
+    * `primary` - (Read-Only) Whether this is the primary CIDR.
+    * `subnet` - (Read-Only) A list of Subnets for the CIDR.
+        * `ip` - (Read-Only) The P address of the subnet.
+        * `name` - (Read-Only) The name of the subnet.
+        * `zone` - (Read-Only) The availability zone name of the Subnet. 
+        * `usage` - (Read-Only) The usage of the Subnet.
+        * `subnet_group` - (Read-Only) The group of the Subnet.
+* `hub_network` - (Read-Only) A list of Hub Networks for the Region.
+    * `name` - (Read-Only) The name of the hub network.
+    * `tenant_name` - (Read-Only) The tenant name of the hub network.

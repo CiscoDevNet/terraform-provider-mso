@@ -3,10 +3,8 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -119,130 +117,91 @@ func dataSourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{})
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	vrf := d.Get("vrf_name").(string)
+	region := d.Get("region_name").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	vrfCont, err := getSiteVrf(vrf, siteCont)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
+		return err
+	} else {
+		d.Set("vrf_name", vrf)
 	}
 
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	found := false
-	stateVrf := d.Get("vrf_name").(string)
-	stateRegion := d.Get("region_name").(string)
+	regionCont, err := getSiteVrfRegion(region, vrfCont)
+	if err != nil {
+		return err
+	} else {
+		d.SetId(fmt.Sprintf("%s/sites/%s-%s/vrfs/%s/regions/%s", schemaId, siteId, templateName, vrf, region))
+		d.Set("region_name", region)
+	}
 
-	for i := 0; i < count && !found; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return err
-		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
+	if regionCont.Exists("isVpnGatewayRouter") {
+		d.Set("vpn_gateway", regionCont.S("isVpnGatewayRouter").Data().(bool))
+	}
+	if regionCont.Exists("isTGWAttachment") {
+		d.Set("hub_network_enable", regionCont.S("isTGWAttachment").Data().(bool))
+	}
 
-		if apiSite == stateSite && apiTemplate == stateTemplate {
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return fmt.Errorf("Unable to get Vrf list")
+	hubMap := make(map[string]interface{})
+	if regionCont.Exists("cloudRsCtxProfileToGatewayRouterP") {
+		temp := regionCont.S("cloudRsCtxProfileToGatewayRouterP").Data().(map[string]interface{})
+
+		hubMap["name"] = temp["name"]
+		hubMap["tenant_name"] = temp["tenantName"]
+
+		d.Set("hub_network", hubMap)
+	} else {
+		d.Set("hub_network", hubMap)
+	}
+
+	cidrList := make([]interface{}, 0, 1)
+	cidrs := regionCont.S("cidrs").Data().([]interface{})
+	for _, tempCidr := range cidrs {
+		cidr := tempCidr.(map[string]interface{})
+
+		cidrMap := make(map[string]interface{})
+		cidrMap["cidr_ip"] = cidr["ip"]
+		cidrMap["primary"] = cidr["primary"]
+
+		subnets := cidr["subnets"].([]interface{})
+		subnetList := make([]interface{}, 0, 1)
+		for _, tempSubnet := range subnets {
+			subnet := tempSubnet.(map[string]interface{})
+
+			subnetMap := make(map[string]interface{})
+			subnetMap["ip"] = subnet["ip"]
+			if subnet["name"] != nil {
+				subnetMap["name"] = subnet["name"]
 			}
-			for j := 0; j < vrfCount && !found; j++ {
-				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
-				if err != nil {
-					return err
-				}
-				apiVrfRef := models.StripQuotes(vrfCont.S("vrfRef").String())
-				split := strings.Split(apiVrfRef, "/")
-				apiVrf := split[6]
-				if apiVrf == stateVrf {
-					d.Set("site_id", apiSite)
-					d.Set("schema_id", split[2])
-					d.Set("template_name", split[4])
-					d.Set("vrf_name", split[6])
-					regionCount, err := vrfCont.ArrayCount("regions")
-					if err != nil {
-						return fmt.Errorf("Unable to get Regions list")
-					}
-					for k := 0; k < regionCount; k++ {
-						regionCont, err := vrfCont.ArrayElement(k, "regions")
-						if err != nil {
-							return err
-						}
-						apiRegion := models.StripQuotes(regionCont.S("name").String())
-						if apiRegion == stateRegion {
-							d.SetId(apiRegion)
-							d.Set("region_name", apiRegion)
-							if regionCont.Exists("isVpnGatewayRouter") {
-								d.Set("vpn_gateway", regionCont.S("isVpnGatewayRouter").Data().(bool))
-							}
-							if regionCont.Exists("isTGWAttachment") {
-								d.Set("hub_network_enable", regionCont.S("isTGWAttachment").Data().(bool))
-							}
-
-							hubMap := make(map[string]interface{})
-							if regionCont.Exists("cloudRsCtxProfileToGatewayRouterP") {
-								temp := regionCont.S("cloudRsCtxProfileToGatewayRouterP").Data().(map[string]interface{})
-
-								hubMap["name"] = temp["name"]
-								hubMap["tenant_name"] = temp["tenantName"]
-
-								d.Set("hub_network", hubMap)
-							} else {
-								d.Set("hub_network", hubMap)
-							}
-
-							cidrList := make([]interface{}, 0, 1)
-							cidrs := regionCont.S("cidrs").Data().([]interface{})
-							for _, tempCidr := range cidrs {
-								cidr := tempCidr.(map[string]interface{})
-
-								cidrMap := make(map[string]interface{})
-								cidrMap["cidr_ip"] = cidr["ip"]
-								cidrMap["primary"] = cidr["primary"]
-
-								subnets := cidr["subnets"].([]interface{})
-								subnetList := make([]interface{}, 0, 1)
-								for _, tempSubnet := range subnets {
-									subnet := tempSubnet.(map[string]interface{})
-
-									subnetMap := make(map[string]interface{})
-									subnetMap["ip"] = subnet["ip"]
-									if subnet["name"] != nil {
-										subnetMap["name"] = subnet["name"]
-									}
-									if subnet["zone"] != nil {
-										subnetMap["zone"] = subnet["zone"]
-									}
-									if subnet["usage"] != nil {
-										subnetMap["usage"] = subnet["usage"]
-									}
-									if subnet["subnetGroup"] != nil {
-										subnetMap["subnet_group"] = subnet["subnetGroup"]
-									}
-
-									subnetList = append(subnetList, subnetMap)
-								}
-								cidrMap["subnet"] = subnetList
-
-								cidrList = append(cidrList, cidrMap)
-							}
-							d.Set("cidr", cidrList)
-							found = true
-							break
-						}
-					}
-				}
+			if subnet["zone"] != nil {
+				subnetMap["zone"] = subnet["zone"]
 			}
-		}
-	}
+			if subnet["usage"] != nil {
+				subnetMap["usage"] = subnet["usage"]
+			}
+			if subnet["subnetGroup"] != nil {
+				subnetMap["subnet_group"] = subnet["subnetGroup"]
+			}
 
-	if !found {
-		return fmt.Errorf("Unable to find the Site Vrf Region %s", stateRegion)
+			subnetList = append(subnetList, subnetMap)
+		}
+		cidrMap["subnet"] = subnetList
+
+		cidrList = append(cidrList, cidrMap)
 	}
+	d.Set("cidr", cidrList)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
