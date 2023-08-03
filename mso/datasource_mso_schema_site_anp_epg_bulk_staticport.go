@@ -23,104 +23,71 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"static_ports": &schema.Schema{
-				Type: schema.TypeList,
+				Type:     schema.TypeList,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"path_type": {
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"port",
-								"vpc",
-								"dpc",
-							}, false),
 						},
 						"pod": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"leaf": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"path": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"vlan": {
 							Type:     schema.TypeInt,
-							Optional: true,
 							Computed: true,
 						},
 						"deployment_immediacy": {
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"immediate",
-								"lazy",
-							}, false),
 						},
 						"fex": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringIsNotEmpty,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"micro_seg_vlan": {
 							Type:     schema.TypeInt,
-							Optional: true,
 							Computed: true,
 						},
 						"mode": {
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"native",
-								"regular",
-								"untagged",
-							}, false),
 						},
 					},
 				},
-				Optional: true,
-				Computed: true,
 			},
 		}),
 	}
@@ -136,7 +103,7 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 	templateName := d.Get("template_name").(string)
 	anp := d.Get("anp_name").(string)
 	epg := d.Get("epg_name").(string)
-	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, siteId, templateName, anp, epg)
+	epgDn := fmt.Sprintf("%s/sites/%s-%s/anps/%s/epgs/%s", schemaId, siteId, templateName, anp, epg)
 
 	d.SetId(epgDn)
 	d.Set("schema_id", schemaId)
@@ -145,6 +112,7 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 	if err != nil {
 		return err
 	} else {
+		d.Set("schema_id", schemaId)
 		d.Set("site_id", siteId)
 		d.Set("template_name", templateName)
 	}
