@@ -13,10 +13,10 @@ Data source for MSO Schema Template External End Point Group Selector.
 ```hcl
 
 data "mso_schema_template_external_epg_selector" "example" {
-    schema_id          = data.mso_schema.schema1.id
-    template_name      = "Template1"
-    external_epg_name  = "epg1"
-    name               = "check"
+  schema_id          = data.mso_schema.schema1.id
+  template_name      = "Template1"
+  external_epg_name  = "epg1"
+  name               = "check"
 }
 
 ```

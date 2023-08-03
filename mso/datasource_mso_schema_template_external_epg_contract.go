@@ -39,15 +39,19 @@ func dataSourceMSOTemplateExternalEpgContract() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"relationship_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"contract_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"relationship_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -70,18 +74,26 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 	if err != nil {
 		return fmt.Errorf("No Template found")
 	}
-	stateTemplate := d.Get("template_name").(string)
+	template := d.Get("template_name").(string)
 	found := false
-	stateEPG := d.Get("external_epg_name").(string)
-	stateContract := d.Get("contract_name").(string)
+	epg := d.Get("external_epg_name").(string)
+	contractName := d.Get("contract_name").(string)
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaId
+	}
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = template
+	}
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+		currentTemplate := models.StripQuotes(tempCont.S("name").String())
 
-		if apiTemplate == stateTemplate {
+		if currentTemplate == template {
 			epgCount, err := tempCont.ArrayCount("externalEpgs")
 			if err != nil {
 				return fmt.Errorf("Unable to get External Epg list")
@@ -91,8 +103,8 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 				if err != nil {
 					return err
 				}
-				apiEpg := models.StripQuotes(epgCont.S("name").String())
-				if apiEpg == stateEPG {
+				currentEpg := models.StripQuotes(epgCont.S("name").String())
+				if currentEpg == epg {
 					contractCount, err := epgCont.ArrayCount("contractRelationships")
 					if err != nil {
 						return fmt.Errorf("Unable to get contract Relationships list")
@@ -105,11 +117,11 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
-						if stateContract == (fmt.Sprintf("%s", split[3])) {
-							d.SetId(fmt.Sprintf("%s", split[3]))
-							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
-							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
-							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
+						if contractName == split[3] && contractSchemaId == split[1] && contractTemplateName == split[2] {
+							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s-%s-%s", schemaId, template, epg, contractSchemaId, contractTemplateName, contractName))
+							d.Set("contract_name", contractName)
+							d.Set("contract_schema_id", contractSchemaId)
+							d.Set("contract_template_name", contractTemplateName)
 							d.Set("relationship_type", models.StripQuotes(contractCont.S("relationshipType").String()))
 							found = true
 							break
@@ -122,7 +134,7 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("External Epg Contract Not Found")
+		return fmt.Errorf("Unable to find the External EPG Contract %s in Template %s of Schema Id %s ", contractName, contractTemplateName, contractSchemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

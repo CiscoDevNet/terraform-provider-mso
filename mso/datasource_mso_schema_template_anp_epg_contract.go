@@ -44,12 +44,16 @@ func dataSourceMSOTemplateAnpEpgContract() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"relationship_type": &schema.Schema{
 				Type:     schema.TypeString,
@@ -75,19 +79,27 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 	if err != nil {
 		return fmt.Errorf("No Template found")
 	}
-	stateTemplate := d.Get("template_name").(string)
+	template := d.Get("template_name").(string)
 	found := false
-	stateANP := d.Get("anp_name")
-	stateEPG := d.Get("epg_name")
-	stateContract := d.Get("contract_name")
+	anp := d.Get("anp_name")
+	epg := d.Get("epg_name")
+	contract := d.Get("contract_name")
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaId
+	}
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = template
+	}
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
+		currentTemplate := models.StripQuotes(tempCont.S("name").String())
 
-		if apiTemplate == stateTemplate {
+		if currentTemplate == template {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get ANP list")
@@ -97,8 +109,8 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 				if err != nil {
 					return err
 				}
-				apiANP := models.StripQuotes(anpCont.S("name").String())
-				if apiANP == stateANP {
+				currentAnp := models.StripQuotes(anpCont.S("name").String())
+				if currentAnp == anp {
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return fmt.Errorf("Unable to get EPG list")
@@ -108,8 +120,8 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 						if err != nil {
 							return err
 						}
-						apiEPG := models.StripQuotes(epgCont.S("name").String())
-						if apiEPG == stateEPG {
+						currentEpg := models.StripQuotes(epgCont.S("name").String())
+						if currentEpg == epg {
 							crefCount, err := epgCont.ArrayCount("contractRelationships")
 							if err != nil {
 								return fmt.Errorf("Unable to get the contract relationships list")
@@ -120,16 +132,14 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 									return err
 								}
 								contractRef := models.StripQuotes(crefCont.S("contractRef").String())
-								apiRelationshipType := models.StripQuotes(crefCont.S("relationshipType").String())
 								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 								match := re.FindStringSubmatch(contractRef)
-								apiContract := match[3]
-								if apiContract == stateContract {
-									d.SetId(apiContract)
-									d.Set("contract_name", match[3])
-									d.Set("contract_schema_id", match[1])
-									d.Set("contract_template_name", match[2])
-									d.Set("relationship_type", apiRelationshipType)
+								if match[3] == contract && match[1] == contractSchemaId && match[2] == contractTemplateName {
+									d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/contracts/%s-%s-%s", schemaId, template, anp, epg, contractSchemaId, contractTemplateName, contract))
+									d.Set("contract_name", contract)
+									d.Set("contract_schema_id", contractSchemaId)
+									d.Set("contract_template_name", contractTemplateName)
+									d.Set("relationship_type", models.StripQuotes(crefCont.S("relationshipType").String()))
 									found = true
 									break
 								}
@@ -145,7 +155,7 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the Contract %s", stateContract)
+		return fmt.Errorf("Unable to find the Contract %s in Template %s of Schema Id %s ", contract, contractTemplateName, contractSchemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

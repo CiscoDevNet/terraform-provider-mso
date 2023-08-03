@@ -26,13 +26,14 @@ data "mso_schema_template_anp_epg_contract" "example" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The schema ID of the Contract.
-* `template_name` - (Required) The template name of the Contract.
+* `schema_id` - (Required) The schema ID of the EPG.
+* `template_name` - (Required) The template name of the EPG.
 * `anp_name` - (Required) The name of the ANP.
 * `epg_name` - (Required) The name of the EPG.
 * `contract_name` - (Required) The name of the Contract.
+* `contract_schema_id` - (Optional) The schema ID of the Contract. The `schema_id` of the EPG. will be used if not provided. 
+* `contract_template_name` - (Optional) The template name of the Contract. The `contract_template_name` of the EPG. will be used if not provided. 
 
 ## Attribute Reference ##
-* `contract_schema_id` - (Read-Only) The schema ID associated with the Contract.
-* `contract_template_name` - (Read-Only) The template name associated with the Contract.
+
 * `relationship_type` - (Read-Only) The relationship type of the Contract.

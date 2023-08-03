@@ -48,12 +48,16 @@ func dataSourceMSOTemplateVRFContract() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
 	}
@@ -75,20 +79,27 @@ func dataSourceMSOTemplateVRFContractRead(d *schema.ResourceData, m interface{})
 	if err != nil {
 		return fmt.Errorf("No Template found")
 	}
-	stateTemplate := d.Get("template_name").(string)
+	template := d.Get("template_name").(string)
 	found := false
-	stateVRF := d.Get("vrf_name").(string)
-	stateContract := d.Get("contract_name").(string)
+	vrf := d.Get("vrf_name").(string)
+	contractName := d.Get("contract_name").(string)
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaId
+	}
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = template
+	}
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
-		if apiTemplate == stateTemplate {
-			d.Set("template_name", apiTemplate)
+		currentTemplate := models.StripQuotes(tempCont.S("name").String())
+		if currentTemplate == template {
+			d.Set("template_name", template)
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
 				return fmt.Errorf("Unable to get VRF list")
@@ -98,10 +109,9 @@ func dataSourceMSOTemplateVRFContractRead(d *schema.ResourceData, m interface{})
 				if err != nil {
 					return err
 				}
-				apiVRF := models.StripQuotes(vrfCont.S("name").String())
-				if apiVRF == stateVRF {
-					d.Set("vrf_name", apiVRF)
-					log.Printf("uniiii %v", vrfCont)
+				currentVrf := models.StripQuotes(vrfCont.S("name").String())
+				if currentVrf == vrf {
+					d.Set("vrf_name", currentVrf)
 					contractCount, err := vrfCont.ArrayCount(humanToApiType[relationshipType])
 					if err != nil {
 						return fmt.Errorf("Unable to get contract Relationships list")
@@ -115,11 +125,11 @@ func dataSourceMSOTemplateVRFContractRead(d *schema.ResourceData, m interface{})
 						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 						split := re.FindStringSubmatch(contractRef)
 						if contractRef != "{}" && contractRef != "" {
-							if stateContract == fmt.Sprintf("%s", split[3]) {
-								d.SetId(fmt.Sprintf("%s", split[3]))
-								d.Set("contract_name", fmt.Sprintf("%s", split[3]))
-								d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
-								d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
+							if contractName == split[3] && contractSchemaId == split[1] && contractTemplateName == split[2] {
+								d.SetId(fmt.Sprintf("%s/templates/%s/vrfs/%s/%s/%s-%s-%s", schemaId, template, vrf, humanToApiType[relationshipType], contractSchemaId, contractTemplateName, contractName))
+								d.Set("contract_name", contractName)
+								d.Set("contract_schema_id", contractSchemaId)
+								d.Set("contract_template_name", contractTemplateName)
 								d.Set("relationship_type", relationshipType)
 								found = true
 								break
@@ -133,7 +143,7 @@ func dataSourceMSOTemplateVRFContractRead(d *schema.ResourceData, m interface{})
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find vrf contract")
+		return fmt.Errorf("Unable to find the VRF Contract %s in Template %s of Schema Id %s ", contractName, contractTemplateName, contractSchemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

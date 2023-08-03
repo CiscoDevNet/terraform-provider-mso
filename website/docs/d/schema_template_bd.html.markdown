@@ -15,9 +15,9 @@ Data source for MSO Schema Template Bridge Domain (BD).
 ```hcl
 
 data "mso_schema_template_bd" "example" {
-    schema_id              = data.mso_schema.schema1.id
-    template_name          = "Template1"
-    name                   = "testBD"
+  schema_id     = data.mso_schema.schema1.id
+  template_name = "Template1"
+  name          = "testBD"
 }
 
 ```

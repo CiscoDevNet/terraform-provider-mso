@@ -31,3 +31,6 @@ data "mso_schema_site_external_epg" "example" {
 ## Attribute Reference ##
 
 * `l3out_name` - (Read-Only) The name of the L3Out.
+* `l3out_schema_id` - (Read-Only) The schema ID of the L3out.
+* `l3out_template_name` - (Read-Only) The template name of the L3out.
+* `l3out_dn` - (Read-Only) The DN of the L3out.
