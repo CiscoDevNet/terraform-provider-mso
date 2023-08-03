@@ -184,7 +184,7 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("The ANP EPG Subnet is not found")
+		return fmt.Errorf("Unable to find ANP EPG ip %s", ip)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
