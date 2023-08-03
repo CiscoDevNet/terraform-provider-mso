@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_vrf_region_cidr_subnet"
 sidebar_current: "docs-mso-data-source-schema_site_vrf_region_cidr_subnet"
 description: |-
-  Data source for MSO Schema Site Vrf Region Cidr Subnet.
+  Data source for MSO Schema Site VRF Region CIDR Subnet.
 ---
 
 # mso_schema_site_vrf_region_cidr_subnet #
 
- Data source for MSO Schema Site Vrf Region Cidr Subnet.
+ Data source for MSO Schema Site VRF Region CIDR Subnet.
 
 ## Example Usage ##
 
 ```hcl
 
- data "mso_schema_site_vrf_region_cidr_subnet" "vrfRegion" {
+ data "mso_schema_site_vrf_region_cidr_subnet" "example" {
   schema_id     = data.mso_schema.schema1.id
   site_id       = data.mso_site.site1.id
   template_name = "Template1"
@@ -28,21 +28,20 @@ description: |-
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Vrf Region Cidr Subnet.
-* `site_id` - (Required) SiteID under which you want to deploy Vrf Region Cidr Subnet.
-* `template_name` - (Required)  Template under which you want to deploy Vrf Region.
-* `vrf_name` - (Required) Name of Vrf.
-* `region_name` - (Required) Name of Region to manage.
-* `cidr_ip` - (Required) The IP range of for the region CIDR where Vrf Region Cidr Subnet to be created.
-* `ip` - (Required) The IP subnet of this region CIDR.
-
+* `schema_id` - (Required) The schema ID under which the Subnet is deployed.
+* `site_id` - (Required) The site ID under which the Subnet is deployed.
+* `template_name` - (Required) The template name under which the Subnet is deployed.
+* `vrf_name` - (Required) The name of the VRF under which the Subnet is deployed.
+* `region_name` - (Required) The name of the VRF Region under which the Subnet is deployed.
+* `cidr_ip` - (Required) The IP range of the VRF Region where the Subnet is deployed in CIDR notation..
+* `ip` - (Required) The IP of the Subnet.
 
 ## Attribute Reference ##
 
-* `zone` - (Read-Only) The name of the availability zone for the region CIDR subnet. 
-* `name` - (Read-Only) The name for the region CIDR Subnet.
-* `usage` - (Read-Only) The usage for the region CIDR Subnet.
-* `subnet_group` - (Read-Only) The subnet group for the region CIDR Subnet.
+* `zone` - (Read-Only) The availability zone name of the Subnet. 
+* `name` - (Read-Only) The name Subnet of the Subnet.
+* `usage` - (Read-Only) The usage of the Subnet.
+* `subnet_group` - (Read-Only) The group of the Subnet.
 
 ## Note ##
 Multiple Subnets with same Ip are allowed, but the operations will take place on the first found Subnet with the given Ip.
