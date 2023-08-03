@@ -16,83 +16,53 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttr() *schema.Resource {
 		Read: dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead,
 
 		Schema: (map[string]*schema.Schema{
-
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"anp_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"epg_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"useg_type": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
-
 			"description": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
-
 			"operator": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"equals",
-					"startsWith",
-					"endsWith",
-					"contains",
-				}, false),
 			},
-
 			"category": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
-
 			"value": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
-
 			"useg_subnet": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 		}),
@@ -168,25 +138,24 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 								if currentName == name {
 									d.SetId(currentName)
 									d.Set("name", currentName)
-									d.Set("operator", models.StripQuotes(usegCont.S("operator").String()))
 									d.Set("useg_type", models.StripQuotes(usegCont.S("type").String()))
 									d.Set("value", models.StripQuotes(usegCont.S("value").String()))
 
-									category := models.StripQuotes(usegCont.S("category").String())
-									desc := models.StripQuotes(usegCont.S("description").String())
-
-									if category != "{}" {
-										d.Set("category", category)
+									if usegCont.Exists("operator") {
+										d.Set("operator", models.StripQuotes(usegCont.S("operator").String()))
+									} else {
+										d.Set("operator", "")
+									}
+									if usegCont.Exists("category") {
+										d.Set("category", models.StripQuotes(usegCont.S("category").String()))
 									} else {
 										d.Set("category", "")
 									}
-
-									if desc != "{}" {
-										d.Set("description", desc)
+									if usegCont.Exists("description") {
+										d.Set("description", models.StripQuotes(usegCont.S("description").String()))
 									} else {
 										d.Set("description", "")
 									}
-
 									if usegCont.Exists("fvSubnet") {
 										usegSubnet, _ := strconv.ParseBool(models.StripQuotes(usegCont.S("fvSubnet").String()))
 										d.Set("useg_subnet", usegSubnet)
