@@ -302,7 +302,6 @@ func resourceMSOUserUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Schema Creation finished successfully", d.Id())
 
 	return resourceMSOUserRead(d, m)
-	return nil
 
 }
 
