@@ -3,16 +3,16 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_external_epg_selector"
 sidebar_current: "docs-mso-data-source-schema_site_external_epg_selector"
 description: |-
-  Data source for MSO Schema Site external Endpoint Groups Selector.
+  Data source for MSO Schema Site External End Point Group Selector.
 ---
 
 # mso_schema_site_external_epg_selector #
 
-Data source for MSO Schema Site external Endpoint Groups Selector.
+Data source for MSO Schema Site External End Point Group Selector.
 
 ```hcl
 
-data "mso_schema_site_external_epg_selector" "check"{
+data "mso_schema_site_external_epg_selector" "example"{
   schema_id         = data.mso_schema.schema1.id
   template_name     = "Template1"
   site_id           = data.mso_site.site1.id
@@ -24,12 +24,12 @@ data "mso_schema_site_external_epg_selector" "check"{
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy external Epg Selector.
-* `site_id` - (Required) site ID under which you want to deploy external Epg Selector.
-* `template_name` - (Required) Template under above site id where external Epg Selector to be created.
-* `external_epg_name` - (Required) Name of Endpoint Group.
-* `name` - (Required) Name for the selector.
+* `schema_id` - (Required) The schema ID under which the Selector is deployed.
+* `site_id` - (Required) The site ID under which the Selector is deployed.
+* `template_name` - (Required) The template name under which the Selector is deployed.
+* `external_epg_name` - (Required) The name of the Selector.
+* `name` - (Required) The name of the Selector.
 
 ## Attribute Reference ##
 
-* `ip` - (Optional) Ip address associated with the selector.
+* `ip` - (Optional) The IP address of the Selector.
