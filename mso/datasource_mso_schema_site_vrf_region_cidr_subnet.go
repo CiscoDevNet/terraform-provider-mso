@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -49,14 +48,14 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"name": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"zone": &schema.Schema{
 				Type:     schema.TypeString,
@@ -78,124 +77,79 @@ func dataSourceMSOSchemaSiteVrfRegionCidrSubnetRead(d *schema.ResourceData, m in
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	vrf := d.Get("vrf_name").(string)
+	region := d.Get("region_name").(string)
+	cidrIp := d.Get("cidr_ip").(string)
+	ip := d.Get("ip").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	vrfCont, err := getSiteVrf(vrf, siteCont)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
+		return err
+	} else {
+		d.Set("vrf_name", vrf)
 	}
 
-	stateSite := d.Get("site_id").(string)
-	stateTemplate := d.Get("template_name").(string)
-	found := false
-	stateVrf := d.Get("vrf_name").(string)
-	stateRegion := d.Get("region_name").(string)
-	stateCidr := d.Get("cidr_ip").(string)
-	stateIp := d.Get("ip").(string)
+	regionCont, err := getSiteVrfRegion(region, vrfCont)
+	if err != nil {
+		return err
+	} else {
+		d.Set("region_name", region)
+	}
 
-	for i := 0; i < count && !found; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
+	cidrCont, err := getSiteVrfRegionCIDR(cidrIp, regionCont)
+	if err != nil {
+		return err
+	} else {
+		d.Set("cidr_ip", cidrIp)
+	}
+
+	subnetCount, err := cidrCont.ArrayCount("subnets")
+	if err != nil {
+		return fmt.Errorf("Unable to get Subnet list")
+	}
+
+	found := false
+	for m := 0; m < subnetCount; m++ {
+		subnetCont, err := cidrCont.ArrayElement(m, "subnets")
 		if err != nil {
 			return err
 		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
-
-		if apiSite == stateSite && apiTemplate == stateTemplate {
-			apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return fmt.Errorf("Unable to get Vrf list")
+		currentIp := models.StripQuotes(subnetCont.S("ip").String())
+		if currentIp == ip {
+			found = true
+			d.SetId(fmt.Sprintf("%s/sites/%s-%s/vrfs/%s/regions/%s/cidr/%s/subnet/%s", schemaId, siteId, templateName, vrf, region, cidrIp, ip))
+			d.Set("ip", ip)
+			if subnetCont.Exists("zone") {
+				d.Set("zone", models.StripQuotes(subnetCont.S("zone").String()))
 			}
-			for j := 0; j < vrfCount && !found; j++ {
-				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
-				if err != nil {
-					return err
-				}
-				apiVrfRef := models.StripQuotes(vrfCont.S("vrfRef").String())
-				split := strings.Split(apiVrfRef, "/")
-				apiVrf := split[6]
-				if apiVrf == stateVrf {
-					regionCount, err := vrfCont.ArrayCount("regions")
-					if err != nil {
-						return fmt.Errorf("Unable to get Regions list")
-					}
-					for k := 0; k < regionCount && !found; k++ {
-						regionCont, err := vrfCont.ArrayElement(k, "regions")
-						if err != nil {
-							return err
-						}
-						apiRegion := models.StripQuotes(regionCont.S("name").String())
-						if apiRegion == stateRegion {
-							cidrCount, err := regionCont.ArrayCount("cidrs")
-							if err != nil {
-								return fmt.Errorf("Unable to get Cidr list")
-							}
-							for l := 0; l < cidrCount && !found; l++ {
-								cidrCont, err := regionCont.ArrayElement(l, "cidrs")
-								if err != nil {
-									return err
-								}
-								apiCidr := models.StripQuotes(cidrCont.S("ip").String())
-								log.Println("Current Cidr Ip", apiCidr)
-								if apiCidr == stateCidr {
-									subnetCount, err := cidrCont.ArrayCount("subnets")
-									if err != nil {
-										return fmt.Errorf("Unable to get Subnet list")
-									}
-									for m := 0; m < subnetCount; m++ {
-										subnetCont, err := cidrCont.ArrayElement(m, "subnets")
-										if err != nil {
-											return err
-										}
-										apiIp := models.StripQuotes(subnetCont.S("ip").String())
-										if apiIp == stateIp {
-											d.SetId(apiIp)
-											d.Set("ip", apiIp)
-											d.Set("site_id", apiSite)
-											d.Set("template_name", apiTemplate)
-											d.Set("cidr_name", apiCidr)
-											d.Set("vrf_name", apiVrf)
-											d.Set("region_name", apiRegion)
-											if subnetCont.Exists("zone") {
-												d.Set("zone", models.StripQuotes(subnetCont.S("zone").String()))
-											}
-											if subnetCont.Exists("usage") {
-												d.Set("usage", models.StripQuotes(subnetCont.S("usage").String()))
-											}
-											if subnetCont.Exists("subnetGroup") {
-												d.Set("subnet_group", models.StripQuotes(subnetCont.S("subnetGroup").String()))
-											}
-											if subnetCont.Exists("name") {
-												d.Set("name", models.StripQuotes(subnetCont.S("name").String()))
-											}
-											found = true
-											break
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+			if subnetCont.Exists("usage") {
+				d.Set("usage", models.StripQuotes(subnetCont.S("usage").String()))
 			}
+			if subnetCont.Exists("subnetGroup") {
+				d.Set("subnet_group", models.StripQuotes(subnetCont.S("subnetGroup").String()))
+			}
+			if subnetCont.Exists("name") {
+				d.Set("name", models.StripQuotes(subnetCont.S("name").String()))
+			}
+			break
 		}
 	}
 
 	if !found {
 		d.SetId("")
-		d.Set("schema_id", "")
-		d.Set("site_id", "")
-		d.Set("template_name", "")
-		d.Set("region_name", "")
-		d.Set("vrf_name", "")
-		return fmt.Errorf("Unable to find VRF Region Cidr Subnet %s", stateIp)
-
+		return fmt.Errorf("Unable to find VRF Region Cidr Subnet %s", ip)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
