@@ -3,39 +3,39 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_bd_subnet"
 sidebar_current: "docs-mso-data-source-schema_site_bd_subnet"
 description: |-
-  Data source for MSO Schema Site Bd Subnet.
+  Data source for MSO Schema Site Bridge Domain (BD) Subnet.
 ---
 
 # mso_schema_site_bd_subnet #
 
-Data source for MSO Schema Site Bridge Domain(Bd) Subnet.
+Data source for MSO Schema Site Bridge Domain (BD) Subnet.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_site_bd_subnet" "s1" {
-  schema_id = data.mso_schema.schema1.id
-  site_id   = data.mso_site.site1.id
-  bd_name   = "WebServer-Finance"
-  ip        = "200.168.240.1/24"
+data "mso_schema_site_bd_subnet" "example" {
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
+  template_name = "Template1"
+  bd_name       = "WebServer-Finance"
+  ip            = "200.168.240.1/24"
 }
 
 ```
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy the subnet.
-* `site_id` - (Required) SiteID under which you want to deploy the subnet.
-* `bd_name` - (Required) Bd name under which you want to deploy the subnet.
-* `ip` - (Required) The IP of the subnet.
-* `template_name` - (Required) Template name under which you want to deploy the subnet.
+* `schema_id` - (Required) The schema ID under which the Subnet is deployed.
+* `site_id` - (Required) The site ID under which the Subnet is deployed.
+* `template_name` - (Required) The template name under which the Subnet is deployed.
+* `bd_name` - (Required)  The bridge domain name under which the Subnet is deployed.
+* `ip` - (Required) The IP of the Subnet.
 
 ## Attribute Reference ##
 
-* `scope` - (Read-Only) The scope of the subnet.
-* `shared` - (Read-Only) Whether this subnet is shared between VRFs.
-* `querier` - (Read-Only) Whether this subnet is an IGMP querier.
-* `no_default_gateway` - (Read-Only) Whether this subnet has a default gateway.
-* `description` - (Read-Only) The description of this subnet. 
-
+* `scope` - (Read-Only) The scope of the Subnet.
+* `shared` - (Read-Only) Whether the Subnet is shared between VRFs.
+* `querier` - (Read-Only) Whether the Subnet is an IGMP querier.
+* `no_default_gateway` - (Read-Only) Whether the Subnet has a default gateway.
+* `description` - (Read-Only) The description of the Subnet.
