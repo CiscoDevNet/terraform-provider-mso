@@ -142,7 +142,7 @@ func setRouteLeakFromSchema(d *schema.ResourceData, schemaCont *container.Contai
 					for index, routeLeak := range vrfDetails["routeLeak"].(interface{}).([]interface{}) {
 						routeLeakDetails := routeLeak.(map[string]interface{})
 						if routeLeakDetails["vrfRef"].(string) == targetVrfRef {
-							d.SetId(fmt.Sprintf("/sites/%s-%s/vrfs/%s/routeLeak/%v", siteId, templateName, vrfName, index))
+							d.SetId(fmt.Sprintf("%s/sites/%s-%s/vrfs/%s/routeLeak/%v", schemaId, siteId, templateName, vrfName, index))
 							d.Set("schema_id", schemaId)
 							d.Set("site_id", siteId)
 							d.Set("template_name", templateName)
