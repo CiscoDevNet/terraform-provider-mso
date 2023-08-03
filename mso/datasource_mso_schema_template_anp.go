@@ -17,29 +17,24 @@ func datasourceMSOSchemaTemplateAnp() *schema.Resource {
 
 		SchemaVersion: version,
 		Schema: (map[string]*schema.Schema{
-
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"display_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		}),
 	}
@@ -103,7 +98,7 @@ func datasourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) e
 	}
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("The ANP is not found")
+		return fmt.Errorf("Unable to find ANP %s", anpName)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
