@@ -3,32 +3,29 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_anp"
 sidebar_current: "docs-mso-data-source-schema_site_anp"
 description: |-
-  MSO Schema Site Application Network Profile(ANP) Data source.
+  Data source for MSO Schema Site Application Network Profile (ANP).
 ---
 
 # mso_schema_site_anp #
 
- MSO Schema Site Application Network Profile(ANP) Data source.
+ Data source for MSO Schema Site Application Network Profile (ANP).
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_site_anp" "st10" {
-  anp_name      = "anp1"
+data "mso_schema_site_anp" "example" {
   schema_id     = data.mso_schema.schema1.id
   site_id       = data.mso_site.site1.id
   template_name = "Template1"
+  anp_name      = "anp1"
 }
 
 ```
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Site Anp.
-* `site_id` - (Required) SiteID under which you want to deploy Anp.
-* `anp_name` - (Required) Name of Site Anp. The name of the ANP should be present in the ANP list of the given `schema_id` and `template_name`
-
-## Attribute Reference ##
-
-* `template_name` - (Optional) Template where Site Anp to be created.
+* `schema_id` - (Required) The schema ID under which the ANP is deployed.
+* `site_id` - (Required) The site ID under which the ANP is deployed.
+* `template_name` - (Required) The template name under which the ANP is deployed.
+* `anp_name` - (Required) The name of the ANP.
