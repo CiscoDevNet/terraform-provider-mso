@@ -3,10 +3,8 @@ package mso
 import (
 	"fmt"
 	"log"
-	"regexp"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -22,24 +20,21 @@ func dataSourceMSOSchemaSiteVrf() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"template_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"vrf_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
-			},
-			"template_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
@@ -50,56 +45,26 @@ func dataSourceMSOSchemaSiteVrfRead(d *schema.ResourceData, m interface{}) error
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
+	siteId := d.Get("site_id").(string)
+	templateName := d.Get("template_name").(string)
+	vrf := d.Get("vrf_name").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	siteCont, err := getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName, msoClient)
 	if err != nil {
 		return err
+	} else {
+		d.Set("schema_id", schemaId)
+		d.Set("site_id", siteId)
+		d.Set("template_name", templateName)
 	}
-	count, err := cont.ArrayCount("sites")
+
+	_, err = getSiteVrf(vrf, siteCont)
 	if err != nil {
-		return fmt.Errorf("No Sites found")
-	}
-	stateSite := d.Get("site_id").(string)
-	found := false
-	stateVrf := d.Get("vrf_name").(string)
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return err
-		}
-		apiSite := models.StripQuotes(tempCont.S("siteId").String())
-
-		if apiSite == stateSite {
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return fmt.Errorf("Unable to get Vrf list")
-			}
-			for j := 0; j < vrfCount; j++ {
-				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
-				if err != nil {
-					return err
-				}
-				vrfRef := models.StripQuotes(vrfCont.S("vrfRef").String())
-				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
-				match := re.FindStringSubmatch(vrfRef)
-				if match[3] == stateVrf {
-					d.SetId(match[3])
-					d.Set("vrf_name", match[3])
-					d.Set("schema_id", match[1])
-					d.Set("template_name", match[2])
-					d.Set("site_id", apiSite)
-					found = true
-					break
-				}
-			}
-		}
-	}
-
-	if !found {
-		d.SetId("")
-		return fmt.Errorf("Unable to find Site Vrf %s", stateVrf)
+		return err
+	} else {
+		d.SetId(fmt.Sprintf("%s/sites/%s-%s/vrfs/%s", schemaId, siteId, templateName, vrf))
+		d.Set("vrf_name", vrf)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
