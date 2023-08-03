@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -646,71 +645,6 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 
 	d.SetId("")
 	return resourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d, m)
-}
-
-func getSiteFromSiteIdAndTemplate(schemaId, siteId, templateName string, msoClient *client.Client) (*container.Container, error) {
-	schemaObject, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
-	if err != nil {
-		return nil, err
-	}
-	siteCount, err := schemaObject.ArrayCount("sites")
-	if err != nil {
-		return nil, fmt.Errorf("No Sites found")
-	}
-
-	for i := 0; i < siteCount; i++ {
-		site, err := schemaObject.ArrayElement(i, "sites")
-		if err != nil {
-			return nil, err
-		}
-
-		if models.G(site, "siteId") == siteId && models.G(site, "templateName") == templateName {
-			return site, nil
-		}
-	}
-	return nil, fmt.Errorf("Site-Template association for %v-%v is not found.", siteId, templateName)
-}
-
-func getSiteAnp(anpName string, site *container.Container) (*container.Container, error) {
-
-	anpCount, err := site.ArrayCount("anps")
-	if err != nil {
-		return nil, fmt.Errorf("Unable to get Anp list")
-	}
-	for i := 0; i < anpCount; i++ {
-		anpCont, err := site.ArrayElement(i, "anps")
-		if err != nil {
-			return nil, err
-		}
-		anpRef := models.G(anpCont, "anpRef")
-		re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/anps/(.*)")
-		match := re.FindStringSubmatch(anpRef)
-		if match[3] == anpName {
-			return anpCont, nil
-		}
-	}
-	return nil, fmt.Errorf("ANP %v is not found in Site.", anpName)
-}
-
-func getSiteEpg(epgName string, anpCont *container.Container) (*container.Container, error) {
-
-	epgCount, err := anpCont.ArrayCount("epgs")
-	if err != nil {
-		return nil, fmt.Errorf("Unable to get EPG list")
-	}
-	for i := 0; i < epgCount; i++ {
-		epgCont, err := anpCont.ArrayElement(i, "epgs")
-		if err != nil {
-			return nil, err
-		}
-		epgRef := models.G(epgCont, "epgRef")
-		re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/epgs/(.*)")
-		match := re.FindStringSubmatch(epgRef)
-		if match[3] == epgName {
-			return epgCont, nil
-		}
-	}
-	return nil, fmt.Errorf("EPG %v is not found in Site.", epgName)
 }
 
 func getStaticPortPathValues(pathValue string, re *regexp.Regexp) map[string]string {
