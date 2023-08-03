@@ -21,54 +21,45 @@ func dataSourceMSOTemplateSubnetBD() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"scope": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
+			},
+			"primary": &schema.Schema{
+				Type:     schema.TypeBool,
 				Computed: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"querier": &schema.Schema{
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 		}),
@@ -142,6 +133,9 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 							}
 							if dataCon.Exists("querier") {
 								d.Set("querier", dataCon.S("querier").Data().(bool))
+							}
+							if dataCon.Exists("primary") {
+								d.Set("primary", dataCon.S("primary").Data().(bool))
 							}
 							found = true
 							break

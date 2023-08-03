@@ -3,18 +3,18 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_bd_subnet"
 sidebar_current: "docs-mso-data-source-schema_template_bd_subnet"
 description: |-
-  Data source for MSO Schema Template Bridge Domain Subnet.
+  Data source for MSO Schema Template Bridge Domain (BD) Subnet.
 ---
 
 # mso_schema_template_bd_subnet #
 
-Data source for MSO Schema Template Bridge Domain Subnet.
+Data source for MSO Schema Template Bridge Domain (BD) Subnet.
 
 ## Example Usage ##
 
 ```hcl
 
-data "mso_schema_template_bd_subnet" "bridge_domain_subnet" {
+data "mso_schema_template_bd_subnet" "example" {
   schema_id     = data.mso_schema.schema1.id
   template_name = "Template1"
   bd_name       = "testBD"
@@ -25,15 +25,16 @@ data "mso_schema_template_bd_subnet" "bridge_domain_subnet" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Bridge Domain.
-* `template_name` - (Required) Template where Bridge Domain to be created.
-* `bd_name` - (Required) Name of Bridge Domain.
-* `ip` - (Required) The IP range in CIDR notation.
+* `schema_id` - (Required) The schema ID of the Subnet.
+* `template_name` - (Required) The template name of the Subnet.
+* `bd_name` - (Required) The name of the BD.
+* `ip` - (Required) The IP range of the Subnet in CIDR notation.
 
 ## Attribute Reference ##
 
-* `scope` - (Optional) The scope of the subnet.
-* `shared` - (Optional) Whether this subnet is shared between VRFs.
-* `description` - (Optional) The description for the subnet.
-* `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
-* `querier` - (Optional) Whether this subnet is an IGMP querier.
+* `scope` - (Read-Only) The scope of the Subnet.
+* `shared` - (Read-Only) Whether the Subnet is shared between VRFs.
+* `description` - (Read-Only) The description of the Subnet.
+* `no_default_gateway` - (Read-Only) Whether the Subnet has a default gateway.
+* `querier` - (Read-Only) Whether the Subnet is an IGMP querier.
+* `primary` - (Read-Only) Whether the Subnet is the primary Subnet.
