@@ -24,6 +24,8 @@ resource "mso_schema_template_bd_subnet" "bdsub1" {
   shared             = true
   no_default_gateway = false
   querier            = true
+  primary            = false
+  virtual            = false
 }
 
 ```
@@ -34,11 +36,13 @@ resource "mso_schema_template_bd_subnet" "bdsub1" {
 * `template_name` - (Required) Template where Bridge Domain Subnet to be created.
 * `bd_name` - (Required) Name of Bridge Domain.
 * `ip` - (Required) The IP range in CIDR notation.
-* `scope` - (Required) The scope of the subnet. Allowed values are `private`, `public`.
+* `scope` - (Required) The scope of the subnet. Allowed values are `private` and `public`.
+* `shared` - (Optional) Whether this subnet is shared between VRFs.
 * `description` - (Optional) The description of the subnet.
-* `shared` - (Required) Whether this subnet is shared between VRFs.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
 * `querier` - (Optional) Whether this subnet is an IGMP querier.
+* `primary` - (Optional) Whether the Subnet is the primary Subnet.
+* `virtual` - (Optional) Whether the Subnet is virtual.
 
 ## Attribute Reference ##
 

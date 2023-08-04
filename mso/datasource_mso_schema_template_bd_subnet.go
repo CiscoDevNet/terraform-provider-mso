@@ -53,6 +53,10 @@ func dataSourceMSOTemplateSubnetBD() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"virtual": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -133,6 +137,9 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 							}
 							if dataCon.Exists("primary") {
 								d.Set("primary", dataCon.S("primary").Data().(bool))
+							}
+							if dataCon.Exists("virtual") {
+								d.Set("virtual", dataCon.S("virtual").Data().(bool))
 							}
 							found = true
 							break

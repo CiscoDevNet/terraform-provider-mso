@@ -50,7 +50,6 @@ func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -58,18 +57,34 @@ func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"scope": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-			},
-			"scope": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				ValidateFunc: validation.StringInSlice([]string{
+					"public",
+					"private",
+				}, false),
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
+			},
+			"primary": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+			"virtual": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -161,6 +176,12 @@ func resourceMSOSchemaSiteBdSubnetImport(d *schema.ResourceData, m interface{}) 
 							if subnetCont.Exists("querier") {
 								d.Set("querier", subnetCont.S("querier").Data().(bool))
 							}
+							if subnetCont.Exists("primary") {
+								d.Set("primary", subnetCont.S("primary").Data().(bool))
+							}
+							if subnetCont.Exists("virtual") {
+								d.Set("virtual", subnetCont.S("virtual").Data().(bool))
+							}
 							found = true
 							break
 						}
@@ -215,9 +236,17 @@ func resourceMSOSchemaSiteBdSubnetCreate(d *schema.ResourceData, m interface{}) 
 	if d, ok := d.GetOk("description"); ok {
 		Desc = d.(string)
 	}
+	var Primary bool
+	if d, ok := d.GetOk("primary"); ok {
+		Primary = d.(bool)
+	}
+	var Virtual bool
+	if d, ok := d.GetOk("virtual"); ok {
+		Virtual = d.(bool)
+	}
 
 	path := fmt.Sprintf("/sites/%s-%s/bds/%s/subnets/-", statesiteId, stateTemplateName, stateBd)
-	BdSubnetStruct := models.NewSchemaSiteBdSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+	BdSubnetStruct := models.NewSchemaSiteBdSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdSubnetStruct)
 	if err != nil {
 		return err
@@ -300,6 +329,12 @@ func resourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) er
 							if subnetCont.Exists("querier") {
 								d.Set("querier", subnetCont.S("querier").Data().(bool))
 							}
+							if subnetCont.Exists("primary") {
+								d.Set("primary", subnetCont.S("primary").Data().(bool))
+							}
+							if subnetCont.Exists("virtual") {
+								d.Set("virtual", subnetCont.S("virtual").Data().(bool))
+							}
 							found = true
 							break
 						}
@@ -355,6 +390,14 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 	if d, ok := d.GetOk("description"); ok {
 		Desc = d.(string)
 	}
+	var Primary bool
+	if d, ok := d.GetOk("primary"); ok {
+		Primary = d.(bool)
+	}
+	var Virtual bool
+	if d, ok := d.GetOk("virtual"); ok {
+		Virtual = d.(bool)
+	}
 
 	index := -1
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -407,7 +450,7 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 						if IP == apiIP {
 							index = l
 							path := fmt.Sprintf("/sites/%s-%s/bds/%s/subnets/%v", statesiteId, stateTemplateName, stateBd, index)
-							BdSubnetStruct := models.NewSchemaSiteBdSubnet("replace", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
+							BdSubnetStruct := models.NewSchemaSiteBdSubnet("replace", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
 							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdSubnetStruct)
 							if err != nil {
 								return err
@@ -438,30 +481,6 @@ func resourceMSOSchemaSiteBdSubnetDelete(d *schema.ResourceData, m interface{}) 
 	var IP string
 	if ip, ok := d.GetOk("ip"); ok {
 		IP = ip.(string)
-	}
-
-	var Scope string
-	if scope, ok := d.GetOk("scope"); ok {
-		Scope = scope.(string)
-	}
-
-	var Shared bool
-	if shared, ok := d.GetOk("shared"); ok {
-		Shared = shared.(bool)
-	}
-
-	var NoDefaultGateway bool
-	if ndg, ok := d.GetOk("no_default_gateway"); ok {
-		NoDefaultGateway = ndg.(bool)
-	}
-
-	var Querier bool
-	if qr, ok := d.GetOk("querier"); ok {
-		Querier = qr.(bool)
-	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
 	}
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -505,10 +524,8 @@ func resourceMSOSchemaSiteBdSubnetDelete(d *schema.ResourceData, m interface{}) 
 						}
 						apiIP := models.StripQuotes(subnetCont.S("ip").String())
 						if IP == apiIP {
-							index := l
-							path := fmt.Sprintf("/sites/%s-%s/bds/%s/subnets/%v", stateSite, stateTemplate, stateBd, index)
-							BdSubnetStruct := models.NewSchemaSiteBdSubnet("remove", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier)
-							response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdSubnetStruct)
+							path := fmt.Sprintf("/sites/%s-%s/bds/%s/subnets/%v", stateSite, stateTemplate, stateBd, l)
+							response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), models.GetRemovePatchPayload(path))
 
 							// Ignoring Error with code 141: Resource Not Found when deleting
 							if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
