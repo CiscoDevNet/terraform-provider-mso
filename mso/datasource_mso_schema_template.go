@@ -76,7 +76,7 @@ func datasourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) erro
 	}
 
 	dataCon := cont.S("templates").Index(count)
-	d.SetId(models.StripQuotes(dataCon.S("name").String()))
+	d.SetId(fmt.Sprintf("%s/templates/%s", schemaId, name))
 	d.Set("name", models.StripQuotes(dataCon.S("name").String()))
 	d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 	d.Set("display_name", models.StripQuotes(dataCon.S("displayName").String()))

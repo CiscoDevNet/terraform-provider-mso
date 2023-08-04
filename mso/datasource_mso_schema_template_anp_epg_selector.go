@@ -64,16 +64,15 @@ func datasourceMSOSchemaTemplateAnpEpgSelector() *schema.Resource {
 }
 
 func datasourceMSOSchemaTemplateAnpEpgSelectorRead(d *schema.ResourceData, m interface{}) error {
-	found := false
 	msoClient := m.(*client.Client)
 
-	dn := d.Get("name").(string)
-	schemaID := d.Get("schema_id").(string)
+	selectorName := d.Get("name").(string)
+	schemaId := d.Get("schema_id").(string)
 	template := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
@@ -83,58 +82,54 @@ func datasourceMSOSchemaTemplateAnpEpgSelectorRead(d *schema.ResourceData, m int
 		return fmt.Errorf("No Template found")
 	}
 
-	for i := 0; i < tempCount; i++ {
+	found := false
+	for i := 0; i < tempCount && !found; i++ {
 		tempcont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
-
 		tempName := models.StripQuotes(tempcont.S("name").String())
 		if tempName == template {
 			anpCount, err := tempcont.ArrayCount("anps")
 			if err != nil {
 				return err
 			}
-
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempcont.ArrayElement(j, "anps")
 				if err != nil {
 					return err
 				}
-
 				currentanpName := models.StripQuotes(anpCont.S("name").String())
 				if currentanpName == anpName {
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return err
 					}
-
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
 						}
-
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
 						if currentEpgName == epgName {
 							selectorCount, err := epgCont.ArrayCount("selectors")
 							if err != nil {
 								return err
 							}
-
 							for l := 0; l < selectorCount; l++ {
 								selectorCont, err := epgCont.ArrayElement(l, "selectors")
 								if err != nil {
 									return err
 								}
-
 								currSelectorName := models.StripQuotes(selectorCont.S("name").String())
-								if currSelectorName == dn {
+								if currSelectorName == selectorName {
 									found = true
-									d.SetId(dn)
+									d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/selectors/%s", schemaId, template, anpName, epgName, currSelectorName))
 									d.Set("name", currSelectorName)
+									d.Set("template_name", tempName)
+									d.Set("anp_name", anpName)
+									d.Set("epg_name", epgName)
 									exps := selectorCont.S("expressions").Data().([]interface{})
-
 									expressionsList := make([]interface{}, 0, 1)
 									for _, val := range exps {
 										tp := val.(map[string]interface{})
@@ -157,29 +152,17 @@ func datasourceMSOSchemaTemplateAnpEpgSelectorRead(d *schema.ResourceData, m int
 									break
 								}
 							}
-							if found {
-								d.Set("epg_name", epgName)
-								break
-							}
 						}
-					}
-					if found {
-						d.Set("anp_name", anpName)
-						break
 					}
 				}
 			}
-			if found {
-				d.Set("template_name", tempName)
-				break
-			}
 		}
 	}
-	if found {
-		d.Set("schemaID", schemaID)
-	} else {
+
+	if !found {
 		d.SetId("")
-		return fmt.Errorf("unable to find selector for given name")
+		return fmt.Errorf("Unable to find the ANP EPG Selector %s in Template %s of Schema Id %s ", selectorName, template, schemaId)
 	}
+
 	return nil
 }

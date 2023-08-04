@@ -86,7 +86,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	found := false
+	stateName := d.Get("filter_name")
 	stateContract := d.Get("contract_name")
 	stateFilterType := d.Get("filter_type")
 
@@ -103,8 +103,8 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 		stateFilterTemplate = stateTemplate
 	}
 
-	stateName := d.Get("filter_name")
-	for i := 0; i < count; i++ {
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -123,7 +123,6 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 				}
 				apiContract := models.StripQuotes(contractCont.S("name").String())
 				if apiContract == stateContract {
-					d.SetId(apiContract)
 					d.Set("contract_name", apiContract)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
@@ -142,11 +141,11 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 								if err != nil {
 									return fmt.Errorf("Unable to parse the filter Relationships list")
 								}
-
 								if filterCont.Exists("filterRef") {
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
 									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
+										d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s/filterRelationships/%s-%s-%s", schemaId, stateTemplate, stateContract, stateFilterSchema, stateFilterTemplate, stateName))
 										d.Set("filter_name", split[6])
 										d.Set("filter_template_name", split[4])
 										d.Set("filter_schema_id", split[2])
@@ -165,13 +164,12 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 								if err != nil {
 									return fmt.Errorf("Unable to parse the filter Relationships Provider to Consumer list")
 								}
-
 								if filterCont.Exists("filterRef") {
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
 
 									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
-
+										d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s/filterRelationshipsProviderToConsumer/%s-%s-%s", schemaId, stateTemplate, stateContract, stateFilterSchema, stateFilterTemplate, stateName))
 										d.Set("filter_name", split[6])
 										d.Set("filter_template_name", split[4])
 										d.Set("filter_schema_id", split[2])
@@ -190,11 +188,11 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 								if err != nil {
 									return fmt.Errorf("Unable to parse the filter Relationships Consumer To Provider list")
 								}
-
 								if filterCont.Exists("filterRef") {
 									filRef := filterCont.S("filterRef").Data()
 									split := strings.Split(filRef.(string), "/")
 									if split[6] == stateName && split[4] == stateFilterTemplate && split[2] == stateFilterSchema {
+										d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s/filterRelationshipsConsumerToProvider/%s-%s-%s", schemaId, stateTemplate, stateContract, stateFilterSchema, stateFilterTemplate, stateName))
 										d.Set("filter_name", split[6])
 										d.Set("filter_template_name", split[4])
 										d.Set("filter_schema_id", split[2])
@@ -206,7 +204,6 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 							}
 						}
 					}
-
 				}
 			}
 		}
@@ -214,7 +211,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the Contract %s with Filter %s", stateContract, stateName)
+		return fmt.Errorf("Unable to find the Contract %s with Filter %s in Template %s of Schema Id %s", stateContract, stateName, stateTemplate, schemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

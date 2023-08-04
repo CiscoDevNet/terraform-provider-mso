@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -73,11 +72,11 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	found := false
 	stateExternalepg := d.Get("external_epg_name")
 	stateIP := d.Get("ip")
 
-	for i := 0; i < count; i++ {
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -89,7 +88,7 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 			if err != nil {
 				return fmt.Errorf("Unable to get Externalepg list")
 			}
-			for j := 0; j < externalepgCount; j++ {
+			for j := 0; j < externalepgCount && !found; j++ {
 				externalepgCont, err := tempCont.ArrayElement(j, "externalEpgs")
 				if err != nil {
 					return err
@@ -107,12 +106,10 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 						}
 						apiIP := models.StripQuotes(subnetsCont.S("ip").String())
 						if apiIP == stateIP {
+							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/subnets/%s", schemaId, stateTemplate, stateExternalepg, stateIP))
 							d.Set("schema_id", schemaId)
 							d.Set("template_name", apiTemplate)
 							d.Set("external_epg_name", apiExternalepg)
-							ip := models.StripQuotes(subnetsCont.S("ip").String())
-							idSubnet := strings.Split(ip, "/")
-							d.SetId(idSubnet[0])
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
 							if name := models.StripQuotes(subnetsCont.S("name").String()); name == "{}" {
 								d.Set("name", "")
@@ -127,13 +124,7 @@ func dataSourceMSOTemplateExternalEpgSubnetRead(d *schema.ResourceData, m interf
 						}
 					}
 				}
-				if found {
-					break
-				}
 			}
-		}
-		if found {
-			break
 		}
 	}
 

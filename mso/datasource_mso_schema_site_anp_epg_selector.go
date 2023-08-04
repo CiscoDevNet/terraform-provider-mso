@@ -145,5 +145,6 @@ func datasourceSchemaSiteApnEpgSelectorRead(d *schema.ResourceData, m interface{
 		d.SetId("")
 		return fmt.Errorf("Unable to find the Site Anp Epg Selector %s", name)
 	}
+	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }

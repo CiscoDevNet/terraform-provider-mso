@@ -71,16 +71,15 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 
 	templateName := d.Get("template").(string)
 	vrfName := d.Get("name").(string)
-	found := false
 
-	for i := 0; i < count; i++ {
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
 		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
 		if currentTemplateName == templateName {
-			d.Set("template", currentTemplateName)
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
 				return fmt.Errorf("No Vrf found")
@@ -92,8 +91,9 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 				}
 				currentVrfName := models.StripQuotes(vrfCont.S("name").String())
 				if currentVrfName == vrfName {
-					d.SetId(currentVrfName)
+					d.SetId(fmt.Sprintf("%s/templates/%s/vrfs/%s", schemaId, templateName, vrfName))
 					d.Set("name", currentVrfName)
+					d.Set("template", currentTemplateName)
 					d.Set("display_name", models.StripQuotes(vrfCont.S("displayName").String()))
 					if vrfCont.Exists("l3MCast") {
 						l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
@@ -115,14 +115,10 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 				}
 			}
 		}
-		if found {
-			break
-		}
 	}
+
 	if !found {
 		d.SetId("")
-		d.Set("name", "")
-		d.Set("display_name", "")
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

@@ -80,7 +80,6 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 		return fmt.Errorf("No Template found")
 	}
 	template := d.Get("template_name").(string)
-	found := false
 	anp := d.Get("anp_name")
 	epg := d.Get("epg_name")
 	contract := d.Get("contract_name")
@@ -92,7 +91,8 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 	if contractTemplateName == "" {
 		contractTemplateName = template
 	}
-	for i := 0; i < count; i++ {
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -104,7 +104,7 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 			if err != nil {
 				return fmt.Errorf("Unable to get ANP list")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 				if err != nil {
 					return err
@@ -115,7 +115,7 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 					if err != nil {
 						return fmt.Errorf("Unable to get EPG list")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
@@ -155,7 +155,7 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the Contract %s in Template %s of Schema Id %s ", contract, contractTemplateName, contractSchemaId)
+		return fmt.Errorf("Unable to find the ANP EPG Contract %s in Template %s of Schema Id %s ", contract, contractTemplateName, contractSchemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

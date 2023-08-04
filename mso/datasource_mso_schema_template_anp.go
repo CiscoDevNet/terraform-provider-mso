@@ -55,20 +55,16 @@ func datasourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) e
 
 	templateName := d.Get("template").(string)
 	anpName := d.Get("name").(string)
+
 	found := false
-
-	for i := 0; i < count; i++ {
-
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
 		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
-
 		if currentTemplateName == templateName {
-			d.Set("template", currentTemplateName)
 			anpCount, err := tempCont.ArrayCount("anps")
-
 			if err != nil {
 				return fmt.Errorf("No Anp found")
 			}
@@ -79,11 +75,10 @@ func datasourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) e
 					return err
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
-				log.Println("currentanpname", currentAnpName)
 				if currentAnpName == anpName {
-					log.Println("found correct anpname")
-					d.SetId(currentAnpName)
+					d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s", schemaId, templateName, anpName))
 					d.Set("name", currentAnpName)
+					d.Set("template", currentTemplateName)
 					if anpCont.Exists("displayName") {
 						d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
 					}
@@ -92,14 +87,13 @@ func datasourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) e
 				}
 			}
 		}
-		if found {
-			break
-		}
 	}
+
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find ANP %s", anpName)
+		return fmt.Errorf("Unable to find the ANP %s in Template %s of Schema Id %s ", anpName, templateName, schemaId)
 	}
+
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }

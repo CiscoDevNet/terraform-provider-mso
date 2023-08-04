@@ -111,11 +111,11 @@ func dataSourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interf
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	found := false
 	stateFilter := d.Get("name").(string)
 	stateFilterEntry := d.Get("entry_name").(string)
 
-	for i := 0; i < count; i++ {
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -123,32 +123,33 @@ func dataSourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interf
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
 		if apiTemplate == stateTemplate {
-			d.Set("template_name", apiTemplate)
-			anpCount, err := tempCont.ArrayCount("filters")
+			filterCount, err := tempCont.ArrayCount("filters")
 			if err != nil {
 				return fmt.Errorf("Unable to get Filter list")
 			}
-			for j := 0; j < anpCount; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "filters")
+			for j := 0; j < filterCount && !found; j++ {
+				filterCont, err := tempCont.ArrayElement(j, "filters")
 				if err != nil {
 					return err
 				}
-				apiFilter := models.StripQuotes(anpCont.S("name").String())
+				apiFilter := models.StripQuotes(filterCont.S("name").String())
 				if apiFilter == stateFilter {
-					d.Set("name", apiFilter)
-					d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
-					entriesCount, err := anpCont.ArrayCount("entries")
+					entriesCount, err := filterCont.ArrayCount("entries")
 					if err != nil {
 						return fmt.Errorf("Unable to get Entry list")
 					}
 					for k := 0; k < entriesCount; k++ {
-						entriesCont, err := anpCont.ArrayElement(k, "entries")
+						entriesCont, err := filterCont.ArrayElement(k, "entries")
 						if err != nil {
 							return err
 						}
 						apiFilterEntry := models.StripQuotes(entriesCont.S("name").String())
 						if apiFilterEntry == stateFilterEntry {
-							d.SetId(apiFilterEntry)
+							found = true
+							d.SetId(fmt.Sprintf("%s/templates/%s/filters/%s/entries/%s", schemaId, stateTemplate, stateFilter, stateFilterEntry))
+							d.Set("template_name", apiTemplate)
+							d.Set("name", apiFilter)
+							d.Set("display_name", models.StripQuotes(filterCont.S("displayName").String()))
 							d.Set("entry_name", apiFilterEntry)
 							d.Set("entry_display_name", models.StripQuotes(entriesCont.S("displayName").String()))
 							if entriesCont.Exists("description") {
@@ -184,7 +185,6 @@ func dataSourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interf
 							if entriesCont.Exists("tcpSessionRules") {
 								d.Set("tcp_session_rules", entriesCont.S("tcpSessionRules").Data().([]interface{}))
 							}
-							found = true
 							break
 						}
 					}
@@ -192,9 +192,10 @@ func dataSourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interf
 			}
 		}
 	}
+
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the filter %s with entry %s", stateFilter, stateFilterEntry)
+		return fmt.Errorf("Unable to find the Filter %s with Entry %s in Template %s of Schema Id %s", stateFilter, stateFilterEntry, stateTemplate, schemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

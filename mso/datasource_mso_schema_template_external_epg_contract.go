@@ -75,7 +75,6 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 		return fmt.Errorf("No Template found")
 	}
 	template := d.Get("template_name").(string)
-	found := false
 	epg := d.Get("external_epg_name").(string)
 	contractName := d.Get("contract_name").(string)
 	contractSchemaId := d.Get("contract_schema_id").(string)
@@ -86,7 +85,9 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 	if contractTemplateName == "" {
 		contractTemplateName = template
 	}
-	for i := 0; i < count; i++ {
+
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -98,7 +99,7 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 			if err != nil {
 				return fmt.Errorf("Unable to get External Epg list")
 			}
-			for j := 0; j < epgCount; j++ {
+			for j := 0; j < epgCount && !found; j++ {
 				epgCont, err := tempCont.ArrayElement(j, "externalEpgs")
 				if err != nil {
 					return err
@@ -134,7 +135,7 @@ func dataSourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m inte
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the External EPG Contract %s in Template %s of Schema Id %s ", contractName, contractTemplateName, contractSchemaId)
+		return fmt.Errorf("Unable to find the External EPG Contract %s in Template %s of Schema Id %s", contractName, contractTemplateName, contractSchemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

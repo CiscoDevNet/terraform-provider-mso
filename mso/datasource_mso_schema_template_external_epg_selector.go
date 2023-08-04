@@ -61,14 +61,12 @@ func datasourceSchemaTemplateExternalEPGSelector() *schema.Resource {
 func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
-	found := false
-
-	schemaID := d.Get("schema_id").(string)
+	schemaId := d.Get("schema_id").(string)
 	template := d.Get("template_name").(string)
 	externalEpgName := d.Get("external_epg_name").(string)
 	name := d.Get("name").(string)
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
@@ -78,7 +76,8 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 		return fmt.Errorf("No templates found")
 	}
 
-	for i := 0; i < count; i++ {
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return fmt.Errorf("Error fetching template")
@@ -91,7 +90,7 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 				return fmt.Errorf("no externalEpgs found")
 			}
 
-			for j := 0; j < extrEpgCount; j++ {
+			for j := 0; j < extrEpgCount && !found; j++ {
 				extrEpgCont, err := tempCont.ArrayElement(j, "externalEpgs")
 				if err != nil {
 					return fmt.Errorf("Error fetching external Epg")
@@ -112,10 +111,12 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 
 						selectorName := models.StripQuotes(selectorCont.S("name").String())
 						if selectorName == name {
-							d.SetId(name)
+							found = true
+							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/selectors/%s", schemaId, template, externalEpgName, name))
 							d.Set("name", selectorName)
+							d.Set("external_epg_name", externalEpgName)
+							d.Set("template_name", tempName)
 							exps := selectorCont.S("expressions").Data().([]interface{})
-
 							expressionList := make([]interface{}, 0, 1)
 							for _, val := range exps {
 								tp := val.(map[string]interface{})
@@ -129,27 +130,18 @@ func datasourceSchemaTemplateExternalEPGSelectorRead(d *schema.ResourceData, m i
 								expressionList = append(expressionList, expMap)
 							}
 							d.Set("expressions", expressionList)
-							found = true
 							break
 						}
 					}
 				}
-				if found {
-					d.Set("external_epg_name", externalEpgName)
-					break
-				}
 			}
-		}
-		if found {
-			d.Set("template_name", tempName)
-			break
 		}
 	}
 	if found {
-		d.Set("schema_id", schemaID)
+		d.Set("schema_id", schemaId)
 	} else {
 		d.SetId("")
-		return fmt.Errorf("Unable to find the External Epg %s with Selector %s", externalEpgName, name)
+		return fmt.Errorf("Unable to find the External Epg %s with Selector %s in Template %s of Schema Id %s", externalEpgName, name, template, schemaId)
 	}
 	return nil
 }

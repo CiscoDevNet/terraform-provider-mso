@@ -94,9 +94,10 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
+	stateContract := d.Get("contract_name").(string)
+
 	found := false
-	stateContract := d.Get("contract_name")
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -115,7 +116,7 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 				}
 				apiContract := models.StripQuotes(contractCont.S("name").String())
 				if apiContract == stateContract {
-					d.SetId(apiContract)
+					d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", schemaId, stateTemplate, stateContract))
 					d.Set("contract_name", apiContract)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
@@ -148,8 +149,9 @@ func dataSourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) er
 			}
 		}
 	}
+
 	if !found {
-		return fmt.Errorf("Unable to find the Contract %s", stateContract)
+		return fmt.Errorf("Unable to find the Contract %s in Template %s of Schema Id %s", stateContract, stateTemplate, schemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
