@@ -128,7 +128,7 @@ func dataSourceMSOTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) erro
 	stateANP := d.Get("anp_name").(string)
 	stateEPG := d.Get("name").(string)
 
-	err = resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG, cont, d)
+	err = resourceMSOSchemaTemplateAnpEpgSetAttr(schemaId, stateTemplate, stateANP, stateEPG, cont, d)
 
 	if err != nil {
 		return err

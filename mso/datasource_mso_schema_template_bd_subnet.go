@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -82,10 +81,11 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 		return fmt.Errorf("No TemplateSubnet found")
 	}
 	stateTemplateSubnet := d.Get("template_name").(string)
-	found := false
 	stateBD := d.Get("bd_name")
 	stateIP := d.Get("ip")
-	for i := 0; i < count; i++ {
+
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -97,7 +97,7 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 			if err != nil {
 				return fmt.Errorf("Unable to get BD list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err
@@ -117,13 +117,10 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 
 						apiIP := models.StripQuotes(dataCon.S("ip").String())
 						if apiIP == stateIP {
-							log.Println(dataCon)
+							d.SetId(fmt.Sprintf("%s/templates/%s/bds/%s/subnets/%s", schemaId, stateTemplateSubnet, stateBD, stateIP))
 							d.Set("schema_id", schemaId)
 							d.Set("template_name", apiTemplateSubnet)
 							d.Set("bd_name", apiBD)
-							ip := models.StripQuotes(dataCon.S("ip").String())
-							idSubnet := strings.Split(ip, "/")
-							d.SetId(idSubnet[0])
 							d.Set("ip", models.StripQuotes(dataCon.S("ip").String()))
 							d.Set("scope", models.StripQuotes(dataCon.S("scope").String()))
 							d.Set("description", models.StripQuotes(dataCon.S("description").String()))
@@ -143,14 +140,13 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 
 					}
 				}
-
 			}
 		}
-
 	}
 
 	if !found {
-		return fmt.Errorf("Unable to find the BD Subnet with IP: %s", stateIP)
+		d.SetId("")
+		return fmt.Errorf("Unable to find the BD Subnet %s in Template %s of Schema Id %s ", stateIP, stateTemplateSubnet, schemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

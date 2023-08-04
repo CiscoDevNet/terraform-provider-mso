@@ -140,7 +140,7 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 	}
 
 	temprelationList := make([]interface{}, 0, 1)
-	for i := 0; i < tempCount; i++ {
+	for i := 0; i < tempCount && !foundTemp; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return fmt.Errorf("Error in fetch of template")
@@ -208,9 +208,6 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 				}
 			}
 		}
-		if foundTemp {
-			break
-		}
 	}
 
 	siterelationList := make([]interface{}, 0, 1)
@@ -218,7 +215,7 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 	if err != nil {
 		return fmt.Errorf("No sites found")
 	}
-	for i := 0; i < siteCount; i++ {
+	for i := 0; i < siteCount && !foundSite; i++ {
 		siteCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
 			return fmt.Errorf("Error fetching site")
@@ -308,9 +305,6 @@ func datasourceTemplateContractServiceGraphRead(d *schema.ResourceData, m interf
 					}
 				}
 			}
-		}
-		if foundSite {
-			break
 		}
 	}
 

@@ -87,24 +87,21 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	name := d.Get("name").(string)
+
 	found := false
-
-	for i := 0; i < count; i++ {
-
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
 		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
-
 		if currentTemplateName == templateName {
-			d.Set("template_name", currentTemplateName)
 			anpCount, err := tempCont.ArrayCount("anps")
 
 			if err != nil {
 				return fmt.Errorf("No Anp found")
 			}
-			for j := 0; j < anpCount; j++ {
+			for j := 0; j < anpCount && !found; j++ {
 				anpCont, err := tempCont.ArrayElement(j, "anps")
 
 				if err != nil {
@@ -112,19 +109,17 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
 				if currentAnpName == anpName {
-					d.Set("anp_name", currentAnpName)
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return fmt.Errorf("No Epg found")
 					}
-					for k := 0; k < epgCount; k++ {
+					for k := 0; k < epgCount && !found; k++ {
 						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
 						}
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
 						if currentEpgName == epgName {
-							d.Set("epg_name", currentEpgName)
 							usegCount, err := epgCont.ArrayCount("uSegAttrs")
 							if err != nil {
 								return fmt.Errorf("No usegAttrs found")
@@ -136,8 +131,11 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 								}
 								currentName := models.StripQuotes(usegCont.S("name").String())
 								if currentName == name {
-									d.SetId(currentName)
+									d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/uSegAttrs/%s", schemaId, templateName, anpName, epgName, name))
+									d.Set("template_name", currentTemplateName)
 									d.Set("name", currentName)
+									d.Set("anp_name", currentAnpName)
+									d.Set("epg_name", currentEpgName)
 									d.Set("useg_type", models.StripQuotes(usegCont.S("type").String()))
 									d.Set("value", models.StripQuotes(usegCont.S("value").String()))
 
@@ -166,32 +164,17 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 								}
 							}
 						}
-
-						if found {
-							break
-						}
-
 					}
 				}
-				if found {
-					break
-				}
 			}
-		}
-		if found {
-			break
 		}
 	}
 
 	if !found {
-
 		d.SetId("")
-		d.Set("name", "")
-		d.Set("operator", "")
-		d.Set("useg_type", "")
-		d.Set("value", "")
-		return fmt.Errorf("Unable to find Schema template anp epg useg attribute %s", name)
+		return fmt.Errorf("Unable to find the ANP EPG uSeg Attribute %s in Template %s of Schema Id %s ", name, templateName, schemaId)
 	}
+
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }

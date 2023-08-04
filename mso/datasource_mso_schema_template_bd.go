@@ -349,5 +349,6 @@ func setSchemaTemplateBDAttrs(schemaId, templateName, bdName string, cont *conta
 	if !found {
 		return fmt.Errorf("Unable to find the BD %s in Template %s of Schema Id %s ", bdName, templateName, schemaId)
 	}
+
 	return nil
 }

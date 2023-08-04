@@ -174,7 +174,7 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 	}
 }
 
-func resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG string, cont *container.Container, d *schema.ResourceData) error {
+func resourceMSOSchemaTemplateAnpEpgSetAttr(schemaId, stateTemplate, stateANP, stateEPG string, cont *container.Container, d *schema.ResourceData) error {
 	found := false
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
@@ -212,7 +212,7 @@ func resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG st
 						}
 						apiEPG := models.StripQuotes(epgCont.S("name").String())
 						if apiEPG == stateEPG {
-							d.SetId(apiEPG)
+							d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s", schemaId, stateTemplate, stateANP, stateEPG))
 							d.Set("name", apiEPG)
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
 							d.Set("description", models.StripQuotes(epgCont.S("description").String()))
@@ -304,7 +304,7 @@ func resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG st
 		}
 	}
 	if !found {
-		return fmt.Errorf("Unable to find the EPG %s", stateEPG)
+		return fmt.Errorf("Unable to find the ANP EPG %s in Template %s of Schema Id %s ", stateEPG, stateTemplate, schemaId)
 	}
 	return nil
 }
@@ -326,7 +326,7 @@ func resourceMSOSchemaTemplateAnpEpgImport(d *schema.ResourceData, m interface{}
 	stateANP := get_attribute[4]
 	stateEPG := get_attribute[6]
 
-	err = resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG, cont, d)
+	err = resourceMSOSchemaTemplateAnpEpgSetAttr(schemaId, stateTemplate, stateANP, stateEPG, cont, d)
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +500,7 @@ func resourceMSOSchemaTemplateAnpEpgRead(d *schema.ResourceData, m interface{}) 
 	stateANP := d.Get("anp_name").(string)
 	stateEPG := d.Get("name").(string)
 
-	err = resourceMSOSchemaTemplateAnpEpgSetAttr(stateTemplate, stateANP, stateEPG, cont, d)
+	err = resourceMSOSchemaTemplateAnpEpgSetAttr(schemaId, stateTemplate, stateANP, stateEPG, cont, d)
 
 	if err != nil {
 		d.SetId("")

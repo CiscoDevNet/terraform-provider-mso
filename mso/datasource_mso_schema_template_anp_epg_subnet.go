@@ -88,19 +88,16 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	ip := d.Get("ip").(string)
+
 	found := false
-
 	for i := 0; i < count && !found; i++ {
-
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
 		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
 		if currentTemplateName == templateName {
-			d.Set("template", currentTemplateName)
 			anpCount, err := tempCont.ArrayCount("anps")
-
 			if err != nil {
 				return fmt.Errorf("No Anp found")
 			}
@@ -112,7 +109,6 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 				}
 				currentAnpName := models.StripQuotes(anpCont.S("name").String())
 				if currentAnpName == anpName {
-					d.Set("anp_name", currentAnpName)
 					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
 						return fmt.Errorf("No Epg found")
@@ -124,7 +120,6 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 						}
 						currentEpgName := models.StripQuotes(epgCont.S("name").String())
 						if currentEpgName == epgName {
-							d.Set("epg_name", currentEpgName)
 							subnetCount, err := epgCont.ArrayCount("subnets")
 							if err != nil {
 								return fmt.Errorf("No Subnets found")
@@ -136,8 +131,11 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 								}
 								currentIp := models.StripQuotes(subnetCont.S("ip").String())
 								if currentIp == ip {
-									d.SetId(currentIp)
+									d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/subnets/%s", schemaId, templateName, anpName, epgName, ip))
 									d.Set("ip", currentIp)
+									d.Set("template", currentTemplateName)
+									d.Set("anp_name", currentAnpName)
+									d.Set("epg_name", currentEpgName)
 									d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
 
 									if subnetCont.Exists("scope") {
@@ -165,26 +163,15 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 								}
 							}
 						}
-
-						if found {
-							break
-						}
-
 					}
 				}
-				if found {
-					break
-				}
 			}
-		}
-		if found {
-			break
 		}
 	}
 
 	if !found {
 		d.SetId("")
-		return fmt.Errorf("Unable to find ANP EPG ip %s", ip)
+		return fmt.Errorf("Unable to find the ANP EPG Subnet %s in Template %s of Schema Id %s ", ip, templateName, schemaId)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

@@ -69,15 +69,15 @@ func dataSourceMSOTemplateL3outRead(d *schema.ResourceData, m interface{}) error
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	found := false
 	stateL3out := d.Get("l3out_name")
-	for i := 0; i < count; i++ {
+
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
 		}
 		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
 		if apiTemplate == stateTemplate {
 			l3outCount, err := tempCont.ArrayCount("intersiteL3outs")
 			if err != nil {
@@ -90,7 +90,7 @@ func dataSourceMSOTemplateL3outRead(d *schema.ResourceData, m interface{}) error
 				}
 				apiL3out := models.StripQuotes(l3outCont.S("name").String())
 				if apiL3out == stateL3out {
-					d.SetId(apiL3out)
+					d.SetId(fmt.Sprintf("%s/templates/%s/intersiteL3outs/%s", schemaId, stateTemplate, stateL3out))
 					d.Set("l3out_name", apiL3out)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
@@ -111,7 +111,7 @@ func dataSourceMSOTemplateL3outRead(d *schema.ResourceData, m interface{}) error
 	}
 
 	if !found {
-		return fmt.Errorf("Unable to find the L3out %s", stateL3out)
+		return fmt.Errorf("Unable to find the L3out %s in Template %s of Schema Id %s", stateL3out, stateTemplate, schemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

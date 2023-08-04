@@ -106,9 +106,10 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	found := false
 	stateExternalepg := d.Get("external_epg_name")
-	for i := 0; i < count; i++ {
+
+	found := false
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -127,7 +128,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 				}
 				apiExternalepg := models.StripQuotes(externalepgCont.S("name").String())
 				if apiExternalepg == stateExternalepg {
-					d.SetId(apiExternalepg)
+					d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s", schemaId, stateTemplate, stateExternalepg))
 					d.Set("external_epg_name", apiExternalepg)
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
@@ -195,7 +196,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 	}
 
 	if !found {
-		return fmt.Errorf("Unable to find the External Epg %s", stateExternalepg)
+		return fmt.Errorf("Unable to find the External Epg %s in Template %s of Schema Id %s", stateExternalepg, stateTemplate, schemaId)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())

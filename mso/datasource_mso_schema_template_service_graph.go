@@ -88,7 +88,6 @@ func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interf
 
 	if err != nil {
 		d.SetId("")
-		log.Printf("graphcont err %v", err)
 		return err
 	}
 
@@ -107,7 +106,7 @@ func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interf
 		}
 		sitesCount, err := cont.ArrayCount("sites")
 		if err != nil {
-			d.SetId(graphName)
+			d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, stateTemplate, graphName))
 			d.Set("site_nodes", nil)
 			log.Printf("Unable to find sites")
 			return nil
@@ -137,7 +136,7 @@ func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interf
 		}
 	}
 	d.Set("site_nodes", siteParams)
-	d.SetId(graphName)
+	d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, stateTemplate, graphName))
 	return nil
 }
 
