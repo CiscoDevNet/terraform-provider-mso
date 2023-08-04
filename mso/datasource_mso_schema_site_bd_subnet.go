@@ -55,6 +55,14 @@ func dataSourceMSOSchemaSiteBdSubnet() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"primary": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"virtual": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -125,6 +133,12 @@ func dataSourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) 
 			}
 			if subnetCont.Exists("querier") {
 				d.Set("querier", subnetCont.S("querier").Data().(bool))
+			}
+			if subnetCont.Exists("primary") {
+				d.Set("primary", subnetCont.S("primary").Data().(bool))
+			}
+			if subnetCont.Exists("virtual") {
+				d.Set("virtual", subnetCont.S("virtual").Data().(bool))
 			}
 		}
 	}

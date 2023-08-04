@@ -38,3 +38,5 @@ data "mso_schema_template_bd_subnet" "example" {
 * `no_default_gateway` - (Read-Only) Whether the Subnet has a default gateway.
 * `querier` - (Read-Only) Whether the Subnet is an IGMP querier.
 * `primary` - (Read-Only) Whether the Subnet is the primary Subnet.
+* `virtual` - (Read-Only) Whether the Subnet is virtual.
+

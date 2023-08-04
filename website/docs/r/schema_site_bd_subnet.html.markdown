@@ -25,6 +25,8 @@ resource "mso_schema_site_bd_subnet" "sub1" {
   scope              = "private"
   querier            = false
   no_default_gateway = false
+  primary            = false
+  virtual            = false
 }
 
 ```
@@ -41,6 +43,8 @@ resource "mso_schema_site_bd_subnet" "sub1" {
 * `querier` - (Optional) Whether this subnet is an IGMP querier.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
 * `description` - (Optional) The description of this subnet. 
+* `primary` - (Optional) Whether the Subnet is the primary Subnet.
+* `virtual` - (Optional) Whether the Subnet is virtual.
 
 ## Attribute Reference ##
 
