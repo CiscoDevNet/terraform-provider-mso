@@ -6,7 +6,7 @@ type TemplateBDSubnet struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateBDSubnet(ops, path, ip, desc, scope string, shared, noDefaultGateway, querier bool) *TemplateBDSubnet {
+func NewTemplateBDSubnet(ops, path, ip, desc, scope string, shared, noDefaultGateway, querier, primary, virtual bool) *TemplateBDSubnet {
 	var bdsubnetMap map[string]interface{}
 	if ops != "remove" {
 		bdsubnetMap = map[string]interface{}{
@@ -16,6 +16,8 @@ func NewTemplateBDSubnet(ops, path, ip, desc, scope string, shared, noDefaultGat
 			"shared":           shared,
 			"noDefaultGateway": noDefaultGateway,
 			"querier":          querier,
+			"primary":          primary,
+			"virtual":          virtual,
 		}
 	} else {
 		bdsubnetMap = nil
