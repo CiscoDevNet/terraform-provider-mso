@@ -32,4 +32,4 @@ data "mso_schema_site_external_epg_selector" "example"{
 
 ## Attribute Reference ##
 
-* `ip` - (Optional) The IP address of the Selector.
+* `ip` - (Read-Only) The IP address of the Selector.
