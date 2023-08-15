@@ -15,7 +15,7 @@ Data source for MSO Site.
 ```hcl
 
 data "mso_site" "example" {
-  name  = "AWS-West"
+  name = "AWS-West"
 }
 
 ```

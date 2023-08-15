@@ -27,7 +27,7 @@ data "mso_schema_site_external_epg_selector" "example"{
 * `schema_id` - (Required) The schema ID under which the Selector is deployed.
 * `site_id` - (Required) The site ID under which the Selector is deployed.
 * `template_name` - (Required) The template name under which the Selector is deployed.
-* `external_epg_name` - (Required) The name of the Selector.
+* `external_epg_name` - (Required) The name of the External EPG under which the Selector is deployed.
 * `name` - (Required) The name of the Selector.
 
 ## Attribute Reference ##

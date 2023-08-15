@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_external_epg_contract"
 sidebar_current: "docs-mso-data-source-schema_template_external_epg_contract"
 description: |-
-  MSO Schema Template External End Point Group Contract Data source.
+  Data source for MSO Schema Template External End Point Group Contract.
 ---
 
 # mso_schema_template_external_epg_contract #
 
-MSO Schema Template External End Point Group Contract Data source.
+Data source for MSO Schema Template External End Point Group Contract.
 
 ## Example Usage ##
 

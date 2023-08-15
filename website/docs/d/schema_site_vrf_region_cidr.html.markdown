@@ -15,12 +15,12 @@ Data source for MSO Schema Site VRF Region CIDR.
 ```hcl
 
 data "mso_schema_site_vrf_region_cidr" "example" {
-  schema_id   = data.mso_schema.schema1.id
-  site_id     = data.mso_site.site1.id
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
   template_name = "Template1"
-  vrf_name    = "Campus"
-  region_name = "westus"
-  ip          = "192.168.241.0/24"
+  vrf_name      = "Campus"
+  region_name   = "westus"
+  ip            = "192.168.241.0/24"
 }
 
 ```
