@@ -15,11 +15,11 @@ Data source for MSO Schema Template Contract Filter.
 ```hcl
 
 data "mso_schema_template_contract_filter" "example" {
-  schema_id            = data.mso_schema.schema1.id
-  template_name        = "Template1"
-  contract_name        = "Web-to-DB"
-  filter_type          = "provider_to_consumer"
-  filter_name          = "Any"
+  schema_id     = data.mso_schema.schema1.id
+  template_name = "Template1"
+  contract_name = "Web-to-DB"
+  filter_type   = "provider_to_consumer"
+  filter_name   = "Any"
 }
 
 ```

@@ -33,13 +33,13 @@ data "mso_schema_site_anp_epg_domain" "example_name" {
 
 ```hcl
 
-resource "mso_schema_site_anp_epg_domain" "example_dn" {
-  schema_id = "5c4d9fca270000a101f8094a"
+data "mso_schema_site_anp_epg_domain" "example_dn" {
+  schema_id     = data.mso_schema.schema1.id
+  site_id       = data.mso_site.site1.id
   template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "Web"
-  domain_dn = "uni/vmmp-VMware/dom-VMware-ab"
+  anp_name      = "ANP"
+  epg_name      = "Web"
+  domain_dn     = "uni/vmmp-VMware/dom-VMware-ab"
 }
 
 ```
