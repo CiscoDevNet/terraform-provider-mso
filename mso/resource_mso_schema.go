@@ -88,6 +88,21 @@ func resourceMSOSchema() *schema.Resource {
 				},
 			},
 		}),
+		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+			// check if template_type is changed between known state and provided configuration and error out during plan if it is
+			stateTemplate, configTemplate := diff.GetChange("template")
+			for _, valueState := range stateTemplate.(*schema.Set).List() {
+				state := valueState.(map[string]interface{})
+				for _, valueConfig := range configTemplate.(*schema.Set).List() {
+					config := valueConfig.(map[string]interface{})
+					if state["name"] == config["name"] && state["template_type"] != config["template_type"] &&
+						!(state["template_type"] == "aci_multi_site" && config["template_type"] == "") {
+						return fmt.Errorf("Template type cannot be changed. Change detected from '%s' to '%s'.", state["template_type"], config["template_type"])
+					}
+				}
+			}
+			return nil
+		},
 	}
 }
 
@@ -184,8 +199,10 @@ func resourceMSOSchemaCreate(d *schema.ResourceData, m interface{}) error {
 				map_templates["displayName"] = inner_templates["display_name"]
 				map_templates["tenantId"] = inner_templates["tenant_id"]
 				map_templates["description"] = inner_templates["description"]
-				map_templates["templateType"] = getTemplateType(inner_templates["template_type"].(string))
-				map_templates["templateSubType"] = getTemplateSubType(inner_templates["template_type"].(string))
+				if val, ok := inner_templates["template_type"]; ok && val.(string) != "" {
+					map_templates["templateType"] = getTemplateType(inner_templates["template_type"].(string))
+					map_templates["templateSubType"] = getTemplateSubType(inner_templates["template_type"].(string))
+				}
 				templates = append(templates, map_templates)
 			}
 		}
@@ -237,7 +254,9 @@ func resourceMSOSchemaImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		map_template["display_name"] = models.StripQuotes(templatesCont.S("displayName").String())
 		map_template["tenant_id"] = models.StripQuotes(templatesCont.S("tenantId").String())
 		map_template["description"] = models.StripQuotes(templatesCont.S("description").String())
-		map_template["template_type"] = getSchemaTemplateType(templatesCont)
+		if templatesCont.Exists("templateType") {
+			map_template["template_type"] = getSchemaTemplateType(templatesCont)
+		}
 		templates = append(templates, map_template)
 
 	}
@@ -374,9 +393,6 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 				valueOld := valueMapOld.(map[string]interface{})
 				for _, valueMapNew := range getDifferenceNew {
 					valueNew := valueMapNew.(map[string]interface{})
-					if valueOld["name"] == valueNew["name"] && valueOld["template_type"] != valueNew["template_type"] {
-						return fmt.Errorf("Template type cannot be changed.")
-					}
 
 					// Tenant Id of template has been changed
 					if valueOld["name"] == valueNew["name"] && valueOld["tenant_id"] != valueNew["tenant_id"] {
@@ -435,13 +451,11 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 			for _, MapToAdd := range listMapsToAdd {
 
 				changedMap := MapToAdd.(map[string]interface{})
-				templateType := getTemplateType(changedMap["template_type"].(string))
-				templateSubType := getTemplateSubType(changedMap["template_type"].(string))
-				if _, ok := changedMap["template_type"]; ok {
-					delete(changedMap, "template_type")
+
+				if val, ok := changedMap["template_type"]; ok && val.(string) != "" {
+					changedMap["templateType"] = getTemplateType(changedMap["template_type"].(string))
+					changedMap["templateSubType"] = getTemplateSubType(changedMap["template_type"].(string))
 				}
-				changedMap["templateType"] = templateType
-				changedMap["templateSubType"] = templateSubType
 
 				map_add, _ := json.Marshal(changedMap)
 				map_values := strings.Replace(strings.Replace(string(map_add), "display_name", "displayName", 1), "tenant_id", "tenantId", 1)
@@ -541,7 +555,9 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 		map_template["display_name"] = models.StripQuotes(templatesCont.S("displayName").String())
 		map_template["tenant_id"] = models.StripQuotes(templatesCont.S("tenantId").String())
 		map_template["description"] = models.StripQuotes(templatesCont.S("description").String())
-		map_template["template_type"] = getSchemaTemplateType(templatesCont)
+		if templatesCont.Exists("templateType") {
+			map_template["template_type"] = getSchemaTemplateType(templatesCont)
+		}
 		templates = append(templates, map_template)
 
 		apiTemplate := models.StripQuotes(templatesCont.S("name").String())
