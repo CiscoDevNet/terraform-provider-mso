@@ -74,33 +74,42 @@ resource "mso_schema_template_contract" "template_contract" {
   contract_name = "Contract1"
   display_name  = "Contract1"
   filter_type   = "bothWay"
+  target_dscp   = "af11"
+  priority      = "level1"
   scope         = "context"
   filter_relationship {
     filter_schema_id     = mso_schema_template_filter_entry.filter_entry.schema_id
     filter_template_name = mso_schema_template_filter_entry.filter_entry.template_name
     filter_name          = mso_schema_template_filter_entry.filter_entry.name
+    filter_type          = "bothWay"
+    action               = "permit"
+    priority             = "default"
+    directives           = ["log", "no_stats"]
   }
   filter_relationship {
     filter_schema_id     = mso_schema_template_filter_entry.filter_entry_2.schema_id
     filter_template_name = mso_schema_template_filter_entry.filter_entry_2.template_name
     filter_name          = mso_schema_template_filter_entry.filter_entry_2.name
+    filter_type          = "bothWay"
+    action               = "deny"
+    priority             = "level2"
+    directives           = ["log", ]
   }
-  directives = ["none"]
 }
 
 // The below format of using filter_relationships is deprecated and might be removed in future release.
 // See filter_relationship example above for new syntax.
 resource "mso_schema_template_contract" "template_contract" {
-  schema_id             = mso_schema_template_filter_entry.filter_entry_2.schema_id
-  template_name         = mso_schema_template_filter_entry.filter_entry_2.template_name
-  contract_name         = "Contract2"
-  display_name          = "Contract2"
-  filter_type           = "bothWay"
-  scope                 = "context"
-  filter_relationships  = {
-    filter_schema_id    = mso_schema_template_filter_entry.filter_entry_2.schema_id
+  schema_id     = mso_schema_template_filter_entry.filter_entry_2.schema_id
+  template_name = mso_schema_template_filter_entry.filter_entry_2.template_name
+  contract_name = "Contract2"
+  display_name  = "Contract2"
+  filter_type   = "bothWay"
+  scope         = "context"
+  filter_relationships = {
+    filter_schema_id     = mso_schema_template_filter_entry.filter_entry_2.schema_id
     filter_template_name = mso_schema_template_filter_entry.filter_entry_2.template_name
-    filter_name = mso_schema_template_filter_entry.filter_entry.name
+    filter_name          = mso_schema_template_filter_entry.filter_entry.name
   }
-  directives            = ["none"]
+  directives = ["none"]
 }
