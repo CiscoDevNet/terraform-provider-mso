@@ -31,11 +31,21 @@ data "mso_schema_template_contract" "example" {
 ## Attribute Reference ##
 
 * `display_name` - (Read-Only) The name of the Contract as displayed on the MSO UI.
-* `filter_type` - (Read-Only) The type of the Filter. 
+* `filter_type` - (Read-Only) The type of filters of the Contract.
 * `scope` - (Read-Only) The scope of the Contract.
-* `filter_relationships` - A map for the Filter relationship.
+* `target_dscp` - (Read-Only) The dscp value of the Contract.
+* `priority` - (Read-Only) The priority override of the Filter.
+* `filter_relationship` - A List of Filter relationships.
     * `filter_schema_id` - (Read-Only) The schema ID of the Filter.
     * `filter_template_name` - (Read-Only) The template name of the Filter.
     * `filter_name` - (Read-Only) The name of the Filter.
+    * `filter_type` - (Read-Only) The type of the Filter. 
     * `action` - (Read-Only) The action of the Filter.
     * `directives` - (Read-Only) The directives of the Filter.
+    * `priority` - (Read-Only) The priority override of the Filter.
+
+* `filter_relationships` - **Deprecated** A map of the Filter relationship.
+    * `filter_schema_id` - (Read-Only) The schema ID of the Filter.
+    * `filter_template_name` - (Read-Only) The template name of the Filter.
+    * `filter_name` - (Read-Only) The name of the Filter.
+* `directives` - **Deprecated** (Read-Only) The directives of the Filter.
