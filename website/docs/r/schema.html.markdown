@@ -51,7 +51,7 @@ resource "mso_schema" "demo_schema" {
   * `display_name` - (Required) The display name of the template.
   * `tenant_id` - (Required) The tenant-id to associate with the template.
   * `description` - (Optional) The description of the template.
-  * `template_type` - (Optional) The template type of the template. Allowed values are `aci_multi_site`, `aci_autonomous`, `ndfc`, `cloud_local`, and `sr_mpls`. NDO defaults to `aci_multi_site` when attribute is unset during creation.
+  * `template_type` - (Optional) The template type of the template. Allowed values are `aci_multi_site`, `aci_autonomous`, `ndfc`, `cloud_local`, and `sr_mpls`. Defaults to `aci_multi_site` when attribute is unset during creation.
 
 ## Attribute Reference ##
 

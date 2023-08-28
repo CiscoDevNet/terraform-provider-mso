@@ -80,7 +80,7 @@ func resourceMSOSchema() *schema.Resource {
 						"template_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							Default:  "aci_multi_site",
 							// validation func does not work inside typeset
 							ValidateFunc: validation.StringInSlice(getSchemaTemplateTypes(), false),
 						},
