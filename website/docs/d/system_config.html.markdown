@@ -1,7 +1,7 @@
 ---
 layout: "mso"
 page_title: "MSO: mso_system_config"
-sidebar_current: "docs-mso-data-source-system-config"
+sidebar_current: "docs-mso-data-source-system_config"
 description: |-
   Data source for MSO System Configuration.
 ---

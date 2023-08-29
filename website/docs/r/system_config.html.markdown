@@ -1,7 +1,7 @@
 ---
 layout: "mso"
 page_title: "MSO: mso_system_config"
-sidebar_current: "docs-mso-resource-system-config"
+sidebar_current: "docs-mso-resource-system_config"
 description: |-
   Manages MSO System Configuration.
 ---
