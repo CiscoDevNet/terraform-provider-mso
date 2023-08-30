@@ -22,7 +22,7 @@ resource "mso_system_config" "system_config" {
     type = "warning"
   }
   change_control = {
-    enable = true
+    enable = "enabled"
     number_of_approvers = 2
   }
 }
@@ -37,7 +37,7 @@ resource "mso_system_config" "system_config" {
     * `type` - (Required) The type of the Banner. Allowed values are `critical`, `warning` or `informational`.
     * `message` - (Required) The message of the Banner.
 * `change_control` - (Optional) A map of Change Control configuration. 
-    * `enable` - (Required) Whether Change Control is enabled.
+    * `enable` - (Required) Whether Change Control is enabled. Allowed values are `enabled`, or `disabled`.
     * `number_of_approvers` - (Optional) The number of approvers for the Change Control. MSO defaults to `1` when not provided.
 
 ## Attribute Reference ##

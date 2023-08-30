@@ -21,7 +21,7 @@ resource "mso_system_config" "system_config" {
     type = "warning"
   }
   change_control = {
-    enable = true
+    enable = "enabled"
     number_of_approvers = 2
   }
 }

@@ -74,21 +74,39 @@ func resourceMSOSystemConfig() *schema.Resource {
 						"enable": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
+							// Validate function is not working in TypeMap
 							ValidateFunc: validation.StringInSlice([]string{
 								"enabled",
 								"disabled",
 							}, false),
 						},
 						"number_of_approvers": &schema.Schema{
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
+							Type:     schema.TypeInt,
+							Optional: true,
+							Computed: true,
+							// Validate function is not working in TypeMap
 							ValidateFunc: validation.IntAtLeast(1),
 						},
 					},
 				},
 			},
 		}),
+		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+			// Validate function is not working in TypeMap thus providing function to validate the input during plan
+			_, configChangeControl := diff.GetChange("change_control")
+			configChangeControlMap := configChangeControl.(map[string]interface{})
+			if configChangeControlMap["enable"] != "enabled" && configChangeControlMap["enable"] != "disabled" {
+				return fmt.Errorf("expected change_control.enable to be one of [enabled disabled], got '%s'", configChangeControlMap["enable"])
+			}
+			if configChangeControlMap["number_of_approvers"].(string) == "0" {
+				return fmt.Errorf("change_control.number_of_approvers must be at least 1")
+			}
+			_, err := strconv.Atoi(configChangeControlMap["number_of_approvers"].(string))
+			if err != nil {
+				return fmt.Errorf("change_control.number_of_approvers must be a integer")
+			}
+			return nil
+		},
 	}
 }
 
