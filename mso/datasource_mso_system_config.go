@@ -42,7 +42,7 @@ func dataSourceMSOSystemConfig() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"enable": &schema.Schema{
+						"workflow": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
 						},
