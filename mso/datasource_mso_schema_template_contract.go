@@ -77,7 +77,7 @@ func dataSourceMSOTemplateContract() *schema.Resource {
 							Computed: true,
 						},
 						"directives": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Computed: true,
 						},

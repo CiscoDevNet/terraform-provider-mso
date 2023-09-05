@@ -147,7 +147,7 @@ func resourceMSOTemplateContract() *schema.Resource {
 							}, false),
 						},
 						"directives": {
-							Type: schema.TypeList,
+							Type: schema.TypeSet,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 								ValidateFunc: validation.StringInSlice([]string{
@@ -272,8 +272,8 @@ func getFilterRelationshipsFromConfig(schemaId, templateName string, filterRelat
 			"filterName":   relationshipConfigMap["filter_name"].(string),
 		}
 
-		if len(relationshipConfigMap["directives"].([]interface{})) > 0 {
-			relationshipMap["directives"] = relationshipConfigMap["directives"]
+		if len(relationshipConfigMap["directives"].(*schema.Set).List()) > 0 {
+			relationshipMap["directives"] = relationshipConfigMap["directives"].(*schema.Set).List()
 		} else {
 			relationshipMap["directives"] = directives
 		}
@@ -521,10 +521,10 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	filterRelationship := d.Get("filter_relationship").([]interface{})
 
 	// TODO remove when filter_relationships and directives are deprecated on next mayor version
-	deprecatedFilterRelationship := d.Get("filter_relationships").(map[string]interface{})
 	directives := d.Get("directives").([]interface{})
 	var filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider []interface{}
-	if len(deprecatedFilterRelationship) > 0 {
+	if d.HasChange("filter_relationships") {
+		deprecatedFilterRelationship := d.Get("filter_relationships").(map[string]interface{})
 		filterRelationships = getDeprecatedFilterRelationshipsFromConfig(schemaId, templateName, deprecatedFilterRelationship, directives)
 	} else {
 		filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider = getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship, directives)
