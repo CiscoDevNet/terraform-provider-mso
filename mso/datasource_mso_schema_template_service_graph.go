@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -35,33 +34,29 @@ func dataSourceMSOSchemaTemplateServiceGraph() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"site_nodes": &schema.Schema{
-				Type:     schema.TypeList,
-				Computed: true,
+			"service_node_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+				// ConflictsWith: []string{"service_node"},
+				Deprecated: "Use service_node to configure service nodes.",
+			},
+			"service_node": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Configure service nodes for the service graph.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"node_index": &schema.Schema{
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"service_node_type": &schema.Schema{
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"site_id": &schema.Schema{
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"tenant_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"node_name": &schema.Schema{
+						"type": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 					},
 				},
+			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		}),
 	}
@@ -91,51 +86,26 @@ func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interf
 		return err
 	}
 
-	d.Set("schema_id", schemaId)
-	d.Set("template_name", stateTemplate)
-	d.Set("service_graph_name", graphName)
+	serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
 
-	siteParams := make([]interface{}, 0, 1)
-	for _, node := range sgCont.S("serviceNodes").Data().([]interface{}) {
-		nodeIndex := node.(map[string]interface{})["index"].(float64)
-		nodeCont, _, _ := getTemplateServiceNodeContFromIndex(sgCont, int(nodeIndex))
-		serviceNodeTypeId := models.StripQuotes(nodeCont.S("serviceNodeTypeId").String())
-		serviceNodeTypeIdHuman, err := getNodeNameFromId(msoClient, serviceNodeTypeId)
+	serviceNodeList := make([]interface{}, 0, 1)
+	for _, val := range serviceNodes {
+		serviceNodeValues := val.(map[string]interface{})
+		serviceNodeMap := make(map[string]interface{})
+		nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
+		nodeType, err := getNodeNameFromId(msoClient, nodeId)
 		if err != nil {
 			return err
 		}
-		sitesCount, err := cont.ArrayCount("sites")
-		if err != nil {
-			d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, stateTemplate, graphName))
-			d.Set("site_nodes", nil)
-			log.Printf("Unable to find sites")
-			return nil
-		}
-		for i := 0; i < sitesCount; i++ {
-			siteCont, err := cont.ArrayElement(i, "sites")
-			if err != nil {
-				return fmt.Errorf("Unable to load site element")
-			}
-			apiSiteId := models.StripQuotes(siteCont.S("siteId").String())
-			graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, stateTemplate, apiSiteId, graphName)
-			if err == nil {
-				nodeName := models.StripQuotes(nodeCont.S("name").String())
-				siteServiceNodeCont, _, nodeerr := getSiteServiceNodeCont(graphCont, schemaId, stateTemplate, graphName, nodeName)
-				if nodeerr == nil {
-					deviceDn := models.StripQuotes(siteServiceNodeCont.S("device", "dn").String())
-					dnSplit := strings.Split(deviceDn, "/")
-					siteMap := make(map[string]interface{})
-					siteMap["node_index"] = int(nodeIndex)
-					siteMap["service_node_type"] = serviceNodeTypeIdHuman
-					siteMap["tenant_name"] = strings.Join(strings.Split(dnSplit[1], "-")[1:], "-")
-					siteMap["node_name"] = strings.Join(strings.Split(dnSplit[2], "-")[1:], "-")
-					siteMap["site_id"] = apiSiteId
-					siteParams = append(siteParams, siteMap)
-				}
-			}
-		}
+		serviceNodeMap["type"] = nodeType
+
+		serviceNodeList = append(serviceNodeList, serviceNodeMap)
 	}
-	d.Set("site_nodes", siteParams)
+	d.Set("service_node", serviceNodeList)
+
+	d.Set("schema_id", schemaId)
+	d.Set("template_name", stateTemplate)
+	d.Set("service_graph_name", graphName)
 	d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, stateTemplate, graphName))
 	return nil
 }
