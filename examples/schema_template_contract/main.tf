@@ -75,7 +75,7 @@ resource "mso_schema_template_contract" "template_contract" {
     filter_type          = "bothWay"
     action               = "deny"
     priority             = "level2"
-    directives           = ["log", ]
+    directives           = ["log"]
   }
 }
 
