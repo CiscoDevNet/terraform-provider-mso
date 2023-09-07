@@ -30,9 +30,9 @@ data "mso_schema_template_service_graph" "example" {
 
 ## Attribute Reference ##
 
-* `site_nodes` - (Read-Only) A list of site nodes for the Service Graph.
-    * `node_index` - (Read-Only) The index of the Service Node.
-    * `service_node_type` - (Read-Only) The type of the Service Node.
-    * `site_id` - (Read-Only) The site ID of the Service Node.
-    * `tenant_name` - (Read-Only) The tenant name of the Service Node.
-    * `node_name` - (Read-Only) The name of the site level Service Node.
+* `service_node_type` - (Read-Only) **Deprecated**. The type of the Service Node.
+* `service_node` - (Read-Only) List of service nodes attached to Service Graph.
+    * `service_node.type` - (Read-Only) Type of Service Node attached to the Service Graph. Allowed values are `firewall`, `load-balancer` , `other`.
+
+## NOTE ##
+The `site_nodes` parameters are removed from Template level Service Graph datasource.
