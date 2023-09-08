@@ -60,7 +60,7 @@ func dataSourceMSOSystemConfig() *schema.Resource {
 func dataSourceMSOSystemConfigRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
-	err := getSystemConfig(d, m)
+	err := getAndSetSystemConfig(d, m)
 	if err != nil {
 		return err
 	}

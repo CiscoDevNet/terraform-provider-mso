@@ -95,15 +95,17 @@ func resourceMSOSystemConfig() *schema.Resource {
 			// Validate function is not working in TypeMap thus providing function to validate the input during plan
 			_, configChangeControl := diff.GetChange("change_control")
 			configChangeControlMap := configChangeControl.(map[string]interface{})
-			if configChangeControlMap["workflow"] != "enabled" && configChangeControlMap["workflow"] != "disabled" {
+			if configChangeControlMap["workflow"] != "enabled" && configChangeControlMap["workflow"] != "disabled" && configChangeControlMap["workflow"] != nil {
 				return fmt.Errorf("expected change_control.workflow to be one of [enabled disabled], got '%s'", configChangeControlMap["workflow"])
 			}
-			if configChangeControlMap["number_of_approvers"].(string) == "0" {
-				return fmt.Errorf("change_control.number_of_approvers must be at least 1")
-			}
-			_, err := strconv.Atoi(configChangeControlMap["number_of_approvers"].(string))
-			if err != nil {
-				return fmt.Errorf("change_control.number_of_approvers must be a integer")
+			if configChangeControlMap["number_of_approvers"] != nil {
+				if configChangeControlMap["number_of_approvers"].(string) == "0" {
+					return fmt.Errorf("change_control.number_of_approvers must be at least 1")
+				}
+				_, err := strconv.Atoi(configChangeControlMap["number_of_approvers"].(string))
+				if err != nil {
+					return fmt.Errorf("change_control.number_of_approvers must be a integer")
+				}
 			}
 			return nil
 		},
@@ -118,29 +120,36 @@ func getAndSetSystemConfig(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(models.StripQuotes(con.Search("systemConfigs").Search("id").String()))
+	if con.Exists("systemConfigs") {
 
-	bannerConfig := con.Search("systemConfigs").Search("bannerConfig").Data().([]interface{})[0].(map[string]interface{})
-	banner := bannerConfig["banner"].(map[string]interface{})
-	d.Set("alias", bannerConfig["alias"].(string))
-	bannerMap := map[string]interface{}{
-		"state":   banner["bannerState"].(string),
-		"type":    banner["bannerType"].(string),
-		"message": banner["message"].(string),
-	}
-	d.Set("banner", []interface{}{bannerMap})
+		systemConfigs := con.Search("systemConfigs").Data().(map[string]interface{})
 
-	changeControl := con.Search("systemConfigs").Search("changeControl").Data().(map[string]interface{})
-	workflow := "disabled"
-	if changeControl["enable"].(bool) {
-		workflow = "enabled"
-	}
-	changeControlMap := map[string]interface{}{
-		"workflow":            workflow,
-		"number_of_approvers": strconv.Itoa(int(changeControl["numOfApprovers"].(float64))),
-	}
-	d.Set("change_control", changeControlMap)
+		d.SetId(systemConfigs["id"].(string))
 
+		if bannerConfig, ok := systemConfigs["bannerConfig"]; ok && len(bannerConfig.([]interface{})) > 0 {
+			bannerConfigMap := bannerConfig.([]interface{})[0].(map[string]interface{})
+			banner := bannerConfigMap["banner"].(map[string]interface{})
+			d.Set("alias", bannerConfigMap["alias"].(string))
+			bannerMap := map[string]interface{}{
+				"state":   banner["bannerState"].(string),
+				"type":    banner["bannerType"].(string),
+				"message": banner["message"].(string),
+			}
+			d.Set("banner", []interface{}{bannerMap})
+		}
+
+		if changeControl, ok := systemConfigs["changeControl"]; ok {
+			changeControlMap := changeControl.(map[string]interface{})
+			workflow := "disabled"
+			if changeControlMap["enable"].(bool) {
+				workflow = "enabled"
+			}
+			d.Set("change_control", map[string]interface{}{
+				"workflow":            workflow,
+				"number_of_approvers": strconv.Itoa(int(changeControlMap["numOfApprovers"].(float64))),
+			})
+		}
+	}
 	return nil
 }
 
@@ -148,8 +157,8 @@ func patchSystemConfig(d *schema.ResourceData, msoClient *client.Client, systemC
 
 	var patchPayloads []models.Model
 
-	changeControl := d.Get("change_control")
-	if changeControl != nil {
+	changeControl, ok := d.GetOk("change_control")
+	if ok {
 		changeControlMap := changeControl.(map[string]interface{})
 		enable := false
 		if changeControlMap["workflow"].(string) == "enabled" {
@@ -163,9 +172,12 @@ func patchSystemConfig(d *schema.ResourceData, msoClient *client.Client, systemC
 	}
 
 	alias := d.Get("alias").(string)
-	banner := d.Get("banner")
-	if (banner != nil && len(banner.([]interface{})) > 0) || alias != "" {
-		bannerMap := banner.([]interface{})[0].(map[string]interface{})
+	banner, ok := d.GetOk("banner")
+	if ok || alias != "" {
+		bannerMap := map[string]interface{}{"state": "", "type": "", "message": ""}
+		if ok {
+			bannerMap = banner.([]interface{})[0].(map[string]interface{})
+		}
 		patchPayloads = append(patchPayloads, models.NewSystemConfigBanner(
 			alias,
 			bannerMap["state"].(string),

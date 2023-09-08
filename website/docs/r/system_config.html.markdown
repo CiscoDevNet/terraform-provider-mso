@@ -10,10 +10,11 @@ description: |-
 
 Manages MSO System Configuration.
 
+Note: System configuration is already existing on MSO, thus a `terraform apply` command will always replace the current configuration. A `terraform destroy` command will remove the configuration from state but will not remove or update any current configuration on MSO. 
+
 ## Example Usage ##
 
 ```hcl
-
 resource "mso_system_config" "system_config" {
   alias = "test alias"
   banner {
@@ -26,7 +27,6 @@ resource "mso_system_config" "system_config" {
     number_of_approvers = 2
   }
 }
-
 ```
 
 ## Argument Reference ##
@@ -43,3 +43,11 @@ resource "mso_system_config" "system_config" {
 ## Attribute Reference ##
 
 No attributes are exported.
+
+## Importing ##
+
+The `terraform import` command is not supported. The `terraform apply` command without configuration can be used instead.
+
+```hcl
+resource "mso_system_config" "system_config" {}
+```
