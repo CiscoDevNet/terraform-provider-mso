@@ -260,15 +260,17 @@ func getFilterRelationshipsFromConfig(schemaId, templateName string, filterRelat
 		relationshipConfigMap := relationshipConfig.(map[string]interface{})
 		relationshipMap := make(map[string]interface{})
 
+		relationshipSchemaId := schemaId
 		if relationshipConfigMap["filter_schema_id"] != "" {
-			schemaId = relationshipConfigMap["filter_schema_id"].(string)
+			relationshipSchemaId = relationshipConfigMap["filter_schema_id"].(string)
 		}
+		relationshipTemplateName := templateName
 		if relationshipConfigMap["filter_template_name"] != "" {
-			templateName = relationshipConfigMap["filter_template_name"].(string)
+			relationshipTemplateName = relationshipConfigMap["filter_template_name"].(string)
 		}
 		relationshipMap["filterRef"] = map[string]interface{}{
-			"schemaId":     schemaId,
-			"templateName": templateName,
+			"schemaId":     relationshipSchemaId,
+			"templateName": relationshipTemplateName,
 			"filterName":   relationshipConfigMap["filter_name"].(string),
 		}
 
