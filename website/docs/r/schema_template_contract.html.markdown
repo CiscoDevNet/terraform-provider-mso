@@ -45,8 +45,7 @@ resource "mso_schema_template_contract" "example" {
 * `scope` - (Optional) The scope of the Contract. Allowed values are `application-profile`, `tenant`, `context`, and `global`. Default to `context`.
 * `target_dscp` - (Optional) The dscp value of the Contract. Allowed values are `af11`, `af12`, `af13`, `af21`, `af22`, `af23`, `af31`, `af32`, `af33`, `af41`, `af42`, `af43`, `cs0`, `cs1`, `cs2`, `cs3`, `cs4`, `cs5`, `cs6`, `cs7`, `expeditedForwarding`, `voiceAdmit`, and `unspecified`. Defaults to `unspecified`.
 * `priority` - (Optional) The priority of the Contract. Allowed values are `unspecified`, `level1`, `level2`, `level3`, `level4`, `level5`, and `level6`. Defaults to `unspecified`.
-
-* `filter_relationship` - (Required) A list of Filter Relationships for the Contract.
+* `filter_relationship` - (Optional) A list of Filter Relationships for the Contract.
   * `filter_relationship.filter_name` - (Required) The name of the Filter associated with the Contract.
   * `filter_relationship.filter_schema_id` - (Optional) The schema ID of the Filter associated with the Contract.
   * `filter_relationship.filter_template_name` - (Optional) The template name of the Filter associated with the Contract.
@@ -55,12 +54,11 @@ resource "mso_schema_template_contract" "example" {
   * `filter_relationship.action` - (Optional) The action of the Filter associated with the Contract. Allowed values are `deny` and `permit`. 
   * `filter_relationship.priority` - (Optional) The override priority of the Filter associated with the Contract. Allowed values are `default`, `level1`, `level2`, and `level3`. 
   
-* `filter_relationships` - **Deprecated** (Required) A Map to provide one Filter Relationship. This attribute is deprecated, use `filter_relationship` instead. It is not allowed to use in combination with `filter_relationship`.
+* `filter_relationships` - (Optional) **Deprecated** A Map to provide one Filter Relationship. This attribute is deprecated, use `filter_relationship` instead. It is not allowed to use in combination with `filter_relationship`.
   * `filter_relationships.filter_schema_id` - (Optional) The schemaId in which the filter is located.
   * `filter_relationships.filter_template_name` - (Optional) The template name in which the filter is located.
   * `filter_relationships.filter_name` - (Required) The filter to associate with this contract.
-
-* `directives` -  **Deprecated** (Optional) A list of filter directives. Allowed values are `none`, `no_stats`, and `log`.
+* `directives` -  (Optional) **Deprecated** A list of filter directives. Allowed values are `none`, `no_stats`, and `log`.
 
 ## Attribute Reference ##
 

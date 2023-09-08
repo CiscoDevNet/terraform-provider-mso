@@ -222,6 +222,7 @@ func resourceMSOTemplateContract() *schema.Resource {
 			if configFilterType != stateFilterType && stateFilterType != "" {
 				return fmt.Errorf("The filter_type cannot be changed. Change detected from '%s' to '%s'.", stateFilterType, configFilterType)
 			}
+
 			return nil
 		},
 	}
@@ -410,12 +411,17 @@ func setContractFromSchema(d *schema.ResourceData, schemaCont *container.Contain
 
 							*/
 							filterRelationshipsMap := make(map[string]interface{})
-							filterMap := filterList[len(filterList)-1]
-							filterRelationshipsMap["filter_schema_id"] = filterMap["filter_schema_id"]
-							filterRelationshipsMap["filter_template_name"] = filterMap["filter_template_name"]
-							filterRelationshipsMap["filter_name"] = filterMap["filter_name"]
-							d.Set("filter_relationships", filterRelationshipsMap)
-							d.Set("directives", filterMap["directives"])
+							if len(filterList) != 0 {
+								filterMap := filterList[len(filterList)-1]
+								filterRelationshipsMap["filter_schema_id"] = filterMap["filter_schema_id"]
+								filterRelationshipsMap["filter_template_name"] = filterMap["filter_template_name"]
+								filterRelationshipsMap["filter_name"] = filterMap["filter_name"]
+								d.Set("filter_relationships", filterRelationshipsMap)
+								d.Set("directives", filterMap["directives"])
+							} else {
+								d.Set("filter_relationships", filterRelationshipsMap)
+								d.Set("directives", []string{})
+							}
 						}
 
 						// End of block
