@@ -110,7 +110,7 @@ func resourceMSOSystemConfig() *schema.Resource {
 	}
 }
 
-func getSystemConfig(d *schema.ResourceData, m interface{}) error {
+func getAndSetSystemConfig(d *schema.ResourceData, m interface{}) error {
 
 	msoClient := m.(*client.Client)
 	con, err := msoClient.GetViaURL(systemConfigUrl)
@@ -222,7 +222,7 @@ func resourceMSOSystemConfigUpdate(d *schema.ResourceData, m interface{}) error 
 func resourceMSOSystemConfigRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
-	err := getSystemConfig(d, m)
+	err := getAndSetSystemConfig(d, m)
 	if err != nil {
 		return err
 	}
