@@ -21,7 +21,7 @@ resource "mso_schema_template_service_graph" "test_sg" {
   service_node {
     type = "firewall"
   }
-  description        = "hello"
+  description        = "Created by terraform"
 }
 
 ```

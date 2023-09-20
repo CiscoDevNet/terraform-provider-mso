@@ -35,8 +35,7 @@ func dataSourceMSOSchemaTemplateServiceGraph() *schema.Resource {
 			},
 			"service_node_type": &schema.Schema{
 				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validation.StringLenBetween(1, 1000),
+				Computed:      true,
 				ConflictsWith: []string{"service_node"},
 				Deprecated:    "Use service_node to configure service nodes.",
 			},
