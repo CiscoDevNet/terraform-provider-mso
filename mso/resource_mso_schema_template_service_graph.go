@@ -63,6 +63,11 @@ func resourceMSOSchemaTemplateServiceGraphs() *schema.Resource {
 						"type": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"firewall",
+								"load-balancer",
+								"other",
+							}, false),
 						},
 					},
 				},
@@ -107,12 +112,10 @@ func resourceMSOSchemaTemplateServiceGraphImport(d *schema.ResourceData, m inter
 		log.Printf("graphcont err %v", err)
 		return nil, err
 	}
-	log.Printf("CHECK IMPORT sgCont %v", sgCont)
 
 	d.Set("schema_id", schemaId)
 	d.Set("template_name", templateName)
 	d.Set("service_graph_name", graphName)
-	log.Printf("CHECK IMPORT IF %v", d.Get("service_node_type"))
 
 	serviceNodeList := make([]interface{}, 0, 1)
 	serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
