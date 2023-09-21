@@ -10,6 +10,9 @@ description: |-
 
 Manages MSO Schema Site Level Service Graph Node.
 
+# **DEPRECATED** # 
+"This resource (mso_schema_site_service_graph_node) is **deprecated**. Use mso_schema_site_service_graph resource instead."
+
 ## Example Usage ##
 
 ```hcl
