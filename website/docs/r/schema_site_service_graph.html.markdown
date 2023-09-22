@@ -34,12 +34,12 @@ resource "mso_schema_site_service_graph" "site_service_graph" {
 * `template_name` - (Required) The template name under which you want to deploy Service Graph.
 * `site_id` - (Required) The site ID under which you want to deploy Service Graph.
 * `service_graph_name` - (Required) The name of the Service Graph.
-* `service_node` - (Required) List of maps to provide Site level Node association. This maps should be provided if site is associated with template.
+* `service_node` - (Required) List of maps to provide Site level Node association.
     * `device_dn` - (Required) Dn of device associated with the service node of the Service Graph.
 
 ## Attribute Reference ##
 
-No attributes are exported.
+The only Attribute exposed for this resource is `id`. Which is set to the id of Service Graph created.
 
 ## Note ##
 - This resource is supported only for NDO 4.1.1i and above.

@@ -60,15 +60,11 @@ func dataSourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	siteId := d.Get("site_id").(string)
+	graphName := d.Get("service_graph_name").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
-	}
-
-	var graphName string
-	if tempVar, ok := d.GetOk("service_graph_name"); ok {
-		graphName = tempVar.(string)
 	}
 
 	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)

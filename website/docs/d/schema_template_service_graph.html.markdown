@@ -24,15 +24,15 @@ data "mso_schema_template_service_graph" "example" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The schema ID of the Service Graph.
-* `template_name` - (Required) The template name of the Service Graph.
+* `schema_id` - (Required) The schema ID under which you want to deploy Service Graph.
+* `template_name` - (Required) The template name under which you want to deploy Service Graph.
 * `service_graph_name` - (Required) The name of the Service Graph.
 
 ## Attribute Reference ##
 
 * `service_node_type` - (Read-Only) **Deprecated**. The type of the Service Node.
 * `service_node` - (Read-Only) List of service nodes attached to Service Graph.
-    * `service_node.type` - (Read-Only) Type of Service Node attached to the Service Graph. Allowed values are `firewall`, `load-balancer` , `other`.
+    * `service_node.type` - (Read-Only) Type of Service Node attached to the Service Graph.
 
 ## NOTE ##
 The `site_nodes` parameters are removed from Template level Service Graph datasource.

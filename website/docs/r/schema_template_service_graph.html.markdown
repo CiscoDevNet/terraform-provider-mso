@@ -27,13 +27,13 @@ resource "mso_schema_template_service_graph" "test_sg" {
 ```
 
 ## Argument Reference ##
-* `schema_id` - (Required) Schema ID where Service Graph to be created.
-* `template_name` - (Required) Template Name where Service Graph to be created.
-* `service_graph_name` - (Required) Name of Service Graph.
-* `service_node_type` - (Optional) **Deprecated**. Type of Service Node attached to this Graph. Allowed values are `firewall`, `load-balancer` , `other`.
+* `schema_id` - (Required) The schema ID under which you want to deploy Service Graph.
+* `template_name` - (Required) The template name under which you want to deploy Service Graph.
+* `service_graph_name` - (Required) Name of the Service Graph.
+* `service_node_type` - (Optional) **Deprecated**. Type of Service Node attached to this Graph. Allowed values are `firewall`, `load-balancer` and `other`.
 * `description` - (Optional) Description of Service Graph.
 * `service_node` - (Required) List of service nodes attached to Service Graph.
-    * `service_node.type` - (Required) Type of Service Node attached to the Service Graph. Allowed values are `firewall`, `load-balancer` , `other`.
+    * `service_node.type` - (Required) Type of Service Node attached to the Service Graph. Allowed values are `firewall`, `load-balancer` and `other`.
 
 
 ## NOTE ##
@@ -41,7 +41,7 @@ The `site_nodes` parameters are removed from Template level Service Graph resour
 
 ## Attribute Reference ##
 
-The only Attribute exposed for this resource is `id`. Which is set to the name of Service Graph created.
+The only Attribute exposed for this resource is `id`. Which is set to the id of Service Graph created.
 
 ## Importing ##
 
