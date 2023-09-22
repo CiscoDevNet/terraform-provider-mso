@@ -109,26 +109,10 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 	log.Printf("[DEBUG] Begining Creation Site Service Node")
 	msoClient := m.(*client.Client)
 
-	var schemaId string
-	if schema_id, ok := d.GetOk("schema_id"); ok {
-		schemaId = schema_id.(string)
-	}
-	// schemaId := d.Get("schema_id")
-
-	var templateName string
-	if tempVar, ok := d.GetOk("template_name"); ok {
-		templateName = tempVar.(string)
-	}
-
-	var siteId string
-	if site_id, ok := d.GetOk("site_id"); ok {
-		siteId = site_id.(string)
-	}
-
-	var graphName string
-	if tempVar, ok := d.GetOk("service_graph_name"); ok {
-		graphName = tempVar.(string)
-	}
+	schemaId := d.Get("schema_id").(string)
+	templateName := d.Get("template_name").(string)
+	siteId := d.Get("site_id").(string)
+	graphName := d.Get("service_graph_name").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
@@ -162,16 +146,12 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 
 	nodeIdSt := d.Id()
 	schemaId := d.Get("schema_id").(string)
-	siteId := d.Get("site_id").(string)
 	templateName := d.Get("template_name").(string)
+	siteId := d.Get("site_id").(string)
+	graphName := d.Get("service_graph_name").(string)
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), cont, d)
-	}
-
-	var graphName string
-	if tempVar, ok := d.GetOk("service_graph_name"); ok {
-		graphName = tempVar.(string)
 	}
 
 	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
@@ -197,25 +177,10 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 	log.Printf("[DEBUG] Begining Update Template Service Graph")
 	msoClient := m.(*client.Client)
 
-	var schemaId string
-	if schema_id, ok := d.GetOk("schema_id"); ok {
-		schemaId = schema_id.(string)
-	}
-
-	var templateName string
-	if tempVar, ok := d.GetOk("template_name"); ok {
-		templateName = tempVar.(string)
-	}
-
-	var siteId string
-	if site_id, ok := d.GetOk("site_id"); ok {
-		siteId = site_id.(string)
-	}
-
-	var graphName string
-	if tempVar, ok := d.GetOk("service_graph_name"); ok {
-		graphName = tempVar.(string)
-	}
+	schemaId := d.Get("schema_id").(string)
+	templateName := d.Get("template_name").(string)
+	siteId := d.Get("site_id").(string)
+	graphName := d.Get("service_graph_name").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
@@ -245,7 +210,7 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 }
 
 func resourceMSOSchemaSiteServiceGraphDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[NOTE]: Deletion of site Service Graph is not supported by the API.  Site Service Graph will be removed when site is disassociated from the template or when Service Graph is removed at the template level.")
+	log.Printf("[INFO]: Deletion of site Service Graph is not supported by the API.  Site Service Graph will be removed when site is disassociated from the template or when Service Graph is removed at the template level.")
 	return nil
 }
 

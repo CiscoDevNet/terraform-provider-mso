@@ -32,5 +32,5 @@ resource "mso_schema_site_service_graph" "test_sg" {
 
 ## Attribute Reference ##
 
-* `service_node` - (Required) List of maps to provide Site level Node association. This maps should be provided if site is associated with template.
+* `service_node` - (Required) List of maps to provide Site level Node association.
     * `device_dn` - (Required) Dn of device associated with the service node of the Service Graph.
