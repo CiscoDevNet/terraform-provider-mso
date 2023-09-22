@@ -13,7 +13,7 @@ import (
 func dataSourceMSOSchemaTemplateServiceGraph() *schema.Resource {
 	return &schema.Resource{
 
-		Read: dataSourceMSOSchemaTemplateServiceGrapRead,
+		Read: dataSourceMSOSchemaTemplateServiceGraphRead,
 
 		SchemaVersion: version,
 
@@ -60,8 +60,8 @@ func dataSourceMSOSchemaTemplateServiceGraph() *schema.Resource {
 	}
 }
 
-func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
+func dataSourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] %s: Beginning datasource Read", d.Id())
 
 	msoClient := m.(*client.Client)
 
@@ -89,17 +89,14 @@ func dataSourceMSOSchemaTemplateServiceGrapRead(d *schema.ResourceData, m interf
 		d.Set("service_node_type", serviceNodeType)
 	} else {
 		serviceNodeList := make([]interface{}, 0, 1)
-		serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
-		for _, val := range serviceNodes {
-			serviceNodeValues := val.(map[string]interface{})
-			serviceNodeMap := make(map[string]interface{})
-			nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
-
-			nodeType, err := getNodeNameFromId(msoClient, nodeId)
+		for _, val := range sgCont.S("serviceNodes").Data().([]interface{}) {
+			nodeType, err := getNodeNameFromId(msoClient, models.StripQuotes(val.(map[string]interface{})["serviceNodeTypeId"].(string)))
 			if err != nil {
 				return err
 			}
-			serviceNodeMap["type"] = nodeType
+			serviceNodeMap := map[string]interface{}{
+				"type": nodeType,
+			}
 
 			serviceNodeList = append(serviceNodeList, serviceNodeMap)
 		}

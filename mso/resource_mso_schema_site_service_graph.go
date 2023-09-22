@@ -85,13 +85,7 @@ func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface
 	var graphName string
 	graphName = get_attribute[6]
 
-	graphCont, _, err := getSiteServiceGraphCont(
-		cont,
-		schemaId,
-		templateName,
-		siteId,
-		graphName,
-	)
+	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 	if err != nil {
 		d.SetId("")
 		log.Printf("sitegraphcont err %v", err)
@@ -119,6 +113,7 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 	if schema_id, ok := d.GetOk("schema_id"); ok {
 		schemaId = schema_id.(string)
 	}
+	// schemaId := d.Get("schema_id")
 
 	var templateName string
 	if tempVar, ok := d.GetOk("template_name"); ok {
@@ -140,11 +135,7 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 		return err
 	}
 
-	graphCont, _, err := getTemplateServiceGraphCont(
-		cont,
-		templateName,
-		graphName,
-	)
+	graphCont, _, err := getTemplateServiceGraphCont(cont, templateName, graphName)
 	if err != nil {
 		return err
 	}
@@ -183,13 +174,7 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 		graphName = tempVar.(string)
 	}
 
-	graphCont, _, err := getSiteServiceGraphCont(
-		cont,
-		schemaId,
-		templateName,
-		siteId,
-		graphName,
-	)
+	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 	if err != nil {
 		d.SetId("")
 		log.Printf("sitegraphcont err %v", err)
@@ -238,13 +223,7 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 	}
 
 	if d.HasChange("service_node") {
-		graphCont, _, err := getSiteServiceGraphCont(
-			cont,
-			schemaId,
-			templateName,
-			siteId,
-			graphName,
-		)
+		graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 		if err != nil {
 			return err
 		}
@@ -272,13 +251,10 @@ func resourceMSOSchemaSiteServiceGraphDelete(d *schema.ResourceData, m interface
 
 func getServiceNodeList(siteServiceNodes interface{}, graphCont *container.Container) []interface{} {
 	siteServiceNodeList := make([]interface{}, 0, 1)
-	templateServiceNodes := graphCont.S("serviceNodes").Data().([]interface{})
-	for index, templateServiceNode := range templateServiceNodes {
-		templateServiceNodeMap := templateServiceNode.(map[string]interface{})
-		siteServiceNodeDeviceList := siteServiceNodes.([]interface{})
-		siteServiceNodeMap := siteServiceNodeDeviceList[index].(map[string]interface{})
+	for index, templateServiceNode := range graphCont.S("serviceNodes").Data().([]interface{}) {
+		siteServiceNodeMap := siteServiceNodes.([]interface{})[index].(map[string]interface{})
 		serviceNodeMap := map[string]interface{}{
-			"serviceNodeRef": templateServiceNodeMap["serviceNodeRef"],
+			"serviceNodeRef": templateServiceNode.(map[string]interface{})["serviceNodeRef"],
 			"device": map[string]interface{}{
 				"dn": siteServiceNodeMap["device_dn"],
 			},
@@ -290,10 +266,8 @@ func getServiceNodeList(siteServiceNodes interface{}, graphCont *container.Conta
 
 func setServiceNodeList(graphCont *container.Container) ([]interface{}, error) {
 	serviceNodeList := make([]interface{}, 0, 1)
-	serviceNodes := graphCont.S("serviceNodes").Data().([]interface{})
-	for _, val := range serviceNodes {
-		serviceNodeValues := val.(map[string]interface{})
-		device := serviceNodeValues["device"].(map[string]interface{})["dn"]
+	for _, val := range graphCont.S("serviceNodes").Data().([]interface{}) {
+		device := val.(map[string]interface{})["device"].(map[string]interface{})["dn"]
 		serviceNodeMap := map[string]interface{}{
 			"device_dn": device,
 		}
