@@ -20,8 +20,8 @@ data "aci_tenant" "ansible_test" {
 }
 
 data "aci_l4_l7_device" "l4_l7_device_1" {
-  tenant_dn        = data.aci_tenant.ansible_test.id
-  name       = "ansible_test_firewall1"
+  tenant_dn = data.aci_tenant.ansible_test.id
+  name      = "ansible_test_firewall1"
 }
 
 output "aci_l4_l7_device_1" {
@@ -29,8 +29,8 @@ output "aci_l4_l7_device_1" {
 }
 
 data "aci_l4_l7_device" "l4_l7_device_2" {
-  tenant_dn        = data.aci_tenant.ansible_test.id
-  name       = "ansible_test_firewall2"
+  tenant_dn = data.aci_tenant.ansible_test.id
+  name      = "ansible_test_firewall2"
 }
 
 output "aci_l4_l7_device_2" {
@@ -47,7 +47,7 @@ provider "mso" {
 }
 
 data "mso_tenant" "tf_tenant" {
-  name         = "ansible_test"
+  name = "ansible_test"
 }
 
 data "mso_site" "tf_site" {
@@ -86,7 +86,7 @@ resource "mso_schema_site" "schema_site_1" {
 
 resource "mso_schema_site_service_graph" "test_sg_site" {
   schema_id          = mso_schema_site.schema_site_1.schema_id
-  site_id          = mso_schema_site.schema_site_1.site_id
+  site_id            = mso_schema_site.schema_site_1.site_id
   template_name      = mso_schema_template_service_graph.test_sg.template_name
   service_graph_name = mso_schema_template_service_graph.test_sg.service_graph_name
   service_node {
@@ -101,7 +101,7 @@ resource "mso_schema_site_service_graph" "test_sg_site" {
 
 data "mso_schema_site_service_graph" "test_sg_site" {
   schema_id          = mso_schema_site_service_graph.test_sg_site.schema_id
-  site_id          = mso_schema_site_service_graph.test_sg_site.site_id
+  site_id            = mso_schema_site_service_graph.test_sg_site.site_id
   template_name      = mso_schema_site_service_graph.test_sg_site.template_name
   service_graph_name = mso_schema_site_service_graph.test_sg_site.service_graph_name
 }

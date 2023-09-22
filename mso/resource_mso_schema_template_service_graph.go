@@ -324,10 +324,7 @@ func resourceMSOSchemaTemplateServiceGraphDelete(d *schema.ResourceData, m inter
 
 	path := fmt.Sprintf("/templates/%s/serviceGraphs/%s", templateName, graphName)
 
-	templatePatchStruct := models.NewTemplateServiceGraph("remove", path, nil)
-
-	response, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), templatePatchStruct)
-
+	response, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), models.GetRemovePatchPayload(path))
 	// Ignoring Error with code 141: Resource Not Found when deleting
 	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
 		return err
@@ -540,8 +537,7 @@ func getServiceGraphNodes(d *schema.ResourceData, msoClient *client.Client) ([]i
 		serviceNodes = append(serviceNodes, serviceNode)
 	} else {
 		if val, ok := d.GetOk("service_node"); ok {
-			serviceNodeList := val.([]interface{})
-			for i, val := range serviceNodeList {
+			for i, val := range val.([]interface{}) {
 				serviceNodeValues := val.(map[string]interface{})
 				if serviceNodeValues["type"] != "" {
 					nodeId, err := getNodeIdFromName(msoClient, fmt.Sprintf("%v", serviceNodeValues["type"]))
