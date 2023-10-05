@@ -6,16 +6,15 @@ type TemplateContract struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateContract(ops, path, name, displayName, scope, filterType string, filterRelationships []interface{}) *TemplateContract {
-	var contractMap map[string]interface{}
-	contractMap = map[string]interface{}{
+func NewTemplateContract(ops, path, name, displayName, scope, filterType, targetDscp, priority string, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider []interface{}) *TemplateContract {
+	contractMap := map[string]interface{}{
 		"name":                                  name,
 		"displayName":                           displayName,
 		"scope":                                 scope,
 		"filterType":                            filterType,
 		"filterRelationships":                   filterRelationships,
-		"filterRelationshipsProviderToConsumer": []interface{}{},
-		"filterRelationshipsConsumerToProvider": []interface{}{},
+		"filterRelationshipsProviderToConsumer": filterRelationshipsProviderToConsumer,
+		"filterRelationshipsConsumerToProvider": filterRelationshipsConsumerToProvider,
 	}
 
 	if contractMap["filterType"] == "" {
@@ -24,6 +23,19 @@ func NewTemplateContract(ops, path, name, displayName, scope, filterType string,
 
 	if contractMap["scope"] == "" {
 		contractMap["scope"] = "context"
+	}
+
+	if priority != "" {
+		contractMap["prio"] = priority
+	}
+
+	if targetDscp != "" {
+		contractMap["targetDscp"] = targetDscp
+	}
+
+	// If displayName is not set, set it to name because error will be raised if displayName is empty
+	if displayName == "" {
+		contractMap["displayName"] = name
 	}
 
 	return &TemplateContract{

@@ -112,6 +112,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_service_graph_node":         resourceMSOSchemaSiteServiceGraphNode(),
 			"mso_service_node_type":                      resourceMSOServiceNodeType(),
 			"mso_schema_template_contract_service_graph": resourceTemplateContractServiceGraph(),
+			"mso_system_config":                          resourceMSOSystemConfig(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -163,7 +164,8 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_service_graph":          dataSourceMSOSchemaTemplateServiceGraph(),
 			"mso_service_node_type":                      dataSourceMSOServiceNodeType(),
 			"mso_schema_template_contract_service_graph": datasourceTemplateContractServiceGraph(),
-			"mso_rest": datasourceMSORest(),
+			"mso_system_config":                          dataSourceMSOSystemConfig(),
+			"mso_rest":                                   datasourceMSORest(),
 		},
 
 		ConfigureFunc: configureClient,
