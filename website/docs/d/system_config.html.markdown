@@ -30,5 +30,5 @@ No arguments are required.
     * `type` - (Read-Only) The type of the Banner.
     * `message` - (Read-Only) The message of the Banner.
 * `change_control` - (Read-Only) A map of Change Control configuration.
-    * `workflow` - (Required) Whether Change Control workflow is enabled. 
+    * `workflow` - (Read-Only) Whether Change Control workflow is enabled. 
     * `number_of_approvers` - (Read-Only) The number of approvers for the Change Control. 
