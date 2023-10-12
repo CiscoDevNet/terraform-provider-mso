@@ -13,39 +13,66 @@ provider "mso" {
   insecure = true
 }
 
-resource "mso_schema_template_contract_service_graph" "one" {
-  schema_id = "5f11b0e22c00001c4a812a2a"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  template_name = "Template1"
-  contract_name = "UntitledContract1"
+
+data "mso_schema" "schema1" {
+  name = "schema1"
+}
+
+data "mso_schema" "schema2" {
+  name = "schema2"
+}
+
+data "mso_schema_template" "t1" {
+  name      = "t1"
+  schema_id = data.mso_schema.schema1.id
+}
+
+data "mso_schema_template" "t2" {
+  name      = "t2"
+  schema_id = data.mso_schema.schema2.id
+}
+
+data "mso_schema_template_bd" "bd1" {
+  schema_id     = data.mso_schema.schema1.id
+  template_name = "t1"
+  name          = "bd1"
+}
+
+data "mso_schema_template_bd" "bd2" {
+  schema_id     = data.mso_schema.schema2.id
+  template_name = "t2"
+  name          = "bd2"
+}
+
+data "mso_schema_template_contract" "c1" {
+  schema_id     = data.mso_schema.schema1.id
+  template_name = "t1"
+  contract_name = "c1"
+}
+
+data "mso_schema_template_service_graph" "sg1" {
+  schema_id          = data.mso_schema.schema1.id
+  template_name      = "t1"
   service_graph_name = "sg1"
-  service_graph_schema_id = "5f16a7c62c00006367812a2f"
+}
+
+resource "mso_schema_template_contract_service_graph" "example" {
+  schema_id          = data.mso_schema.schema1.id
+  template_name      = data.mso_schema_template.t1.name
+  contract_name      = data.mso_schema_template_contract.c1.name
+  service_graph_name = data.mso_schema_template_service_graph.sg1.service_graph_name
   node_relationship {
-    provider_connector_bd_name = "BD1"
-    consumer_connector_bd_name = "BD2"
-    provider_connector_cluster_interface = "test"
-    consumer_connector_cluster_interface = "test"
-    provider_connector_redirect_policy_tenant = "NkAutomation"
-    provider_connector_redirect_policy = "test2"
-    consumer_connector_redirect_policy_tenant = "NkAutomation"
-    consumer_connector_redirect_policy = "test2"
-    provider_subnet_ips = ["1.2.3.4/20"]
-    consumer_subnet_ips = ["1.2.3.4/20"]
+    consumer_connector_bd_name          = data.mso_schema_template_bd.bd1.name
+    provider_connector_bd_template_name = data.mso_schema_template.t2.name
+    provider_connector_bd_schema_id     = data.mso_schema.schema2.id
+    provider_connector_bd_name          = data.mso_schema_template_bd.bd2.name
   }
   node_relationship {
-    provider_connector_bd_name = "CBD2"
-    provider_connector_bd_schema_id = "5f16a7c62c00006367812a2f"
-    provider_connector_bd_template_name = "Template1"
-    consumer_connector_bd_name = "CBD1"
-    consumer_connector_bd_schema_id = "5f16a7c62c00006367812a2f"
-    consumer_connector_bd_template_name = "Template1"
-    provider_connector_cluster_interface = "test"
-    consumer_connector_cluster_interface = "test"
-    provider_connector_redirect_policy_tenant = "NkAutomation"
-    provider_connector_redirect_policy = "test2"
-    consumer_connector_redirect_policy_tenant = "NkAutomation"
-    consumer_connector_redirect_policy = "test2"
-    provider_subnet_ips = ["1.2.3.4/20"]
-    consumer_subnet_ips = ["1.2.3.4/20"]
+    consumer_connector_bd_name = data.mso_schema_template_bd.bd1.name
+    provider_connector_bd_name = data.mso_schema_template_bd.bd1.name
+  }
+  node_relationship {
+    consumer_connector_bd_name = data.mso_schema_template_bd.bd1.name
+    provider_connector_bd_name = data.mso_schema_template_bd.bd1.name
   }
 }

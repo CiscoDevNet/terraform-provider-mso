@@ -3,51 +3,35 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_contract_service_graph"
 sidebar_current: "docs-mso-resource-schema_template_contract_service_graph"
 description: |-
-  Manages MSO Schema Template Contract service graph.
+  Manages MSO Schema Template Contract Service Graph.
 ---
 
 # mso_schema_template_contract_service_graph #
 
-Manages MSO Schema Template Contract service graph.
+Manages MSO Schema Template Contract Service Graph.
 
 ## Example Usage ##
 
 ```hcl
 
-resource "mso_schema_template_contract_service_graph" "one" {
-  schema_id               = mso_schema.schema1.id
-  site_id                 = mso_site.site1.id
-  template_name           = "Template1"
-  contract_name           = mso_schema_template_contract.template_contract.contract_name
-  service_graph_name      = mso_schema_template_service_graph.test_sg.service_graph_name
-  service_graph_schema_id = mso_schema_template_service_graph.test_sg.schema_id
+resource "mso_schema_template_contract_service_graph" "example" {
+  schema_id          = data.mso_schema.schema1.id
+  template_name      = data.mso_schema_template.t1.name
+  contract_name      = data.mso_schema_template_contract.c1.name
+  service_graph_name = data.mso_schema_template_service_graph.sg1.service_graph_name
   node_relationship {
-    provider_connector_bd_name                = mso_schema_template_bd.provider_bridge_domain.name
-    consumer_connector_bd_name                = mso_schema_template_bd.consumer_bridge_domain.name
-    provider_connector_cluster_interface      = "test"
-    consumer_connector_cluster_interface      = "test"
-    provider_connector_redirect_policy_tenant = "NkAutomation"
-    provider_connector_redirect_policy        = "test2"
-    consumer_connector_redirect_policy_tenant = "NkAutomation"
-    consumer_connector_redirect_policy        = "test2"
-    provider_subnet_ips = ["1.2.3.4/20"]
-    consumer_subnet_ips = ["1.2.3.4/20"]
+    consumer_connector_bd_name          = data.mso_schema_template_bd.bd1.name
+    provider_connector_bd_template_name = data.mso_schema_template.t2.name
+    provider_connector_bd_schema_id     = data.mso_schema.schema2.id
+    provider_connector_bd_name          = data.mso_schema_template_bd.bd2.name
   }
   node_relationship {
-    provider_connector_bd_name          = mso_schema_template_bd.provider_bridge_domain.name
-    provider_connector_bd_schema_id     = mso_schema_template_bd.provider_bridge_domain.schema_id
-    provider_connector_bd_template_name = "Template1"
-    consumer_connector_bd_name          = mso_schema_template_bd.consumer_bridge_domain.name
-    consumer_connector_bd_schema_id     = mso_schema_template_bd.consumer_bridge_domain.schema_id
-    consumer_connector_bd_template_name = "Template1"
-    provider_connector_cluster_interface = "test"
-    consumer_connector_cluster_interface = "test"
-    provider_connector_redirect_policy_tenant = "NkAutomation"
-    provider_connector_redirect_policy        = "test2"
-    consumer_connector_redirect_policy_tenant = "NkAutomation"
-    consumer_connector_redirect_policy        = "test2"
-    provider_subnet_ips = ["1.2.3.4/20"]
-    consumer_subnet_ips = ["1.2.3.4/20"]
+    consumer_connector_bd_name = data.mso_schema_template_bd.bd1.name
+    provider_connector_bd_name = data.mso_schema_template_bd.bd1.name
+  }
+  node_relationship {
+    consumer_connector_bd_name = data.mso_schema_template_bd.bd1.name
+    provider_connector_bd_name = data.mso_schema_template_bd.bd1.name
   }
 }
 
@@ -55,36 +39,19 @@ resource "mso_schema_template_contract_service_graph" "one" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy Contract Service Graph.
-* `site_id` - (Required) SiteID under which you want to deploy Contract Service Graph.
-* `template_name` - (Required) Template where Contract Service Graph to be created.
-* `contract_name` - (Required) The name of the contract to manage. There should be an existing contract with this name.
-
-* `service_graph_name` - (Required) The name of service graph.
-* `service_graph_schema_id` - (Optional) The schema Id in which service graph is created. If not given then `schema_id` will be taken.
-* `service_graph_template_name` - (Optional) The Template name in which service graph is created. If not given then `template_name` will be taken.
-* `service_graph_site_id` - (Optional) The Site Id for where service graph created. If not given then `site_id` will be taken.
-
-* `node_relationship` - (Required) Service graph node relationship information. You have to define this block for every node of service graph.
-* `node_relationship.provider_connector_bd_name` - (Required) bd name for provider connector at template level.
-* `node_relationship.provider_connector_bd_schema_id` - (Optional) schema id under which above bd is created. If not given then `schema_id` will be taken.
-* `node_relationship.provider_connector_bd_template_name` - (Optional) template name under which above bd is created. If not given then `template_name` will be taken.
-
-* `node_relationship.consumer_connector_bd_name` - (Required) bd name for consumer connector at template level.
-* `node_relationship.consumer_connector_bd_schema_id` - (Optional) schema id under which above bd is created. If not given then `schema_id` will be taken.
-* `node_relationship.consumer_connector_bd_template_name` - (Optional) template name under which above bd is created. If not given then `template_name` will be taken.
-
-* `node_relationship.provider_connector_cluster_interface` - (Required) cluster interface for provider connector to attach with node at site level. 
-* `node_relationship.consumer_connector_cluster_interface` - (Required) cluster interface for consumer connector to attach with node at site level.
-
-* `node_relationship.provider_connector_redirect_policy_tenant` - (Optional) tenant for redirection policy for provider connector at site level. It is required to set redirection policy for provider connector.
-* `node_relationship.provider_connector_redirect_policy` - (Optional) redirection policy for provider connector at site level.
-* `node_relationship.consumer_connector_redirect_policy_tenant` - (Optional) tenant for redirection policy for consumer connector at site level. It is required to set redirection policy for consumer connector.
-* `node_relationship.consumer_connector_redirect_policy` - (Optional) redirection policy for consumer connector at site level.
-
-* `node_relationship.provider_subnet_ips` - (Optional) subnet ips which will be associated with provider connector at site level. It should be in CIDR format.
-* `node_relationship.consumer_subnet_ips` - (Optional) subnet ips which will be associated with consumer connector at site level. It should be in CIDR format.
-
+* `schema_id` - (Required) SchemaID to associate the Template Service Graph with Contract.
+* `template_name` - (Required) Template name to associate the Template Service Graph with Contract.
+* `contract_name` - (Required) Contract name to associate the Template Service Graph.
+* `service_graph_name` - (Required) Name of the Template Service Graph.
+* `service_graph_schema_id` - (Optional) SchemaID of the source Template Service Graph. The `schema_id` will be used if not provided.
+* `service_graph_template_name` - (Optional) Template name of the source Template Service Graph. The `template_name` will be used if not provided.
+* `node_relationship` - (Required) Contract Service Graph Node relationship information.
+  * `provider_connector_bd_name` - (Required) Name of the BD that has to be connected to a Provider Connector.
+  * `provider_connector_bd_schema_id` - (Optional) SchemaID of the source Provider Connector BD. The `schema_id` will be used if not provided.
+  * `provider_connector_bd_template_name` - (Optional) Template name of the source Provider Connector BD. The `template_name` will be used if not provided.
+  * `consumer_connector_bd_name` - (Required) Name of the BD that has to be connected to a Consumer Connector.
+  * `consumer_connector_bd_schema_id` - (Optional) SchemaID of the source Consumer Connector BD. The `schema_id` will be used if not provided.
+  * `consumer_connector_bd_template_name` - (Optional) Template name of the source Consumer Connector BD. The `template_name` will be used if not provided.
 
 
 ## Attribute Reference ##
@@ -93,8 +60,8 @@ No attributes are exported.
 
 ## Importing ##
 
-An existing MSO Schema Template Contract service graph can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+An existing MSO Schema Template Contract Service Graph can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_template_contract_service_graph.one {schema_id}/template/{template_name}/contract/{contract_name}/serviceGraph/{service_graph_name}
+terraform import mso_schema_template_contract_service_graph.example {schema_id}/template/{template_name}/contract/{contract_name}
 ```
