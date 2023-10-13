@@ -10,6 +10,8 @@ description: |-
 
 Manages MSO Schema Template Contract Filter.
 
+!> Do not use this resource together with resource [mso_schema_template_contract](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/resources/schema_template_contract).
+
 ## Example Usage ##
 
 ```hcl
