@@ -44,14 +44,7 @@ func errorForObjectNotFound(err error, dn string, con *container.Container, d *s
 //
 // Returns true if the attribute is not empty, false otherwise.
 func checkNodeAttr(object interface{}, attrName string, index int) bool {
-	objList := object.([]interface{})
-
-	instance := objList[index].(map[string]interface{})
-
-	if instance[attrName] != "" {
-		return true
-	}
-	return false
+	return object.([]interface{})[index].(map[string]interface{})[attrName] != ""
 }
 
 // extractNodes extracts the nodes from the given container.
@@ -64,18 +57,8 @@ func checkNodeAttr(object interface{}, attrName string, index int) bool {
 // - error: An error object if there is any error encountered during the extraction process.
 func extractNodes(cont *container.Container) ([]interface{}, error) {
 	nodes := make([]interface{}, 0, 1)
-	count, err := cont.ArrayCount("serviceNodes")
-	if err != nil {
-		return nodes, err
-	}
-
-	for i := 0; i < count; i++ {
-		node, err := cont.ArrayElement(i, "serviceNodes", "name")
-		if err != nil {
-			return nodes, err
-		}
-
-		nodes = append(nodes, models.StripQuotes(node.String()))
+	for _, node := range cont.S("serviceNodes").Data().([]interface{}) {
+		nodes = append(nodes, models.StripQuotes(node.(map[string]interface{})["name"].(string)))
 	}
 	return nodes, nil
 }
