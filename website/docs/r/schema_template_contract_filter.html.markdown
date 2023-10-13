@@ -14,13 +14,15 @@ Manages MSO Schema Template Contract Filter.
 
 ```hcl
 
-resource "mso_schema_template_contract_filter" "filter3" {
+resource "mso_schema_template_contract_filter" "example" {
   schema_id     = mso_schema.schema1.id
   template_name = "Template1"
   contract_name = "Web-to-DB"
   filter_type   = "provider_to_consumer"
   filter_name   = "Any"
-  directives    = ["none", "log"]
+  directives    = ["no_stats", "log"]
+  action        = "deny"
+  priority      = "level1"
 }
 
 ```
@@ -34,7 +36,9 @@ resource "mso_schema_template_contract_filter" "filter3" {
 * `filter_schema_id` - (Optional) The schemaId in which the filter is located. Default is `schema_id`.
 * `filter_template_name` - (Optional) The template name in which the filter is located.  Default is `template_name`.
 * `filter_name` - (Required) The filter name to associate with this contract. Filter must exist with the given `filter_name`, `filter_schema_id` and `filter_template_name`.
-* `directives` - (Required) A list of filter directives. Allowed values are `log` and `none`.
+* `directives` - (Optional) A list of filter directives. Allowed values are `log`, `no_stats` and `none`.
+* `action` - (Optional) The action of the Filter. Allowed values are `deny` and `permit`. Default is `permit`.
+* `priority` - (Optional) The override priority of the Filter. Allowed values are `default`, `level1`, `level2`, and `level3`. Default is `default`.
 
 ## Attribute Reference ##
 
@@ -45,5 +49,5 @@ No attributes are exported.
 An existing MSO Schema Template Contract Filter can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_template_contract_filter.filter3 {schema_id}/template/{template_name}/contract/{contract_name}/filter/{filter_name}/filterType/{filter_type}
+terraform import mso_schema_template_contract_filter.example {schema_id}/template/{template_name}/contract/{contract_name}/filter_type/{filter_type}/filter/{filter_schema_id}/{filter_template_name}/{filter_name}
 ```
