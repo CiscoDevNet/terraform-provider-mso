@@ -37,4 +37,6 @@ data "mso_schema_template_contract_filter" "example" {
 
 ## Attribute Reference ##
 
-* `directives` - (Read-Only) A list of filter directives.
+* `action` - (Read-Only) The action of the Filter.
+* `directives` - (Read-Only) The directives of the Filter.
+* `priority` - (Read-Only) The priority override of the Filter.
