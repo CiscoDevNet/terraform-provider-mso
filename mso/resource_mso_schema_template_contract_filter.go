@@ -124,11 +124,11 @@ func getFilterRelationshipTypeMap() map[string]string {
 	}
 }
 
-func createPath(templateName, contractName, filterRelationshipType, name string) string {
+func createMSOTemplateContractFilterPath(templateName, contractName, filterRelationshipType, name string) string {
 	return fmt.Sprintf("/templates/%s/contracts/%s/%s/%s", templateName, contractName, filterRelationshipType, name)
 }
 
-func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.Container, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName string) error {
+func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.Container, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName string) error {
 	log.Printf("[DEBUG] %s: Beginning set contract filter", d.Id())
 	templates := schemaCont.Search("templates").Data()
 	if templates == nil || len(templates.([]interface{})) == 0 {
@@ -150,7 +150,7 @@ func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.C
 								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/filters/(.*)")
 								match := re.FindStringSubmatch(val.(string))
 								if match[1] == filterSchemaId && match[2] == filterTemplateName && match[3] == filterName {
-									d.SetId(createPath(templateName, contractName, filterRelationshipType, filterName))
+									d.SetId(createMSOTemplateContractFilterPath(templateName, contractName, filterRelationshipType, filterName))
 									d.Set("directives", filterRelationshipMap["directives"])
 									d.Set("action", filterRelationshipMap["action"])
 									d.Set("priority", filterRelationshipMap["priority"])
@@ -187,7 +187,7 @@ func resourceMSOTemplateContractFilterImport(d *schema.ResourceData, m interface
 	if err != nil {
 		return nil, err
 	}
-	err = setContractFilterFromSchema(d, schemaCont, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
+	err = setContractFilterFromSchema(d, schemaCont, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func resourceMSOTemplateContractFilterImport(d *schema.ResourceData, m interface
 }
 
 func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning Create", d.Id())
+	log.Printf("[DEBUG] Beginning Create")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
@@ -205,11 +205,11 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 	filterName := d.Get("filter_name").(string)
 
 	filterSchemaId := schemaId
-	if tempVar, ok := d.GetOk("filter_schema_id"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_schema_id"); ok {
 		filterSchemaId = tempVar.(string)
 	}
 	filterTemplateName := templateName
-	if tempVar, ok := d.GetOk("filter_template_name"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_template_name"); ok {
 		filterTemplateName = tempVar.(string)
 	}
 	filterRefMap := getFilterRef(filterSchemaId, filterTemplateName, filterName)
@@ -226,11 +226,11 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 		priority = tempVar.(string)
 	}
 
-	path := createPath(templateName, contractName, getFilterRelationshipTypeMap()[filterType], "-")
+	path := createMSOTemplateContractFilterPath(templateName, contractName, getFilterRelationshipTypeMap()[filterType], "-")
 	filterStruct := models.NewTemplateContractFilterRelationShip("add", path, action, priority, filterRefMap, directives)
-	_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
-	if err1 != nil {
-		return err1
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
+	if err != nil {
+		return err
 	}
 
 	log.Printf("[DEBUG] %s: Create finished successfully", d.Id())
@@ -247,11 +247,11 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 	filterName := d.Get("filter_name").(string)
 
 	filterSchemaId := schemaId
-	if tempVar, ok := d.GetOk("filter_schema_id"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_schema_id"); ok {
 		filterSchemaId = tempVar.(string)
 	}
 	filterTemplateName := templateName
-	if tempVar, ok := d.GetOk("filter_template_name"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_template_name"); ok {
 		filterTemplateName = tempVar.(string)
 	}
 
@@ -259,7 +259,7 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), schemaCont, d)
 	}
-	setContractFilterFromSchema(d, schemaCont, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
+	setContractFilterFromSchema(d, schemaCont, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
@@ -272,11 +272,11 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	filterName := d.Get("filter_name").(string)
 
 	filterSchemaId := schemaId
-	if tempVar, ok := d.GetOk("filter_schema_id"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_schema_id"); ok {
 		filterSchemaId = tempVar.(string)
 	}
 	filterTemplateName := templateName
-	if tempVar, ok := d.GetOk("filter_template_name"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_template_name"); ok {
 		filterTemplateName = tempVar.(string)
 	}
 	filterRefMap := getFilterRef(filterSchemaId, filterTemplateName, filterName)
@@ -294,9 +294,9 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	}
 
 	filterStruct := models.NewTemplateContractFilterRelationShip("replace", d.Id(), action, priority, filterRefMap, directives)
-	_, err1 := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
-	if err1 != nil {
-		return err1
+	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
+	if err != nil {
+		return err
 	}
 
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
