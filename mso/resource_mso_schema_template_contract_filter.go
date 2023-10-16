@@ -128,7 +128,7 @@ func createMSOTemplateContractFilterPath(templateName, contractName, filterRelat
 	return fmt.Sprintf("/templates/%s/contracts/%s/%s/%s", templateName, contractName, filterRelationshipType, name)
 }
 
-func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.Container, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName string) error {
+func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.Container, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName string) error {
 	log.Printf("[DEBUG] %s: Beginning set contract filter", d.Id())
 	templates := schemaCont.Search("templates").Data()
 	if templates == nil || len(templates.([]interface{})) == 0 {
@@ -151,11 +151,16 @@ func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.C
 								match := re.FindStringSubmatch(val.(string))
 								if match[1] == filterSchemaId && match[2] == filterTemplateName && match[3] == filterName {
 									d.SetId(createMSOTemplateContractFilterPath(templateName, contractName, filterRelationshipType, filterName))
+									d.Set("schema_id", schemaId)
+									d.Set("template_name", templateName)
+									d.Set("contract_name", contractName)
 									d.Set("directives", filterRelationshipMap["directives"])
 									d.Set("action", filterRelationshipMap["action"])
 									d.Set("priority", filterRelationshipMap["priority"])
+									d.Set("filter_type", filterType)
 									d.Set("filter_schema_id", filterSchemaId)
 									d.Set("filter_template_name", filterTemplateName)
+									d.Set("filter_name", filterName)
 									log.Printf("[DEBUG] %s: Finished set contract filter", d.Id())
 									return nil
 								}
@@ -187,7 +192,7 @@ func resourceMSOTemplateContractFilterImport(d *schema.ResourceData, m interface
 	if err != nil {
 		return nil, err
 	}
-	err = setContractFilterFromSchema(d, schemaCont, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
+	err = setContractFilterFromSchema(d, schemaCont, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +201,7 @@ func resourceMSOTemplateContractFilterImport(d *schema.ResourceData, m interface
 }
 
 func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Beginning Create")
+	log.Printf("[DEBUG] Template Contract Filter: Beginning Creation")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
@@ -259,7 +264,7 @@ func resourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), schemaCont, d)
 	}
-	setContractFilterFromSchema(d, schemaCont, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
+	setContractFilterFromSchema(d, schemaCont, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
 }
