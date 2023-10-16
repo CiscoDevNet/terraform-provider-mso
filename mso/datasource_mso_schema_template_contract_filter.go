@@ -76,7 +76,7 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 }
 
 func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
+	log.Printf("[DEBUG] %s: Beginning datasource Read", d.Id())
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
@@ -97,10 +97,10 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), schemaCont, d)
 	}
-	err = setContractFilterFromSchema(d, schemaCont, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
+	err = setContractFilterFromSchema(d, schemaCont, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
+	log.Printf("[DEBUG] %s: Datasource read finished successfully", d.Id())
 	return nil
 }
