@@ -76,7 +76,7 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 }
 
 func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] %s: Beginning datasource Read", d.Id())
+	log.Printf("[DEBUG] Beginning datasource Read")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
@@ -85,11 +85,11 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 	filterName := d.Get("filter_name").(string)
 
 	filterSchemaId := schemaId
-	if tempVar, ok := d.GetOk("filter_schema_id"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_schema_id"); ok {
 		filterSchemaId = tempVar.(string)
 	}
 	filterTemplateName := templateName
-	if tempVar, ok := d.GetOk("filter_template_name"); ok && tempVar.(string) != "" {
+	if tempVar, ok := d.GetOk("filter_template_name"); ok {
 		filterTemplateName = tempVar.(string)
 	}
 
@@ -97,7 +97,7 @@ func dataSourceMSOTemplateContractFilterRead(d *schema.ResourceData, m interface
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), schemaCont, d)
 	}
-	err = setContractFilterFromSchema(d, schemaCont, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
+	err = setContractFilterFromSchema(d, schemaCont, schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName)
 	if err != nil {
 		return err
 	}
