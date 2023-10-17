@@ -228,6 +228,10 @@ func resourceMSOTemplateContract() *schema.Resource {
 	}
 }
 
+func createMSOTemplateContractPath(templateName, contractName string) string {
+	return fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
+}
+
 // TODO remove this deprecated function when filter_relationships is removed
 func getDeprecatedFilterRelationshipsFromConfig(schemaId, templateName string, filterRelationshipsConfig map[string]interface{}, directives []interface{}) []interface{} {
 
@@ -339,7 +343,7 @@ func setContractFromSchema(d *schema.ResourceData, schemaCont *container.Contain
 			for _, contract := range templateDetails["contracts"].([]interface{}) {
 				contractDetails := contract.(map[string]interface{})
 				if contractDetails["name"].(string) == contractName {
-					d.SetId(fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName))
+					d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", schemaId, templateName, contractName))
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", templateName)
 					d.Set("contract_name", contractName)
@@ -489,7 +493,7 @@ func resourceMSOTemplateContractCreate(d *schema.ResourceData, m interface{}) er
 	// TODO uncomment line below when filter_relationships and directives are deprecated on next mayor version
 	// filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider := getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship)
 
-	path := fmt.Sprintf("/templates/%s/contracts/-", templateName)
+	path := createMSOTemplateContractPath(templateName, "-")
 	contractStruct := models.NewTemplateContract("add", path, contractName, displayName, scope, filterType, targetDscp, priority, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), contractStruct)
 	if err != nil {
@@ -540,7 +544,7 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	// TODO uncomment line below when filter_relationships and directives are deprecated on next mayor version
 	// filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider := getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship)
 
-	path := fmt.Sprintf("/templates/%s/contracts/%s", templateName, contractName)
+	path := createMSOTemplateContractPath(templateName, contractName)
 	contractStruct := models.NewTemplateContract("replace", path, contractName, displayName, scope, filterType, targetDscp, priority, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), contractStruct)
 	if err != nil {
@@ -552,13 +556,12 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 func resourceMSOTemplateContractDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Delete", d.Id())
 	msoClient := m.(*client.Client)
-	if d.Id() != "" {
-		response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", d.Get("schema_id").(string)), models.GetRemovePatchPayload(d.Id()))
-		if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
-			return err
-		}
-		d.SetId("")
+	path := createMSOTemplateContractPath(d.Get("template_name").(string), d.Get("contract_name").(string))
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", d.Get("schema_id").(string)), models.GetRemovePatchPayload(path))
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
+		return err
 	}
+	d.SetId("")
 	log.Printf("[DEBUG] Delete finished successfully")
 	return nil
 }

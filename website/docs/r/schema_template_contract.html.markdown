@@ -69,5 +69,5 @@ No attributes are exported.
 An existing MSO Schema Template Contract can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_template_contract.template_contract {schema_id}/template/{template_name}/contract/{contract_name}
+terraform import mso_schema_template_contract.example {schema_id}/templates/{template_name}/contracts/{contract_name}
 ```

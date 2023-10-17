@@ -150,7 +150,7 @@ func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.C
 								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/filters/(.*)")
 								match := re.FindStringSubmatch(val.(string))
 								if match[1] == filterSchemaId && match[2] == filterTemplateName && match[3] == filterName {
-									d.SetId(createMSOTemplateContractFilterPath(templateName, contractName, filterRelationshipType, filterName))
+									d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s/%s/%s/%s/%s", schemaId, templateName, contractName, filterType, filterSchemaId, filterTemplateName, filterName))
 									d.Set("schema_id", schemaId)
 									d.Set("template_name", templateName)
 									d.Set("contract_name", contractName)
@@ -183,10 +183,10 @@ func resourceMSOTemplateContractFilterImport(d *schema.ResourceData, m interface
 	schemaId := splitImport[0]
 	templateName := splitImport[2]
 	contractName := splitImport[4]
-	filterType := splitImport[6]
-	filterSchemaId := splitImport[8]
-	filterTemplateName := splitImport[9]
-	filterName := splitImport[10]
+	filterType := splitImport[5]
+	filterSchemaId := splitImport[6]
+	filterTemplateName := splitImport[7]
+	filterName := splitImport[8]
 
 	schemaCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
@@ -298,7 +298,8 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 		priority = tempVar.(string)
 	}
 
-	filterStruct := models.NewTemplateContractFilterRelationShip("replace", d.Id(), action, priority, filterRefMap, directives)
+	path := createMSOTemplateContractFilterPath(templateName, d.Get("contract_name").(string), getFilterRelationshipTypeMap()[d.Get("filter_type").(string)], filterName)
+	filterStruct := models.NewTemplateContractFilterRelationShip("replace", path, action, priority, filterRefMap, directives)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
 	if err != nil {
 		return err
@@ -311,13 +312,15 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 func resourceMSOTemplateContractFilterDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Delete", d.Id())
 	msoClient := m.(*client.Client)
-	if d.Id() != "" {
-		response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", d.Get("schema_id").(string)), models.GetRemovePatchPayload(d.Id()))
-		if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
-			return err
-		}
-		d.SetId("")
+	templateName := d.Get("template_name").(string)
+	filterName := d.Get("filter_name").(string)
+	path := createMSOTemplateContractFilterPath(templateName, d.Get("contract_name").(string), getFilterRelationshipTypeMap()[d.Get("filter_type").(string)], filterName)
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", d.Get("schema_id").(string)), models.GetRemovePatchPayload(path))
+	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
+		return err
 	}
+	d.SetId("")
+
 	log.Printf("[DEBUG] Delete finished successfully")
 	return nil
 
