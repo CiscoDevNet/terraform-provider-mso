@@ -75,11 +75,13 @@ func resourceMSOSchemaTemplateContractServiceGraph() *schema.Resource {
 						"provider_connector_bd_schema_id": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"provider_connector_bd_template_name": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"consumer_connector_bd_name": &schema.Schema{
@@ -90,25 +92,18 @@ func resourceMSOSchemaTemplateContractServiceGraph() *schema.Resource {
 						"consumer_connector_bd_schema_id": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"consumer_connector_bd_template_name": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 					},
 				},
 			},
-		},
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
-			old1, new1 := diff.GetChange("service_graph_template_name")
-			if old1 == new1 {
-				err := diff.Clear("service_graph_template_name")
-				log.Printf("[DEBUG]: service_graph_template_name old: %v new: %v", old1, new1)
-				log.Printf("[DEBUG]: service_graph_template_name error msg: %v", err)
-			}
-			return nil
 		},
 	}
 }
@@ -116,10 +111,16 @@ func resourceMSOSchemaTemplateContractServiceGraph() *schema.Resource {
 func resourceMSOSchemaTemplateContractServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	serviceGraphTokens := strings.Split(d.Id(), "/")
-	d.Set("schema_id", serviceGraphTokens[1])
-	d.Set("template_name", serviceGraphTokens[3])
-	d.Set("contract_name", serviceGraphTokens[5])
-	err := setSchemaTemplateContractServiceGraphAttrs(d, m, true)
+	d.Set("schema_id", serviceGraphTokens[0])
+	d.Set("template_name", serviceGraphTokens[2])
+	d.Set("contract_name", serviceGraphTokens[4])
+
+	msoClient := m.(*client.Client)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", serviceGraphTokens[0]))
+	if err != nil {
+		return nil, err
+	}
+	err = setSchemaTemplateContractServiceGraphAttrs(cont, d, true)
 	if err != nil {
 		return nil, err
 	}
@@ -150,11 +151,14 @@ func resourceMSOSchemaTemplateContractServiceGraphUpdate(d *schema.ResourceData,
 
 func resourceMSOSchemaTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Begining Read Template Contract Service Graph")
-	serviceGraphTokens := strings.Split(d.Id(), "/")
-	d.Set("schema_id", serviceGraphTokens[1])
-	d.Set("template_name", serviceGraphTokens[3])
-	d.Set("contract_name", serviceGraphTokens[5])
-	err := setSchemaTemplateContractServiceGraphAttrs(d, m, false)
+	msoClient := m.(*client.Client)
+	schemaId := d.Get("schema_id").(string)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return errorForObjectNotFound(err, d.Id(), cont, d)
+	}
+
+	err = setSchemaTemplateContractServiceGraphAttrs(cont, d, false)
 	if err != nil {
 		return err
 	}
@@ -166,14 +170,14 @@ func resourceMSOSchemaTemplateContractServiceGraphDelete(d *schema.ResourceData,
 	log.Printf("[DEBUG] Begining Delete Template Contract Service Graph")
 	msoClient := m.(*client.Client)
 
-	schemaID := d.Get("schema_id").(string)
+	schemaId := d.Get("schema_id").(string)
 	TemplateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
 
 	tempPath := fmt.Sprintf("/templates/%s/contracts/%s/serviceGraphRelationship", TemplateName, contractName)
 	tempConGraph := models.NewTemplateContractServiceGraph("remove", tempPath, nil, nil)
 
-	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), tempConGraph)
+	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), tempConGraph)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting
 	if err != nil && !(response.Exists("code") && response.S("code").String() == "141") {
@@ -230,7 +234,7 @@ func getSchemaTemplateContractServiceGraph(cont *container.Container, templateNa
 }
 
 // Returns the List of Service Graph Node map object with Consumer and Provider BD values
-func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schemaID, templateName string, nodeList, tempNodeList []interface{}, serviceGraphRef map[string]interface{}) ([]interface{}, error) {
+func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schemaId, templateName string, nodeList, tempNodeList []interface{}, serviceGraphRef map[string]interface{}) ([]interface{}, error) {
 	templateNodes := make([]interface{}, 0)
 
 	for i := 0; i < len(tempNodeList); i++ {
@@ -249,7 +253,7 @@ func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schem
 		if node["provider_connector_bd_schema_id"] != "" {
 			bdRef["schemaId"] = node["provider_connector_bd_schema_id"].(string)
 		} else {
-			bdRef["schemaId"] = schemaID
+			bdRef["schemaId"] = schemaId
 		}
 
 		if node["provider_connector_bd_template_name"] != "" {
@@ -266,7 +270,7 @@ func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schem
 		if node["consumer_connector_bd_schema_id"] != "" {
 			conbdRef["schemaId"] = node["consumer_connector_bd_schema_id"].(string)
 		} else {
-			conbdRef["schemaId"] = schemaID
+			conbdRef["schemaId"] = schemaId
 		}
 
 		if node["consumer_connector_bd_template_name"] != "" {
@@ -297,16 +301,11 @@ func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schem
 //
 // Returns:
 // - error: The error encountered, if any.
-func setSchemaTemplateContractServiceGraphAttrs(d *schema.ResourceData, m interface{}, importFlag bool) error {
-	msoClient := m.(*client.Client)
+func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData, importFlag bool) error {
 	foundTemp := false
-	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
-	if err != nil {
-		return errorForObjectNotFound(err, d.Id(), cont, d)
-	}
+
 	tempCount, err := cont.ArrayCount("templates")
 	if err != nil {
 		return fmt.Errorf("No templates found")
@@ -439,8 +438,7 @@ func setSchemaTemplateContractServiceGraphAttrs(d *schema.ResourceData, m interf
 			nodeList = append(nodeList, allMap)
 		}
 		d.Set("node_relationship", nodeList)
-		// {schema_id}/template/{template_name}/contracts/{contracts_name}
-		d.SetId(fmt.Sprintf("schemas/%s/templates/%s/contracts/%s", schemaID, templateName, contractName))
+		d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", d.Get("schema_id").(string), templateName, contractName))
 
 	} else {
 		d.SetId("")
@@ -459,7 +457,7 @@ func setSchemaTemplateContractServiceGraphAttrs(d *schema.ResourceData, m interf
 //   - An error if there was a problem creating the service graph configuration.
 func PostSchemaTemplateContractServiceGraphConfig(action string, d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
-	schemaID := d.Get("schema_id").(string)
+	schemaId := d.Get("schema_id").(string)
 	TemplateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
 	serviceGraph := d.Get("service_graph_name").(string)
@@ -470,7 +468,7 @@ func PostSchemaTemplateContractServiceGraphConfig(action string, d *schema.Resou
 	if graphSchema, ok := d.GetOk("service_graph_schema_id"); ok {
 		serviceGraphRef["schemaId"] = graphSchema.(string)
 	} else {
-		serviceGraphRef["schemaId"] = schemaID
+		serviceGraphRef["schemaId"] = schemaId
 	}
 
 	if graphTemp, ok := d.GetOk("service_graph_template_name"); ok {
@@ -500,7 +498,7 @@ func PostSchemaTemplateContractServiceGraphConfig(action string, d *schema.Resou
 		return fmt.Errorf("Length mismatch between total nodes and total node relation")
 	}
 
-	templateNodes, err := getSchemaTemplateContractServiceGraphNodes(cont, schemaID, TemplateName, nodeList, tempNodeList, serviceGraphRef)
+	templateNodes, err := getSchemaTemplateContractServiceGraphNodes(cont, schemaId, TemplateName, nodeList, tempNodeList, serviceGraphRef)
 
 	if err != nil {
 		return err
@@ -508,13 +506,12 @@ func PostSchemaTemplateContractServiceGraphConfig(action string, d *schema.Resou
 
 	tempPath := fmt.Sprintf("/templates/%s/contracts/%s/serviceGraphRelationship", TemplateName, contractName)
 	tempConGraph := models.NewTemplateContractServiceGraph(action, tempPath, serviceGraphRef, templateNodes)
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), tempConGraph)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), tempConGraph)
 
 	if err != nil {
 		return err
 	}
 
-	// {schema_id}/template/{template_name}/contracts/{contracts_name}
-	d.SetId(fmt.Sprintf("schemas/%s/templates/%s/contracts/%s", schemaID, TemplateName, contractName))
+	d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", schemaId, TemplateName, contractName))
 	return nil
 }
