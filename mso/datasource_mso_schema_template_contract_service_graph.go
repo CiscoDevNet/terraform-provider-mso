@@ -1,8 +1,10 @@
 package mso
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -76,7 +78,27 @@ func dataSourceMSOSchemaTemplateContractServiceGraph() *schema.Resource {
 
 func dataSourceMSOSchemaTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Beginning datasource Read")
-	setSchemaTemplateContractServiceGraphAttrs(d, m, true)
+
+	schemaId := d.Get("schema_id").(string)
+	templateName := d.Get("template_name").(string)
+	contractName := d.Get("contract_name").(string)
+
+	msoClient := m.(*client.Client)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return err
+	}
+
+	d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", schemaId, templateName, contractName))
+	if err != nil {
+		return errorForObjectNotFound(err, d.Id(), cont, d)
+	}
+
+	err = setSchemaTemplateContractServiceGraphAttrs(cont, d, true)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[DEBUG] %s: Datasource read finished successfully", d.Id())
 	return nil
 }
