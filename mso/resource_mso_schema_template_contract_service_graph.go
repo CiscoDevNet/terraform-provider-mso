@@ -63,8 +63,9 @@ func resourceMSOSchemaTemplateContractServiceGraph() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"node_relationship": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
+				Type:        schema.TypeList,
+				Required:    true,
+				Description: "The order of the node_relationship object should match the node types in the Service Graph",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"provider_connector_bd_name": &schema.Schema{
