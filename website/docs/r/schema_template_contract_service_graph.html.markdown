@@ -44,7 +44,7 @@ resource "mso_schema_template_contract_service_graph" "example" {
 * `service_graph_name` - (Required) The name of the Service Graph.
 * `service_graph_schema_id` - (Optional) The schema ID of the Service Graph. The `schema_id` will be used if not provided.
 * `service_graph_template_name` - (Optional) The template name of the Service Graph. The `template_name` will be used if not provided.
-* `node_relationship` - (Required) The Contract Service Graph Node relationship information.
+* `node_relationship` - (Required) The Contract Service Graph Node relationship information. The order of the node_relationship object should match the node types in the Service Graph.
   * `provider_connector_bd_name` - (Required) The name of the BD that has to be connected to a Provider Connector.
   * `provider_connector_bd_schema_id` - (Optional) The schema ID of the BD that has to be connected to a Provider Connector. The `schema_id` will be used if not provided.
   * `provider_connector_bd_template_name` - (Optional) The template name of the BD that has to be connected to a Provider Connector. The `template_name` will be used if not provided.
@@ -58,7 +58,7 @@ No attributes are exported.
 
 ## Importing ##
 
-An existing MSO Schema Template Contract Service Graph can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+An existing MSO Schema Template Contract Service Graph can be [imported][docs-import] into this resource using its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
 terraform import mso_schema_template_contract_service_graph.example {schema_id}/templates/{template_name}/contracts/{contract_name}
