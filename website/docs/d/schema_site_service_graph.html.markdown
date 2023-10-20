@@ -1,24 +1,24 @@
 ---
 layout: "mso"
 page_title: "MSO: mso_schema_site_service_graph"
-sidebar_current: "docs-mso-resource-schema_site_service_graph_node"
+sidebar_current: "docs-mso-data-source-schema_site_service_graph"
 description: |-
-  Manages MSO Schema Site Level Service Graph Node
+  Data source for MSO Schema Site Level Service Graph
 ---
 
 # mso_schema_site_service_graph #
 
-Manages MSO Schema Site Level Service Graph Node.
+Data source for MSO Schema Site Level Service Graph.
 
 ## Example Usage ##
 
 ```hcl
 
-resource "mso_schema_site_service_graph" "test_sg" {
+data "mso_schema_site_service_graph" "example" {
   schema_id          = mso_schema_site.schema_site_1.schema_id
   site_id            = mso_schema_site.schema_site_1.site_id
-  template_name      = mso_schema_template_service_graph.test_sg.template_name
-  service_graph_name = mso_schema_template_service_graph.test_sg.service_graph_name
+  template_name      = "template1"
+  service_graph_name = "service_graph1"
 }
 
 ```
@@ -32,5 +32,5 @@ resource "mso_schema_site_service_graph" "test_sg" {
 
 ## Attribute Reference ##
 
-* `service_node` - (Required) List of maps to provide Site level Node association.
-    * `device_dn` - (Required) Dn of device associated with the service node of the Service Graph.
+* `service_node` - (Read-Only) List of maps to provide Site level Node association.
+    * `device_dn` - (Read-Only) Dn of device associated with the service node of the Service Graph.

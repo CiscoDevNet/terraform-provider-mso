@@ -102,8 +102,7 @@ func resourceMSOSchemaTemplateServiceGraphImport(d *schema.ResourceData, m inter
 	}
 
 	templateName := get_attribute[2]
-	var graphName string
-	graphName = get_attribute[4]
+	graphName := get_attribute[4]
 
 	sgCont, _, err := getTemplateServiceGraphCont(cont, templateName, graphName)
 
@@ -467,17 +466,7 @@ func getTemplateServiceGraphCont(cont *container.Container, templateName, graphN
 
 	return nil, -1, fmt.Errorf("unable to find service graph")
 }
-func getNodeIdFromName(msoClient *client.Client, nodeType string) (string, error) {
-	cont, err := msoClient.GetViaURL("api/v1/schemas/service-node-types")
-	if err != nil {
-		return "", err
-	}
-
-	nodesCount, err := cont.ArrayCount("serviceNodeTypes")
-	if err != nil {
-		return "", err
-	}
-
+func getNodeIdFromName(cont *container.Container, nodesCount int, nodeType string) (string, error) {
 	for i := 0; i < nodesCount; i++ {
 		nodeCont, err := cont.ArrayElement(i, "serviceNodeTypes")
 		if err != nil {
@@ -522,10 +511,20 @@ func getNodeNameFromId(msoClient *client.Client, nodeId string) (string, error) 
 }
 
 func getServiceGraphNodes(d *schema.ResourceData, msoClient *client.Client) ([]interface{}, error) {
+	cont, err := msoClient.GetViaURL("api/v1/schemas/service-node-types")
+	if err != nil {
+		return nil, err
+	}
+
+	nodesCount, err := cont.ArrayCount("serviceNodeTypes")
+	if err != nil {
+		return nil, err
+	}
+
 	serviceNodes := make([]interface{}, 0, 1)
 	if tempVar, ok := d.GetOk("service_node_type"); ok {
 		serviceNodeType := tempVar.(string)
-		nodeId, err := getNodeIdFromName(msoClient, serviceNodeType)
+		nodeId, err := getNodeIdFromName(cont, nodesCount, serviceNodeType)
 		if err != nil {
 			return nil, err
 		}
@@ -540,7 +539,7 @@ func getServiceGraphNodes(d *schema.ResourceData, msoClient *client.Client) ([]i
 			for i, val := range val.([]interface{}) {
 				serviceNodeValues := val.(map[string]interface{})
 				if serviceNodeValues["type"] != "" {
-					nodeId, err := getNodeIdFromName(msoClient, fmt.Sprintf("%v", serviceNodeValues["type"]))
+					nodeId, err := getNodeIdFromName(cont, nodesCount, fmt.Sprintf("%v", serviceNodeValues["type"]))
 					if err != nil {
 						return nil, err
 					}

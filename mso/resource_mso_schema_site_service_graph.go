@@ -76,19 +76,16 @@ func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface
 	schemaId := get_attribute[0]
 	siteId := get_attribute[2]
 	templateName := get_attribute[4]
+	graphName := get_attribute[6]
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return nil, err
 	}
 
-	var graphName string
-	graphName = get_attribute[6]
-
 	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 	if err != nil {
 		d.SetId("")
-		log.Printf("sitegraphcont err %v", err)
 		return nil, err
 	}
 
@@ -106,7 +103,7 @@ func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface
 }
 
 func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Creation Site Service Node")
+	log.Printf("[DEBUG] Begining Creation Site Service Graph")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -129,7 +126,7 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 		siteServiceNodeList = getServiceNodeList(siteServiceNodes, graphCont)
 	}
 	serviceNodePath := fmt.Sprintf("/sites/%s-%s/serviceGraphs/%s/serviceNodes", siteId, templateName, graphName)
-	siteServiceGraphPayload := models.NewSchemaSiteServiceGraph("add", serviceNodePath, siteServiceNodeList)
+	siteServiceGraphPayload := models.GetPatchPayloadList("add", serviceNodePath, siteServiceNodeList)
 	_, err = msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), siteServiceGraphPayload)
 	if err != nil {
 		return err
@@ -157,7 +154,6 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 	if err != nil {
 		d.SetId("")
-		log.Printf("sitegraphcont err %v", err)
 		return nil
 	}
 
@@ -174,7 +170,7 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 }
 
 func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Update Template Service Graph")
+	log.Printf("[DEBUG] Begining Update Site Service Graph")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -196,7 +192,7 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 		if siteServiceNodes, ok := d.GetOk("service_node"); ok {
 			siteServiceNodeList := getServiceNodeList(siteServiceNodes, graphCont)
 			serviceNodePath := fmt.Sprintf("/sites/%s-%s/serviceGraphs/%s/serviceNodes", siteId, templateName, graphName)
-			siteServiceGraphPayload := models.NewSchemaSiteServiceGraph("replace", serviceNodePath, siteServiceNodeList)
+			siteServiceGraphPayload := models.GetPatchPayloadList("replace", serviceNodePath, siteServiceNodeList)
 			_, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), siteServiceGraphPayload)
 			if err != nil {
 				return err
