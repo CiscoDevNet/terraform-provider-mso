@@ -107,5 +107,6 @@ func dataSourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m inter
 	d.Set("template_name", stateTemplate)
 	d.Set("service_graph_name", graphName)
 	d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, stateTemplate, graphName))
+	log.Printf("[DEBUG] %s: Datasource read finished successfully", d.Id())
 	return nil
 }

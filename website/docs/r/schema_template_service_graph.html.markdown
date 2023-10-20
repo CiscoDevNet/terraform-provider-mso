@@ -33,7 +33,7 @@ resource "mso_schema_template_service_graph" "test_sg" {
 * `service_node_type` - (Optional) **Deprecated**. Type of Service Node attached to this Graph. Allowed values are `firewall`, `load-balancer` and `other`.
 * `description` - (Optional) Description of Service Graph.
 * `service_node` - (Required) List of service nodes attached to Service Graph.
-    * `service_node.type` - (Required) Type of Service Node attached to the Service Graph. Allowed values are `firewall`, `load-balancer` and `other`.
+    * `type` - (Required) Type of Service Node attached to the Service Graph. Allowed values are `firewall`, `load-balancer` and `other`.
 
 
 ## NOTE ##

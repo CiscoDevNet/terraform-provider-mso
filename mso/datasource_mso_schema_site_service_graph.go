@@ -54,7 +54,7 @@ func datasourceMSOSchemaSiteServiceGraph() *schema.Resource {
 }
 
 func dataSourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Beginning datasource Read ")
+	log.Printf("[DEBUG] Beginning datasource Read")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -70,7 +70,6 @@ func dataSourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface
 	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 	if err != nil {
 		d.SetId("")
-		log.Printf("sitegraphcont err %v", err)
 		return nil
 	}
 

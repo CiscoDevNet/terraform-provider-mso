@@ -106,12 +106,17 @@ func resourceMSOSchemaSiteServiceGraphNodeCreate(d *schema.ResourceData, m inter
 		nodeType = tempVar.(string)
 	}
 
-	nodeId, err := getNodeIdFromName(msoClient, nodeType)
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
 
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	nodesCount, err := cont.ArrayCount("serviceNodeTypes")
+	if err != nil {
+		return err
+	}
+
+	nodeId, err := getNodeIdFromName(cont, nodesCount, nodeType)
 	if err != nil {
 		return err
 	}
@@ -251,7 +256,11 @@ func resourceMSOSchemaSiteServiceGraphNodeRead(d *schema.ResourceData, m interfa
 	if tempVar, ok := d.GetOk("service_node_type"); ok {
 		nodeType = tempVar.(string)
 	}
-	nodeId, err := getNodeIdFromName(msoClient, nodeType)
+	nodesCount, err := cont.ArrayCount("serviceNodeTypes")
+	if err != nil {
+		return err
+	}
+	nodeId, err := getNodeIdFromName(cont, nodesCount, nodeType)
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,7 @@ output "aci_l4_l7_device_1" {
 
 data "aci_l4_l7_device" "l4_l7_device_2" {
   tenant_dn = data.aci_tenant.ansible_test.id
-  name      = "ansible_test_firewall2"
+  name      = "ansible_test_other"
 }
 
 output "aci_l4_l7_device_2" {
@@ -59,7 +59,7 @@ resource "mso_schema" "schema_test" {
   template {
     name         = "Template1"
     display_name = "Template1"
-    tenant_id    = data.mso_tenant.tf_tenant.id // 32
+    tenant_id    = data.mso_tenant.tf_tenant.id
   }
 }
 
@@ -67,7 +67,6 @@ resource "mso_schema_template_service_graph" "test_sg" {
   schema_id          = mso_schema.schema_test.id
   template_name      = one(mso_schema.schema_test.template).name
   service_graph_name = "sgtf1"
-  # service_node_type  = "other"
   service_node {
     type = "firewall"
   }

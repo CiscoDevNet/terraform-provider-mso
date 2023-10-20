@@ -104,7 +104,12 @@ func testAccCheckMsoSchemaSiteServiceGraphNodeExists(schemaTemplateVrfName strin
 		stvt.GraphName = "sgtf"
 		stvt.Template = "Template1"
 
-		nodeId, err := getNodeIdFromName(client, "firewall")
+		nodesCount, err := cont.ArrayCount("serviceNodeTypes")
+		if err != nil {
+			return err
+		}
+
+		nodeId, err := getNodeIdFromName(cont, nodesCount, "firewall")
 		if err != nil {
 			return err
 		}
