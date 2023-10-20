@@ -43,3 +43,19 @@ func GetRemovePatchPayload(path string) *PatchPayload {
 		Path: path,
 	}
 }
+
+func GetPatchPayload(ops, path string, value map[string]interface{}) *PatchPayload {
+	return &PatchPayload{
+		Ops:   ops,
+		Path:  path,
+		Value: value,
+	}
+}
+
+func GetPatchPayloadList(ops, path string, value []interface{}) *PatchPayloadList {
+	return &PatchPayloadList{
+		Ops:   ops,
+		Path:  path,
+		Value: value,
+	}
+}
