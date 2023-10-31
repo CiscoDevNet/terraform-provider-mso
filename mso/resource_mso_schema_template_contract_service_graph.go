@@ -190,50 +190,6 @@ func resourceMSOSchemaTemplateContractServiceGraphDelete(d *schema.ResourceData,
 	return nil
 }
 
-// Returns the Service Graph object from the Template Service Graph list based on the templateName and graphName
-// Return values: Template serviceGraph Object, Template serviceGraph index position, error
-func getSchemaTemplateContractServiceGraph(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
-	templateCount, err := cont.ArrayCount("templates")
-	if err != nil {
-		return nil, -1, fmt.Errorf("No Template found")
-	}
-
-	for i := 0; i < templateCount; i++ {
-		templateCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return nil, -1, fmt.Errorf("Unable to get template element")
-		}
-
-		apiTemplate := models.StripQuotes(templateCont.S("name").String())
-
-		if apiTemplate == templateName {
-			log.Printf("[DEBUG] Template found")
-
-			sgCount, err := templateCont.ArrayCount("serviceGraphs")
-
-			if err != nil {
-				return nil, -1, fmt.Errorf("No Service Graph found")
-			}
-
-			for j := 0; j < sgCount; j++ {
-				sgCont, err := templateCont.ArrayElement(j, "serviceGraphs")
-
-				if err != nil {
-					return nil, -1, fmt.Errorf("Unable to get service graph element")
-				}
-
-				apiSgName := models.StripQuotes(sgCont.S("name").String())
-
-				if apiSgName == graphName {
-					return sgCont, j, nil
-				}
-			}
-
-		}
-	}
-	return nil, -1, fmt.Errorf("unable to find service graph")
-}
-
 // Returns the List of Service Graph Node map object with Consumer and Provider BD values
 func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schemaId, templateName string, nodeList, tempNodeList []interface{}, serviceGraphRef map[string]interface{}) ([]interface{}, error) {
 	templateNodes := make([]interface{}, 0)
@@ -483,7 +439,7 @@ func PostSchemaTemplateContractServiceGraphConfig(action string, d *schema.Resou
 		return err
 	}
 
-	graphCont, _, err := getSchemaTemplateContractServiceGraph(cont, serviceGraphRef["templateName"].(string), serviceGraph)
+	graphCont, _, err := getSchemaTemplateServiceGraph(cont, serviceGraphRef["templateName"].(string), serviceGraph)
 
 	if err != nil {
 		return err

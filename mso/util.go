@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -61,4 +62,57 @@ func extractNodes(cont *container.Container) ([]interface{}, error) {
 		nodes = append(nodes, models.StripQuotes(node.(map[string]interface{})["name"].(string)))
 	}
 	return nodes, nil
+}
+
+// getSchemaTemplateServiceGraph retrieves the schema template service graph based on the provided parameters.
+//
+// Parameters:
+// - cont: The container object.
+// - templateName: The name of the template.
+// - graphName: The name of the service graph.
+//
+// Returns:
+// - cont: The template service graph container object.
+// - int: The index of the service graph in the container.
+// - error: An error indicating any issues encountered during the retrieval process.
+func getSchemaTemplateServiceGraph(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
+	templateCount, err := cont.ArrayCount("templates")
+	if err != nil {
+		return nil, -1, fmt.Errorf("No Template found")
+	}
+
+	for i := 0; i < templateCount; i++ {
+		templateCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return nil, -1, fmt.Errorf("Unable to get template element")
+		}
+
+		apiTemplate := models.StripQuotes(templateCont.S("name").String())
+
+		if apiTemplate == templateName {
+			log.Printf("[DEBUG] Template found")
+
+			sgCount, err := templateCont.ArrayCount("serviceGraphs")
+
+			if err != nil {
+				return nil, -1, fmt.Errorf("No Service Graph found")
+			}
+
+			for j := 0; j < sgCount; j++ {
+				sgCont, err := templateCont.ArrayElement(j, "serviceGraphs")
+
+				if err != nil {
+					return nil, -1, fmt.Errorf("Unable to get service graph element")
+				}
+
+				apiSgName := models.StripQuotes(sgCont.S("name").String())
+
+				if apiSgName == graphName {
+					return sgCont, j, nil
+				}
+			}
+
+		}
+	}
+	return nil, -1, fmt.Errorf("unable to find service graph")
 }
