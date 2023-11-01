@@ -83,7 +83,7 @@ func resourceMSOSchemaTemplateServiceGraphs() *schema.Resource {
 			_, service_node_type := diff.GetOk("service_node_type")
 			_, service_node := diff.GetOk("service_node")
 			if !service_node_type && !service_node {
-				return errors.New(`"service_node"is required.`)
+				return errors.New(`"service_node" is required.`)
 			}
 			return nil
 		},
