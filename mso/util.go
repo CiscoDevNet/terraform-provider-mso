@@ -36,22 +36,7 @@ func errorForObjectNotFound(err error, dn string, con *container.Container, d *s
 
 // CHANGE TO UTILS IF YOU ADD MORE FUNCTIONS
 
-// extractServiceGraphNodesFromContainer extracts the nodes from the given container.
-//
-// Parameters:
-// - cont: A pointer to the container.Container object.
-//
-// Returns:
-// - nodes: A slice of interfaces that contains the extracted nodes.
-func extractServiceGraphNodesFromContainer(cont *container.Container) []interface{} {
-	nodes := make([]interface{}, 0, 1)
-	for _, node := range cont.S("serviceNodes").Data().([]interface{}) {
-		nodes = append(nodes, models.StripQuotes(node.(map[string]interface{})["name"].(string)))
-	}
-	return nodes
-}
-
-// getSchemaTemplateServiceGraphFromContainer retrieves the schema template service graph based on the provided parameters.
+// getSchemaTemplateServiceGraph retrieves the schema template service graph based on the provided parameters.
 //
 // Parameters:
 // - cont: The container object.
@@ -62,7 +47,7 @@ func extractServiceGraphNodesFromContainer(cont *container.Container) []interfac
 // - cont: The template service graph container object.
 // - int: The index of the service graph in the container.
 // - error: An error indicating any issues encountered during the retrieval process.
-func getSchemaTemplateServiceGraphFromContainer(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
+func getSchemaTemplateServiceGraph(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
 	templateCount, err := cont.ArrayCount("templates")
 	if err != nil {
 		return nil, -1, fmt.Errorf("No Template found")
