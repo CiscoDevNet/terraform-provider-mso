@@ -55,13 +55,12 @@ func checkNodeAttr(object interface{}, attrName string, index int) bool {
 //
 // Returns:
 // - nodes: A slice of interfaces that contains the extracted nodes.
-// - error: An error object if there is any error encountered during the extraction process.
-func extractNodes(cont *container.Container) ([]interface{}, error) {
+func extractNodes(cont *container.Container) []interface{} {
 	nodes := make([]interface{}, 0, 1)
 	for _, node := range cont.S("serviceNodes").Data().([]interface{}) {
 		nodes = append(nodes, models.StripQuotes(node.(map[string]interface{})["name"].(string)))
 	}
-	return nodes, nil
+	return nodes
 }
 
 // getSchemaTemplateServiceGraph retrieves the schema template service graph based on the provided parameters.
