@@ -79,17 +79,17 @@ func dataSourceMSOSchemaTemplateContractServiceGraph() *schema.Resource {
 func dataSourceMSOSchemaTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Beginning datasource Read")
 
-	schemaId := d.Get("schema_id").(string)
+	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
 
 	msoClient := m.(*client.Client)
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", schemaId, templateName, contractName))
+	d.SetId(fmt.Sprintf("%s/templates/%s/contracts/%s", schemaID, templateName, contractName))
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
