@@ -1,12 +1,12 @@
 ---
 layout: "mso"
-page_title: "MSO: mso_schema_site_template_contract_service_graph"
-sidebar_current: "docs-mso-resource-schema_site_template_contract_service_graph"
+page_title: "MSO: mso_schema_site_contract_service_graph"
+sidebar_current: "docs-mso-resource-schema_site_contract_service_graph"
 description: |-
   Manages MSO Site Template Contract Service Graph.
 ---
 
-# mso_schema_site_template_contract_service_graph #
+# mso_schema_site_contract_service_graph #
 
 Manages MSO Site Template Contract Service Graph.
 
@@ -14,7 +14,7 @@ Manages MSO Site Template Contract Service Graph.
 
 ```hcl
 
-resource "mso_schema_site_template_contract_service_graph" "example" {
+resource "mso_schema_site_contract_service_graph" "example" {
   schema_id          = mso_schema.schema.id
   template_name      = "Template1"
   contract_name      = "C1"
@@ -36,7 +36,7 @@ resource "mso_schema_site_template_contract_service_graph" "example" {
 }
 
 # Cloud Network Controller site configuration
-resource "mso_schema_site_template_contract_service_graph" "example" {
+resource "mso_schema_site_contract_service_graph" "example" {
   schema_id          = mso_schema.schema.id
   template_name      = "Template1"
   contract_name      = "C1"
@@ -72,5 +72,5 @@ No attributes are exported.
 An existing MSO Site Template Contract Service Graph can be [imported][docs-import] into this resource using its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_site_template_contract_service_graph.example {schema_id}/sites/{site_id}/templates/{template_name}/contracts/{contract_name}
+terraform import mso_schema_site_contract_service_graph.example {schema_id}/sites/{site_id}/templates/{template_name}/contracts/{contract_name}
 ```
