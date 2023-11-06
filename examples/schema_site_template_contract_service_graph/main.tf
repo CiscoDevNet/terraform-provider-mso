@@ -66,7 +66,7 @@ resource "mso_schema_site" "schema_site_1" {
   template_name = data.mso_schema_template_service_graph.sg1.template_name
 }
 
-resource "mso_site_template_contract_service_graph" "example" {
+resource "mso_schema_site_template_contract_service_graph" "example" {
   schema_id          = data.mso_schema.schema1.id
   template_name      = "t1"
   contract_name      = "c1"
@@ -88,7 +88,7 @@ resource "mso_site_template_contract_service_graph" "example" {
 }
 
 # Cloud Network Controller site configuration
-resource "mso_site_template_contract_service_graph" "example" {
+resource "mso_schema_site_template_contract_service_graph" "example" {
   schema_id          = data.mso_schema.schema1.id
   template_name      = "t1"
   contract_name      = "c1"

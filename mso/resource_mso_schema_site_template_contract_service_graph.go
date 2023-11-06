@@ -12,15 +12,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func resourceMSOSiteTemplateContractServiceGraph() *schema.Resource {
+func resourceMSOSchemaSiteTemplateContractServiceGraph() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSiteTemplateContractServiceGraphCreate,
-		Update: resourceMSOSiteTemplateContractServiceGraphUpdate,
-		Read:   resourceMSOSiteTemplateContractServiceGraphRead,
-		Delete: resourceMSOSiteTemplateContractServiceGraphDelete,
+		Create: resourceMSOSchemaSiteTemplateContractServiceGraphCreate,
+		Update: resourceMSOSchemaSiteTemplateContractServiceGraphUpdate,
+		Read:   resourceMSOSchemaSiteTemplateContractServiceGraphRead,
+		Delete: resourceMSOSchemaSiteTemplateContractServiceGraphDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: resourceMSOSiteTemplateContractServiceGraphImport,
+			State: resourceMSOSchemaSiteTemplateContractServiceGraphImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -119,7 +119,7 @@ func resourceMSOSiteTemplateContractServiceGraph() *schema.Resource {
 	}
 }
 
-func resourceMSOSiteTemplateContractServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceMSOSchemaSiteTemplateContractServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	serviceGraphTokens := strings.Split(d.Id(), "/")
 	d.Set("schema_id", serviceGraphTokens[0])
@@ -140,28 +140,28 @@ func resourceMSOSiteTemplateContractServiceGraphImport(d *schema.ResourceData, m
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceMSOSiteTemplateContractServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteTemplateContractServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site Template Contract Service Graph: Beginning Creation")
 	err := postSiteTemplateContractServiceGraphConfig("add", d, m)
 	if err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
-	return resourceMSOSiteTemplateContractServiceGraphRead(d, m)
+	return resourceMSOSchemaSiteTemplateContractServiceGraphRead(d, m)
 
 }
 
-func resourceMSOSiteTemplateContractServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteTemplateContractServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site Template Contract Service Graph: Beginning Update")
 	err := postSiteTemplateContractServiceGraphConfig("replace", d, m)
 	if err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
-	return resourceMSOSiteTemplateContractServiceGraphRead(d, m)
+	return resourceMSOSchemaSiteTemplateContractServiceGraphRead(d, m)
 }
 
-func resourceMSOSiteTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Begining Read Site Template Contract Service Graph")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
@@ -178,7 +178,7 @@ func resourceMSOSiteTemplateContractServiceGraphRead(d *schema.ResourceData, m i
 	return nil
 }
 
-func resourceMSOSiteTemplateContractServiceGraphDelete(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteTemplateContractServiceGraphDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Begining Delete Site Template Contract Service Graph")
 	msoClient := m.(*client.Client)
 	schemaID := d.Get("schema_id").(string)
