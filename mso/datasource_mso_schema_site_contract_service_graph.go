@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func dataSourceMSOSchemaSiteTemplateContractServiceGraph() *schema.Resource {
+func dataSourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceMSOSchemaSiteTemplateContractServiceGraphRead,
+		Read: dataSourceMSOSchemaSiteContractServiceGraphRead,
 
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
@@ -87,7 +87,7 @@ func dataSourceMSOSchemaSiteTemplateContractServiceGraph() *schema.Resource {
 	}
 }
 
-func dataSourceMSOSchemaSiteTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
+func dataSourceMSOSchemaSiteContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Beginning datasource Read")
 
 	schemaID := d.Get("schema_id").(string)
@@ -106,7 +106,7 @@ func dataSourceMSOSchemaSiteTemplateContractServiceGraphRead(d *schema.ResourceD
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
-	err = setSiteTemplateContractServiceGraphAttrs(cont, d, true)
+	err = setSiteContractServiceGraphAttrs(cont, d, true)
 	if err != nil {
 		return err
 	}

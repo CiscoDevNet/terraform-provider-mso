@@ -12,15 +12,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func resourceMSOSchemaSiteTemplateContractServiceGraph() *schema.Resource {
+func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSchemaSiteTemplateContractServiceGraphCreate,
-		Update: resourceMSOSchemaSiteTemplateContractServiceGraphUpdate,
-		Read:   resourceMSOSchemaSiteTemplateContractServiceGraphRead,
-		Delete: resourceMSOSchemaSiteTemplateContractServiceGraphDelete,
+		Create: resourceMSOSchemaSiteContractServiceGraphCreate,
+		Update: resourceMSOSchemaSiteContractServiceGraphUpdate,
+		Read:   resourceMSOSchemaSiteContractServiceGraphRead,
+		Delete: resourceMSOSchemaSiteContractServiceGraphDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: resourceMSOSchemaSiteTemplateContractServiceGraphImport,
+			State: resourceMSOSchemaSiteContractServiceGraphImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -70,6 +70,7 @@ func resourceMSOSchemaSiteTemplateContractServiceGraph() *schema.Resource {
 			"node_relationship": &schema.Schema{ // Only for non-cloud sites
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"provider_connector_cluster_interface": &schema.Schema{
@@ -119,7 +120,7 @@ func resourceMSOSchemaSiteTemplateContractServiceGraph() *schema.Resource {
 	}
 }
 
-func resourceMSOSchemaSiteTemplateContractServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceMSOSchemaSiteContractServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	serviceGraphTokens := strings.Split(d.Id(), "/")
 	d.Set("schema_id", serviceGraphTokens[0])
@@ -131,7 +132,7 @@ func resourceMSOSchemaSiteTemplateContractServiceGraphImport(d *schema.ResourceD
 	if err != nil {
 		return nil, err
 	}
-	err = setSiteTemplateContractServiceGraphAttrs(cont, d, true)
+	err = setSiteContractServiceGraphAttrs(cont, d, true)
 	if err != nil {
 		return nil, err
 	}
@@ -140,28 +141,28 @@ func resourceMSOSchemaSiteTemplateContractServiceGraphImport(d *schema.ResourceD
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceMSOSchemaSiteTemplateContractServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteContractServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site Template Contract Service Graph: Beginning Creation")
-	err := postSiteTemplateContractServiceGraphConfig("add", d, m)
+	err := postSiteContractServiceGraphConfig("add", d, m)
 	if err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
-	return resourceMSOSchemaSiteTemplateContractServiceGraphRead(d, m)
+	return resourceMSOSchemaSiteContractServiceGraphRead(d, m)
 
 }
 
-func resourceMSOSchemaSiteTemplateContractServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteContractServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Site Template Contract Service Graph: Beginning Update")
-	err := postSiteTemplateContractServiceGraphConfig("replace", d, m)
+	err := postSiteContractServiceGraphConfig("replace", d, m)
 	if err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
-	return resourceMSOSchemaSiteTemplateContractServiceGraphRead(d, m)
+	return resourceMSOSchemaSiteContractServiceGraphRead(d, m)
 }
 
-func resourceMSOSchemaSiteTemplateContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Begining Read Site Template Contract Service Graph")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
@@ -170,7 +171,7 @@ func resourceMSOSchemaSiteTemplateContractServiceGraphRead(d *schema.ResourceDat
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
-	err = setSiteTemplateContractServiceGraphAttrs(cont, d, false)
+	err = setSiteContractServiceGraphAttrs(cont, d, false)
 	if err != nil {
 		return err
 	}
@@ -178,7 +179,7 @@ func resourceMSOSchemaSiteTemplateContractServiceGraphRead(d *schema.ResourceDat
 	return nil
 }
 
-func resourceMSOSchemaSiteTemplateContractServiceGraphDelete(d *schema.ResourceData, m interface{}) error {
+func resourceMSOSchemaSiteContractServiceGraphDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Begining Delete Site Template Contract Service Graph")
 	msoClient := m.(*client.Client)
 	schemaID := d.Get("schema_id").(string)
@@ -199,7 +200,7 @@ func resourceMSOSchemaSiteTemplateContractServiceGraphDelete(d *schema.ResourceD
 }
 
 // Sets the resource attribute values
-func setSiteTemplateContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData, importFlag bool) error {
+func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData, importFlag bool) error {
 	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
@@ -507,7 +508,7 @@ func getSiteTemplateServiceGraph(cont *container.Container, schemaID, templateNa
 	return nil, -1, fmt.Errorf("Unable to find site service graph")
 }
 
-// postSiteTemplateContractServiceGraphConfig create/update a service graph configuration for a site template contract.
+// postSiteContractServiceGraphConfig create/update a service graph configuration for a site template contract.
 //
 // Parameters:
 //   - ops: The ops to perform create(add)/update(replace) operations.
@@ -516,7 +517,7 @@ func getSiteTemplateServiceGraph(cont *container.Container, schemaID, templateNa
 //
 // Returns:
 //   - An error if there was a problem creating the service graph configuration.
-func postSiteTemplateContractServiceGraphConfig(ops string, d *schema.ResourceData, m interface{}) error {
+func postSiteContractServiceGraphConfig(ops string, d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)

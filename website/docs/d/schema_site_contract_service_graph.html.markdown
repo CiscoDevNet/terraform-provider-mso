@@ -1,12 +1,12 @@
 ---
 layout: "mso"
-page_title: "MSO: mso_schema_site_template_contract_service_graph"
-sidebar_current: "docs-mso-data-source-schema_site_template_contract_service_graph"
+page_title: "MSO: mso_schema_site_contract_service_graph"
+sidebar_current: "docs-mso-data-source-schema_site_contract_service_graph"
 description: |-
   Data source for MSO Site Template Contract Service Graph.
 ---
 
-# mso_schema_site_template_contract_service_graph #
+# mso_schema_site_contract_service_graph #
 
 Data source for MSO Site Template Contract Service Graph.
 
@@ -14,7 +14,7 @@ Data source for MSO Site Template Contract Service Graph.
 
 ```hcl
 
-data "mso_schema_site_template_contract_service_graph" "example" {
+data "mso_schema_site_contract_service_graph" "example" {
   schema_id     = mso_schema.schema.id
   template_name = "Template1"
   contract_name = "C1"
