@@ -121,7 +121,7 @@ func resourceMSOSchemaTemplateContractServiceGraphImport(d *schema.ResourceData,
 	if err != nil {
 		return nil, err
 	}
-	err = setSchemaTemplateContractServiceGraphAttrs(cont, d, true)
+	err = setSchemaTemplateContractServiceGraphAttrs(cont, d)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,8 @@ func resourceMSOSchemaTemplateContractServiceGraphRead(d *schema.ResourceData, m
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
-	err = setSchemaTemplateContractServiceGraphAttrs(cont, d, false)
+	err = setSchemaTemplateContractServiceGraphAttrs(cont, d)
+
 	if err != nil {
 		return err
 	}
@@ -252,11 +253,10 @@ func getSchemaTemplateContractServiceGraphNodes(cont *container.Container, schem
 // Parameters:
 // - d: *schema.ResourceData: The resource data containing the schema attributes.
 // - m: interface{}: The client interface.
-// - importFlag: bool: The import flag to determine if the attributes should be imported.
 //
 // Returns:
 // - error: The error encountered, if any.
-func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData, importFlag bool) error {
+func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData) error {
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
 
@@ -312,7 +312,6 @@ func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *sc
 						if err != nil {
 							return err
 						}
-						nodeRelationshipList := d.Get("node_relationship")
 
 						for k := 0; k < serviceNodesRelationshipCount; k++ {
 							relationMap := make(map[string]interface{})
@@ -323,35 +322,17 @@ func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *sc
 
 							providerConnectorBDRef := models.StripQuotes(node.S("providerConnector", "bdRef").String())
 							providerConnectorBDRefTokens := strings.Split(providerConnectorBDRef, "/")
+
 							relationMap["provider_connector_bd_name"] = providerConnectorBDRefTokens[len(providerConnectorBDRefTokens)-1]
-
-							if importFlag || checkNodeAttr(nodeRelationshipList, "provider_connector_bd_schema_id", k) {
-								relationMap["provider_connector_bd_schema_id"] = providerConnectorBDRefTokens[len(providerConnectorBDRefTokens)-5]
-							} else {
-								relationMap["provider_connector_bd_schema_id"] = ""
-							}
-
-							if importFlag || checkNodeAttr(nodeRelationshipList, "provider_connector_bd_template_name", k) {
-								relationMap["provider_connector_bd_template_name"] = providerConnectorBDRefTokens[len(providerConnectorBDRefTokens)-3]
-							} else {
-								relationMap["provider_connector_bd_template_name"] = ""
-							}
+							relationMap["provider_connector_bd_schema_id"] = providerConnectorBDRefTokens[len(providerConnectorBDRefTokens)-5]
+							relationMap["provider_connector_bd_template_name"] = providerConnectorBDRefTokens[len(providerConnectorBDRefTokens)-3]
 
 							consumerConnectorBDRef := models.StripQuotes(node.S("consumerConnector", "bdRef").String())
 							consumerConnectorBDRefTokens := strings.Split(consumerConnectorBDRef, "/")
+
 							relationMap["consumer_connector_bd_name"] = consumerConnectorBDRefTokens[len(consumerConnectorBDRefTokens)-1]
-
-							if importFlag || checkNodeAttr(nodeRelationshipList, "consumer_connector_bd_schema_id", k) {
-								relationMap["consumer_connector_bd_schema_id"] = consumerConnectorBDRefTokens[len(consumerConnectorBDRefTokens)-5]
-							} else {
-								relationMap["consumer_connector_bd_schema_id"] = ""
-							}
-
-							if importFlag || checkNodeAttr(nodeRelationshipList, "consumer_connector_bd_template_name", k) {
-								relationMap["consumer_connector_bd_template_name"] = consumerConnectorBDRefTokens[len(consumerConnectorBDRefTokens)-3]
-							} else {
-								relationMap["consumer_connector_bd_template_name"] = ""
-							}
+							relationMap["consumer_connector_bd_schema_id"] = consumerConnectorBDRefTokens[len(consumerConnectorBDRefTokens)-5]
+							relationMap["consumer_connector_bd_template_name"] = consumerConnectorBDRefTokens[len(consumerConnectorBDRefTokens)-3]
 
 							serviceGraphRelationshipList = append(serviceGraphRelationshipList, relationMap)
 						}
@@ -418,12 +399,12 @@ func postSchemaTemplateContractServiceGraphConfig(ops string, d *schema.Resource
 		return err
 	}
 
-	templateServiceGraphCont, _, err := getSchemaTemplateServiceGraph(cont, serviceGraphRef["templateName"].(string), serviceGraphName)
+	templateServiceGraphCont, _, err := getSchemaTemplateServiceGraphFromContainer(cont, serviceGraphRef["templateName"].(string), serviceGraphName)
 
 	if err != nil {
 		return err
 	}
-	apiServiceGraphNodeList := extractNodes(templateServiceGraphCont)
+	apiServiceGraphNodeList := extractServiceGraphNodesFromContainer(templateServiceGraphCont)
 
 	nodeRelationshipList := d.Get("node_relationship").([]interface{})
 

@@ -94,7 +94,7 @@ func dataSourceMSOSchemaTemplateContractServiceGraphRead(d *schema.ResourceData,
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
-	err = setSchemaTemplateContractServiceGraphAttrs(cont, d, true)
+	err = setSchemaTemplateContractServiceGraphAttrs(cont, d)
 	if err != nil {
 		return err
 	}
