@@ -36,26 +36,14 @@ func errorForObjectNotFound(err error, dn string, con *container.Container, d *s
 
 // CHANGE TO UTILS IF YOU ADD MORE FUNCTIONS
 
-// checkNodeAttr checks the attribute of a node in a list of objects.
-//
-// Parameters:
-// - object: the list of objects.
-// - attrName: the name of the attribute to check.
-// - index: the index of the object in the list.
-//
-// Returns true if the attribute is not empty, false otherwise.
-func checkNodeAttr(object interface{}, attrName string, index int) bool {
-	return object.([]interface{})[index].(map[string]interface{})[attrName] != ""
-}
-
-// extractNodes extracts the nodes from the given container.
+// extractServiceGraphNodesFromContainer extracts the nodes from the given container.
 //
 // Parameters:
 // - cont: A pointer to the container.Container object.
 //
 // Returns:
 // - nodes: A slice of interfaces that contains the extracted nodes.
-func extractNodes(cont *container.Container) []interface{} {
+func extractServiceGraphNodesFromContainer(cont *container.Container) []interface{} {
 	nodes := make([]interface{}, 0, 1)
 	for _, node := range cont.S("serviceNodes").Data().([]interface{}) {
 		nodes = append(nodes, models.StripQuotes(node.(map[string]interface{})["name"].(string)))
@@ -63,7 +51,7 @@ func extractNodes(cont *container.Container) []interface{} {
 	return nodes
 }
 
-// getSchemaTemplateServiceGraph retrieves the schema template service graph based on the provided parameters.
+// getSchemaTemplateServiceGraphFromContainer retrieves the schema template service graph based on the provided parameters.
 //
 // Parameters:
 // - cont: The container object.
@@ -74,7 +62,7 @@ func extractNodes(cont *container.Container) []interface{} {
 // - cont: The template service graph container object.
 // - int: The index of the service graph in the container.
 // - error: An error indicating any issues encountered during the retrieval process.
-func getSchemaTemplateServiceGraph(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
+func getSchemaTemplateServiceGraphFromContainer(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
 	templateCount, err := cont.ArrayCount("templates")
 	if err != nil {
 		return nil, -1, fmt.Errorf("No Template found")

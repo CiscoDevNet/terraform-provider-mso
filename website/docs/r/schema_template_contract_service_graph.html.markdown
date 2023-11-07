@@ -10,6 +10,9 @@ description: |-
 
 Manages MSO Schema Template Contract Service Graph.
 
+# Note: #
+Only MSO versions 3.7 and 4.2+ are compatible with this resource. For the MSO version 4.1 is not supported.
+
 ## Example Usage ##
 
 ```hcl
