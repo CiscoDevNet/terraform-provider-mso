@@ -16,17 +16,17 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups Domain.
 
 ```hcl
 
-resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
-  schema_id                = mso_schema.schema1.id
-  template_name            = "Template1"
-  site_id                  = mso_schema_site.schema_site.site_id
-  anp_name                 = mso_schema_site_anp_epg.site_anp_epg.anp_name
-  epg_name                 = mso_schema_site_anp_epg.site_anp_epg.epg_name
+resource "mso_schema_site_anp_epg_domain" "vmware_domain_with_name_pre_4_2" {
+  schema_id                = mso_schema.schema_1.id
+  template_name            = one(mso_schema.schema_1.template).name
+  site_id                  = data.mso_site.example_site.id
+  anp_name                 = mso_schema_template_anp.anp_1.name
+  epg_name                 = mso_schema_template_anp_epg.anp_epg_1.name
   domain_type              = "vmmDomain"
-  vmm_domain_type          = "VMware"
-  domain_name              = "VMware-ab"
-  deploy_immediacy         = "lazy"
-  resolution_immediacy     = "lazy"
+  vmm_domain_type          = "Microsoft"
+  domain_name              = "VM-Micro"
+  deploy_immediacy         = "immediate"
+  resolution_immediacy     = "immediate"
   vlan_encap_mode          = "static"
   allow_micro_segmentation = true
   switching_mode           = "native"
@@ -35,8 +35,6 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
   micro_seg_vlan           = 46
   port_encap_vlan_type     = "vlan"
   port_encap_vlan          = 45
-  enhanced_lag_policy_name = "Lacp"
-  enhanced_lag_policy_dn   = "uni/vmmp-VMware/dom-VMware-ab/vswitchpolcont/enlacplagp-Lacp"
 }
 
 ```
@@ -44,26 +42,61 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 ### domain_dn usage ###
 
 ```hcl
-resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
-  schema_id = "5c4d9fca270000a101f8094a"
-  template_name = "Template1"
-  site_id = "5c7c95b25100008f01c1ee3c"
-  anp_name = "ANP"
-  epg_name = "Web"
-  domain_dn = "uni/vmmp-VMware/dom-VMware-ab"
-  deploy_immediacy = "lazy"
-  resolution_immediacy = "lazy"
-  vlan_encap_mode = "static"
-  allow_micro_segmentation = true
-  switching_mode = "native"
-  switch_type = "default"
-  micro_seg_vlan_type = "vlan"
-  micro_seg_vlan = 46
-  port_encap_vlan_type = "vlan"
-  port_encap_vlan = 45
-  enhanced_lag_policy_name = "Lacp"
-  enhanced_lag_policy_dn = "uni/vmmp-VMware/dom-VMware-ab/vswitchpolcont/enlacplagp-Lacp"
 
+resource "mso_schema_site_anp_epg_domain" "vmware_domain_domain_dn_pre_4_2" {
+  schema_id                = mso_schema.schema_1.id
+  template_name            = one(mso_schema.schema_1.template).name
+  site_id                  = data.mso_site.example_site.id
+  anp_name                 = mso_schema_template_anp.anp_1.name
+  epg_name                 = mso_schema_template_anp_epg.anp_epg_1.name
+  domain_dn                = "uni/vmmp-VMware/dom-TEST"
+  deploy_immediacy         = "immediate"
+  resolution_immediacy     = "immediate"
+  vlan_encap_mode          = "static"
+  allow_micro_segmentation = false
+  switching_mode           = "native"
+  switch_type              = "default"
+  micro_seg_vlan_type      = "vlan"
+  micro_seg_vlan           = 46
+  port_encap_vlan_type     = "vlan"
+  port_encap_vlan          = 45
+  enhanced_lag_policy_name = "Lacp"
+  enhanced_lag_policy_dn   = "uni/vmmp-VMware/dom-TEST/vswitchpolcont/enlacplagp-Lacp"
+}
+
+
+```
+
+### domain_dn usage in version >= 4.2 ###
+
+```hcl
+
+resource "mso_schema_site_anp_epg_domain" "vmware_domain_4_2_up" {
+  schema_id                = mso_schema.schema_1.id
+  template_name            = one(mso_schema.schema_1.template).name
+  site_id                  = data.mso_site.example_site.id
+  anp_name                 = mso_schema_template_anp.anp_1.name
+  epg_name                 = mso_schema_template_anp_epg.anp_epg_1.name
+  domain_dn                = "uni/vmmp-VMware/dom-TEST"
+  deploy_immediacy         = "immediate"
+  resolution_immediacy     = "immediate"
+  vlan_encap_mode          = "static"
+  allow_micro_segmentation = true
+  switching_mode           = "native"
+  switch_type              = "default"
+  micro_seg_vlan_type      = "vlan"
+  micro_seg_vlan           = 46
+  port_encap_vlan_type     = "vlan"
+  port_encap_vlan          = 45
+  delimiter                = "|"
+  binding_type             = "static"
+  port_allocation          = "fixed"
+  num_ports                = 3
+  netflow                  = "disabled"
+  allow_promiscuous        = "accept"
+  mac_changes              = "reject"
+  forged_transmits         = "reject"
+  custom_epg_name          = "custom_epg_name_1"
 }
 
 ```
@@ -82,16 +115,25 @@ resource "mso_schema_site_anp_epg_domain" "site_anp_epg_domain" {
 * `vmm_domain_type` - (Optional) The vmm domain type. This is required when `domain_type` is vmmDomain and `domain_dn` is not used. Choices: [ VMware, Microsoft, Redhat ]
 * `deploy_immediacy` - (Required) The deployment immediacy of the domain. Choices: [ immediate, lazy ]
 * `resolution_immediacy` - (Required) Determines when the policies should be resolved and available. Choices: [ immediate, lazy, pre-provision ]
-* `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with vmmDomain domain association. Choices: [ static, dynamic ]
-* `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with vmmDomain domain association.
-* `switching_mode` - (Optional) Which switching mode to use with this domain association. This attribute can only be used with vmmDomain domain association.
-* `switch_type` - (Optional) Which switch type to use with this domain association. This attribute can only be used with vmmDomain domain association.
-* `micro_seg_vlan_type` - (Optional) Virtual LAN type for microsegmentation. This attribute can only be used with vmmDomain domain association.
-* `micro_seg_vlan` - (Optional) Virtual LAN for microsegmentation. This attribute can only be used with vmmDomain domain association.
-* `port_encap_vlan_type` - (Optional) Virtual LAN type for port encap. This attribute can only be used with vmmDomain domain association.
-* `port_encap_vlan` - (Optional) Virtual LAN for port encap. This attribute can only be used with vmmDomain domain association.
-* `enhanced_lag_policy_name` - (Optional) EPG enhanced lagpolicy name. This attribute can only be used with vmmDomain domain association.
-* `enhanced_lag_policy_dn` - (Optional) Distinguished name of EPG lagpolicy. This attribute can only be used with vmmDomain domain association.
+* `vlan_encap_mode` - (Optional) Which VLAN encap mode to use. This attribute can only be used with VMM Domain association. Choices: [ static, dynamic ]
+* `allow_micro_segmentation` - (Optional) Specifies microsegmentation is enabled or not. This attribute can only be used with VMM Domain association.
+* `switching_mode` - (Optional) Which switching mode to use with this domain association. This attribute can only be used with VMM Domain association.
+* `switch_type` - (Optional) Which switch type to use with this domain association. This attribute can only be used with VMM Domain association.
+* `micro_seg_vlan_type` - (Optional) Virtual LAN type for microsegmentation. This attribute can only be used with VMM Domain association.
+* `micro_seg_vlan` - (Optional) Virtual LAN for microsegmentation. This attribute can only be used with VMM Domain association.
+* `port_encap_vlan_type` - (Optional) Virtual LAN type for port encap. This attribute can only be used with VMM Domain association.
+* `port_encap_vlan` - (Optional) Virtual LAN for port encap. This attribute can only be used with VMM Domain association.
+* `enhanced_lag_policy_name` - (Optional) EPG enhanced lagpolicy name. This attribute can only be used with VMM Domain association.
+* `enhanced_lag_policy_dn` - (Optional) Distinguished name of EPG lagpolicy. This attribute can only be used with VMM Domain association.
+* `delimiter` - (Optional) The delimiter of the domain. This attribute can only be used with VMM Domain association. Choices: [ |, ~, !, @, ^, +, = ]
+* `binding_type` - (Optional) The binding type of the domain. This is required when version of NDO is 4.2+ and can only be used with VMM Domain association. Choices: [ static, dynamic, none, ephemeral ] 
+* `port_allocation` - (Optional) The port allocation of the domain. This is required when `binding_type` is static. This attribute can only be used with VMM Domain association. Choices: [ elastic, fixed ]
+* `num_ports` - (Optional) The number of ports for the domain. This attribute can only be used with VMM Domain association.
+* `netflow ` - (Optional) The netflow preference of the domain. This is required when version of NDO is 4.2+ and can only be used with VMM Domain association. Choices: [ enabled, disabled ]
+* `allow_promiscuous` - (Optional) The allow promiscious setting of the domain. This is required when version of NDO is 4.2+ and can only be used with VMM Domain association. Choices: [ accept, reject ]
+* `mac_changes` - (Optional) The mac changes setting of the domain. This is required when version of NDO is 4.2+ and can only be used with VMM Domain association. Choices: [ accept, reject ]
+* `forged_transmits` - (Optional) The forged transmits setting of the domainn. This is required when version of NDO is 4.2+ and can only be used with VMM Domain association. Choices: [ accept, reject ]
+* `custom_epg_name` - (Optional) The custom epg name of the domain. This attribute can only be used with VMM Domain association.
 
 ## Attribute Reference ##
 
