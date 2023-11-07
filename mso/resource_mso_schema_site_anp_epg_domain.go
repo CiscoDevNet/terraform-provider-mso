@@ -110,14 +110,21 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Deprecated:    "use domain_dn alone or domain_name in association with domain_type and vmm_domain_type when it is applicable.",
 			},
 			"deploy_immediacy": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"immediate",
+					"lazy",
+				}, false),
 			},
 			"resolution_immediacy": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"immediate",
+					"lazy",
+					"pre-provision",
+				}, false),
 			},
 
 			"allow_micro_segmentation": &schema.Schema{
@@ -139,6 +146,10 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"dynamic",
+					"static",
+				}, false),
 			},
 
 			"micro_seg_vlan_type": &schema.Schema{
@@ -167,6 +178,86 @@ func resourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Computed: true,
 			},
 			"enhanced_lag_policy_dn": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"delimiter": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"|",
+					"~",
+					"!",
+					"@",
+					"^",
+					"+",
+					"=",
+				}, false),
+			},
+			"binding_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"static",
+					"dynamic",
+					"none",
+					"ephemeral",
+				}, false),
+			},
+			"num_ports": &schema.Schema{
+				Type:     schema.TypeFloat,
+				Optional: true,
+				Computed: true,
+			},
+			"port_allocation": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"elastic",
+					"fixed",
+				}, false),
+			},
+			"netflow": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"enabled",
+					"disabled",
+				}, false),
+			},
+			"allow_promiscuous": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"reject",
+					"accept",
+				}, false),
+			},
+			"forged_transmits": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"reject",
+					"accept",
+				}, false),
+			},
+			"mac_changes": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"reject",
+					"accept",
+				}, false),
+			},
+			"custom_epg_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -302,6 +393,43 @@ func resourceMSOSchemaSiteAnpEpgDomainImport(d *schema.ResourceData, m interface
 											d.Set("enhanced_lag_policy_dn", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "dn").String()))
 										}
 									}
+
+									if domainCont.Exists("delimiter") {
+										d.Set("delimiter", models.StripQuotes(domainCont.S("delimiter").String()))
+									}
+
+									if domainCont.Exists("bindingType") {
+										d.Set("binding_type", models.StripQuotes(domainCont.S("bindingType").String()))
+									}
+
+									if domainCont.Exists("numPorts") {
+										d.Set("num_ports", domainCont.S("numPorts").Data().(float64))
+									}
+
+									if domainCont.Exists("portAllocation") {
+										d.Set("port_allocation", models.StripQuotes(domainCont.S("portAllocation").String()))
+									}
+
+									if domainCont.Exists("netflowPref") {
+										d.Set("netflow", models.StripQuotes(domainCont.S("netflowPref").String()))
+									}
+
+									if domainCont.Exists("allowPromiscuous") {
+										d.Set("allow_promiscuous", models.StripQuotes(domainCont.S("allowPromiscuous").String()))
+									}
+
+									if domainCont.Exists("forgedTransmits") {
+										d.Set("forged_transmits", models.StripQuotes(domainCont.S("forgedTransmits").String()))
+									}
+
+									if domainCont.Exists("macChanges") {
+										d.Set("mac_changes", models.StripQuotes(domainCont.S("macChanges").String()))
+									}
+
+									if domainCont.Exists("customEpgName") {
+										d.Set("custom_epg_name", models.StripQuotes(domainCont.S("customEpgName").String()))
+									}
+
 									found = true
 									break
 								}
@@ -473,6 +601,34 @@ func resourceMSOSchemaSiteAnpEpgDomainCreate(d *schema.ResourceData, m interface
 		vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
 		vmmDomainPropertiesRefMap["switchType"] = switchType
 		vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
+
+		if delimiter, ok := d.GetOk("delimiter"); ok {
+			vmmDomainPropertiesRefMap["delimiter"] = delimiter.(string)
+		}
+		if bindingType, ok := d.GetOk("binding_type"); ok {
+			vmmDomainPropertiesRefMap["bindingType"] = bindingType.(string)
+		}
+		if numPorts, ok := d.GetOk("num_ports"); ok {
+			vmmDomainPropertiesRefMap["numPorts"] = numPorts.(float64)
+		}
+		if portAllocation, ok := d.GetOk("port_allocation"); ok {
+			vmmDomainPropertiesRefMap["portAllocation"] = portAllocation.(string)
+		}
+		if netflowPref, ok := d.GetOk("netflow"); ok {
+			vmmDomainPropertiesRefMap["netflowPref"] = netflowPref.(string)
+		}
+		if allowPromiscuous, ok := d.GetOk("allow_promiscuous"); ok {
+			vmmDomainPropertiesRefMap["allowPromiscuous"] = allowPromiscuous.(string)
+		}
+		if forgedTransmits, ok := d.GetOk("forged_transmits"); ok {
+			vmmDomainPropertiesRefMap["forgedTransmits"] = forgedTransmits.(string)
+		}
+		if macChanges, ok := d.GetOk("mac_changes"); ok {
+			vmmDomainPropertiesRefMap["macChanges"] = macChanges.(string)
+		}
+		if customEpgName, ok := d.GetOk("custom_epg_name"); ok {
+			vmmDomainPropertiesRefMap["customEpgName"] = customEpgName.(string)
+		}
 
 	} else {
 		log.Print("Passing Blank Value to the Model")
@@ -766,6 +922,43 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 											d.Set("enhanced_lag_policy_dn", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "dn").String()))
 										}
 									}
+
+									if domainCont.Exists("delimiter") {
+										d.Set("delimiter", models.StripQuotes(domainCont.S("delimiter").String()))
+									}
+
+									if domainCont.Exists("bindingType") {
+										d.Set("binding_type", models.StripQuotes(domainCont.S("bindingType").String()))
+									}
+
+									if domainCont.Exists("numPorts") {
+										d.Set("num_ports", domainCont.S("numPorts").Data().(float64))
+									}
+
+									if domainCont.Exists("portAllocation") {
+										d.Set("port_allocation", models.StripQuotes(domainCont.S("portAllocation").String()))
+									}
+
+									if domainCont.Exists("netflowPref") {
+										d.Set("netflow", models.StripQuotes(domainCont.S("netflowPref").String()))
+									}
+
+									if domainCont.Exists("allowPromiscuous") {
+										d.Set("allow_promiscuous", models.StripQuotes(domainCont.S("allowPromiscuous").String()))
+									}
+
+									if domainCont.Exists("forgedTransmits") {
+										d.Set("forged_transmits", models.StripQuotes(domainCont.S("forgedTransmits").String()))
+									}
+
+									if domainCont.Exists("macChanges") {
+										d.Set("mac_changes", models.StripQuotes(domainCont.S("macChanges").String()))
+									}
+
+									if domainCont.Exists("customEpgName") {
+										d.Set("custom_epg_name", models.StripQuotes(domainCont.S("customEpgName").String()))
+									}
+
 									found = true
 									break
 								}
@@ -930,6 +1123,34 @@ func resourceMSOSchemaSiteAnpEpgDomainUpdate(d *schema.ResourceData, m interface
 		vmmDomainPropertiesRefMap["switchingMode"] = switchingMode
 		vmmDomainPropertiesRefMap["switchType"] = switchType
 		vmmDomainPropertiesRefMap["vlanEncapMode"] = vlanEncapMode
+
+		if delimiter, ok := d.GetOk("delimiter"); ok {
+			vmmDomainPropertiesRefMap["delimiter"] = delimiter.(string)
+		}
+		if bindingType, ok := d.GetOk("binding_type"); ok {
+			vmmDomainPropertiesRefMap["bindingType"] = bindingType.(string)
+		}
+		if numPorts, ok := d.GetOk("num_ports"); ok {
+			vmmDomainPropertiesRefMap["numPorts"] = numPorts.(float64)
+		}
+		if portAllocation, ok := d.GetOk("port_allocation"); ok {
+			vmmDomainPropertiesRefMap["portAllocation"] = portAllocation.(string)
+		}
+		if netflowPref, ok := d.GetOk("netflow"); ok {
+			vmmDomainPropertiesRefMap["netflowPref"] = netflowPref.(string)
+		}
+		if allowPromiscuous, ok := d.GetOk("allow_promiscuous"); ok {
+			vmmDomainPropertiesRefMap["allowPromiscuous"] = allowPromiscuous.(string)
+		}
+		if forgedTransmits, ok := d.GetOk("forged_transmits"); ok {
+			vmmDomainPropertiesRefMap["forgedTransmits"] = forgedTransmits.(string)
+		}
+		if macChanges, ok := d.GetOk("mac_changes"); ok {
+			vmmDomainPropertiesRefMap["macChanges"] = macChanges.(string)
+		}
+		if customEpgName, ok := d.GetOk("custom_epg_name"); ok {
+			vmmDomainPropertiesRefMap["customEpgName"] = customEpgName.(string)
+		}
 
 	} else {
 		log.Print("Passing Blank Value to the Model")

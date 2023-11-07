@@ -81,7 +81,7 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"deployment_immediacy": &schema.Schema{
+			"deploy_immediacy": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -94,7 +94,7 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Computed: true,
 			},
 			"micro_seg_vlan": &schema.Schema{
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Computed: true,
 			},
 			"port_encap_vlan_type": &schema.Schema{
@@ -102,7 +102,7 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Computed: true,
 			},
 			"port_encap_vlan": &schema.Schema{
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Computed: true,
 			},
 			"vlan_encap_mode": &schema.Schema{
@@ -126,6 +126,42 @@ func dataSourceMSOSchemaSiteAnpEpgDomain() *schema.Resource {
 				Computed: true,
 			},
 			"enhanced_lag_policy_dn": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"delimiter": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"binding_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"num_ports": &schema.Schema{
+				Type:     schema.TypeFloat,
+				Computed: true,
+			},
+			"port_allocation": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"netflow": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"allow_promiscuous": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"forged_transmits": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"mac_changes": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"custom_epg_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -256,6 +292,43 @@ func dataSourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface
 					d.Set("enhanced_lag_policy_dn", models.StripQuotes(domainCont.S("epgLagPol", "enhancedLagPol", "dn").String()))
 				}
 			}
+
+			if domainCont.Exists("delimiter") {
+				d.Set("delimiter", models.StripQuotes(domainCont.S("delimiter").String()))
+			}
+
+			if domainCont.Exists("bindingType") {
+				d.Set("binding_type", models.StripQuotes(domainCont.S("bindingType").String()))
+			}
+
+			if domainCont.Exists("numPorts") {
+				d.Set("num_ports", domainCont.S("numPorts").Data().(float64))
+			}
+
+			if domainCont.Exists("portAllocation") {
+				d.Set("port_allocation", models.StripQuotes(domainCont.S("portAllocation").String()))
+			}
+
+			if domainCont.Exists("netflowPref") {
+				d.Set("netflow", models.StripQuotes(domainCont.S("netflowPref").String()))
+			}
+
+			if domainCont.Exists("allowPromiscuous") {
+				d.Set("allow_promiscuous", models.StripQuotes(domainCont.S("allowPromiscuous").String()))
+			}
+
+			if domainCont.Exists("forgedTransmits") {
+				d.Set("forged_transmits", models.StripQuotes(domainCont.S("forgedTransmits").String()))
+			}
+
+			if domainCont.Exists("macChanges") {
+				d.Set("mac_changes", models.StripQuotes(domainCont.S("macChanges").String()))
+			}
+
+			if domainCont.Exists("customEpgName") {
+				d.Set("custom_epg_name", models.StripQuotes(domainCont.S("customEpgName").String()))
+			}
+
 			break
 		}
 	}
