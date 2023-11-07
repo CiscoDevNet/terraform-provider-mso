@@ -10,6 +10,9 @@ description: |-
 
 Manages MSO Site Template Contract Service Graph.
 
+# Note: #
+This resource is only compatible with NDO versions 3.7 and 4.2+. NDO versions 4.0 and 4.1 are not supported.
+
 ## Example Usage ##
 
 ```hcl
