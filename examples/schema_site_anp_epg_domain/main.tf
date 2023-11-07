@@ -80,7 +80,7 @@ resource "mso_schema_site" "schema_site_1" {
 
 # Examples mso_schema_site_anp_epg_domain vmmDomain in version >= 4.2
 
-resource "mso_schema_site_anp_epg_domain" "vmware_domain_4_2_up" {
+resource "mso_schema_site_anp_epg_domain" "vmware_domain_id_4_2_up" {
   schema_id                = mso_schema.schema_1.id
   template_name            = one(mso_schema.schema_1.template).name
   site_id                  = data.mso_site.example_site.id
@@ -110,6 +110,33 @@ resource "mso_schema_site_anp_epg_domain" "vmware_domain_4_2_up" {
   custom_epg_name          = "custom_epg_name_1"
 }
 
+resource "mso_schema_site_anp_epg_domain" "vmware_domain_name_4_2_up" {
+  schema_id                = mso_schema.schema_1.id
+  template_name            = one(mso_schema.schema_1.template).name
+  site_id                  = data.mso_site.example_site.id
+  anp_name                 = mso_schema_template_anp.anp_1.name
+  epg_name                 = mso_schema_template_anp_epg.anp_epg_1.name
+  domain_dn                = "uni/vmmp-VMware/dom-TEST"
+  deploy_immediacy         = "immediate"
+  resolution_immediacy     = "immediate"
+  vlan_encap_mode          = "static"
+  allow_micro_segmentation = true
+  switching_mode           = "native"
+  switch_type              = "default"
+  micro_seg_vlan_type      = "vlan"
+  micro_seg_vlan           = 46
+  port_encap_vlan_type     = "vlan"
+  port_encap_vlan          = 45
+  delimiter                = "|"
+  binding_type             = "static"
+  port_allocation          = "fixed"
+  num_ports                = 3
+  netflow                  = "disabled"
+  allow_promiscuous        = "accept"
+  mac_changes              = "reject"
+  forged_transmits         = "reject"
+  custom_epg_name          = "custom_epg_name_1"
+}
 
 # Examples mso_schema_site_anp_epg_domain vmmDomain in version < 4.2
 
