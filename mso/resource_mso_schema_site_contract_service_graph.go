@@ -132,7 +132,7 @@ func resourceMSOSchemaSiteContractServiceGraphImport(d *schema.ResourceData, m i
 	if err != nil {
 		return nil, err
 	}
-	err = setSiteContractServiceGraphAttrs(cont, d, true)
+	err = setSiteContractServiceGraphAttrs(cont, d)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func resourceMSOSchemaSiteContractServiceGraphRead(d *schema.ResourceData, m int
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
-	err = setSiteContractServiceGraphAttrs(cont, d, false)
+	err = setSiteContractServiceGraphAttrs(cont, d)
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func resourceMSOSchemaSiteContractServiceGraphDelete(d *schema.ResourceData, m i
 }
 
 // Sets the resource attribute values
-func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData, importFlag bool) error {
+func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.ResourceData) error {
 	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
@@ -223,7 +223,7 @@ func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.Resou
 		apiSiteId := models.StripQuotes(siteCont.S("siteId").String())
 		apiTemplateName := models.StripQuotes(siteCont.S("templateName").String())
 
-		if (siteID == apiSiteId && apiTemplateName == templateName) || (apiTemplateName == templateName && importFlag) {
+		if siteID == apiSiteId && apiTemplateName == templateName {
 			if siteID == "" {
 				siteID = apiSiteId
 			}
@@ -552,11 +552,11 @@ func postSiteContractServiceGraphConfig(ops string, d *schema.ResourceData, m in
 		return err
 	}
 
-	schemaTemplateServiceGraphCont, _, err := getSchemaTemplateServiceGraph(cont, serviceGraphRef["templateName"].(string), serviceGraphName)
+	schemaTemplateServiceGraphCont, _, err := getSchemaTemplateServiceGraphFromContainer(cont, serviceGraphRef["templateName"].(string), serviceGraphName)
 	if err != nil {
 		return err
 	}
-	apiNodeRelationshipList, err := extractNodes(schemaTemplateServiceGraphCont)
+	apiNodeRelationshipList := extractServiceGraphNodesFromContainer(schemaTemplateServiceGraphCont)
 	if err != nil {
 		return err
 	}

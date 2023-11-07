@@ -106,7 +106,7 @@ func dataSourceMSOSchemaSiteContractServiceGraphRead(d *schema.ResourceData, m i
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
 
-	err = setSiteContractServiceGraphAttrs(cont, d, true)
+	err = setSiteContractServiceGraphAttrs(cont, d)
 	if err != nil {
 		return err
 	}
