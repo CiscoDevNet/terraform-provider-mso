@@ -87,8 +87,8 @@ resource "mso_schema_site_anp_epg_domain" "vmware_domain_id_4_2_up" {
   anp_name                 = mso_schema_template_anp.anp_1.name
   epg_name                 = mso_schema_template_anp_epg.anp_epg_1.name
   domain_type              = "vmmDomain"
-  vmm_domain_type          = "Microsoft"
-  domain_name              = "VM-Micro"
+  vmm_domain_type          = "VMware"
+  domain_name              = "TEST"
   deploy_immediacy         = "immediate"
   resolution_immediacy     = "immediate"
   vlan_encap_mode          = "static"
@@ -147,8 +147,8 @@ resource "mso_schema_site_anp_epg_domain" "vmware_domain_with_name_pre_4_2" {
   anp_name                 = mso_schema_template_anp.anp_1.name
   epg_name                 = mso_schema_template_anp_epg.anp_epg_1.name
   domain_type              = "vmmDomain"
-  vmm_domain_type          = "Microsoft"
-  domain_name              = "VM-Micro"
+  vmm_domain_type          = "VMware"
+  domain_name              = "TEST"
   deploy_immediacy         = "immediate"
   resolution_immediacy     = "immediate"
   vlan_encap_mode          = "static"
