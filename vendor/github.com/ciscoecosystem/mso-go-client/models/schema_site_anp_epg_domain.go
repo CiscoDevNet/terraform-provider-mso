@@ -30,7 +30,24 @@ func NewSchemaSiteAnpEpgDomain(ops, path, domainType, dn, deploymentImmediacy, r
 
 func injectVmmDomainProperties(siteAnpEpgDomainMap, vmmDomainProperties map[string]interface{}) {
 
-	properties := []string{"allowMicroSegmentation", "epgLagPol", "switchType", "switchingMode", "vlanEncapMode", "portEncapVlan", "microSegVlan"}
+	properties := []string{
+		"allowMicroSegmentation",
+		"epgLagPol",
+		"switchType",
+		"switchingMode",
+		"vlanEncapMode",
+		"portEncapVlan",
+		"microSegVlan",
+		"delimiter",
+		"bindingType",
+		"numPorts",
+		"portAllocation",
+		"netflowPref",
+		"allowPromiscuous",
+		"forgedTransmits",
+		"macChanges",
+		"customEpgName",
+	}
 	for _, property := range properties {
 		value, exists := vmmDomainProperties[property]
 		if exists {
