@@ -46,31 +46,31 @@ data "aci_l4_l7_device" "l4_l7_others" {
 }
 
 data "aci_l4_l7_logical_interface" "l4_l7_fw_prov_prov_inf" {
-  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_fw
+  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_fw.id
   name            = "prov_inf"
 }
 data "aci_l4_l7_logical_interface" "l4_l7_fw_prov_cons_inf" {
-  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_fw
+  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_fw.id
   name            = "cons_inf"
 }
 
 data "aci_l4_l7_logical_interface" "l4_l7_adc_lb_prov_inf" {
-  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_adc_lb
+  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_adc_lb.id
   name            = "prov_inf"
 }
 
 data "aci_l4_l7_logical_interface" "l4_l7_adc_lb_cons_inf" {
-  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_adc_lb
+  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_adc_lb.id
   name            = "cons_inf"
 }
 
 data "aci_l4_l7_logical_interface" "l4_l7_others_prov_inf" {
-  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_others
+  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_others.id
   name            = "prov_inf"
 }
 
 data "aci_l4_l7_logical_interface" "l4_l7_others_cons_inf" {
-  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_others
+  l4_l7_device_dn = data.aci_l4_l7_device.l4_l7_others.id
   name            = "cons_inf"
 }
 
@@ -238,13 +238,13 @@ resource "mso_schema_site_service_graph" "site_service_graph" {
   site_id            = mso_schema_site.site1.site_id
   service_graph_name = mso_schema_template_contract_service_graph.template_contract_sg.service_graph_name
   service_node {
-    device_dn = data.aci_l4_l7_device.l4_l7_fw
+    device_dn = data.aci_l4_l7_device.l4_l7_fw.id
   }
   service_node {
-    device_dn = data.aci_l4_l7_device.l4_l7_adc_lb
+    device_dn = data.aci_l4_l7_device.l4_l7_adc_lb.id
   }
   service_node {
-    device_dn = data.aci_l4_l7_device.l4_l7_others
+    device_dn = data.aci_l4_l7_device.l4_l7_others.id
   }
 }
 
