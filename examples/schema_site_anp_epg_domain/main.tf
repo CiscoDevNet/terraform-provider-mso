@@ -171,7 +171,7 @@ resource "mso_schema_site_anp_epg_domain" "vmware_domain_enhanced_lag_policy_wit
   deploy_immediacy         = "immediate"
   resolution_immediacy     = "immediate"
   vlan_encap_mode          = "static"
-  allow_micro_segmentation = false
+  allow_micro_segmentation = true
   switching_mode           = "native"
   switch_type              = "default"
   micro_seg_vlan_type      = "vlan"
