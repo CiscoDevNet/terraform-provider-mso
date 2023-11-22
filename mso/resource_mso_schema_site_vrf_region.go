@@ -86,7 +86,8 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 			},
 			"cidr": &schema.Schema{
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cidr_ip": &schema.Schema{
@@ -202,27 +203,42 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 						if apiRegion == stateRegion {
 							d.SetId(apiRegion)
 							d.Set("region_name", apiRegion)
-							if regionCont.Exists("isVpnGatewayRouter") {
-								d.Set("vpn_gateway", regionCont.S("isVpnGatewayRouter").Data().(bool))
-							}
-							if regionCont.Exists("isTGWAttachment") {
-								d.Set("hub_network_enable", regionCont.S("isTGWAttachment").Data().(bool))
+							var cidrs []interface{}
+							var regionOrVpcsContainer map[string]interface{}
+							if regionCont.Exists("vpcs") {
+								vpcsInterface := regionCont.S("vpcs").Data()
+								vpcs := vpcsInterface.([]interface{})
+								if len(vpcs) > 0 {
+									regionOrVpcsContainer = vpcs[0].(map[string]interface{})
+									if cidrsInterface, exists := regionOrVpcsContainer["cidrs"]; exists {
+										cidrs = cidrsInterface.([]interface{})
+									}
+								}
+							} else {
+								regionOrVpcsContainer = regionCont.Data().(map[string]interface{})
+								if regionCont.Exists("cidrs") {
+									cidrsData := regionCont.S("cidrs").Data()
+									if cidrsData != nil {
+										cidrs = cidrsData.([]interface{})
+									}
+								}
 							}
 
+							if isVpnGatewayRouter, exists := regionOrVpcsContainer["isVpnGatewayRouter"]; exists {
+								d.Set("vpn_gateway", isVpnGatewayRouter)
+							}
+							if isTGWAttachment, exists := regionOrVpcsContainer["isTGWAttachment"]; exists {
+								d.Set("hub_network_enable", isTGWAttachment)
+							}
 							hubMap := make(map[string]interface{})
-							if regionCont.Exists("cloudRsCtxProfileToGatewayRouterP") {
-								temp := regionCont.S("cloudRsCtxProfileToGatewayRouterP").Data().(map[string]interface{})
-
+							if cloudRsCtxProfileToGatewayRouterP, exists := regionOrVpcsContainer["cloudRsCtxProfileToGatewayRouterP"]; exists {
+								temp := cloudRsCtxProfileToGatewayRouterP.(map[string]interface{})
 								hubMap["name"] = temp["name"]
 								hubMap["tenant_name"] = temp["tenantName"]
-
-								d.Set("hub_network", hubMap)
-							} else {
 								d.Set("hub_network", hubMap)
 							}
 
 							cidrList := make([]interface{}, 0, 1)
-							cidrs := regionCont.S("cidrs").Data().([]interface{})
 							for _, tempCidr := range cidrs {
 								cidr := tempCidr.(map[string]interface{})
 
@@ -506,33 +522,34 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 							d.SetId(apiRegion)
 							d.Set("region_name", apiRegion)
 							var cidrs []interface{}
-							var container map[string]interface{}
+							var regionOrVpcsContainer map[string]interface{}
 							if regionCont.Exists("vpcs") {
 								vpcsInterface := regionCont.S("vpcs").Data()
 								vpcs := vpcsInterface.([]interface{})
 								if len(vpcs) > 0 {
-									container = vpcs[0].(map[string]interface{})
-									if cidrsInterface, exists := container["cidrs"]; exists {
+									regionOrVpcsContainer = vpcs[0].(map[string]interface{})
+									if cidrsInterface, exists := regionOrVpcsContainer["cidrs"]; exists {
 										cidrs = cidrsInterface.([]interface{})
 									}
 								}
-							}
-							if cidrs == nil {
-								cidrs = regionCont.S("cidrs").Data().([]interface{})
+							} else {
+								regionOrVpcsContainer = regionCont.Data().(map[string]interface{})
+								if regionCont.Exists("cidrs") {
+									cidrsData := regionCont.S("cidrs").Data()
+									if cidrsData != nil {
+										cidrs = cidrsData.([]interface{})
+									}
+								}
 							}
 
-							if container == nil {
-								container = regionCont.Data().(map[string]interface{})
-							}
-
-							if isVpnGatewayRouter, exists := container["isVpnGatewayRouter"]; exists {
+							if isVpnGatewayRouter, exists := regionOrVpcsContainer["isVpnGatewayRouter"]; exists {
 								d.Set("vpn_gateway", isVpnGatewayRouter)
 							}
-							if isTGWAttachment, exists := container["isTGWAttachment"]; exists {
+							if isTGWAttachment, exists := regionOrVpcsContainer["isTGWAttachment"]; exists {
 								d.Set("hub_network_enable", isTGWAttachment)
 							}
 							hubMap := make(map[string]interface{})
-							if cloudRsCtxProfileToGatewayRouterP, exists := container["cloudRsCtxProfileToGatewayRouterP"]; exists {
+							if cloudRsCtxProfileToGatewayRouterP, exists := regionOrVpcsContainer["cloudRsCtxProfileToGatewayRouterP"]; exists {
 								temp := cloudRsCtxProfileToGatewayRouterP.(map[string]interface{})
 								hubMap["name"] = temp["name"]
 								hubMap["tenant_name"] = temp["tenantName"]
