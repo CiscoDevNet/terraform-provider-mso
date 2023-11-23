@@ -336,7 +336,10 @@ func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		readAzureAccountDataFromSchema(sitesCont, mapSite)
 
 		if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
-			setCloudAccountInfo(strings.Split(sitesCont.S("cloudAccount").String(), "/")[2], mapSite)
+			splitStr := strings.Split(sitesCont.S("cloudAccount").String(), "/")
+			if len(splitStr) > 2 {
+				setCloudAccountInfo(splitStr[2], mapSite)
+			}
 		}
 
 		site_associations = append(site_associations, mapSite)
@@ -794,7 +797,10 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 		readAzureAccountDataFromSchema(sitesCont, mapSite)
 
 		if sitesCont.Exists("cloudAccount") && sitesCont.S("cloudAccount").String() != "{}" {
-			setCloudAccountInfo(strings.Split(sitesCont.S("cloudAccount").String(), "/")[2], mapSite)
+			splitStr := strings.Split(sitesCont.S("cloudAccount").String(), "/")
+			if len(splitStr) > 2 {
+				setCloudAccountInfo(splitStr[2], mapSite)
+			}
 		}
 
 		site_associations = append(site_associations, mapSite)
