@@ -140,6 +140,15 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 				},
 			},
 		}),
+		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+			configOld, configNew := diff.GetChange("hub_network")
+			stateHub := configOld.(map[string]interface{})
+			configHub := configNew.(map[string]interface{})
+			if len(stateHub) == 0 && len(configHub) == 0 {
+				diff.Clear("hub_network")
+			}
+			return nil
+		},
 	}
 }
 
@@ -201,7 +210,7 @@ func resourceMSOSchemaSiteVrfRegionImport(d *schema.ResourceData, m interface{})
 						}
 						apiRegion := models.StripQuotes(regionCont.S("name").String())
 						if apiRegion == stateRegion {
-							d.SetId(apiRegion)
+							d.SetId(d.Id())
 							d.Set("region_name", apiRegion)
 							var cidrs []interface{}
 							var regionOrVpcsContainer map[string]interface{}
@@ -479,6 +488,7 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 	}
 
 	stateSite := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	found := false
 	stateVrf := d.Get("vrf_name").(string)
 	stateRegion := d.Get("region_name").(string)
@@ -489,8 +499,9 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
 				return fmt.Errorf("Unable to get Vrf list")
@@ -519,7 +530,7 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 						}
 						apiRegion := models.StripQuotes(regionCont.S("name").String())
 						if apiRegion == stateRegion {
-							d.SetId(apiRegion)
+							d.SetId(fmt.Sprintf("%s/sites/%s/template/%s/vrf/%s/region/%s", schemaId, stateSite, stateTemplate, stateVrf, stateRegion))
 							d.Set("region_name", apiRegion)
 							var cidrs []interface{}
 							var regionOrVpcsContainer map[string]interface{}
@@ -548,6 +559,7 @@ func resourceMSOSchemaSiteVrfRegionRead(d *schema.ResourceData, m interface{}) e
 							if isTGWAttachment, exists := regionOrVpcsContainer["isTGWAttachment"]; exists {
 								d.Set("hub_network_enable", isTGWAttachment)
 							}
+
 							hubMap := make(map[string]interface{})
 							if cloudRsCtxProfileToGatewayRouterP, exists := regionOrVpcsContainer["cloudRsCtxProfileToGatewayRouterP"]; exists {
 								temp := cloudRsCtxProfileToGatewayRouterP.(map[string]interface{})
