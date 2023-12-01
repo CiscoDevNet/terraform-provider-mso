@@ -61,6 +61,36 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
+						"consumer_connector_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							// Default: "none",
+							// options -> none,redir
+						},
+						"provider_connector_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							// Default: "none",
+							// options -> none,redir
+						},
+						"consumer_interface": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"provider_interface": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"firewall_provider_connector_type": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							// options -> none,redir, snat(source NAT(SNAT)), dnat(destination NAT(DNAT)), snat_dnat(SNAT+DNAT)
+						},
 					},
 				},
 			},
@@ -122,8 +152,12 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 	}
 
 	var siteServiceNodeList []interface{}
+
 	if siteServiceNodes, ok := d.GetOk("service_node"); ok {
-		siteServiceNodeList = getServiceNodeList(siteServiceNodes, graphCont)
+		siteServiceNodeList, err = getServiceNodeList(msoClient, siteServiceNodes, graphCont)
+		if err != nil {
+			return err
+		}
 	}
 	serviceNodePath := fmt.Sprintf("/sites/%s-%s/serviceGraphs/%s/serviceNodes", siteId, templateName, graphName)
 	siteServiceGraphPayload := models.GetPatchPayloadList("add", serviceNodePath, siteServiceNodeList)
@@ -134,6 +168,7 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 
 	d.SetId(fmt.Sprintf("%s/sites/%s/template/%s/serviceGraphs/%s", schemaId, siteId, templateName, graphName))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
+	log.Printf(" CHECK READ CREATE")
 	return resourceMSOSchemaSiteServiceGraphRead(d, m)
 }
 
@@ -156,6 +191,7 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 		d.SetId("")
 		return nil
 	}
+	log.Printf(" CHECK READ graphCont: %s", graphCont)
 
 	serviceNodeList, err := setServiceNodeList(graphCont)
 	d.Set("service_node", serviceNodeList)
@@ -184,16 +220,25 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 	}
 
 	if d.HasChange("service_node") {
-		graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
+		graphCont, _, err := getTemplateServiceGraphCont(cont, templateName, graphName)
 		if err != nil {
 			return err
 		}
+		// graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
+		// if err != nil {
+		// 	d.SetId("")
+		// 	return nil
+		// }
 
 		if siteServiceNodes, ok := d.GetOk("service_node"); ok {
-			siteServiceNodeList := getServiceNodeList(siteServiceNodes, graphCont)
+			siteServiceNodeList, err := getServiceNodeList(msoClient, siteServiceNodes, graphCont)
+			if err != nil {
+				return err
+			}
+
 			serviceNodePath := fmt.Sprintf("/sites/%s-%s/serviceGraphs/%s/serviceNodes", siteId, templateName, graphName)
 			siteServiceGraphPayload := models.GetPatchPayloadList("replace", serviceNodePath, siteServiceNodeList)
-			_, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), siteServiceGraphPayload)
+			_, err = msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), siteServiceGraphPayload)
 			if err != nil {
 				return err
 			}
@@ -202,6 +247,7 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 
 	d.SetId(d.Id())
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
+	log.Printf(" CHECK READ UPDATE")
 	return resourceMSOSchemaSiteServiceGraphRead(d, m)
 }
 
@@ -210,27 +256,47 @@ func resourceMSOSchemaSiteServiceGraphDelete(d *schema.ResourceData, m interface
 	return nil
 }
 
-func getServiceNodeList(siteServiceNodes interface{}, graphCont *container.Container) []interface{} {
+func getServiceNodeList(msoClient *client.Client, siteServiceNodes interface{}, graphCont *container.Container) ([]interface{}, error) {
 	siteServiceNodeList := make([]interface{}, 0, 1)
-	for index, templateServiceNode := range graphCont.S("serviceNodes").Data().([]interface{}) {
+	for index, serviceNode := range graphCont.S("serviceNodes").Data().([]interface{}) {
+		nodeType, err := getNodeNameFromId(msoClient, serviceNode.(map[string]interface{})["serviceNodeTypeId"].(string))
+		if err != nil {
+			return nil, err
+		}
+
 		siteServiceNodeMap := siteServiceNodes.([]interface{})[index].(map[string]interface{})
+
+		provider_connector_type_value := siteServiceNodeMap["provider_connector_type"]
+		if nodeType == "firewall" {
+			provider_connector_type_value = siteServiceNodeMap["firewall_provider_connector_type"]
+		}
+		log.Printf(" CHECK NODE provider_connector_type_value: %s", provider_connector_type_value)
+
 		serviceNodeMap := map[string]interface{}{
-			"serviceNodeRef": templateServiceNode.(map[string]interface{})["serviceNodeRef"],
+			"serviceNodeRef": serviceNode.(map[string]interface{})["serviceNodeRef"],
 			"device": map[string]interface{}{
 				"dn": siteServiceNodeMap["device_dn"],
 			},
+			"consumerConnectorType": siteServiceNodeMap["consumer_connector_type"],
+			"providerConnectorType": provider_connector_type_value,
+			"consumerInterface":     siteServiceNodeMap["consumer_interface"],
+			"providerInterface":     siteServiceNodeMap["provider_interface"],
 		}
 		siteServiceNodeList = append(siteServiceNodeList, serviceNodeMap)
 	}
-	return siteServiceNodeList
+	return siteServiceNodeList, nil
 }
 
 func setServiceNodeList(graphCont *container.Container) ([]interface{}, error) {
 	serviceNodeList := make([]interface{}, 0, 1)
 	for _, val := range graphCont.S("serviceNodes").Data().([]interface{}) {
-		device := val.(map[string]interface{})["device"].(map[string]interface{})["dn"]
 		serviceNodeMap := map[string]interface{}{
-			"device_dn": device,
+			"device_dn":                        val.(map[string]interface{})["device"].(map[string]interface{})["dn"],
+			"consumer_connector_type":          val.(map[string]interface{})["consumerConnectorType"],
+			"provider_connector_type":          val.(map[string]interface{})["providerConnectorType"],
+			"consumer_interface":               val.(map[string]interface{})["consumerInterface"],
+			"provider_interface":               val.(map[string]interface{})["providerInterface"],
+			"firewall_provider_connector_type": val.(map[string]interface{})["providerConnectorType"],
 		}
 		serviceNodeList = append(serviceNodeList, serviceNodeMap)
 	}
