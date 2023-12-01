@@ -9,6 +9,7 @@ terraform {
   }
 }
 
+# ACI
 provider "aci" {
   username = "" # <APIC username>
   password = "" # <APIC pwd>
@@ -39,6 +40,7 @@ output "aci_l4_l7_device_2" {
 }
 
 
+# MSO
 provider "mso" {
   username = "" # <MSO username>
   password = "" # <MSO pwd>
