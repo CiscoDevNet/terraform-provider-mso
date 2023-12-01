@@ -65,15 +65,19 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
-							// Default: "none",
-							// options -> none,redir
+							ValidateFunc: validation.StringInSlice([]string{
+								"none",
+								"redir",
+							}, false),
 						},
 						"provider_connector_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
-							// Default: "none",
-							// options -> none,redir
+							ValidateFunc: validation.StringInSlice([]string{
+								"none",
+								"redir",
+							}, false),
 						},
 						"consumer_interface": &schema.Schema{
 							Type:     schema.TypeString,
@@ -89,7 +93,13 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
-							// options -> none,redir, snat(source NAT(SNAT)), dnat(destination NAT(DNAT)), snat_dnat(SNAT+DNAT)
+							ValidateFunc: validation.StringInSlice([]string{
+								"none",
+								"redir",
+								"snat",
+								"dnat",
+								"snat_dnat",
+							}, false),
 						},
 					},
 				},
@@ -168,7 +178,6 @@ func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface
 
 	d.SetId(fmt.Sprintf("%s/sites/%s/template/%s/serviceGraphs/%s", schemaId, siteId, templateName, graphName))
 	log.Printf("[DEBUG] %s: Creation finished successfully", d.Id())
-	log.Printf(" CHECK READ CREATE")
 	return resourceMSOSchemaSiteServiceGraphRead(d, m)
 }
 
@@ -191,7 +200,6 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 		d.SetId("")
 		return nil
 	}
-	log.Printf(" CHECK READ graphCont: %s", graphCont)
 
 	serviceNodeList, err := setServiceNodeList(graphCont)
 	d.Set("service_node", serviceNodeList)
@@ -224,11 +232,6 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 		if err != nil {
 			return err
 		}
-		// graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
-		// if err != nil {
-		// 	d.SetId("")
-		// 	return nil
-		// }
 
 		if siteServiceNodes, ok := d.GetOk("service_node"); ok {
 			siteServiceNodeList, err := getServiceNodeList(msoClient, siteServiceNodes, graphCont)
@@ -247,7 +250,6 @@ func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface
 
 	d.SetId(d.Id())
 	log.Printf("[DEBUG] %s: Update finished successfully", d.Id())
-	log.Printf(" CHECK READ UPDATE")
 	return resourceMSOSchemaSiteServiceGraphRead(d, m)
 }
 
@@ -270,7 +272,6 @@ func getServiceNodeList(msoClient *client.Client, siteServiceNodes interface{}, 
 		if nodeType == "firewall" {
 			provider_connector_type_value = siteServiceNodeMap["firewall_provider_connector_type"]
 		}
-		log.Printf(" CHECK NODE provider_connector_type_value: %s", provider_connector_type_value)
 
 		serviceNodeMap := map[string]interface{}{
 			"serviceNodeRef": serviceNode.(map[string]interface{})["serviceNodeRef"],
@@ -298,6 +299,7 @@ func setServiceNodeList(graphCont *container.Container) ([]interface{}, error) {
 			"provider_interface":               val.(map[string]interface{})["providerInterface"],
 			"firewall_provider_connector_type": val.(map[string]interface{})["providerConnectorType"],
 		}
+
 		serviceNodeList = append(serviceNodeList, serviceNodeMap)
 	}
 	return serviceNodeList, nil

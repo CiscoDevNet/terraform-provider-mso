@@ -21,9 +21,15 @@ resource "mso_schema_site_service_graph" "example" {
   service_graph_name = "service_graph1"
   service_node {
     device_dn = data.aci_l4_l7_device.l4_l7_device_1.id
+    provider_connector_type = "redir"
+    consumer_connector_type = "redir"
   }
   service_node {
     device_dn = data.aci_l4_l7_device.l4_l7_device_2.id
+    firewall_provider_connector_type = "snat_dnat"
+    consumer_connector_type          = "redir"
+    consumer_interface               = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
+    provider_interface               = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
   }
 }
 
@@ -36,6 +42,11 @@ resource "mso_schema_site_service_graph" "example" {
 * `service_graph_name` - (Required) The name of the Service Graph.
 * `service_node` - (Required) List of service nodes attached to the Site Service Graph. Maintaining the order of the service nodes is essential.
     * `device_dn` - (Required) Dn of device associated with the service node of the Service Graph.
+    * `provider_connector_type` - (Optional) Connector type of the provider type of the service node. Allowed values are `redir` and `none`. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `consumer_connector_type` - (Optional) Connector type of the consumer type of the service node. Allowed values are `redir` and `none`. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `firewall_provider_connector_type` - (Optional) Connector type of the provider type of the third-party firewall service node. Allowed values are `none`, `redir`, `snat`, `dnat`, `snat_dnat` and `none`. This parameter is only applicable for third-party firewall service nodes, when the template is attached to cloud sites.
+    * `provider_interface` - (Optional) Interface name of the provider interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `consumer_interface` - (Optional) Interface name of the consumer interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
 
 ## Attribute Reference ##
 

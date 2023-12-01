@@ -9,7 +9,7 @@ terraform {
   }
 }
 
-
+# AZURE CLOUD / AWS CLOUD
 provider "aci" {
   username = "" # <APIC username>
   password = "" # <APIC pwd>
@@ -19,7 +19,7 @@ provider "aci" {
 
 # ACI
 data "aci_tenant" "ansible_test" {
-  name = "ansible_test_anv"
+  name = "ansible_test_cloud"
 }
 
 data "aci_cloud_l4_l7_native_load_balancer" "application_load_balancer" {
@@ -68,7 +68,7 @@ provider "mso" {
 }
 
 data "mso_tenant" "tf_tenant" {
-  name = "ansible_test_anv"
+  name = "ansible_test_cloud"
 }
 
 data "mso_site" "tf_site" {
@@ -76,7 +76,7 @@ data "mso_site" "tf_site" {
 }
 
 resource "mso_schema" "schema_test" {
-  name = "terraform_schema"
+  name = "terraform_schema_cloud"
   template {
     name         = "Template1"
     display_name = "Template1"
@@ -84,7 +84,7 @@ resource "mso_schema" "schema_test" {
   }
 }
 
-resource "mso_schema_template_service_graph" "test_sg" {
+resource "mso_schema_template_service_graph" "test_sg_cloud" {
   schema_id          = mso_schema.schema_test.id
   template_name      = one(mso_schema.schema_test.template).name
   service_graph_name = "sgtf1"
@@ -103,19 +103,19 @@ resource "mso_schema_template_service_graph" "test_sg" {
 resource "mso_schema_site" "schema_site_1" {
   schema_id     = mso_schema.schema_test.id
   site_id       = data.mso_site.tf_site.id
-  template_name = mso_schema_template_service_graph.test_sg.template_name
+  template_name = mso_schema_template_service_graph.test_sg_cloud.template_name
 }
 
-resource "mso_schema_site_service_graph" "test_sg_site" {
+resource "mso_schema_site_service_graph" "test_sg_cloud_site" {
   schema_id          = mso_schema_site.schema_site_1.schema_id
   site_id            = mso_schema_site.schema_site_1.site_id
-  template_name      = mso_schema_template_service_graph.test_sg.template_name
-  service_graph_name = mso_schema_template_service_graph.test_sg.service_graph_name
+  template_name      = mso_schema_template_service_graph.test_sg_cloud.template_name
+  service_graph_name = mso_schema_template_service_graph.test_sg_cloud.service_graph_name
   service_node {
     # for 1st item in the service graph list - network load balancer
-    device_dn                        = data.aci_cloud_l4_l7_native_load_balancer.network_load_balancer.id
-    firewall_provider_connector_type = "redir"
-    consumer_connector_type          = "redir"
+    device_dn               = data.aci_cloud_l4_l7_native_load_balancer.network_load_balancer.id
+    provider_connector_type = "redir"
+    consumer_connector_type = "redir"
   }
   service_node {
     # for 2nd item in the service graph list - 3rd party load balancer
@@ -133,18 +133,18 @@ resource "mso_schema_site_service_graph" "test_sg_site" {
   }
 }
 
-data "mso_schema_site_service_graph" "test_sg_site" {
-  schema_id          = mso_schema_site_service_graph.test_sg_site.schema_id
-  site_id            = mso_schema_site_service_graph.test_sg_site.site_id
-  template_name      = mso_schema_site_service_graph.test_sg_site.template_name
-  service_graph_name = mso_schema_site_service_graph.test_sg_site.service_graph_name
+data "mso_schema_site_service_graph" "test_sg_cloud_site" {
+  schema_id          = mso_schema_site_service_graph.test_sg_cloud_site.schema_id
+  site_id            = mso_schema_site_service_graph.test_sg_cloud_site.site_id
+  template_name      = mso_schema_site_service_graph.test_sg_cloud_site.template_name
+  service_graph_name = mso_schema_site_service_graph.test_sg_cloud_site.service_graph_name
 }
 
 output "example" {
-  value = data.mso_schema_site_service_graph.test_sg_site
+  value = data.mso_schema_site_service_graph.test_sg_cloud_site
 }
 
-resource "mso_schema_template_service_graph" "test_sg_2" {
+resource "mso_schema_template_service_graph" "test_sg_cloud_2" {
   schema_id          = mso_schema.schema_test.id
   template_name      = one(mso_schema.schema_test.template).name
   service_graph_name = "sgtf2"
@@ -153,11 +153,11 @@ resource "mso_schema_template_service_graph" "test_sg_2" {
   }
 }
 
-resource "mso_schema_site_service_graph" "test_sg_site_2" {
+resource "mso_schema_site_service_graph" "test_sg_cloud_site_2" {
   schema_id          = mso_schema_site.schema_site_1.schema_id
   site_id            = mso_schema_site.schema_site_1.site_id
-  template_name      = mso_schema_template_service_graph.test_sg_2.template_name
-  service_graph_name = mso_schema_template_service_graph.test_sg_2.service_graph_name
+  template_name      = mso_schema_template_service_graph.test_sg_cloud_2.template_name
+  service_graph_name = mso_schema_template_service_graph.test_sg_cloud_2.service_graph_name
   service_node {
     # for 1st item in the service graph list - application load balancer
     device_dn = data.aci_cloud_l4_l7_native_load_balancer.application_load_balancer.id
