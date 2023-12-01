@@ -15,6 +15,7 @@ provider "aci" {
   url      = "" # <cloud APIC URL>
   insecure = true
 }
+
 data "aci_tenant" "ansible_test" {
   name = "ansible_test"
 }
@@ -81,7 +82,6 @@ resource "mso_schema_site" "schema_site_1" {
   site_id       = data.mso_site.tf_site.id
   template_name = mso_schema_template_service_graph.test_sg.template_name
 }
-
 
 resource "mso_schema_site_service_graph" "test_sg_site" {
   schema_id          = mso_schema_site.schema_site_1.schema_id
