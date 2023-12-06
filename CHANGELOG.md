@@ -1,3 +1,31 @@
+## 1.0.0 (December 6, 2023)
+BREAKING CHANGE:
+- Separating site and template level service graph provider from mso_schema_template_service_graph (#240)
+- Removed Site Contract Service Graph logic from mso_schema_template_contract_service_graph resource (#244)
+
+BUG FIXES:
+- Fix schema attributes and documentation to reflect computed (Read-Only) attributes for all data-sources (#235)
+- Fix template name selections for all data-sources (#235)
+- Fix consistency of id attribute for all data-sources (#235)
+- Fix to prevent {} to be written to statefile in datasource mso_schema_template_anp_epg_useg_attr (#235)
+- Fix for setting correct schema id and template name for schema attributes l3out and contract in mso_schema_site_bd_l3out, mso_schema_site_external_epg, mso_schema_template_anp_epg_contract, mso_schema_template_contract_service_graph, mso_schema_template_external_epg_contract, and template_vrf_contract datasources (#235)
+- Fix to raise error when bd is not found in datasource mso_schema_template_bd (#235)
+- Fix for changes when template_type is not specified in mso_schema resource (#237)
+- Fix to overcome index out of range error for aws sites in mso_tenant (#254)
+- Fix for regions API changes in NDO version >= 4.2's in mso_schema_site_vrf_region (#254)
+
+IMPROVEMENTS:
+- Add support for mso_schema_site_contract_service_graph (#248)
+- Add mso_system_config resource and datasource (#241)
+- Add missing attributes type, group_id, version, status, reprovision, proxy, sr_l3out, template_count for datasource mso_site (#235)
+- Add primary and virtual attribute to mso_schema_site_bd_subnet and mso_schema_template_bd_subnet (#235)
+- Add bd_schema_id, bd_template_name to service_graph for datasource mso_schema_template_contract_service_graph (#235)
+- Add filter_type, directives, action and priority attributes to filter_relationship to mso_schema_template_contract (#238)
+- Add target_dscp and priority attributes to mso_schema_template_contract (#238)
+- Add directives, action and priority attributes to mso_schema_template_contract_filter (#239)
+- Add support for attributes binding_type, delimiter, num_ports, port_allocation, netflow, allow_promiscuous, forged_transmits, mac_changes, and custom_epg_name in mso_schema_site_epg_domain (#247)
+
+
 ## 0.11.1 (July 31, 2023)
 BUG FIXES:
 - Fix for mso_site to detect changes to a site, after manually changing it to unmanaged (#231)
