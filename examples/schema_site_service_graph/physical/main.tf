@@ -26,17 +26,9 @@ data "aci_l4_l7_device" "l4_l7_device_1" {
   name      = "ansible_test_firewall1"
 }
 
-output "aci_l4_l7_device_1" {
-  value = data.aci_l4_l7_device.l4_l7_device_1.id
-}
-
 data "aci_l4_l7_device" "l4_l7_device_2" {
   tenant_dn = data.aci_tenant.ansible_test.id
   name      = "ansible_test_other"
-}
-
-output "aci_l4_l7_device_2" {
-  value = data.aci_l4_l7_device.l4_l7_device_2.id
 }
 
 

@@ -27,17 +27,9 @@ data "aci_cloud_l4_l7_native_load_balancer" "application_load_balancer" {
   name      = "tf_application_load_balancer"
 }
 
-output "application_load_balancer" {
-  value = data.aci_cloud_l4_l7_native_load_balancer.application_load_balancer.id
-}
-
 data "aci_cloud_l4_l7_native_load_balancer" "network_load_balancer" {
   tenant_dn = data.aci_tenant.ansible_test.id
   name      = "tf_network_load_balancer"
-}
-
-output "network_load_balancer" {
-  value = data.aci_cloud_l4_l7_native_load_balancer.network_load_balancer.id
 }
 
 data "aci_cloud_l4_l7_third_party_device" "third_party_load_balancer" {
@@ -45,18 +37,11 @@ data "aci_cloud_l4_l7_third_party_device" "third_party_load_balancer" {
   name      = "tf_third_party_load_balancer"
 }
 
-output "third_party_load_balancer" {
-  value = data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.id
-}
-
 data "aci_cloud_l4_l7_third_party_device" "third_party_firewall" {
   tenant_dn = data.aci_tenant.ansible_test.id
   name      = "tf_third_party_firewall"
 }
 
-output "third_party_firewall" {
-  value = data.aci_cloud_l4_l7_third_party_device.third_party_firewall.id
-}
 
 # MSO
 provider "mso" {
