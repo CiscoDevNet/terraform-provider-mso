@@ -19,7 +19,7 @@ provider "aci" {
 
 # ACI
 data "aci_tenant" "ansible_test" {
-  name = "ansible_test_cloud"
+  name = "ansible_test_anv"
 }
 
 data "aci_cloud_l4_l7_native_load_balancer" "application_load_balancer" {
@@ -53,7 +53,7 @@ provider "mso" {
 }
 
 data "mso_tenant" "tf_tenant" {
-  name = "ansible_test_cloud"
+  name = "ansible_test_anv"
 }
 
 data "mso_site" "tf_site" {
@@ -110,11 +110,11 @@ resource "mso_schema_site_service_graph" "test_sg_cloud_site" {
   }
   service_node {
     # for 3rd item in the service graph list - 3rd party firewall
-    device_dn                        = data.aci_cloud_l4_l7_third_party_device.third_party_firewall.id
-    firewall_provider_connector_type = "snat_dnat"
-    consumer_connector_type          = "redir"
-    consumer_interface               = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
-    provider_interface               = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
+    device_dn               = data.aci_cloud_l4_l7_third_party_device.third_party_firewall.id
+    provider_connector_type = "snat_dnat"
+    consumer_connector_type = "redir"
+    consumer_interface      = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
+    provider_interface      = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
   }
 }
 

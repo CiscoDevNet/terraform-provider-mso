@@ -62,10 +62,6 @@ func datasourceMSOSchemaSiteServiceGraph() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"firewall_provider_connector_type": &schema.Schema{
-							Type:     schema.TypeString,
-							Computed: true,
-						},
 					},
 				},
 			},
