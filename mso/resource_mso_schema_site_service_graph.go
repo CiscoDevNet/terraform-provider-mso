@@ -25,58 +25,6 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 
 		SchemaVersion: version,
 
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
-
-			// Validate Service Node Type from template
-			// msoClient := v.(*client.Client)
-			// templateServiceGraphNodes, err := getServiceGraphNodes(d *schema.ResourceData, msoClient)
-			// if err != nil {
-			// 	return err
-			// }
-			// for _, templateServiceGraphNode := range templateServiceGraphNodes {
-			// 	nodeId := templateServiceGraphNode.(map[string]interface{})["nodeId"].(string)
-			// 	nodeType, err := getNodeNameFromId(msoClient, nodeId)
-			// 	if err != nil {
-			// 		return err
-			// 	}
-			// 	// Validate Service Node Type
-			// }
-
-			// Validate Service Node Type
-			valA, valB := diff.GetChange("service_node")
-			log.Printf("CKECK THIS OUT: %v \n  %v", valA, valB)
-			serviceNodeMap := valB.([]interface{})
-			for i, val := range serviceNodeMap {
-				found := false
-				serviceNode := val.(map[string]interface{})
-				if serviceNode["service_node_type"] == "other" {
-					var other_provider_connector_type_list = []string{"none", "redir"}
-					for _, value := range other_provider_connector_type_list {
-						if value == serviceNode["provider_connector_type"] {
-							found = true
-							break
-						}
-					}
-					if !found {
-						return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir] when service_node.%d.service_node_type is other, got %s.", i, i, serviceNode["provider_connector_type"])
-					}
-				}
-				if serviceNode["service_node_type"] == "firewall" {
-					firewall_provider_connector_type_list := []string{"none", "redir", "snat", "dnat", "snat_dnat"}
-					for _, value := range firewall_provider_connector_type_list {
-						if value == serviceNode["provider_connector_type"] {
-							found = true
-							break
-						}
-					}
-					if !found {
-						return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir, snat, dnat, snat_dnat] when service_node.%d.service_node_type is firewall, got %s.", i, i, serviceNode["provider_connector_type"])
-					}
-				}
-			}
-			return nil
-		},
-
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
@@ -113,28 +61,19 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
-						"service_node_type": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"other",
-								"load-balancer",
-								"firewall",
-							}, false),
-						},
 						"consumer_connector_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
 							ValidateFunc: validation.StringInSlice([]string{
 								"none",
 								"redir",
 							}, false),
+							Default: "none",
 						},
 						"provider_connector_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							Default:  "none",
 						},
 						"consumer_interface": &schema.Schema{
 							Type:     schema.TypeString,
@@ -150,6 +89,88 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 				},
 			},
 		}),
+
+		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+			/* This function validates the user input for service_node.provider_connector_type when
+			the template_service_graph.service_node.type is 'other' or 'firewall'.
+
+			- The user input for site_service_graph.service_node.other_provider_connector_type should be one of 'none' or 'redir',
+			when the corresponding template_service_graph.service_node.type is 'other'.
+
+			- The user input for site_service_graph.servicenode.firewall_provider_connector_type_list should be one of 'none', 'redir', 'snat', 'dnat' or 'snat_dnat',
+			when the corresponding template_service_graph.service_node.type is 'firewall'.
+			*/
+
+			// Create a list of service node types using the user input(template service graph).
+			msoClient := v.(*client.Client)
+			_, schemaId := diff.GetChange("schema_id")
+			_, templateName := diff.GetChange("template_name")
+			_, graphName := diff.GetChange("service_graph_name")
+			cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+			if err != nil {
+				return err
+			}
+
+			sgCont, _, err := getTemplateServiceGraphCont(cont, templateName.(string), graphName.(string))
+			if err != nil {
+				log.Printf("graphcont err %v", err)
+				return err
+			}
+
+			var templateServiceNodeList []string
+			serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
+			for _, val := range serviceNodes {
+				serviceNodeValues := val.(map[string]interface{})
+				nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
+
+				nodeType, err := getNodeNameFromId(msoClient, nodeId)
+				if err != nil {
+					return err
+				}
+
+				templateServiceNodeList = append(templateServiceNodeList, nodeType)
+			}
+
+			/* Loop trough the templateServiceNodeList and validate the site level user input(provider_connector_type)
+			   to verify it's value for nodetype 'other' and 'firewall'. */
+			_, siteServiceNodes := diff.GetChange("service_node")
+
+			for _, templateNodeType := range templateServiceNodeList {
+				found := false
+				for i, val := range siteServiceNodes.([]interface{}) {
+					serviceNode := val.(map[string]interface{})
+					if templateNodeType == "other" {
+						var other_provider_connector_type_list = []string{"none", "redir"}
+						for _, value := range other_provider_connector_type_list {
+							if value == serviceNode["provider_connector_type"] {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir] when template's service node type is other, got %s.", i, serviceNode["provider_connector_type"])
+						} else {
+							break
+						}
+					}
+					if templateNodeType == "firewall" {
+						firewall_provider_connector_type_list := []string{"none", "redir", "snat", "dnat", "snat_dnat"}
+						for _, value := range firewall_provider_connector_type_list {
+							if value == serviceNode["provider_connector_type"] {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir, snat, dnat, snat_dnat] when template's service node type is firewall, got %s.", i, serviceNode["provider_connector_type"])
+						} else {
+							break
+						}
+					}
+				}
+			}
+			return nil
+		},
 	}
 }
 
