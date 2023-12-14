@@ -42,15 +42,14 @@ resource "mso_schema_site_service_graph" "example" {
 * `service_graph_name` - (Required) The name of the Service Graph.
 * `service_node` - (Required) List of service nodes attached to the Site Service Graph. Maintaining the order of the service nodes is essential.
     * `device_dn` - (Required) Dn of device associated with the service node of the Service Graph.
-    * `provider_connector_type` - (Optional) Connector type of the provider type of the service node.  This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
-    * `consumer_connector_type` - (Optional) Connector type of the consumer type of the service node. Allowed values are `redir` and `none`. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `provider_connector_type` - (Optional) Provider connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `consumer_connector_type` - (Optional) Consumer connector type of the service node. Allowed values are `redir` and `none`. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
     * `provider_interface` - (Optional) Interface name of the provider interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
-      * NOTE -
-        - The user input for site_service_graph.service_node.other_provider_connector_type should be one of 'none' or 'redir',
-        when the corresponding template_service_graph.service_node.type is 'other'.
 
-        - The user input for site_service_graph.servicenode.firewall_provider_connector_type_list should be one of 'none', 'redir', 'snat', 'dnat' or 'snat_dnat',
-        when the corresponding template_service_graph.service_node.type is 'firewall'.
+    -> - The user input for `site_service_graph.service_node.other_provider_connector_type` should be one of `none`, `redir`,
+        when the corresponding `template_service_graph.service_node.type` is `other`. <br><br>
+    - The user input for `site_service_graph.servicenode.firewall_provider_connector_type_list` should be one of `none`, `redir`, `snat`, `dnat` or `snat_dnat`,
+        when the corresponding `template_service_graph.service_node.type` is `firewall`.
 
     * `consumer_interface` - (Optional) Interface name of the consumer interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
 

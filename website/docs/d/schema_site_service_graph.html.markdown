@@ -34,7 +34,7 @@ data "mso_schema_site_service_graph" "example" {
 
 * `service_node` - (Read-Only) List of maps to provide Site level Node association.
     * `device_dn` - (Read-Only) Dn of device associated with the service node of the Service Graph.
-    * `provider_connector_type` - (Read-Only) Connector type of the provider type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
-    * `consumer_connector_type` - (Read-Only) Connector type of the consumer type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `provider_connector_type` - (Read-Only) Provider connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `consumer_connector_type` - (Read-Only) Consumer connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
     * `provider_interface` - (Read-Only) Interface name of the provider interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
     * `consumer_interface` - (Read-Only) Interface name of the consumer interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
