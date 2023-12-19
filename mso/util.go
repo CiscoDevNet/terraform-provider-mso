@@ -103,3 +103,13 @@ func getSchemaTemplateServiceGraphFromContainer(cont *container.Container, templ
 	}
 	return nil, -1, fmt.Errorf("unable to find service graph")
 }
+
+// Verifies, if the value (string) is in the list of strings
+func valueInSliceofStrings(value string, list []string) bool {
+	for _, item := range list {
+		if item == value {
+			return true
+		}
+	}
+	return false
+}
