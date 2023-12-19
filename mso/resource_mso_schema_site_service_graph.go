@@ -147,14 +147,6 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 		},
 	}
 }
-func valueInSliceofStrings(value string, list []string) bool {
-	for _, item := range list {
-		if item == value {
-			return true
-		}
-	}
-	return false
-}
 
 func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
