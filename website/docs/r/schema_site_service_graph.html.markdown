@@ -46,9 +46,9 @@ resource "mso_schema_site_service_graph" "example" {
 
         -> `snat`, `dnat` or `snat_dnat` are only supported for template_service_graph.service_node.type `firewall`.
 
-    * `consumer_connector_type` - (Optional) Consumer connector type of the service node. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites. Allowed values are `redir` and `none`.
-    * `provider_interface` - (Optional) Interface name of the provider interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
-    * `consumer_interface` - (Optional) Interface name of the consumer interface of the service node. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `consumer_connector_type` - (Optional) Consumer connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites. Allowed values are `redir` and `none`.
+    * `provider_interface` - (Optional) Interface name of the provider interface of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
+    * `consumer_interface` - (Optional) Interface name of the consumer interface of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
 
 ## Attribute Reference ##
 
