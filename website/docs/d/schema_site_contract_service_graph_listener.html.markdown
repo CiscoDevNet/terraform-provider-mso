@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_contract_service_graph_listener"
 sidebar_current: "docs-mso-data-source-schema_site_contract_service_graph_listener"
 description: |-
-  Data source for MSO Site Template Contract Service Graph Listener for the Azure Cloud Network Controller.
+  Data source for MSO Site Contract Service Graph Listener for the Azure Cloud Network Controller.
 ---
 
 # mso_schema_site_contract_service_graph_listener #
 
-Data source for MSO Site Template Contract Service Graph Listener for the Azure Cloud Network Controller.
+Data source for MSO Site Contract Service Graph Listener for the Azure Cloud Network Controller.
 
 ## Example Usage ##
 
@@ -64,7 +64,7 @@ data "mso_schema_site_contract_service_graph_listener" "example" {
   * `redirect_port` - (Read-Only) The redirect port of the Rule.
   * `redirect_code` - (Read-Only) The redirect code of the Rule.
   * `target_ip_type` - (Read-Only) The target IP type of the Rule.
-  * `health_check` - (Read-Only) The Health Checks information of the Listener Rule.
+  * `health_check` - (Read-Only) The Health Checks information of the Rule.
     * `port` - (Read-Only) The port number of the Health Checks.
     * `protocol` - (Read-Only) The port number of the Health Checks.
     * `path` - (Read-Only) The path of the Health Checks.
@@ -74,7 +74,7 @@ data "mso_schema_site_contract_service_graph_listener" "example" {
     * `use_host_from_rule` - (Read-Only) The use host from rule of the Health Checks.
     * `success_code` - (Read-Only) The success code (code range) of the Health Checks.
     * `host` - (Read-Only) The host of the Health Checks.
-  * `provider_epg_ref` - (Read-Only) The Provider EPG information of the Listener Rule.
+  * `provider_epg_ref` - (Read-Only) The Provider EPG information of the Rule.
     * `schema_id` - (Read-Only) The schema ID of the EPG Provider.
     * `template_name` - (Read-Only) The template name of the EPG Provider.
     * `anp_name` - (Read-Only) The application profile name of the EPG Provider.

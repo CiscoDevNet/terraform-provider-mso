@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_site_contract_service_graph_listener"
 sidebar_current: "docs-mso-resource-schema_site_contract_service_graph_listener"
 description: |-
-  Manages MSO Site Template Contract Service Graph Listener for the Azure Cloud Network Controller.
+  Manages MSO Site Contract Service Graph Listener for the Azure Cloud Network Controller.
 ---
 
 # mso_schema_site_contract_service_graph_listener #
 
-Manages MSO Site Template Contract Service Graph Listener for the Azure Cloud Network Controller.
+Manages MSO Site Contract Service Graph Listener for the Azure Cloud Network Controller.
 
 # Note: #
 This resource is only compatible with NDO versions 3.7 and 4.2+. NDO versions 4.0 and 4.1 are not supported.
@@ -18,7 +18,7 @@ This resource is only compatible with NDO versions 3.7 and 4.2+. NDO versions 4.
 ```hcl
 
 # Sample Listener configuration for the Application Load Balancer
-resource "mso_schema_site_contract_service_graph_listener" "application_load_balancer_node1" {
+resource "mso_schema_site_contract_service_graph_listener" "example" {
   contract_name      = mso_schema_site_contract_service_graph.site_contract_service_graph.contract_name
   listener_name      = "example"
   port               = 443
@@ -147,7 +147,7 @@ resource "mso_schema_site_contract_service_graph_listener" "example" {
   * `redirect_port` - (Optional) The redirect port of the Rule.
   * `redirect_code` - (Optional) The redirect code of the Rule. Allowed values are `unknown`, `permanently_moved`, `found`, `see_other` and `temporary_redirect`. The MSO/NDO defaults to `permanently_moved` when unset during creation.
   * `target_ip_type` - (Optional) The target IP type of the Rule. Allowed values are `unspecified`, `primary` and `secondary`.  The MSO/NDO defaults to `unspecified` when unset during creation.
-  * `health_check` - (Optional) The Health Checks information of the Listener Rule.
+  * `health_check` - (Optional) The Health Checks information of the Rule.
     * `port` - (Optional) The port number of the Health Checks. The MSO/NDO defaults to `0` when unset during creation.
     * `protocol` - (Optional) The port number of the Health Checks. Allowed values are `http`, `https`, `tcp`, `udp` and `tls`. The MSO/NDO defaults to `` when unset during creation.
     * `path` - (Optional) The path of the Health Checks. The MSO/NDO defaults to `` when unset during creation.
@@ -157,9 +157,9 @@ resource "mso_schema_site_contract_service_graph_listener" "example" {
     * `use_host_from_rule` - (Optional) The use host from rule of the Health Checks. Allowed values are `true` and `false`. The MSO/NDO defaults to `false` when unset during creation.
     * `success_code` - (Optional) The success code (code range) of the Health Checks. The MSO/NDO defaults to `200-399` when unset during creation.
     * `host` - (Optional) The host of the Health Checks. The `host` attribute will be enabled when the `use_host_from_rule` is `false`.
-  * `provider_epg_ref` - (Optional) The Provider EPG information of the Listener Rule.
-    * `schema_id` - (Optional) The schema ID of the EPG Provider. The `schema_id` will be used if not provided.
-    * `template_name` - (Optional) The template name of the EPG Provider. The `template_name` will be used if not provided.
+  * `provider_epg_ref` - (Optional) The Provider EPG information of the Rule.
+    * `schema_id` - (Optional) The schema ID of the EPG Provider. The `schema_id` of the Listener will be used if not provided.
+    * `template_name` - (Optional) The template name of the EPG Provider. The `template_name` of the Listener will be used if not provided.
     * `anp_name` - (Required) The application profile name of the EPG Provider.
     * `epg_name` - (Required) The name of the EPG Provider.
 
