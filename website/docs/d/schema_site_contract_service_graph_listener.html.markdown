@@ -41,7 +41,6 @@ data "mso_schema_site_contract_service_graph_listener" "example" {
 * `ssl_certificates` - (Read-Only) The SSL Certificates information of the Listener.
   * `name` - (Read-Only) The key ring name of the SSL Certificate.
   * `target_dn` - (Read-Only) The key ring DN of the SSL Certificate.
-  * `default` - (Read-Only) The default boolean flag of the SSL Certificate.
   * `certificate_store` - (Read-Only) The certificate store of the SSL Certificate.
 * `rules` - (Read-Only) The Rules information of the Listener.
   * `name` - (Read-Only) The name of the Rule.
@@ -50,7 +49,6 @@ data "mso_schema_site_contract_service_graph_listener" "example" {
   * `host` - (Read-Only) The host of the Rule.
   * `path` - (Read-Only) The path of the Rule.
   * `action` - (Read-Only) The action of the Rule.
-  * `condition` - (Read-Only) The condition of the Rule.
   * `action_type` - (Read-Only) The action type of the Rule.
   * `content_type` - (Read-Only) The content type of the Rule.
   * `port` - (Read-Only) The port number of the Rule.

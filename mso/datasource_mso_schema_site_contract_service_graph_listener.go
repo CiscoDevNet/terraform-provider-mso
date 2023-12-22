@@ -67,10 +67,6 @@ func dataSourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"default": &schema.Schema{
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
 						"certificate_store": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
@@ -111,10 +107,11 @@ func dataSourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"condition": &schema.Schema{
-							Type:     schema.TypeString,
-							Computed: true,
-						},
+						// TODO: Should be uncommented once condition is configured through UI
+						// "condition": &schema.Schema{
+						// 	Type:     schema.TypeString,
+						// 	Computed: true,
+						// },
 						"action_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
@@ -225,7 +222,7 @@ func dataSourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 										Computed: true,
 									},
 									"use_host_from_rule": &schema.Schema{
-										Type:     schema.TypeString,
+										Type:     schema.TypeBool,
 										Computed: true,
 									},
 									"success_code": &schema.Schema{

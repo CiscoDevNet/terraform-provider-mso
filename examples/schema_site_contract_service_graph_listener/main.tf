@@ -332,7 +332,7 @@ resource "mso_schema_site_contract_service_graph" "site_contract_service_graph" 
 # Application Load Balancer - Config example
 resource "mso_schema_site_contract_service_graph_listener" "application_load_balancer_node1" {
   contract_name      = mso_schema_site_contract_service_graph.site_contract_service_graph.contract_name
-  listener_name      = "C"
+  listener_name      = "example"
   port               = 443
   protocol           = "https"
   schema_id          = mso_schema.tf_schema_sg.id
@@ -342,12 +342,12 @@ resource "mso_schema_site_contract_service_graph_listener" "application_load_bal
   template_name      = one(mso_schema.tf_schema_sg.template).name
   rules {
     action_type       = "redirect"
-    content_type      = "textPlain"
-    name              = "post-default-1"
+    content_type      = "text_plain"
+    name              = "rule_1"
     port              = 80
     priority          = 1
     protocol          = "http"
-    redirect_code     = "permMoved"
+    redirect_code     = "permanently_moved"
     redirect_port     = 80
     redirect_protocol = "http"
     response_code     = "204"
@@ -362,7 +362,7 @@ resource "mso_schema_site_contract_service_graph_listener" "application_load_bal
       success_code        = "200"
       timeout             = 30
       unhealthy_threshold = 3
-      use_host_from_rule  = "no"
+      use_host_from_rule  = false
     }
   }
   ssl_certificates {
@@ -381,7 +381,7 @@ resource "mso_schema_site_contract_service_graph_listener" "network_load_balance
   # Steps to configure Frontend IP Name
   # 1. Application Management -> Services -> Create a "Network Load Balancer" - L4-L7 Device -> Advanced Settings -> Additional Frontend IPs -> Frontend IP Names
   frontend_ip_dn     = "uni/tn-azure_tenant/clb-nlb/vip-2.2.2.2"
-  listener_name      = "L22"
+  listener_name      = "example"
   port               = 80
   protocol           = "udp"
   schema_id          = mso_schema.tf_schema_sg.id
@@ -391,12 +391,12 @@ resource "mso_schema_site_contract_service_graph_listener" "network_load_balance
   template_name      = one(mso_schema.tf_schema_sg.template).name
   rules {
     action_type       = "forward"
-    content_type      = "textPlain"
+    content_type      = "text_plain"
     name              = "default"
     port              = 80
     priority          = 0
     protocol          = "udp"
-    redirect_code     = "permMoved"
+    redirect_code     = "permanently_moved"
     redirect_port     = 0
     redirect_protocol = "inherit"
     target_ip_type    = "unspecified"
@@ -405,10 +405,10 @@ resource "mso_schema_site_contract_service_graph_listener" "network_load_balance
       interval            = 5
       port                = 80
       protocol            = "tcp"
-      success_code        = "200-399"
+      success_code        = "200"
       timeout             = 0
       unhealthy_threshold = 2
-      use_host_from_rule  = "no"
+      use_host_from_rule  = false
     }
     provider_epg_ref {
       anp_name      = mso_schema_template_anp.anp1.name

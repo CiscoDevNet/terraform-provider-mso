@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -12,6 +13,54 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
+
+var listenerProtocols = []string{"http", "https", "tcp", "udp", "tls", "inherit"}
+
+var listenerSecurityPolicyMap = map[string]string{
+	"default":                     "default",
+	"elb_sec_2016_18":             "eLBSecurityPolicy-2016-08",
+	"elb_sec_fs_2018_06":          "eLBSecurityPolicy-FS-2018-06",
+	"elb_sec_tls_1_2_2017_01":     "eLBSecurityPolicy-TLS-1-2-2017-01",
+	"elb_sec_tls_1_2_ext_2018_06": "eLBSecurityPolicy-TLS-1-2-Ext-2018-06",
+	"elb_sec_tls_1_1_2017_01":     "eLBSecurityPolicy-TLS-1-1-2017-01",
+	"elb_sec_2015_05":             "eLBSecurityPolicy-2015-05",
+	"elb_sec_tls_1_0_2015_04":     "eLBSecurityPolicy-TLS-1-0-2015-04",
+	"app_gw_ssl_default":          "AppGwSslPolicyDefault",
+	"app_gw_ssl_2015_501":         "AppGwSslPolicy20150501",
+	"app_gw_ssl_2017_401":         "AppGwSslPolicy20170401",
+	"app_gw_ssl_2017_401s":        "AppGwSslPolicy20170401S",
+}
+
+var listenerActionTypeMap = map[string]string{
+	"fixed_response": "fixedResponse",
+	"forward":        "forward",
+	"redirect":       "redirect",
+	"ha_port":        "haPort",
+}
+
+var listenerContentTypeMap = map[string]string{
+	"text_plain": "textPlain",
+	"text_css":   "textCSS",
+	"text_html":  "textHtml",
+	"app_js":     "appJS",
+	"app_json":   "appJson",
+}
+
+var listenerRedirectCodeMap = map[string]string{
+	"unknown":            "unknown",
+	"permanently_moved":  "permMoved",
+	"found":              "found",
+	"see_other":          "seeOther",
+	"temporary_redirect": "temporary",
+}
+
+var listenerSecurityPolicyKeys = getMapKeys(listenerSecurityPolicyMap)
+
+var listenerActionTypeKeys = getMapKeys(listenerActionTypeMap)
+
+var listenerContentTypeKeys = getMapKeys(listenerContentTypeMap)
+
+var listenerRedirectCodeKeys = getMapKeys(listenerRedirectCodeMap)
 
 func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 	return &schema.Resource{
@@ -61,39 +110,19 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"protocol": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"http",
-					"https",
-					"tcp",
-					"udp",
-					"tls",
-					"inherit",
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(listenerProtocols, false),
 			},
 			"port": &schema.Schema{
 				Type:     schema.TypeInt,
 				Required: true,
 			},
 			"security_policy": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"default",
-					"eLBSecurityPolicy-2016-08",
-					"eLBSecurityPolicy-FS-2018-06",
-					"eLBSecurityPolicy-TLS-1-2-2017-01",
-					"eLBSecurityPolicy-TLS-1-2-Ext-2018-06",
-					"eLBSecurityPolicy-TLS-1-1-2017-01",
-					"eLBSecurityPolicy-2015-05",
-					"eLBSecurityPolicy-TLS-1-0-2015-04",
-					"AppGwSslPolicyDefault",
-					"AppGwSslPolicy20150501",
-					"AppGwSslPolicy20170401",
-					"AppGwSslPolicy20170401S",
-				}, false),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice(listenerSecurityPolicyKeys, false),
 			},
 			"ssl_certificates": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -111,10 +140,6 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
-						"default": &schema.Schema{ // default should be true for a valid SSL Certificate
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
 						"certificate_store": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
@@ -128,16 +153,13 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				},
 			},
 			"frontend_ip_dn": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 			"rules": &schema.Schema{
 				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
-				MinItems: 1,
+				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
@@ -146,76 +168,54 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"floating_ip": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
 						},
 						"priority": &schema.Schema{
 							Type:     schema.TypeInt,
 							Required: true,
 						},
 						"host": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"path": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"action": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"condition": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"action_type": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"fixedResponse",
-								"forward",
-								"redirect",
-								"haPort",
-							}, false),
-						},
-						"content_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"textPlain",
-								"textCSS",
-								"textHtml",
-								"appJS",
-								"appJson",
-							}, false),
+						},
+						"path": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"action": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						// TODO: Should be uncommented once condition is configured through UI
+						// "condition": &schema.Schema{
+						// 	Type:     schema.TypeString,
+						// 	Optional: true,
+						// 	Computed: true,
+						// },
+						"action_type": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(listenerActionTypeKeys, false),
+						},
+						"content_type": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringInSlice(listenerContentTypeKeys, false),
 						},
 						"port": &schema.Schema{
 							Type:     schema.TypeInt,
 							Required: true,
 						},
 						"protocol": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"http",
-								"https",
-								"tcp",
-								"udp",
-								"tls",
-								"inherit",
-							}, false),
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(listenerProtocols, false),
 						},
 						"provider_epg_ref": { // Only one object allowed
 							Type:     schema.TypeSet,
@@ -225,16 +225,14 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"schema_id": &schema.Schema{
-										Type:         schema.TypeString,
-										Optional:     true,
-										Computed:     true,
-										ValidateFunc: validation.StringLenBetween(1, 1000),
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
 									},
 									"template_name": &schema.Schema{
-										Type:         schema.TypeString,
-										Optional:     true,
-										Computed:     true,
-										ValidateFunc: validation.StringLenBetween(1, 1000),
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
 									},
 									"anp_name": &schema.Schema{
 										Type:         schema.TypeString,
@@ -259,53 +257,40 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							}, false),
 						},
 						"custom_url": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"redirect_host_name": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"redirect_path": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"redirect_query": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"response_code": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"response_body": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"redirect_protocol": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"http",
-								"https",
-								"tcp",
-								"udp",
-								"tls",
-								"inherit",
-							}, false),
+						},
+						"redirect_host_name": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"redirect_path": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"redirect_query": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"response_code": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"response_body": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"redirect_protocol": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringInSlice(listenerProtocols, false),
 						},
 						"redirect_port": &schema.Schema{
 							Type:     schema.TypeInt,
@@ -313,16 +298,10 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							Computed: true,
 						},
 						"redirect_code": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"unknown",
-								"permMoved",
-								"found",
-								"seeOther",
-								"temporary",
-							}, false),
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringInSlice(listenerRedirectCodeKeys, false),
 						},
 						"health_check": &schema.Schema{ // Only one object allowed
 							Type:     schema.TypeSet,
@@ -337,23 +316,15 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 										Computed: true,
 									},
 									"protocol": &schema.Schema{
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-										ValidateFunc: validation.StringInSlice([]string{
-											"http",
-											"https",
-											"tcp",
-											"udp",
-											"tls",
-											"inherit",
-										}, false),
-									},
-									"path": &schema.Schema{
 										Type:         schema.TypeString,
 										Optional:     true,
 										Computed:     true,
-										ValidateFunc: validation.StringLenBetween(1, 1000),
+										ValidateFunc: validation.StringInSlice(listenerProtocols, false),
+									},
+									"path": &schema.Schema{
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
 									},
 									"interval": &schema.Schema{
 										Type:     schema.TypeInt,
@@ -370,26 +341,20 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 										Optional: true,
 										Computed: true,
 									},
-									"use_host_from_rule": &schema.Schema{
+									"use_host_from_rule": &schema.Schema{ // By default the TypeBool returns false
+										Type:     schema.TypeBool,
+										Optional: true,
+										Computed: true,
+									},
+									"success_code": &schema.Schema{
 										Type:     schema.TypeString,
 										Optional: true,
 										Computed: true,
-										ValidateFunc: validation.StringInSlice([]string{
-											"yes",
-											"no",
-										}, false),
-									},
-									"success_code": &schema.Schema{
-										Type:         schema.TypeString,
-										Optional:     true,
-										Computed:     true,
-										ValidateFunc: validation.StringLenBetween(1, 1000),
 									},
 									"host": &schema.Schema{
-										Type:         schema.TypeString,
-										Optional:     true,
-										Computed:     true,
-										ValidateFunc: validation.StringLenBetween(1, 1000),
+										Type:     schema.TypeString,
+										Optional: true,
+										Computed: true,
 									},
 								},
 							},
@@ -408,24 +373,139 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				},
 			},
 		},
+		// Clear the "rules" attribute diff when its not a valid change
 		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
 
+			// Schema validation parts begins
+			// When the listener Protocol is https
+			_, listenerProtocol := diff.GetChange("protocol")
+			if listenerProtocol.(string) == "https" {
+				_, newSecurityPolicy := diff.GetChange("security_policy")
+				_, newSSLCertificates := diff.GetChange("ssl_certificates")
+				if newSecurityPolicy.(string) == "" || len(newSSLCertificates.(*schema.Set).List()) == 0 {
+					return fmt.Errorf("When the listener Protocol is https, the security_policy and ssl_certificates attributes must be set")
+				}
+			}
+
+			_, newRulesCheck := diff.GetChange("rules")
+			newRulesCheckList := newRulesCheck.(*schema.Set).List()
+
+			for _, newRule := range newRulesCheckList {
+				newRuleMap := newRule.(map[string]interface{})
+
+				// When the rule action_type is "redirect"
+				if newRuleMap["action_type"].(string) == "redirect" {
+					newRedirectProtocol := newRuleMap["redirect_protocol"].(string)
+					newRedirectPort := newRuleMap["redirect_port"].(int)
+					newUrlType := newRuleMap["url_type"].(string)
+					newResponseCode := newRuleMap["redirect_code"].(string)
+					if newRedirectProtocol == "" || newRedirectPort == 0 || newUrlType == "" || newResponseCode == "" {
+						return fmt.Errorf("When the 'action_type' is 'redirect', the 'redirect_protocol', 'redirect_port', 'url_type', 'redirect_code' attributes must be set")
+					}
+				}
+
+				// When the rule action_type is "forward"
+				if newRuleMap["action_type"].(string) == "forward" {
+					newRuleProtocol := newRuleMap["protocol"].(string)
+					newRulePort := newRuleMap["port"].(int)
+					newHealthCheck := newRuleMap["health_check"].(*schema.Set).List()
+					if newRuleProtocol == "" || newRulePort == 0 || len(newHealthCheck) == 0 {
+						return fmt.Errorf("When the 'action_type' is 'forward', the 'protocol', 'port', 'health_check' attributes must be set")
+					}
+				}
+
+				// When the rule url_type is "custom"
+				if newRuleMap["url_type"].(string) == "custom" {
+					newRuleRedirectHostName := newRuleMap["redirect_host_name"].(string)
+					newRuleRedirectPath := newRuleMap["redirect_path"].(string)
+					newRuleRedirectQuery := newRuleMap["redirect_query"].(string)
+					newRuleResponseCode := newRuleMap["response_code"].(string)
+					if newRuleRedirectHostName == "" || newRuleRedirectPath == "" || newRuleRedirectQuery == "" || newRuleResponseCode == "" {
+						return fmt.Errorf("When the 'url_type' is 'custom', the 'redirect_host_name', 'redirect_path', 'redirect_query', 'response_code' attributes must be set")
+					}
+				}
+
+				// When the Health Checks protocol is "http/https"
+				newHealthCheckMap := newRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
+				newHealthCheckProtocol := newHealthCheckMap["protocol"].(string)
+				if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
+					newHealthCheckPort := newHealthCheckMap["port"].(int)
+					newHealthCheckPath := newHealthCheckMap["path"].(string)
+					newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
+					newHealthCheckTimeout := newHealthCheckMap["timeout"].(int)
+					newHealthCheckInterval := newHealthCheckMap["interval"].(int)
+					newHealthCheckSuccessCode := newHealthCheckMap["success_code"].(string)
+					if newHealthCheckPort == 0 || newHealthCheckPath == "" || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckTimeout == 0 || newHealthCheckInterval == 0 || newHealthCheckSuccessCode == "" {
+						return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'port', 'path', 'unhealthy_threshold', 'timeout', 'interval', 'success_code' attributes must be set")
+					}
+					// when the listener protocol is "http/https", the Health Checks protocol is "http/https" and use_host_from_rule is true then the host attribute must be set
+					if listenerProtocol.(string) == "http" || listenerProtocol.(string) == "https" {
+						newHealthCheckUseHostFromRule := newHealthCheckMap["use_host_from_rule"].(bool)
+						newHealthCheckHost := newHealthCheckMap["host"].(string)
+						if !newHealthCheckUseHostFromRule && newHealthCheckHost == "" {
+							return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'use_host_from_rule' and 'host' attributes must be set")
+						}
+					}
+				}
+
+				// when the listener protocol is "tcp/udp" Provider EPG is required
+				if listenerProtocol.(string) == "tcp" || listenerProtocol.(string) == "udp" {
+					newProviderEPGRefList := newRuleMap["provider_epg_ref"].(*schema.Set).List()
+					if len(newProviderEPGRefList) == 0 || len(newRuleMap["health_check"].(*schema.Set).List()) == 0 {
+						return fmt.Errorf("When the 'listener_protocol' is 'tcp/udp', the 'provider_epg_ref', 'health_check' attributes must be set")
+					}
+					// When the listener protocol is "tcp/udp" and the Health Checks protocol is "tcp"
+					if newHealthCheckProtocol == "tcp" {
+						newHealthCheckPort := newHealthCheckMap["port"].(int)
+						newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
+						newHealthCheckInterval := newHealthCheckMap["interval"].(int)
+						if newHealthCheckPort == 0 || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckInterval == 0 {
+							return fmt.Errorf("When the 'health_check' protocol is 'tcp', the 'port', 'unhealthy_threshold', 'interval' attributes must be set")
+						}
+					} else if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
+						// When the listener protocol is "tcp/udp" and the Health Checks protocol is "http/https"
+						newHealthCheckPort := newHealthCheckMap["port"].(int)
+						newHealthCheckPath := newHealthCheckMap["path"].(string)
+						newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
+						newHealthCheckInterval := newHealthCheckMap["interval"].(int)
+						if newHealthCheckPort == 0 || newHealthCheckPath == "" || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckInterval == 0 {
+							return fmt.Errorf("When the 'health_check' protocol is 'tcp', the 'port', 'newHealthCheckPath', 'unhealthy_threshold', 'interval' attributes must be set")
+						}
+					}
+				}
+			}
+			// Schema validation parts ends
+
+			// Diff handling begins
+			// Get the diff between old and new rules
 			oldRules, newRules := diff.GetChange("rules")
+
+			// oldRules - holds the API response content
 			oldRulesList := oldRules.(*schema.Set).List()
+
+			// newRules - holds the user config content
 			newRulesList := newRules.(*schema.Set).List()
 
-			if len(oldRulesList) != len(newRulesList) {
+			sort.Slice(oldRulesList, func(i, j int) bool {
+				return oldRulesList[i].(interface{}).(map[string]interface{})["priority"].(int) < oldRulesList[j].(interface{}).(map[string]interface{})["priority"].(int)
+			})
+
+			sort.Slice(newRulesList, func(i, j int) bool {
+				return newRulesList[i].(interface{}).(map[string]interface{})["priority"].(int) < newRulesList[j].(interface{}).(map[string]interface{})["priority"].(int)
+			})
+
+			if len(oldRulesList) != len(newRulesList) { // Valid change, no need to clear rules attribute diff
 				return nil
 			}
 
+			rulesDiffBoolList := make([]bool, 0)
 			for _, newRule := range newRulesList {
-
-				for _, oldRules := range oldRulesList {
+				for _, oldRule := range oldRulesList {
 
 					newRuleMap := newRule.(map[string]interface{})
 					newRuleName := newRuleMap["name"].(string)
 					newRulePriority := newRuleMap["priority"].(int)
-					oldRuleMap := oldRules.(map[string]interface{})
+					oldRuleMap := oldRule.(map[string]interface{})
 					oldRuleName := oldRuleMap["name"].(string)
 					oldRulePriority := oldRuleMap["priority"].(int)
 
@@ -434,48 +514,173 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 						newRuleHealthCheckList := newRuleMap["health_check"].(*schema.Set).List()
 						oldRuleHealthCheckList := oldRuleMap["health_check"].(*schema.Set).List()
 
-						healCheckDiffBoolList := make([]bool, 0)
+						// When the newRuleHealthCheckList (user config) and oldRuleHealthCheckList (state file content) not empty
 						if len(newRuleHealthCheckList) != 0 && len(oldRuleHealthCheckList) != 0 {
+
 							newRuleHealthCheckMap := newRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
 							oldRuleHealthCheckMap := oldRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
 
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["host"].(string) == "" && oldRuleHealthCheckMap["host"].(string) == "")
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["interval"].(int) == 0 && oldRuleHealthCheckMap["interval"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["path"].(string) == "" && oldRuleHealthCheckMap["path"].(string) == "")
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["port"].(int) == 0 && oldRuleHealthCheckMap["port"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["protocol"].(string) == "" && oldRuleHealthCheckMap["protocol"].(string) == "")
-							healCheckDiffBoolList = append(healCheckDiffBoolList, (newRuleHealthCheckMap["success_code"].(string) == "200-399" && oldRuleHealthCheckMap["success_code"].(string) == "200-399") || (newRuleHealthCheckMap["success_code"].(string) == "" && oldRuleHealthCheckMap["success_code"].(string) == ""))
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["timeout"].(int) == 0 && oldRuleHealthCheckMap["timeout"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, newRuleHealthCheckMap["unhealthy_threshold"].(int) == 0 && oldRuleHealthCheckMap["unhealthy_threshold"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, (newRuleHealthCheckMap["use_host_from_rule"].(string) == "no" && oldRuleHealthCheckMap["use_host_from_rule"].(string) == "no") || (newRuleHealthCheckMap["use_host_from_rule"].(string) == "" && oldRuleHealthCheckMap["use_host_from_rule"].(string) == ""))
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["host"].(string) == oldRuleHealthCheckMap["host"].(string))
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["interval"].(int) == oldRuleHealthCheckMap["interval"].(int))
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["path"].(string) == oldRuleHealthCheckMap["path"].(string))
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["port"].(int) == oldRuleHealthCheckMap["port"].(int))
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["protocol"].(string) == oldRuleHealthCheckMap["protocol"].(string))
 
+							newRuleHealthCheckSuccessCode := newRuleHealthCheckMap["success_code"].(string)
+							oldRuleHealthCheckSuccessCode := oldRuleHealthCheckMap["success_code"].(string)
+
+							if newRuleHealthCheckSuccessCode == "" && oldRuleHealthCheckSuccessCode == "200-399" {
+								rulesDiffBoolList = append(rulesDiffBoolList, true) // Not a valid change because 200-399 is the default value
+							} else if newRuleHealthCheckSuccessCode == oldRuleHealthCheckSuccessCode {
+								rulesDiffBoolList = append(rulesDiffBoolList, true) // Not a valid change - both are equal
+							} else if newRuleHealthCheckSuccessCode == "" && oldRuleHealthCheckSuccessCode != "" {
+								rulesDiffBoolList = append(rulesDiffBoolList, true) // Not a valid change - because the success_code is optional and computed, so the when the success_code is empty we will not consider it as a valid change
+							} else if (newRuleHealthCheckSuccessCode != "" && oldRuleHealthCheckSuccessCode != "") && (newRuleHealthCheckSuccessCode != oldRuleHealthCheckSuccessCode) {
+								rulesDiffBoolList = append(rulesDiffBoolList, false) // Valid change - both are not equal and also not empty
+							} else {
+								rulesDiffBoolList = append(rulesDiffBoolList, false) // By default set false when the above conditions are not met
+							}
+
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["timeout"].(int) == oldRuleHealthCheckMap["timeout"].(int))
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["unhealthy_threshold"].(int) == oldRuleHealthCheckMap["unhealthy_threshold"].(int))
+
+							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["use_host_from_rule"] == oldRuleHealthCheckMap["use_host_from_rule"])
 						} else if len(newRuleHealthCheckList) == 0 && len(oldRuleHealthCheckList) != 0 {
-							// When the newRuleHealthCheckList length is 0 and oldRuleHealthCheckList length is not 0
+							// When the newRuleHealthCheckList (user config) is empty and oldRuleHealthCheckList (state file content) not empty
 							oldRuleHealthCheckMap := oldRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
 
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["host"].(string) == "")
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["interval"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["path"].(string) == "")
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["port"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["protocol"].(string) == "")
-							healCheckDiffBoolList = append(healCheckDiffBoolList, (oldRuleHealthCheckMap["success_code"].(string) == "200-399" || oldRuleHealthCheckMap["success_code"].(string) == ""))
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["timeout"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, oldRuleHealthCheckMap["unhealthy_threshold"].(int) == 0)
-							healCheckDiffBoolList = append(healCheckDiffBoolList, (oldRuleHealthCheckMap["use_host_from_rule"].(string) == "no" || oldRuleHealthCheckMap["use_host_from_rule"].(string) == ""))
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["host"].(string) == "")
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["interval"].(int) == 0)
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["path"].(string) == "")
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["port"].(int) == 0)
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["protocol"].(string) == "")
+							rulesDiffBoolList = append(rulesDiffBoolList, (oldRuleHealthCheckMap["success_code"].(string) == "200-399" || oldRuleHealthCheckMap["success_code"].(string) == ""))
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["timeout"].(int) == 0)
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["unhealthy_threshold"].(int) == 0)
+							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["use_host_from_rule"] == false)
 						}
 
-						healCheckDiffFalse := false
-						for _, healCheckDiffBool := range healCheckDiffBoolList {
-							healCheckDiffFalse = healCheckDiffFalse || !healCheckDiffBool
+						newProviderEPGRefList := newRuleMap["provider_epg_ref"].(*schema.Set).List()
+						oldProviderEPGRefList := oldRuleMap["provider_epg_ref"].(*schema.Set).List()
+
+						if len(newProviderEPGRefList) == 1 && len(oldProviderEPGRefList) == 1 {
+							newProviderEPGRefMap := newRuleMap["provider_epg_ref"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
+							oldProviderEPGRefMap := oldRuleMap["provider_epg_ref"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
+
+							newSchemaID := convertInterfaceToString(newProviderEPGRefMap["schema_id"].(string))
+							newTemplateName := convertInterfaceToString(newProviderEPGRefMap["template_name"].(string))
+
+							if newSchemaID == "" {
+								newSchemaID = diff.Get("schema_id").(string)
+							}
+							if newTemplateName == "" {
+								newTemplateName = diff.Get("template_name").(string)
+							}
+
+							rulesDiffBoolList = append(rulesDiffBoolList, newProviderEPGRefMap["anp_name"].(string) == oldProviderEPGRefMap["anp_name"].(string))
+							rulesDiffBoolList = append(rulesDiffBoolList, newProviderEPGRefMap["epg_name"].(string) == oldProviderEPGRefMap["epg_name"].(string))
+							rulesDiffBoolList = append(rulesDiffBoolList, newSchemaID == oldProviderEPGRefMap["schema_id"].(string))
+							rulesDiffBoolList = append(rulesDiffBoolList, newTemplateName == oldProviderEPGRefMap["template_name"].(string))
+
+						} else if (len(newProviderEPGRefList) == 0 && len(oldProviderEPGRefList) == 1) || (len(newProviderEPGRefList) == 1 && len(oldProviderEPGRefList) == 0) {
+							rulesDiffBoolList = append(rulesDiffBoolList, false) // its a valid change
 						}
-						if !healCheckDiffFalse {
-							// Clearing the rules diff
-							diff.Clear("rules")
-						}
+
+						newFloatingIp := newRuleMap["floating_ip"].(string)
+						newHost := newRuleMap["host"].(string)
+						newPath := newRuleMap["path"].(string)
+						newAction := newRuleMap["action"].(string)
+						// TODO: Should be uncommented once condition is configured through UI
+						// newCondition := newRuleMap["condition"].(string)
+						newActionType := newRuleMap["action_type"].(string)
+						newContentType := newRuleMap["content_type"].(string)
+						newProtocol := newRuleMap["protocol"].(string)
+						newUrlType := newRuleMap["url_type"].(string)
+						newCustomUrl := newRuleMap["custom_url"].(string)
+						newRedirectHostName := newRuleMap["redirect_host_name"].(string)
+						newRedirectPath := newRuleMap["redirect_path"].(string)
+						newRedirectQuery := newRuleMap["redirect_query"].(string)
+						newResponseCode := newRuleMap["response_code"].(string)
+						newResponseBody := newRuleMap["response_body"].(string)
+						newRedirectProtocol := newRuleMap["redirect_protocol"].(string)
+						newRedirectCode := newRuleMap["redirect_code"].(string)
+						newTargetIpType := newRuleMap["target_ip_type"].(string)
+
+						newPort := newRuleMap["port"].(int)
+						newRedirectPort := newRuleMap["redirect_port"].(int)
+
+						oldFloatingIp := oldRuleMap["floating_ip"].(string)
+						oldHost := oldRuleMap["host"].(string)
+						oldPath := oldRuleMap["path"].(string)
+						oldAction := oldRuleMap["action"].(string)
+						// TODO: Should be uncommented once condition is configured through UI
+						// oldCondition := oldRuleMap["condition"].(string)
+						oldActionType := oldRuleMap["action_type"].(string)
+						oldContentType := oldRuleMap["content_type"].(string)
+						oldProtocol := oldRuleMap["protocol"].(string)
+						oldUrlType := oldRuleMap["url_type"].(string)
+						oldCustomUrl := oldRuleMap["custom_url"].(string)
+						oldRedirectHostName := oldRuleMap["redirect_host_name"].(string)
+						oldRedirectPath := oldRuleMap["redirect_path"].(string)
+						oldRedirectQuery := oldRuleMap["redirect_query"].(string)
+						oldResponseCode := oldRuleMap["response_code"].(string)
+						oldResponseBody := oldRuleMap["response_body"].(string)
+						oldRedirectProtocol := oldRuleMap["redirect_protocol"].(string)
+						oldRedirectCode := oldRuleMap["redirect_code"].(string)
+						oldTargetIpType := oldRuleMap["target_ip_type"].(string)
+
+						oldPort := oldRuleMap["port"].(int)
+						oldRedirectPort := oldRuleMap["redirect_port"].(int)
+
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newPort != 0 && newPort != oldPort))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectPort != 0 && newRedirectPort != oldRedirectPort))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newFloatingIp != "" && newFloatingIp != oldFloatingIp))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newHost != "" && newHost != oldHost))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newPath != "" && newPath != oldPath))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newAction != "" && newAction != oldAction))
+						// TODO: Should be uncommented once condition is configured through UI
+						// rulesDiffBoolList = append(rulesDiffBoolList, !(newCondition != "" && newCondition != oldCondition))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newActionType != "" && newActionType != oldActionType))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newContentType != "" && newContentType != oldContentType))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newProtocol != "" && newProtocol != oldProtocol))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newUrlType != "" && newUrlType != oldUrlType))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newCustomUrl != "" && newCustomUrl != oldCustomUrl))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectHostName != "" && newRedirectHostName != oldRedirectHostName))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectPath != "" && newRedirectPath != oldRedirectPath))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectQuery != "" && newRedirectQuery != oldRedirectQuery))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newResponseCode != "" && newResponseCode != oldResponseCode))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newResponseBody != "" && newResponseBody != oldResponseBody))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectProtocol != "" && newRedirectProtocol != oldRedirectProtocol))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectCode != "" && newRedirectCode != oldRedirectCode))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newTargetIpType != "" && newTargetIpType != oldTargetIpType))
+						rulesDiffBoolList = append(rulesDiffBoolList, !(newTargetIpType != "" && newTargetIpType != oldTargetIpType))
+
+						break
+					} else if (newRuleName != oldRuleName && newRulePriority == oldRulePriority) || (newRuleName == oldRuleName && newRulePriority != oldRulePriority) {
+						rulesDiffBoolList = append(rulesDiffBoolList, false) // its a valid change
 					}
 				}
 			}
+
+			// Note: Sample data
+			// rulesDiffBoolList = []bool{true}  // When the list contains only true - not a valid change
+			// rulesDiffBoolList = []bool{false} // When the list contains minimum one false - its a valid change
+
+			rulesDiffFlag := false
+			for _, rulesDiffBool := range rulesDiffBoolList {
+				// Case 0: rulesDiffFlag = false is the initial value and also not a valid change
+				// Case 1: false || !true(false) => false(rulesDiffFlag) - Not a valid change
+				// Case 2: false || !false(true) => true(rulesDiffFlag) - Valid change
+				rulesDiffFlag = rulesDiffFlag || !rulesDiffBool
+			}
+
+			// rulesDiffFlag = true is a valid change
+			// rulesDiffFlag = false is not a valid change and also that is the initial value, so we need to clear the rules attribute diff
+			if !rulesDiffFlag { // !rulesDiffFlag is equal to !false(true)
+				diff.Clear("rules")
+			}
 			return nil
+			// Diff handling ends
 		},
 	}
 }
@@ -583,30 +788,24 @@ func setSchemaSiteContractServiceGraphListenerAttrs(cont *container.Container, d
 
 	sitesCont := cont.S("sites")
 	for _, siteCont := range sitesCont.Data().([]interface{}) {
-
 		apiSiteID := models.StripQuotes(siteCont.(map[string]interface{})["siteId"].(string))
 		apiTemplateName := models.StripQuotes(siteCont.(map[string]interface{})["templateName"].(string))
 		if siteID == apiSiteID && templateName == apiTemplateName {
-
 			siteContractsCont := siteCont.(map[string]interface{})["contracts"]
 			for _, contractCont := range siteContractsCont.([]interface{}) {
-
 				contractRefTokens := strings.Split(models.StripQuotes(contractCont.(map[string]interface{})["contractRef"].(string)), "/")
 				apiContractName := contractRefTokens[len(contractRefTokens)-1]
 				if contractName == apiContractName {
-
 					serviceGraphRelationship := contractCont.(map[string]interface{})["serviceGraphRelationship"]
 					deviceConfigurationMap := serviceGraphRelationship.(map[string]interface{})["serviceNodesRelationship"].([]interface{})[serviceNodeIndex].(map[string]interface{})["deviceConfiguration"]
 					if deviceConfigurationMap != nil {
-
 						listenersMap := deviceConfigurationMap.(map[string]interface{})["cloudLoadBalancer"].(map[string]interface{})["listeners"]
 						for _, listener := range listenersMap.([]interface{}) {
 							listenerMap := listener.(map[string]interface{})
 							if listenerName == listenerMap["name"].(string) {
-
 								d.Set("protocol", listenerMap["protocol"].(string))
 								d.Set("port", listenerMap["port"])
-								d.Set("security_policy", convertInterfaceToString(listenerMap["secPolicy"]))
+								d.Set("security_policy", getKeyByValue(listenerSecurityPolicyMap, convertInterfaceToString(listenerMap["secPolicy"])))
 
 								if listenerMap["certificates"] != nil {
 									sslCertificates := make([]map[string]interface{}, 0)
@@ -615,7 +814,6 @@ func setSchemaSiteContractServiceGraphListenerAttrs(cont *container.Container, d
 										sslCertMap := map[string]interface{}{
 											"name":              convertInterfaceToString(certificateMap["name"]),
 											"target_dn":         convertInterfaceToString(certificateMap["tDn"]),
-											"default":           certificateMap["default"].(bool),
 											"certificate_store": convertInterfaceToString(certificateMap["store"]),
 										}
 										sslCertificates = append(sslCertificates, sslCertMap)
@@ -633,15 +831,16 @@ func setSchemaSiteContractServiceGraphListenerAttrs(cont *container.Container, d
 									apiRuleMap := apiRule.(map[string]interface{})
 
 									ruleMap := map[string]interface{}{
-										"name":               convertInterfaceToString(apiRuleMap["name"]),
-										"floating_ip":        convertInterfaceToString(apiRuleMap["floatingIp"]),
-										"priority":           convertInterfaceToInt(apiRuleMap["index"]),
-										"host":               convertInterfaceToString(apiRuleMap["host"]),
-										"path":               convertInterfaceToString(apiRuleMap["path"]),
-										"action":             convertInterfaceToString(apiRuleMap["action"]),
-										"condition":          convertInterfaceToString(apiRuleMap["condition"]),
-										"action_type":        convertInterfaceToString(apiRuleMap["actionType"]),
-										"content_type":       convertInterfaceToString(apiRuleMap["contentType"]),
+										"name":        convertInterfaceToString(apiRuleMap["name"]),
+										"floating_ip": convertInterfaceToString(apiRuleMap["floatingIp"]),
+										"priority":    convertInterfaceToInt(apiRuleMap["index"]),
+										"host":        convertInterfaceToString(apiRuleMap["host"]),
+										"path":        convertInterfaceToString(apiRuleMap["path"]),
+										"action":      convertInterfaceToString(apiRuleMap["action"]),
+										// TODO: Should be uncommented once condition is configured through UI
+										// "condition":          convertInterfaceToString(apiRuleMap["condition"]),
+										"action_type":        getKeyByValue(listenerActionTypeMap, convertInterfaceToString(apiRuleMap["actionType"])),
+										"content_type":       getKeyByValue(listenerContentTypeMap, convertInterfaceToString(apiRuleMap["contentType"])),
 										"port":               convertInterfaceToInt(apiRuleMap["port"]),
 										"protocol":           convertInterfaceToString(apiRuleMap["protocol"]),
 										"url_type":           convertInterfaceToString(apiRuleMap["urlType"]),
@@ -653,7 +852,7 @@ func setSchemaSiteContractServiceGraphListenerAttrs(cont *container.Container, d
 										"response_body":      convertInterfaceToString(apiRuleMap["responseBody"]),
 										"redirect_protocol":  convertInterfaceToString(apiRuleMap["redirectProtocol"]),
 										"redirect_port":      convertInterfaceToInt(apiRuleMap["redirectPort"]),
-										"redirect_code":      convertInterfaceToString(apiRuleMap["redirectCode"]),
+										"redirect_code":      getKeyByValue(listenerRedirectCodeMap, convertInterfaceToString(apiRuleMap["redirectCode"])),
 										"target_ip_type":     convertInterfaceToString(apiRuleMap["targetIpType"]),
 									}
 
@@ -667,14 +866,14 @@ func setSchemaSiteContractServiceGraphListenerAttrs(cont *container.Container, d
 												"interval":            convertInterfaceToInt(apiHealthCheckMap["interval"]),
 												"timeout":             convertInterfaceToInt(apiHealthCheckMap["timeout"]),
 												"unhealthy_threshold": convertInterfaceToInt(apiHealthCheckMap["unhealthyThreshold"]),
-												"use_host_from_rule":  convertInterfaceToString(apiHealthCheckMap["useHostFromRule"]),
+												"use_host_from_rule":  yesNoToBool(convertInterfaceToString(apiHealthCheckMap["useHostFromRule"])),
 												"success_code":        convertInterfaceToString(apiHealthCheckMap["successCode"]),
 												"host":                convertInterfaceToString(apiHealthCheckMap["host"]),
 											},
 										}
 									}
 
-									if apiRuleMap["providerEpgRef"] != nil {
+									if apiRuleMap["providerEpgRef"] != nil && apiRuleMap["providerEpgRef"] != "" {
 										apiProviderEpgRefTokens := strings.Split(apiRuleMap["providerEpgRef"].(string), "/")
 										ruleMap["provider_epg_ref"] = []interface{}{
 											map[string]string{
@@ -702,7 +901,6 @@ func setSchemaSiteContractServiceGraphListenerAttrs(cont *container.Container, d
 }
 
 func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.ResourceData, m interface{}) error {
-	log.Printf("Inside postconfig")
 	msoClient := m.(*client.Client)
 	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
@@ -713,7 +911,7 @@ func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.Reso
 	protocol := d.Get("protocol").(string)
 	port := d.Get("port").(int)
 
-	securityPolicy := d.Get("security_policy").(string)
+	securityPolicy := listenerSecurityPolicyMap[d.Get("security_policy").(string)]
 	sslCertificates := d.Get("ssl_certificates").(*schema.Set).List()
 	sslCertsPayloadMap := make([]interface{}, 0)
 	for _, sslCert := range sslCertificates {
@@ -733,15 +931,16 @@ func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.Reso
 
 		ruleMap := rule.(map[string]interface{})
 		rulePayloadMap := map[string]interface{}{
-			"name":             ruleMap["name"].(string),
-			"floatingIp":       ruleMap["floating_ip"].(string),
-			"index":            ruleMap["priority"].(int),
-			"host":             ruleMap["host"].(string),
-			"path":             ruleMap["path"].(string),
-			"action":           ruleMap["action"].(string),
-			"condition":        ruleMap["condition"].(string),
-			"actionType":       ruleMap["action_type"].(string),
-			"contentType":      ruleMap["content_type"].(string),
+			"name":       ruleMap["name"].(string),
+			"floatingIp": ruleMap["floating_ip"].(string),
+			"index":      ruleMap["priority"].(int),
+			"host":       ruleMap["host"].(string),
+			"path":       ruleMap["path"].(string),
+			"action":     ruleMap["action"].(string),
+			// TODO: Should be uncommented once condition is configured through UI
+			// "condition":        ruleMap["condition"].(string),
+			"actionType":       listenerActionTypeMap[ruleMap["action_type"].(string)],
+			"contentType":      listenerContentTypeMap[ruleMap["content_type"].(string)],
 			"port":             ruleMap["port"].(int),
 			"protocol":         ruleMap["protocol"].(string),
 			"urlType":          ruleMap["url_type"].(string),
@@ -753,7 +952,7 @@ func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.Reso
 			"responseBody":     ruleMap["response_body"].(string),
 			"redirectProtocol": ruleMap["redirect_protocol"].(string),
 			"redirectPort":     ruleMap["redirect_port"].(int),
-			"redirectCode":     ruleMap["redirect_code"].(string),
+			"redirectCode":     listenerRedirectCodeMap[ruleMap["redirect_code"].(string)],
 			"targetIpType":     ruleMap["target_ip_type"].(string),
 		}
 
@@ -785,9 +984,12 @@ func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.Reso
 			healthCheckPayloadMap["interval"] = healthCheckMap["interval"].(int)
 			healthCheckPayloadMap["timeout"] = healthCheckMap["timeout"].(int)
 			healthCheckPayloadMap["unhealthyThreshold"] = healthCheckMap["unhealthy_threshold"].(int)
-			healthCheckPayloadMap["useHostFromRule"] = healthCheckMap["use_host_from_rule"].(string)
 			healthCheckPayloadMap["successCode"] = healthCheckMap["success_code"].(string)
-			healthCheckPayloadMap["host"] = healthCheckMap["host"].(string)
+
+			healthCheckPayloadMap["useHostFromRule"] = boolToYesNo(healthCheckMap["use_host_from_rule"].(bool))
+			if healthCheckPayloadMap["useHostFromRule"] == "yes" {
+				healthCheckPayloadMap["host"] = healthCheckMap["host"].(string)
+			}
 		}
 		rulePayloadMap["healthCheck"] = healthCheckPayloadMap
 		rulesPayloadMap = append(rulesPayloadMap, rulePayloadMap)
@@ -824,6 +1026,10 @@ func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.Reso
 	return nil
 }
 
+// removeEmptyValuesFromListenerData removes empty values from the given listener data.
+//
+// value: the value to check for empty values.
+// Returns: true if the value is empty, false otherwise.
 func removeEmptyValuesFromListenerData(value interface{}) bool {
 	switch v := value.(type) {
 	case int:
@@ -891,28 +1097,4 @@ func removeEmptyValuesFromListenerData(value interface{}) bool {
 		log.Printf("[DEBUG]: Unknown type, Object Value: %v", v)
 	}
 	return false
-}
-
-func convertInterfaceToString(interfaceObject interface{}) string {
-	switch v := interfaceObject.(type) {
-	case string:
-		return v
-	case nil:
-		return ""
-	default:
-		return ""
-	}
-}
-
-func convertInterfaceToInt(interfaceObject interface{}) int {
-	switch v := interfaceObject.(type) {
-	case int:
-		return v
-	case float64:
-		return int(v)
-	case nil:
-		return 0
-	default:
-		return 0
-	}
 }

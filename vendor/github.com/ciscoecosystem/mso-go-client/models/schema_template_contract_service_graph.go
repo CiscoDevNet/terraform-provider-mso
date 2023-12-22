@@ -72,10 +72,13 @@ func NewSiteContractServiceGraphListener(ops, path, name, protocol, securityPoli
 		"name":         name,
 		"port":         port,
 		"protocol":     protocol,
-		"secPolicy":    securityPolicy,
 		"certificates": certificates,
 		"rules":        rules,
 		"nlbDevIp":     frontendIpDnMap,
+	}
+
+	if securityPolicy != "" {
+		listenerMap["secPolicy"] = securityPolicy
 	}
 
 	return &PatchPayload{
