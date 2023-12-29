@@ -133,6 +133,12 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -177,6 +183,7 @@ func resourceMSOTemplateExtenalepgImport(d *schema.ResourceData, m interface{}) 
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(externalepgCont.S("description").String()))
 					d.Set("external_epg_type", models.StripQuotes(externalepgCont.S("extEpgType").String()))
 					if externalepgCont.Exists("preferredGroup") {
 						d.Set("include_in_preferred_group", externalepgCont.S("preferredGroup").Data().(bool))
@@ -269,7 +276,7 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 	} else {
 		extEpgType = "on-premise"
 	}
-	var vrf_schema_id, vrf_template_name string
+	var vrf_schema_id, vrf_template_name, description string
 
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -280,6 +287,9 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 		vrf_template_name = tempVar.(string)
 	} else {
 		vrf_template_name = templateName
+	}
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
 	}
 
 	preferredGroup := d.Get("include_in_preferred_group").(bool)
@@ -377,7 +387,7 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 		}
 
 		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
-		externalepgStruct := models.NewTemplateExternalepg("add", pathTemp, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
+		externalepgStruct := models.NewTemplateExternalepg("add", pathTemp, externalEpgName, displayName, extEpgType, description, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
 
 		structList := make([]models.Model, 0, 1)
 		structList = append(structList, externalepgStruct)
@@ -418,7 +428,7 @@ func resourceMSOTemplateExtenalepgCreate(d *schema.ResourceData, m interface{}) 
 
 	} else {
 		path := fmt.Sprintf("/templates/%s/externalEpgs/-", templateName)
-		externalepgStruct := models.NewTemplateExternalepg("add", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
+		externalepgStruct := models.NewTemplateExternalepg("add", path, externalEpgName, displayName, extEpgType, description, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 		if err != nil {
@@ -470,6 +480,7 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(externalepgCont.S("description").String()))
 					d.Set("external_epg_type", models.StripQuotes(externalepgCont.S("extEpgType").String()))
 					if externalepgCont.Exists("preferredGroup") {
 						d.Set("include_in_preferred_group", externalepgCont.S("preferredGroup").Data().(bool))
@@ -564,7 +575,7 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 		extEpgType = "on-premise"
 	}
 
-	var vrf_schema_id, vrf_template_name string
+	var vrf_schema_id, vrf_template_name, description string
 
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -575,6 +586,9 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 		vrf_template_name = tempVar.(string)
 	} else {
 		vrf_template_name = templateName
+	}
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
 	}
 
 	vrfRefMap := make(map[string]interface{})
@@ -670,7 +684,7 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 		}
 
 		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
-		externalepgStruct := models.NewTemplateExternalepg("replace", pathTemp, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
+		externalepgStruct := models.NewTemplateExternalepg("replace", pathTemp, externalEpgName, displayName, extEpgType, description, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
 
 		structList := make([]models.Model, 0, 1)
 		structList = append(structList, externalepgStruct)
@@ -728,7 +742,7 @@ func resourceMSOTemplateExtenalepgUpdate(d *schema.ResourceData, m interface{}) 
 
 	} else {
 		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
-		externalepgStruct := models.NewTemplateExternalepg("replace", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
+		externalepgStruct := models.NewTemplateExternalepg("replace", path, externalEpgName, displayName, extEpgType, description, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
 		_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 		if err != nil {
@@ -755,7 +769,7 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 	} else {
 		extEpgType = "on-premise"
 	}
-	var vrf_schema_id, vrf_template_name string
+	var vrf_schema_id, vrf_template_name, description string
 
 	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
 		vrf_schema_id = tempVar.(string)
@@ -766,6 +780,9 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 		vrf_template_name = tempVar.(string)
 	} else {
 		vrf_template_name = templateName
+	}
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
 	}
 
 	vrfRefMap := make(map[string]interface{})
@@ -861,7 +878,7 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 		}
 
 		pathTemp := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
-		externalepgStruct := models.NewTemplateExternalepg("remove", pathTemp, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
+		externalepgStruct := models.NewTemplateExternalepg("remove", pathTemp, externalEpgName, displayName, extEpgType, description, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, selectorList)
 
 		structList := make([]models.Model, 0, 1)
 		structList = append(structList, externalepgStruct)
@@ -902,7 +919,7 @@ func resourceMSOTemplateExtenalepgDelete(d *schema.ResourceData, m interface{}) 
 
 	} else {
 		path := fmt.Sprintf("/templates/%s/externalEpgs/%s", templateName, externalEpgName)
-		externalepgStruct := models.NewTemplateExternalepg("remove", path, externalEpgName, displayName, extEpgType, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
+		externalepgStruct := models.NewTemplateExternalepg("remove", path, externalEpgName, displayName, extEpgType, description, preferredGroup, vrfRefMap, l3outRefMap, anpRefMap, nil)
 
 		response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), externalepgStruct)
 

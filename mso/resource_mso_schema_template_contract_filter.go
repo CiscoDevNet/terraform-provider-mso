@@ -108,6 +108,12 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 					"default",
 				}, false),
 			},
+
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -157,6 +163,7 @@ func setContractFilterFromSchema(d *schema.ResourceData, schemaCont *container.C
 									d.Set("directives", filterRelationshipMap["directives"])
 									d.Set("action", filterRelationshipMap["action"])
 									d.Set("priority", filterRelationshipMap["priority"])
+									d.Set("description", filterRelationshipMap["description"])
 									d.Set("filter_type", filterType)
 									d.Set("filter_schema_id", filterSchemaId)
 									d.Set("filter_template_name", filterTemplateName)
@@ -220,7 +227,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 	filterRefMap := getFilterRef(filterSchemaId, filterTemplateName, filterName)
 
 	var directives []interface{}
-	var action, priority string
+	var action, priority, description string
 	if tempVar, ok := d.GetOk("directives"); ok {
 		directives = tempVar.(*schema.Set).List()
 	}
@@ -230,9 +237,12 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 	if tempVar, ok := d.GetOk("priority"); ok {
 		priority = tempVar.(string)
 	}
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
 
 	path := createMSOTemplateContractFilterPath(templateName, contractName, getFilterRelationshipTypeMap()[filterType], "-")
-	filterStruct := models.NewTemplateContractFilterRelationShip("add", path, action, priority, filterRefMap, directives)
+	filterStruct := models.NewTemplateContractFilterRelationShip("add", path, action, priority, description, filterRefMap, directives)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
 	if err != nil {
 		return err
@@ -287,7 +297,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	filterRefMap := getFilterRef(filterSchemaId, filterTemplateName, filterName)
 
 	var directives []interface{}
-	var action, priority string
+	var action, priority, description string
 	if tempVar, ok := d.GetOk("directives"); ok {
 		directives = tempVar.(*schema.Set).List()
 	}
@@ -297,9 +307,12 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	if tempVar, ok := d.GetOk("priority"); ok {
 		priority = tempVar.(string)
 	}
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
 
 	path := createMSOTemplateContractFilterPath(templateName, d.Get("contract_name").(string), getFilterRelationshipTypeMap()[d.Get("filter_type").(string)], filterName)
-	filterStruct := models.NewTemplateContractFilterRelationShip("replace", path, action, priority, filterRefMap, directives)
+	filterStruct := models.NewTemplateContractFilterRelationShip("replace", path, action, priority, description, filterRefMap, directives)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
 	if err != nil {
 		return err

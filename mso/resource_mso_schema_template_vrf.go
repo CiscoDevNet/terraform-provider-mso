@@ -75,6 +75,12 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -132,6 +138,9 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) (
 					if vrfCont.Exists("preferredGroup") {
 						preferredGroup, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("preferredGroup").String()))
 						d.Set("preferred_group", preferredGroup)
+					}
+					if vrfCont.Exists("description") {
+						d.Set("description", models.StripQuotes(vrfCont.S("description").String()))
 					}
 					found = true
 					break
@@ -196,7 +205,12 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) e
 		preferredGroup = preferred_group.(bool)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", fmt.Sprintf("/templates/%s/vrfs/-", templateName), Name, displayName, ipDataPlaneLearning, l3m, vzany, preferredGroup)
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", fmt.Sprintf("/templates/%s/vrfs/-", templateName), Name, displayName, ipDataPlaneLearning, description, l3m, vzany, preferredGroup)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -254,7 +268,12 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) e
 		preferredGroup = preferred_group.(bool)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", fmt.Sprintf("/templates/%s/vrfs/%s", templateName, Name), Name, displayName, ipDataPlaneLearning, l3m, vzany, preferredGroup)
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", fmt.Sprintf("/templates/%s/vrfs/%s", templateName, Name), Name, displayName, ipDataPlaneLearning, description, l3m, vzany, preferredGroup)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -331,7 +350,9 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) err
 						preferredGroup, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("preferredGroup").String()))
 						d.Set("preferred_group", preferredGroup)
 					}
-
+					if vrfCont.Exists("description") {
+						d.Set("description", models.StripQuotes(vrfCont.S("description").String()))
+					}
 					found = true
 					break
 				}

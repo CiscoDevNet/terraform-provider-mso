@@ -36,6 +36,10 @@ func datasourceMSOSchemaTemplateAnp() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -81,6 +85,9 @@ func datasourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) e
 					d.Set("template", currentTemplateName)
 					if anpCont.Exists("displayName") {
 						d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
+					}
+					if anpCont.Exists("description") {
+						d.Set("description", models.StripQuotes(anpCont.S("description").String()))
 					}
 					found = true
 					break

@@ -49,6 +49,10 @@ func dataSourceMSOTemplateL3out() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -95,6 +99,7 @@ func dataSourceMSOTemplateL3outRead(d *schema.ResourceData, m interface{}) error
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(l3outCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(l3outCont.S("description").String()))
 
 					vrfRef := models.StripQuotes(l3outCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")

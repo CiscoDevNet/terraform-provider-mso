@@ -86,6 +86,10 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -133,6 +137,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(externalepgCont.S("description").String()))
 					d.Set("external_epg_type", models.StripQuotes(externalepgCont.S("extEpgType").String()))
 
 					vrfRef := models.StripQuotes(externalepgCont.S("vrfRef").String())
