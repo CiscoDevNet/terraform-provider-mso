@@ -53,6 +53,10 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -109,6 +113,9 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 					if vrfCont.Exists("preferredGroup") {
 						preferredGroup, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("preferredGroup").String()))
 						d.Set("preferred_group", preferredGroup)
+					}
+					if vrfCont.Exists("description") {
+						d.Set("description", models.StripQuotes(vrfCont.S("description").String()))
 					}
 					found = true
 					break

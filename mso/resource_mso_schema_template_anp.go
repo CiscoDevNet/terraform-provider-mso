@@ -50,6 +50,12 @@ func resourceMSOSchemaTemplateAnp() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -103,6 +109,9 @@ func resourceMSOSchemaTemplateAnpImport(d *schema.ResourceData, m interface{}) (
 					if anpCont.Exists("displayName") {
 						d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
 					}
+					if anpCont.Exists("description") {
+						d.Set("description", models.StripQuotes(anpCont.S("description").String()))
+					}
 					found = true
 					break
 				}
@@ -144,7 +153,12 @@ func resourceMSOSchemaTemplateAnpCreate(d *schema.ResourceData, m interface{}) e
 		displayName = display_name.(string)
 	}
 
-	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("add", "/templates/"+templateName+"/anps/-", Name, displayName)
+	var description string
+	if Description, ok := d.GetOk("description"); ok {
+		description = Description.(string)
+	}
+
+	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("add", "/templates/"+templateName+"/anps/-", Name, displayName, description)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
 	if err != nil {
@@ -181,7 +195,12 @@ func resourceMSOSchemaTemplateAnpUpdate(d *schema.ResourceData, m interface{}) e
 		displayName = display_name.(string)
 	}
 
-	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("replace", "/templates/"+templateName+"/anps/"+Name, Name, displayName)
+	var description string
+	if Description, ok := d.GetOk("description"); ok {
+		description = Description.(string)
+	}
+
+	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("replace", "/templates/"+templateName+"/anps/"+Name, Name, displayName, description)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
 	if err != nil {
@@ -244,6 +263,9 @@ func resourceMSOSchemaTemplateAnpRead(d *schema.ResourceData, m interface{}) err
 					if anpCont.Exists("displayName") {
 						d.Set("display_name", models.StripQuotes(anpCont.S("displayName").String()))
 					}
+					if anpCont.Exists("description") {
+						d.Set("description", models.StripQuotes(anpCont.S("description").String()))
+					}
 					found = true
 					break
 				}
@@ -268,7 +290,7 @@ func resourceMSOSchemaTemplateAnpDelete(d *schema.ResourceData, m interface{}) e
 	schemaId := d.Get("schema_id").(string)
 	template := d.Get("template").(string)
 	name := d.Get("name").(string)
-	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("remove", "/templates/"+template+"/anps/"+name, "", "")
+	schemaTemplateAnpApp := models.NewSchemaTemplateAnp("remove", "/templates/"+template+"/anps/"+name, "", "", "")
 	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpApp)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting

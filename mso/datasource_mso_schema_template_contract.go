@@ -113,6 +113,10 @@ func dataSourceMSOTemplateContract() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }

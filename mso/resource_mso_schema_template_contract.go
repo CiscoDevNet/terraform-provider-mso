@@ -216,6 +216,11 @@ func resourceMSOTemplateContract() *schema.Resource {
 				Computed:   true,
 				Deprecated: "use directives in filter_relationship instead",
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
 			stateFilterType, configFilterType := diff.GetChange("filter_type")
@@ -363,6 +368,9 @@ func setContractFromSchema(d *schema.ResourceData, schemaCont *container.Contain
 					if val, ok := contractDetails["targetDscp"]; val != nil && ok {
 						d.Set("target_dscp", val.(string))
 					}
+					if val, ok := contractDetails["description"]; val != nil && ok {
+						d.Set("description", val.(string))
+					}
 
 					filterList := []map[string]interface{}{}
 					if val, ok := contractDetails["filterRelationships"]; val != nil && ok {
@@ -490,11 +498,14 @@ func resourceMSOTemplateContractCreate(d *schema.ResourceData, m interface{}) er
 	} else {
 		filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider = getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship, directives)
 	}
-	// TODO uncomment line below when filter_relationships and directives are deprecated on next mayor version
+	// TODO uncomment line below when filter_relationships and directives are deprecated on next major version
 	// filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider := getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship)
-
+	var description string
+	if Description, ok := d.GetOk("description"); ok {
+		description = Description.(string)
+	}
 	path := createMSOTemplateContractPath(templateName, "-")
-	contractStruct := models.NewTemplateContract("add", path, contractName, displayName, scope, filterType, targetDscp, priority, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
+	contractStruct := models.NewTemplateContract("add", path, contractName, displayName, scope, filterType, targetDscp, priority, description, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), contractStruct)
 	if err != nil {
 		return err
@@ -544,8 +555,13 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	// TODO uncomment line below when filter_relationships and directives are deprecated on next mayor version
 	// filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider := getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship)
 
+	var description string
+	if Description, ok := d.GetOk("description"); ok {
+		description = Description.(string)
+	}
+
 	path := createMSOTemplateContractPath(templateName, contractName)
-	contractStruct := models.NewTemplateContract("replace", path, contractName, displayName, scope, filterType, targetDscp, priority, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
+	contractStruct := models.NewTemplateContract("replace", path, contractName, displayName, scope, filterType, targetDscp, priority, description, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), contractStruct)
 	if err != nil {
 		return err

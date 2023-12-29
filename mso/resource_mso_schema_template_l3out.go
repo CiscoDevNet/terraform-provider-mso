@@ -65,6 +65,11 @@ func resourceMSOTemplateL3out() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"description": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -109,6 +114,7 @@ func resourceMSOTemplateL3outImport(d *schema.ResourceData, m interface{}) ([]*s
 					d.Set("schema_id", get_attribute[0])
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(l3outCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(l3outCont.S("description").String()))
 
 					vrfRef := models.StripQuotes(l3outCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -156,13 +162,18 @@ func resourceMSOTemplateL3outCreate(d *schema.ResourceData, m interface{}) error
 		vrf_template_name = templateName
 	}
 
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
 	path := fmt.Sprintf("/templates/%s/intersiteL3outs/-", templateName)
-	l3outStruct := models.NewTemplateL3out("add", path, l3outName, displayName, vrfRefMap)
+	l3outStruct := models.NewTemplateL3out("add", path, l3outName, displayName, description, vrfRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), l3outStruct)
 
@@ -214,6 +225,7 @@ func resourceMSOTemplateL3outRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(l3outCont.S("displayName").String()))
+					d.Set("description", models.StripQuotes(l3outCont.S("description").String()))
 
 					vrfRef := models.StripQuotes(l3outCont.S("vrfRef").String())
 					re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/vrfs/(.*)")
@@ -261,13 +273,18 @@ func resourceMSOTemplateL3outUpdate(d *schema.ResourceData, m interface{}) error
 		vrf_template_name = templateName
 	}
 
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
 	path := fmt.Sprintf("/templates/%s/intersiteL3outs/%s", templateName, l3outName)
-	l3outStruct := models.NewTemplateL3out("replace", path, l3outName, displayName, vrfRefMap)
+	l3outStruct := models.NewTemplateL3out("replace", path, l3outName, displayName, description, vrfRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), l3outStruct)
 
@@ -300,13 +317,18 @@ func resourceMSOTemplateL3outDelete(d *schema.ResourceData, m interface{}) error
 		vrf_template_name = templateName
 	}
 
+	var description string
+	if tempVar, ok := d.GetOk("description"); ok {
+		description = tempVar.(string)
+	}
+
 	vrfRefMap := make(map[string]interface{})
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 
 	path := fmt.Sprintf("/templates/%s/intersiteL3outs/%s", templateName, l3outName)
-	l3outStruct := models.NewTemplateL3out("remove", path, l3outName, displayName, vrfRefMap)
+	l3outStruct := models.NewTemplateL3out("remove", path, l3outName, displayName, description, vrfRefMap)
 
 	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), l3outStruct)
 
