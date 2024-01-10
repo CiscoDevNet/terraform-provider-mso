@@ -157,9 +157,11 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			// NOTE: rules is a required attribute but to utilize the ResourceDiff functionality marked as optional and computed
 			"rules": &schema.Schema{
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
@@ -375,8 +377,6 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 		},
 		// Clear the "rules" attribute diff when its not a valid change
 		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
-
-			// Schema validation parts begins
 			// When the listener Protocol is https
 			_, listenerProtocol := diff.GetChange("protocol")
 			if listenerProtocol.(string) == "https" {
@@ -387,10 +387,16 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				}
 			}
 
-			_, newRulesCheck := diff.GetChange("rules")
-			newRulesCheckList := newRulesCheck.(*schema.Set).List()
+			// Get the diff between old and new rules
+			oldRules, newRules := diff.GetChange("rules")
 
-			for _, newRule := range newRulesCheckList {
+			// oldRules - holds the API response content
+			oldRulesList := oldRules.(*schema.Set).List()
+
+			// newRules - holds the user config content
+			newRulesList := newRules.(*schema.Set).List()
+
+			for _, newRule := range newRulesList {
 				newRuleMap := newRule.(map[string]interface{})
 
 				// When the rule action_type is "redirect"
@@ -474,17 +480,6 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 					}
 				}
 			}
-			// Schema validation parts ends
-
-			// Diff handling begins
-			// Get the diff between old and new rules
-			oldRules, newRules := diff.GetChange("rules")
-
-			// oldRules - holds the API response content
-			oldRulesList := oldRules.(*schema.Set).List()
-
-			// newRules - holds the user config content
-			newRulesList := newRules.(*schema.Set).List()
 
 			sort.Slice(oldRulesList, func(i, j int) bool {
 				return oldRulesList[i].(interface{}).(map[string]interface{})["priority"].(int) < oldRulesList[j].(interface{}).(map[string]interface{})["priority"].(int)
@@ -498,7 +493,7 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				return nil
 			}
 
-			rulesDiffBoolList := make([]bool, 0)
+			rulesDiffBool := true // true - is not a valid change and false - is a valid change
 			for _, newRule := range newRulesList {
 				for _, oldRule := range oldRulesList {
 
@@ -520,44 +515,43 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							newRuleHealthCheckMap := newRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
 							oldRuleHealthCheckMap := oldRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
 
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["host"].(string) == oldRuleHealthCheckMap["host"].(string))
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["interval"].(int) == oldRuleHealthCheckMap["interval"].(int))
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["path"].(string) == oldRuleHealthCheckMap["path"].(string))
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["port"].(int) == oldRuleHealthCheckMap["port"].(int))
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["protocol"].(string) == oldRuleHealthCheckMap["protocol"].(string))
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["host"].(string) == oldRuleHealthCheckMap["host"].(string)
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["interval"].(int) == oldRuleHealthCheckMap["interval"].(int)
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["path"].(string) == oldRuleHealthCheckMap["path"].(string)
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["port"].(int) == oldRuleHealthCheckMap["port"].(int)
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["protocol"].(string) == oldRuleHealthCheckMap["protocol"].(string)
 
 							newRuleHealthCheckSuccessCode := newRuleHealthCheckMap["success_code"].(string)
 							oldRuleHealthCheckSuccessCode := oldRuleHealthCheckMap["success_code"].(string)
-
 							if newRuleHealthCheckSuccessCode == "" && oldRuleHealthCheckSuccessCode == "200-399" {
-								rulesDiffBoolList = append(rulesDiffBoolList, true) // Not a valid change because 200-399 is the default value
+								rulesDiffBool = rulesDiffBool && true // Not a valid change because 200-399 is the default value
 							} else if newRuleHealthCheckSuccessCode == oldRuleHealthCheckSuccessCode {
-								rulesDiffBoolList = append(rulesDiffBoolList, true) // Not a valid change - both are equal
+								rulesDiffBool = rulesDiffBool && true // Not a valid change - both are equal
 							} else if newRuleHealthCheckSuccessCode == "" && oldRuleHealthCheckSuccessCode != "" {
-								rulesDiffBoolList = append(rulesDiffBoolList, true) // Not a valid change - because the success_code is optional and computed, so the when the success_code is empty we will not consider it as a valid change
+								rulesDiffBool = rulesDiffBool && true // Not a valid change - because the success_code is optional and computed, so the when the success_code is empty we will not consider it as a valid change
 							} else if (newRuleHealthCheckSuccessCode != "" && oldRuleHealthCheckSuccessCode != "") && (newRuleHealthCheckSuccessCode != oldRuleHealthCheckSuccessCode) {
-								rulesDiffBoolList = append(rulesDiffBoolList, false) // Valid change - both are not equal and also not empty
+								rulesDiffBool = rulesDiffBool && false // Valid change - both are not equal and also not empty
 							} else {
-								rulesDiffBoolList = append(rulesDiffBoolList, false) // By default set false when the above conditions are not met
+								rulesDiffBool = rulesDiffBool && false // By default set false when the above conditions are not met
 							}
 
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["timeout"].(int) == oldRuleHealthCheckMap["timeout"].(int))
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["unhealthy_threshold"].(int) == oldRuleHealthCheckMap["unhealthy_threshold"].(int))
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["timeout"].(int) == oldRuleHealthCheckMap["timeout"].(int)
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["unhealthy_threshold"].(int) == oldRuleHealthCheckMap["unhealthy_threshold"].(int)
 
-							rulesDiffBoolList = append(rulesDiffBoolList, newRuleHealthCheckMap["use_host_from_rule"] == oldRuleHealthCheckMap["use_host_from_rule"])
+							rulesDiffBool = rulesDiffBool && newRuleHealthCheckMap["use_host_from_rule"] == oldRuleHealthCheckMap["use_host_from_rule"]
 						} else if len(newRuleHealthCheckList) == 0 && len(oldRuleHealthCheckList) != 0 {
 							// When the newRuleHealthCheckList (user config) is empty and oldRuleHealthCheckList (state file content) not empty
 							oldRuleHealthCheckMap := oldRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
 
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["host"].(string) == "")
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["interval"].(int) == 0)
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["path"].(string) == "")
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["port"].(int) == 0)
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["protocol"].(string) == "")
-							rulesDiffBoolList = append(rulesDiffBoolList, (oldRuleHealthCheckMap["success_code"].(string) == "200-399" || oldRuleHealthCheckMap["success_code"].(string) == ""))
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["timeout"].(int) == 0)
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["unhealthy_threshold"].(int) == 0)
-							rulesDiffBoolList = append(rulesDiffBoolList, oldRuleHealthCheckMap["use_host_from_rule"] == false)
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["host"].(string) == ""
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["interval"].(int) == 0
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["path"].(string) == ""
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["port"].(int) == 0
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["protocol"].(string) == ""
+							rulesDiffBool = rulesDiffBool && (oldRuleHealthCheckMap["success_code"].(string) == "200-399" || oldRuleHealthCheckMap["success_code"].(string) == "")
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["timeout"].(int) == 0
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["unhealthy_threshold"].(int) == 0
+							rulesDiffBool = rulesDiffBool && oldRuleHealthCheckMap["use_host_from_rule"] == false
 						}
 
 						newProviderEPGRefList := newRuleMap["provider_epg_ref"].(*schema.Set).List()
@@ -577,13 +571,13 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 								newTemplateName = diff.Get("template_name").(string)
 							}
 
-							rulesDiffBoolList = append(rulesDiffBoolList, newProviderEPGRefMap["anp_name"].(string) == oldProviderEPGRefMap["anp_name"].(string))
-							rulesDiffBoolList = append(rulesDiffBoolList, newProviderEPGRefMap["epg_name"].(string) == oldProviderEPGRefMap["epg_name"].(string))
-							rulesDiffBoolList = append(rulesDiffBoolList, newSchemaID == oldProviderEPGRefMap["schema_id"].(string))
-							rulesDiffBoolList = append(rulesDiffBoolList, newTemplateName == oldProviderEPGRefMap["template_name"].(string))
+							rulesDiffBool = rulesDiffBool && newProviderEPGRefMap["anp_name"].(string) == oldProviderEPGRefMap["anp_name"].(string)
+							rulesDiffBool = rulesDiffBool && newProviderEPGRefMap["epg_name"].(string) == oldProviderEPGRefMap["epg_name"].(string)
+							rulesDiffBool = rulesDiffBool && newSchemaID == oldProviderEPGRefMap["schema_id"].(string)
+							rulesDiffBool = rulesDiffBool && newTemplateName == oldProviderEPGRefMap["template_name"].(string)
 
 						} else if (len(newProviderEPGRefList) == 0 && len(oldProviderEPGRefList) == 1) || (len(newProviderEPGRefList) == 1 && len(oldProviderEPGRefList) == 0) {
-							rulesDiffBoolList = append(rulesDiffBoolList, false) // its a valid change
+							rulesDiffBool = rulesDiffBool && false // its a valid change
 						}
 
 						newFloatingIp := newRuleMap["floating_ip"].(string)
@@ -632,55 +626,45 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 						oldPort := oldRuleMap["port"].(int)
 						oldRedirectPort := oldRuleMap["redirect_port"].(int)
 
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newPort != 0 && newPort != oldPort))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectPort != 0 && newRedirectPort != oldRedirectPort))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newFloatingIp != "" && newFloatingIp != oldFloatingIp))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newHost != "" && newHost != oldHost))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newPath != "" && newPath != oldPath))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newAction != "" && newAction != oldAction))
+						rulesDiffBool = rulesDiffBool && !(newPort != 0 && newPort != oldPort)
+						rulesDiffBool = rulesDiffBool && !(newRedirectPort != 0 && newRedirectPort != oldRedirectPort)
+						rulesDiffBool = rulesDiffBool && !(newFloatingIp != "" && newFloatingIp != oldFloatingIp)
+						rulesDiffBool = rulesDiffBool && !(newHost != "" && newHost != oldHost)
+						rulesDiffBool = rulesDiffBool && !(newPath != "" && newPath != oldPath)
+						rulesDiffBool = rulesDiffBool && !(newAction != "" && newAction != oldAction)
 						// TODO: Should be uncommented once condition is configured through UI
-						// rulesDiffBoolList = append(rulesDiffBoolList, !(newCondition != "" && newCondition != oldCondition))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newActionType != "" && newActionType != oldActionType))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newContentType != "" && newContentType != oldContentType))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newProtocol != "" && newProtocol != oldProtocol))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newUrlType != "" && newUrlType != oldUrlType))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newCustomUrl != "" && newCustomUrl != oldCustomUrl))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectHostName != "" && newRedirectHostName != oldRedirectHostName))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectPath != "" && newRedirectPath != oldRedirectPath))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectQuery != "" && newRedirectQuery != oldRedirectQuery))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newResponseCode != "" && newResponseCode != oldResponseCode))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newResponseBody != "" && newResponseBody != oldResponseBody))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectProtocol != "" && newRedirectProtocol != oldRedirectProtocol))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newRedirectCode != "" && newRedirectCode != oldRedirectCode))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newTargetIpType != "" && newTargetIpType != oldTargetIpType))
-						rulesDiffBoolList = append(rulesDiffBoolList, !(newTargetIpType != "" && newTargetIpType != oldTargetIpType))
+						// rulesDiffBool = rulesDiffBool &&  !(newCondition != "" && newCondition != oldCondition)
+						rulesDiffBool = rulesDiffBool && !(newActionType != "" && newActionType != oldActionType)
+						rulesDiffBool = rulesDiffBool && !(newContentType != "" && newContentType != oldContentType)
+						rulesDiffBool = rulesDiffBool && !(newProtocol != "" && newProtocol != oldProtocol)
+						rulesDiffBool = rulesDiffBool && !(newUrlType != "" && newUrlType != oldUrlType)
+						rulesDiffBool = rulesDiffBool && !(newCustomUrl != "" && newCustomUrl != oldCustomUrl)
+						rulesDiffBool = rulesDiffBool && !(newRedirectHostName != "" && newRedirectHostName != oldRedirectHostName)
+						rulesDiffBool = rulesDiffBool && !(newRedirectPath != "" && newRedirectPath != oldRedirectPath)
+						rulesDiffBool = rulesDiffBool && !(newRedirectQuery != "" && newRedirectQuery != oldRedirectQuery)
+						rulesDiffBool = rulesDiffBool && !(newResponseCode != "" && newResponseCode != oldResponseCode)
+						rulesDiffBool = rulesDiffBool && !(newResponseBody != "" && newResponseBody != oldResponseBody)
+						rulesDiffBool = rulesDiffBool && !(newRedirectProtocol != "" && newRedirectProtocol != oldRedirectProtocol)
+						rulesDiffBool = rulesDiffBool && !(newRedirectCode != "" && newRedirectCode != oldRedirectCode)
+						rulesDiffBool = rulesDiffBool && !(newTargetIpType != "" && newTargetIpType != oldTargetIpType)
 
 						break
 					} else if (newRuleName != oldRuleName && newRulePriority == oldRulePriority) || (newRuleName == oldRuleName && newRulePriority != oldRulePriority) {
-						rulesDiffBoolList = append(rulesDiffBoolList, false) // its a valid change
+						rulesDiffBool = rulesDiffBool && false // its a valid change
 					}
+				}
+				// When the rulesDiffBool is false (valid change), stop the diff checking
+				if !rulesDiffBool {
+					return nil
 				}
 			}
 
-			// Note: Sample data
-			// rulesDiffBoolList = []bool{true}  // When the list contains only true - not a valid change
-			// rulesDiffBoolList = []bool{false} // When the list contains minimum one false - its a valid change
-
-			rulesDiffFlag := false
-			for _, rulesDiffBool := range rulesDiffBoolList {
-				// Case 0: rulesDiffFlag = false is the initial value and also not a valid change
-				// Case 1: false || !true(false) => false(rulesDiffFlag) - Not a valid change
-				// Case 2: false || !false(true) => true(rulesDiffFlag) - Valid change
-				rulesDiffFlag = rulesDiffFlag || !rulesDiffBool
-			}
-
-			// rulesDiffFlag = true is a valid change
-			// rulesDiffFlag = false is not a valid change and also that is the initial value, so we need to clear the rules attribute diff
-			if !rulesDiffFlag { // !rulesDiffFlag is equal to !false(true)
+			// rulesDiffBool = true - is not a valid change and also the initial value, so clear the diff
+			// rulesDiffBool = false - is a valid change
+			if rulesDiffBool {
 				diff.Clear("rules")
 			}
 			return nil
-			// Diff handling ends
 		},
 	}
 }
