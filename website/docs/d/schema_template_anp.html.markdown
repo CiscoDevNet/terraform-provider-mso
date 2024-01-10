@@ -31,3 +31,4 @@ data "mso_schema_template_anp" "example" {
 ## Attribute Reference ##
 
 * `display_name` - (Read-Only) The name of the ANP as displayed on the MSO UI.
+* `description` - (Read-Only) The description of the ANP.

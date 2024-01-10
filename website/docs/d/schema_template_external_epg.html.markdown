@@ -43,3 +43,4 @@ data "mso_schema_template_external_epg" "example" {
 * `l3out_template_name` - (Read-Only) The template name of the L3out associated with the External EPG.
 * `selector_name` - (Read-Only) The name of the External EPG selector.
 * `selector_ip` - (Read-Only) The ip address of the External EPG selector.
+* `description` - (Read-Only) The description of the External EPG selector.

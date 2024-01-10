@@ -6,11 +6,12 @@ type TemplateL3out struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateL3out(ops, path, name, displayName string, vrfRef map[string]interface{}) *TemplateL3out {
+func NewTemplateL3out(ops, path, name, displayName, desc string, vrfRef map[string]interface{}) *TemplateL3out {
 	var l3outMap map[string]interface{}
 	l3outMap = map[string]interface{}{
 		"name":        name,
 		"displayName": displayName,
+		"description": desc,
 		"vrfRef":      vrfRef,
 	}
 

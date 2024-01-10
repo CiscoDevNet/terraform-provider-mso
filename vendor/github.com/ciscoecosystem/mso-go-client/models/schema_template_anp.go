@@ -6,12 +6,13 @@ type SchemaTemplateAnp struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateAnp(ops, path, Name, displayName string) *SchemaTemplateAnp {
+func NewSchemaTemplateAnp(ops, path, Name, displayName, desc string) *SchemaTemplateAnp {
 	var VrfMap map[string]interface{}
 
 	if ops != "remove" {
 		VrfMap = map[string]interface{}{
 			"displayName": displayName,
+			"description": desc,
 			"name":        Name,
 			"epgs":        []interface{}{},
 		}

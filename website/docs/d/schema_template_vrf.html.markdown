@@ -35,3 +35,4 @@ data "mso_schema_template_vrf" "example" {
 * `vzany` - (Read-Only) Whether vzany is enabled.
 * `ip_data_plane_learning` - (Read-Only) Whether IP data plane learning is enabled.
 * `preferred_group` - (Read-Only) Whether to preferred group is enabled.
+* `description` - (Read-Only) The description of the VRF.

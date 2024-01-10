@@ -34,3 +34,4 @@ data "mso_schema_template_l3out" "example" {
 * `vrf_name` - (Read-Only) The name of the VRF associated with the L3out.
 * `vrf_schema_id` - (Read-Only) The schema ID of the VRF associated with the L3out.
 * `vrf_template_name` - (Read-Only) The template name of the VRF associated with the L3out.
+* `description` - (Read-Only) The description of the L3out.
