@@ -71,10 +71,6 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"description": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 		}),
 	}
 }
