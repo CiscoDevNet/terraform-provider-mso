@@ -41,6 +41,7 @@ resource "mso_schema_template_contract" "example" {
 * `template_name` - (Required) The template name under which you want to deploy Contract.
 * `contract_name` - (Required) The name of the Contract.
 * `display_name` - (Optional) The display name of the Contract.
+* `description` - (Optional) The description of the Contract.
 * `filter_type` - (Optional)  The type of filters assigned to the Contract. Allowed values are `bothWay` and `oneWay`. Default to `bothWay`.
 * `scope` - (Optional) The scope of the Contract. Allowed values are `application-profile`, `tenant`, `context`, and `global`. Default to `context`.
 * `target_dscp` - (Optional) The dscp value of the Contract. Allowed values are `af11`, `af12`, `af13`, `af21`, `af22`, `af23`, `af31`, `af32`, `af33`, `af41`, `af42`, `af43`, `cs0`, `cs1`, `cs2`, `cs3`, `cs4`, `cs5`, `cs6`, `cs7`, `expeditedForwarding`, `voiceAdmit`, and `unspecified`. Defaults to `unspecified`.

@@ -6,10 +6,11 @@ type TemplateContract struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewTemplateContract(ops, path, name, displayName, scope, filterType, targetDscp, priority string, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider []interface{}) *TemplateContract {
+func NewTemplateContract(ops, path, name, displayName, scope, filterType, targetDscp, priority, desc string, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider []interface{}) *TemplateContract {
 	contractMap := map[string]interface{}{
 		"name":                                  name,
 		"displayName":                           displayName,
+		"description":                           desc,
 		"scope":                                 scope,
 		"filterType":                            filterType,
 		"filterRelationships":                   filterRelationships,

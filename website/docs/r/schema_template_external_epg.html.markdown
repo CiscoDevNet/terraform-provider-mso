@@ -36,6 +36,7 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 * `template_name` - (Required) Template where External-epg to be created.
 * `external_epg_name` - (Required) Name of External-epg.
 * `display_name` - (Required) Display Name of the External-epg on the MSO UI.
+* `description` - (Optional) The description of the External-epg.
 * `external_epg_type` - (Optional) Type of External EPG. Allowed values are `on-premise` and `cloud`. Default to `on-premise`.
 * `vrf_name` - (Required) The VRF associated to this External-epg. VRF must exist.
 * `vrf_schema_id` - (Optional) SchemaID of VRF. schema_id of External-epg will be used if not provided. Should use this parameter when VRF is in different schema than external-epg.

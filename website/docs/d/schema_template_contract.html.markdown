@@ -49,3 +49,4 @@ data "mso_schema_template_contract" "example" {
     * `filter_template_name` - (Read-Only) The template name of the Filter.
     * `filter_name` - (Read-Only) The name of the Filter.
 * `directives` - (Read-Only) **Deprecated** The directives of the Filter.
+* `description` - (Read-Only) The description of the Contract.
