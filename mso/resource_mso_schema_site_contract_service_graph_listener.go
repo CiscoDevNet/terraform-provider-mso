@@ -396,6 +396,10 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 			// newRules - holds the user config content
 			newRulesList := newRules.(*schema.Set).List()
 
+			if len(newRulesList) == 0 {
+				return fmt.Errorf("Rules cannot be empty, minimum one item is required to perform 'create/update' operation")
+			}
+
 			for _, newRule := range newRulesList {
 				newRuleMap := newRule.(map[string]interface{})
 

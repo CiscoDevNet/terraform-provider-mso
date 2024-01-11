@@ -125,7 +125,7 @@ resource "mso_schema_site_contract_service_graph_listener" "example" {
   * `name` - (Required) The key ring name of the SSL Certificate.
   * `target_dn` - (Required) The key ring DN of the SSL Certificate.
   * `certificate_store` - (Required) The certificate store of the SSL Certificate. Allowed values are `default`, `iam` and `acm`.
-* `rules` - (Required) The Rules information of the Listener.
+* `rules` - (Required) The Rules information of the Listener. Minimum one item is required to perform `create/update` operation.
   * `name` - (Required) The name of the Rule.
   * `floating_ip` - (Optional) The floating IP of the Rule.
   * `priority` - (Required) The priority (index) of the Rule.
