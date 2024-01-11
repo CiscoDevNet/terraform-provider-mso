@@ -232,7 +232,7 @@ func resourceMSOTemplateContractFilterCreate(d *schema.ResourceData, m interface
 	}
 
 	path := createMSOTemplateContractFilterPath(templateName, contractName, getFilterRelationshipTypeMap()[filterType], "-")
-	filterStruct := models.NewTemplateContractFilterRelationShip("add", path, action, priority, "", filterRefMap, directives)
+	filterStruct := models.NewTemplateContractFilterRelationShip("add", path, action, priority, filterRefMap, directives)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
 	if err != nil {
 		return err
@@ -299,7 +299,7 @@ func resourceMSOTemplateContractFilterUpdate(d *schema.ResourceData, m interface
 	}
 
 	path := createMSOTemplateContractFilterPath(templateName, d.Get("contract_name").(string), getFilterRelationshipTypeMap()[d.Get("filter_type").(string)], filterName)
-	filterStruct := models.NewTemplateContractFilterRelationShip("replace", path, action, priority, "", filterRefMap, directives)
+	filterStruct := models.NewTemplateContractFilterRelationShip("replace", path, action, priority, filterRefMap, directives)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
 	if err != nil {
 		return err
