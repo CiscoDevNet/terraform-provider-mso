@@ -113,3 +113,63 @@ func valueInSliceofStrings(value string, list []string) bool {
 	}
 	return false
 }
+
+// convertInterfaceToString converts an interface object to a string.
+//
+// interfaceObject: The interface object to be converted.
+// Returns: The converted string.
+func convertInterfaceToString(interfaceObject interface{}) string {
+	switch v := interfaceObject.(type) {
+	case string:
+		return v
+	case nil:
+		return ""
+	default:
+		return ""
+	}
+}
+
+// convertInterfaceToInt converts an interface object to an integer.
+//
+// interfaceObject: The interface object to be converted.
+// Returns: The converted integer value.
+func convertInterfaceToInt(interfaceObject interface{}) int {
+	switch v := interfaceObject.(type) {
+	case int:
+		return v
+	case float64:
+		return int(v)
+	case nil:
+		return 0
+	default:
+		return 0
+	}
+}
+
+func boolToYesNo(b bool) string {
+	if b {
+		return "yes"
+	}
+	return "no"
+}
+
+func yesNoToBool(s string) bool {
+	return s == "yes"
+}
+
+func getMapKeys(inputMap map[string]string) []string {
+	var keys []string
+	for k := range inputMap {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func getKeyByValue(inputMap map[string]string, value string) string {
+	for k, v := range inputMap {
+		if v == value {
+			return k
+		}
+	}
+	return ""
+}

@@ -65,3 +65,25 @@ func (graphAttr *SiteContractServiceGraph) ToMap() (map[string]interface{}, erro
 
 	return graphAttrMap, nil
 }
+
+func NewSiteContractServiceGraphListener(ops, path, name, protocol, securityPolicy string, port int, certificates []interface{}, rules []interface{}, frontendIpDnMap map[string]string) *PatchPayload {
+
+	listenerMap := map[string]interface{}{
+		"name":         name,
+		"port":         port,
+		"protocol":     protocol,
+		"certificates": certificates,
+		"rules":        rules,
+		"nlbDevIp":     frontendIpDnMap,
+	}
+
+	if securityPolicy != "" {
+		listenerMap["secPolicy"] = securityPolicy
+	}
+
+	return &PatchPayload{
+		Ops:   ops,
+		Path:  path,
+		Value: listenerMap,
+	}
+}
