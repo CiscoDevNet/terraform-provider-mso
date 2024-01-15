@@ -32,15 +32,15 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) SchemaID under which you want to deploy External-epg.
-* `template_name` - (Required) Template where External-epg to be created.
-* `external_epg_name` - (Required) Name of External-epg.
-* `display_name` - (Required) Display Name of the External-epg on the MSO UI.
-* `description` - (Optional) The description of the External-epg.
-* `external_epg_type` - (Optional) Type of External EPG. Allowed values are `on-premise` and `cloud`. Default to `on-premise`.
-* `vrf_name` - (Required) The VRF associated to this External-epg. VRF must exist.
-* `vrf_schema_id` - (Optional) SchemaID of VRF. schema_id of External-epg will be used if not provided. Should use this parameter when VRF is in different schema than external-epg.
-* `vrf_template_name` - (Optional) Template Name of VRF. template_name of External-epg will be used if not provided.
+* `schema_id` - (Required) SchemaID under which you want to deploy External EPG.
+* `template_name` - (Required) Template where External EPG is to be created.
+* `external_epg_name` - (Required) Name of the External EPG.
+* `display_name` - (Required) Display Name of the External EPG on the MSO UI.
+* `description` - (Optional) The description of the External EPG.
+* `external_epg_type` - (Optional) The type of External EPG. Allowed values are `on-premise` and `cloud`. Default to `on-premise`.
+* `vrf_name` - (Required) The VRF associated with the External EPG. VRF must exist.
+* `vrf_schema_id` - (Optional) SchemaID of VRF. schema_id of External EPG will be used if not provided. This parameter should be used when VRF is in a different schema than external EPG.
+* `vrf_template_name` - (Optional) Template Name of VRF. The template_name of External EPG will be used if not provided.
 * `include_in_preferred_group` - (Optional) This parameter indicates whether EPG is included in preferred group or not. Default to false.
 * `l3out_name` - (Optional) Name of L3out to attach. Should use this parameter with `external_epg_type` as `on-premise`.
 * `l3out_schema_id` - (Optional) SchemaId of L3out. `schema_id` will be used if not provided. Should use this parameter with `external_epg_type` as `on-premise`.
