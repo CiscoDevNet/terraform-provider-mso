@@ -436,50 +436,53 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 				}
 
 				// When the Health Checks protocol is "http/https"
-				newHealthCheckMap := newRuleMap["health_check"].(*schema.Set).List()[0].(interface{}).(map[string]interface{})
-				newHealthCheckProtocol := newHealthCheckMap["protocol"].(string)
-				if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
-					newHealthCheckPort := newHealthCheckMap["port"].(int)
-					newHealthCheckPath := newHealthCheckMap["path"].(string)
-					newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
-					newHealthCheckTimeout := newHealthCheckMap["timeout"].(int)
-					newHealthCheckInterval := newHealthCheckMap["interval"].(int)
-					newHealthCheckSuccessCode := newHealthCheckMap["success_code"].(string)
-					if newHealthCheckPort == 0 || newHealthCheckPath == "" || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckTimeout == 0 || newHealthCheckInterval == 0 || newHealthCheckSuccessCode == "" {
-						return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'port', 'path', 'unhealthy_threshold', 'timeout', 'interval', 'success_code' attributes must be set")
-					}
-					// when the listener protocol is "http/https", the Health Checks protocol is "http/https" and use_host_from_rule is true then the host attribute must be set
-					if listenerProtocol.(string) == "http" || listenerProtocol.(string) == "https" {
-						newHealthCheckUseHostFromRule := newHealthCheckMap["use_host_from_rule"].(bool)
-						newHealthCheckHost := newHealthCheckMap["host"].(string)
-						if !newHealthCheckUseHostFromRule && newHealthCheckHost == "" {
-							return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'use_host_from_rule' and 'host' attributes must be set")
-						}
-					}
-				}
-
-				// when the listener protocol is "tcp/udp" Provider EPG is required
-				if listenerProtocol.(string) == "tcp" || listenerProtocol.(string) == "udp" {
-					newProviderEPGRefList := newRuleMap["provider_epg_ref"].(*schema.Set).List()
-					if len(newProviderEPGRefList) == 0 || len(newRuleMap["health_check"].(*schema.Set).List()) == 0 {
-						return fmt.Errorf("When the 'listener_protocol' is 'tcp/udp', the 'provider_epg_ref', 'health_check' attributes must be set")
-					}
-					// When the listener protocol is "tcp/udp" and the Health Checks protocol is "tcp"
-					if newHealthCheckProtocol == "tcp" {
-						newHealthCheckPort := newHealthCheckMap["port"].(int)
-						newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
-						newHealthCheckInterval := newHealthCheckMap["interval"].(int)
-						if newHealthCheckPort == 0 || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckInterval == 0 {
-							return fmt.Errorf("When the 'health_check' protocol is 'tcp', the 'port', 'unhealthy_threshold', 'interval' attributes must be set")
-						}
-					} else if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
-						// When the listener protocol is "tcp/udp" and the Health Checks protocol is "http/https"
+				newHealthCheckList := newRuleMap["health_check"].(*schema.Set).List()
+				if len(newHealthCheckList) > 1 {
+					newHealthCheckMap := newHealthCheckList[0].(interface{}).(map[string]interface{})
+					newHealthCheckProtocol := newHealthCheckMap["protocol"].(string)
+					if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
 						newHealthCheckPort := newHealthCheckMap["port"].(int)
 						newHealthCheckPath := newHealthCheckMap["path"].(string)
 						newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
+						newHealthCheckTimeout := newHealthCheckMap["timeout"].(int)
 						newHealthCheckInterval := newHealthCheckMap["interval"].(int)
-						if newHealthCheckPort == 0 || newHealthCheckPath == "" || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckInterval == 0 {
-							return fmt.Errorf("When the 'health_check' protocol is 'tcp', the 'port', 'newHealthCheckPath', 'unhealthy_threshold', 'interval' attributes must be set")
+						newHealthCheckSuccessCode := newHealthCheckMap["success_code"].(string)
+						if newHealthCheckPort == 0 || newHealthCheckPath == "" || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckTimeout == 0 || newHealthCheckInterval == 0 || newHealthCheckSuccessCode == "" {
+							return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'port', 'path', 'unhealthy_threshold', 'timeout', 'interval', 'success_code' attributes must be set")
+						}
+						// when the listener protocol is "http/https", the Health Checks protocol is "http/https" and use_host_from_rule is true then the host attribute must be set
+						if listenerProtocol.(string) == "http" || listenerProtocol.(string) == "https" {
+							newHealthCheckUseHostFromRule := newHealthCheckMap["use_host_from_rule"].(bool)
+							newHealthCheckHost := newHealthCheckMap["host"].(string)
+							if !newHealthCheckUseHostFromRule && newHealthCheckHost == "" {
+								return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'use_host_from_rule' and 'host' attributes must be set")
+							}
+						}
+					}
+
+					// when the listener protocol is "tcp/udp" Provider EPG is required
+					if listenerProtocol.(string) == "tcp" || listenerProtocol.(string) == "udp" {
+						newProviderEPGRefList := newRuleMap["provider_epg_ref"].(*schema.Set).List()
+						if len(newProviderEPGRefList) == 0 || len(newRuleMap["health_check"].(*schema.Set).List()) == 0 {
+							return fmt.Errorf("When the 'listener_protocol' is 'tcp/udp', the 'provider_epg_ref', 'health_check' attributes must be set")
+						}
+						// When the listener protocol is "tcp/udp" and the Health Checks protocol is "tcp"
+						if newHealthCheckProtocol == "tcp" {
+							newHealthCheckPort := newHealthCheckMap["port"].(int)
+							newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
+							newHealthCheckInterval := newHealthCheckMap["interval"].(int)
+							if newHealthCheckPort == 0 || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckInterval == 0 {
+								return fmt.Errorf("When the 'health_check' protocol is 'tcp', the 'port', 'unhealthy_threshold', 'interval' attributes must be set")
+							}
+						} else if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
+							// When the listener protocol is "tcp/udp" and the Health Checks protocol is "http/https"
+							newHealthCheckPort := newHealthCheckMap["port"].(int)
+							newHealthCheckPath := newHealthCheckMap["path"].(string)
+							newHealthCheckUnhealthyThreshold := newHealthCheckMap["unhealthy_threshold"].(int)
+							newHealthCheckInterval := newHealthCheckMap["interval"].(int)
+							if newHealthCheckPort == 0 || newHealthCheckPath == "" || newHealthCheckUnhealthyThreshold == 0 || newHealthCheckInterval == 0 {
+								return fmt.Errorf("When the 'health_check' protocol is 'tcp', the 'port', 'newHealthCheckPath', 'unhealthy_threshold', 'interval' attributes must be set")
+							}
 						}
 					}
 				}
