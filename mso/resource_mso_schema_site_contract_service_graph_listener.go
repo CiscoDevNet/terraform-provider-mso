@@ -437,7 +437,7 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 
 				// When the Health Checks protocol is "http/https"
 				newHealthCheckList := newRuleMap["health_check"].(*schema.Set).List()
-				if len(newHealthCheckList) > 1 {
+				if len(newHealthCheckList) > 0 {
 					newHealthCheckMap := newHealthCheckList[0].(interface{}).(map[string]interface{})
 					newHealthCheckProtocol := newHealthCheckMap["protocol"].(string)
 					if newHealthCheckProtocol == "http" || newHealthCheckProtocol == "https" {
@@ -456,6 +456,8 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 							newHealthCheckHost := newHealthCheckMap["host"].(string)
 							if !newHealthCheckUseHostFromRule && newHealthCheckHost == "" {
 								return fmt.Errorf("When the 'health_check' protocol is 'http/https', the 'use_host_from_rule' and 'host' attributes must be set")
+							} else if newHealthCheckUseHostFromRule && newHealthCheckHost != "" {
+								return fmt.Errorf("When the 'use_host_from_rule' is true, the 'host' should be empty")
 							}
 						}
 					}
@@ -978,7 +980,7 @@ func postSchemaSiteContractServiceGraphListenerConfig(ops string, d *schema.Reso
 			healthCheckPayloadMap["successCode"] = healthCheckMap["success_code"].(string)
 
 			healthCheckPayloadMap["useHostFromRule"] = boolToYesNo(healthCheckMap["use_host_from_rule"].(bool))
-			if healthCheckPayloadMap["useHostFromRule"] == "yes" {
+			if healthCheckPayloadMap["useHostFromRule"] == "no" {
 				healthCheckPayloadMap["host"] = healthCheckMap["host"].(string)
 			}
 		}
