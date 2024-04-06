@@ -1,3 +1,12 @@
+## 1.1.0 (April 5, 2024)
+BUG FIXES:
+- Fix maximum TLS version to 1.3.
+
+IMPROVEMENTS:
+- Add attribute 'description' to a few applicable resources and data sources
+- Add mso_schema_site_contract_service_graph_listener resource and data source to manage Azure CNC Contract Service Graph Load Balancer - Listeners and Rules (#256)
+- Add missing Cloud APIC / CNC site parameters for mso_schema_site_service_graph module.
+
 ## 1.0.0 (December 6, 2023)
 BREAKING CHANGE:
 - Separating site and template level service graph provider from mso_schema_template_service_graph (#240)
