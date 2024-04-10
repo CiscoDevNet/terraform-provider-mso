@@ -518,10 +518,7 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
-	anpName := d.Get("anp_name").(string)
 	Name := d.Get("name").(string)
-	bdName := d.Get("bd_name").(string)
-	vrfName := d.Get("vrf_name").(string)
 	displayName := d.Get("display_name").(string)
 	description := d.Get("description").(string)
 
@@ -584,17 +581,20 @@ func resourceMSOSchemaTemplateAnpEpgUpdate(d *schema.ResourceData, m interface{}
 	}
 
 	vrfRefMap := make(map[string]interface{})
-	vrfRefMap["schemaId"] = vrf_schema_id
-	vrfRefMap["templateName"] = vrf_template_name
-	vrfRefMap["vrfName"] = vrfName
+	if vrfName, ok := d.GetOk("vrf_name"); ok {
+		vrfRefMap["schemaId"] = vrf_schema_id
+		vrfRefMap["templateName"] = vrf_template_name
+		vrfRefMap["vrfName"] = vrfName
+	}
 
 	bdRefMap := make(map[string]interface{})
-	bdRefMap["schemaId"] = bd_schema_id
-	bdRefMap["templateName"] = bd_template_name
-	bdRefMap["bdName"] = bdName
+	if bdName, ok := d.GetOk("bd_name"); ok {
+		bdRefMap["schemaId"] = bd_schema_id
+		bdRefMap["templateName"] = bd_template_name
+		bdRefMap["bdName"] = bdName
+	}
 
-	path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id())
-	anpEpgStruct := models.NewTemplateAnpEpg("replace", path, Name, displayName, intraEpg, epgType, description, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
+	anpEpgStruct := models.NewTemplateAnpEpg("replace", getPathFromId(d.Id()), Name, displayName, intraEpg, epgType, description, uSegEpg, intersiteMulticasteSource, preferredGroup, proxyArp, vrfRefMap, bdRefMap, cloudServiceEpgConfig)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgStruct)
 
@@ -608,9 +608,7 @@ func resourceMSOSchemaTemplateAnpEpgDelete(d *schema.ResourceData, m interface{}
 	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
-	templateName := d.Get("template_name").(string)
-	anpName := d.Get("anp_name").(string)
-	anpEpgRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", templateName, anpName, d.Id()))
+	anpEpgRemovePatchPayload := models.GetRemovePatchPayload(getPathFromId(d.Id()))
 	response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpEpgRemovePatchPayload)
 
 	// Ignoring Error with code 141: Resource Not Found when deleting

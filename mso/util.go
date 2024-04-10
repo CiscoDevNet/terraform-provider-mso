@@ -173,3 +173,8 @@ func getKeyByValue(inputMap map[string]string, value string) string {
 	}
 	return ""
 }
+
+// Removes the schema id from the id and returns the path needed in PATCH request
+func getPathFromId(id string) string {
+	return fmt.Sprintf("/%s", strings.Join(strings.Split(id, "/")[1:], "/"))
+}
