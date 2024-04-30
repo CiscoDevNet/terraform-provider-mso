@@ -74,7 +74,6 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						"pod": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ForceNew:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"leaf": {
@@ -86,13 +85,11 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						"path": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ForceNew:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"vlan": {
 							Type:     schema.TypeInt,
 							Required: true,
-							ForceNew: true,
 						},
 						"deployment_immediacy": {
 							Type:     schema.TypeString,
