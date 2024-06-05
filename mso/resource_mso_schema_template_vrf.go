@@ -81,6 +81,12 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"site_aware_policy_enforcement": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -141,6 +147,10 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) (
 					}
 					if vrfCont.Exists("description") {
 						d.Set("description", models.StripQuotes(vrfCont.S("description").String()))
+					}
+					if vrfCont.Exists("siteAwarePolicyEnforcementMode") {
+						siteAwarePolicyEnforcementMode, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("siteAwarePolicyEnforcementMode").String()))
+						d.Set("site_aware_policy_enforcement", siteAwarePolicyEnforcementMode)
 					}
 					found = true
 					break
@@ -210,7 +220,12 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) e
 		description = tempVar.(string)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", fmt.Sprintf("/templates/%s/vrfs/-", templateName), Name, displayName, ipDataPlaneLearning, description, l3m, vzany, preferredGroup)
+	var siteAwarePolicyEnforcementMode bool
+	if site_aware_policy_enforcement, ok := d.GetOk("site_aware_policy_enforcement"); ok {
+		siteAwarePolicyEnforcementMode = site_aware_policy_enforcement.(bool)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("add", fmt.Sprintf("/templates/%s/vrfs/-", templateName), Name, displayName, ipDataPlaneLearning, description, l3m, vzany, preferredGroup, siteAwarePolicyEnforcementMode)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -273,7 +288,12 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) e
 		description = tempVar.(string)
 	}
 
-	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", fmt.Sprintf("/templates/%s/vrfs/%s", templateName, Name), Name, displayName, ipDataPlaneLearning, description, l3m, vzany, preferredGroup)
+	var siteAwarePolicyEnforcementMode bool
+	if site_aware_policy_enforcement, ok := d.GetOk("site_aware_policy_enforcement"); ok {
+		siteAwarePolicyEnforcementMode = site_aware_policy_enforcement.(bool)
+	}
+
+	schemaTemplateVrfApp := models.NewSchemaTemplateVrf("replace", fmt.Sprintf("/templates/%s/vrfs/%s", templateName, Name), Name, displayName, ipDataPlaneLearning, description, l3m, vzany, preferredGroup, siteAwarePolicyEnforcementMode)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateVrfApp)
 	if err != nil {
@@ -352,6 +372,10 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) err
 					}
 					if vrfCont.Exists("description") {
 						d.Set("description", models.StripQuotes(vrfCont.S("description").String()))
+					}
+					if vrfCont.Exists("siteAwarePolicyEnforcementMode") {
+						siteAwarePolicyEnforcementMode, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("siteAwarePolicyEnforcementMode").String()))
+						d.Set("site_aware_policy_enforcement", siteAwarePolicyEnforcementMode)
 					}
 					found = true
 					break
