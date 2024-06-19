@@ -234,7 +234,7 @@ func datasourceMSOSiteRead(d *schema.ResourceData, m interface{}) error {
 		}
 		d.Set("location", locset)
 
-		if dataCon.Exists("labels") {
+		if dataCon.Exists("labels") && dataCon.S("labels").Data() != nil {
 			d.Set("labels", dataCon.S("labels").Data().([]interface{}))
 		}
 
