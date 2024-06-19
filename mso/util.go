@@ -1,10 +1,12 @@
 package mso
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
+	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -177,4 +179,46 @@ func getKeyByValue(inputMap map[string]string, value string) string {
 // Removes the schema id from the id and returns the path needed in PATCH request
 func getPathFromId(id string) string {
 	return fmt.Sprintf("/%s", strings.Join(strings.Split(id, "/")[1:], "/"))
+}
+
+func setPatchPayloadToContainer(payloadContainer *container.Container, op, path string, value interface{}) error {
+
+	payloadMap := map[string]interface{}{"op": op, "path": path, "value": value}
+
+	payload, err := json.Marshal(payloadMap)
+	if err != nil {
+		return err
+	}
+
+	jsonContainer, err := container.ParseJSON([]byte(payload))
+	if err != nil {
+		return err
+	}
+
+	err = payloadContainer.ArrayAppend(jsonContainer.Data())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func doPatchRequest(msoClient *client.Client, path string, payloadCon *container.Container) error {
+
+	req, err := msoClient.MakeRestRequest("PATCH", path, payloadCon, true)
+	if err != nil {
+		return err
+	}
+
+	cont, _, err := msoClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	err = client.CheckForErrors(cont, "PATCH")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
