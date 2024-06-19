@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -279,14 +280,31 @@ func resourceMSOSchemaSiteBdUpdate(d *schema.ResourceData, m interface{}) error 
 	bdRefMap["templateName"] = bd_template_name
 	bdRefMap["bdName"] = bdName
 
-	path := fmt.Sprintf("/sites/%s-%s/bds/%s", siteId, templateName, bdName)
-	bdStruct := models.NewSchemaSiteBd("replace", path, mac, bdRefMap, host)
+	payloadCon := container.New()
+	payloadCon.Array()
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdStruct)
-
+	err := setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/bdRef", siteId, templateName, bdName), bdRefMap)
 	if err != nil {
 		return err
 	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/hostBasedRouting", siteId, templateName, bdName), host)
+	if err != nil {
+		return err
+	}
+
+	if mac != "" {
+		err := setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/mac", siteId, templateName, bdName), mac)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCon)
+	if err != nil {
+		return err
+	}
+
 	return resourceMSOSchemaSiteBdRead(d, m)
 }
 
