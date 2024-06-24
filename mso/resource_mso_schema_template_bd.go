@@ -848,10 +848,115 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["schemaId"] = vrf_schema_id
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
-	path := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
-	bdStruct := models.NewTemplateBD("replace", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, description, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
+	basePath := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
+	payloadCon := container.New()
+	payloadCon.Array()
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/displayName", basePath), displayName)
+	if err != nil {
+		return err
+	}
+
+	if layer2_unknown_unicast != "" {
+		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2UnknownUnicast", basePath), layer2_unknown_unicast)
+		if err != nil {
+			return err
+		}
+	}
+
+	if unknown_multicast_flooding != "" {
+		if unknown_multicast_flooding == "optimized_flooding" {
+			unknown_multicast_flooding = "opt-flood"
+		}
+		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unkMcastAct", basePath), unknown_multicast_flooding)
+		if err != nil {
+			return err
+		}
+	}
+
+	if multi_destination_flooding != "" {
+		if multi_destination_flooding == "flood_in_encap" {
+			multi_destination_flooding = "encap-flood"
+		} else if multi_destination_flooding == "flood_in_bd" {
+			multi_destination_flooding = "bd-flood"
+		}
+		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/multiDstPktAct", basePath), multi_destination_flooding)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ipv6_unknown_multicast_flooding != "" {
+		if ipv6_unknown_multicast_flooding == "optimized_flooding" {
+			ipv6_unknown_multicast_flooding = "opt-flood"
+		}
+		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/v6unkMcastAct", basePath), ipv6_unknown_multicast_flooding)
+		if err != nil {
+			return err
+		}
+	}
+
+	if virtual_mac_address != "" {
+		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), virtual_mac_address)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/description", basePath), description)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/intersiteBumTrafficAllow", basePath), intersite_bum_traffic)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/optimizeWanBandwidth", basePath), optimize_wan_bandwidth)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2Stretch", basePath), layer2_stretch)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l3MCast", basePath), layer3_multicast)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/arpFlood", basePath), arp_flooding)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unicastRouting", basePath), unicast_routing)
+	if err != nil {
+		return err
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vrfRef", basePath), vrfRefMap)
+	if err != nil {
+		return err
+	}
+
+	if len(dhcpPolMap) != 0 {
+		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabel", basePath), dhcpPolMap)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabels", basePath), dhcpPolList)
+	if err != nil {
+		return err
+	}
+
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaID), payloadCon)
 	if err != nil {
 		return err
 	}
