@@ -15,14 +15,16 @@ Manages MSO Resource Schema Template Vrf
 ```hcl
 
 resource "mso_schema_template_vrf" "vrf1" {
-  schema_id        = mso_schema.schema1.id
-  template         = "temp3"
-  name             = "vrf982"
-  display_name     = "vz1"
-  layer3_multicast = false
-  vzany            = false
-  ip_data_plane_learning = "disabled"
-  preferred_group = true
+  schema_id                     = mso_schema.schema1.id
+  template                      = "temp3"
+  name                          = "vrf982"
+  display_name                  = "vz1"
+  description                   = "vrf description"
+  layer3_multicast              = false
+  vzany                         = false
+  ip_data_plane_learning        = "disabled"
+  preferred_group               = true
+  site_aware_policy_enforcement = true
 }
 
 ```
@@ -39,6 +41,7 @@ resource "mso_schema_template_vrf" "vrf1" {
 * `vzany` - (Optional) Whether to enable vzany.
 * `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled or disabled. Allowed values are `disabled`and `enabled`. Default to `enabled`.
 * `preferred_group` - (Optional) Whether to enable preferred Endpoint Group.
+* `site_aware_policy_enforcement` - (Optional) Whether to enable site aware policy enforcement mode.
 
 ## Attribute Reference ##
 

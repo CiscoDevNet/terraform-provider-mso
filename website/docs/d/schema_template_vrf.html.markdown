@@ -36,3 +36,4 @@ data "mso_schema_template_vrf" "example" {
 * `ip_data_plane_learning` - (Read-Only) Whether IP data plane learning is enabled.
 * `preferred_group` - (Read-Only) Whether to preferred group is enabled.
 * `description` - (Read-Only) The description of the VRF.
+* `site_aware_policy_enforcement` - (Read-Only) Whether site aware policy enforcement mode is enabled.

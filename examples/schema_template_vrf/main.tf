@@ -66,14 +66,15 @@ resource "mso_schema_template_anp" "anp" {
 }
 
 resource "mso_schema_template_anp_epg" "anp_epg" {
-  schema_id       = mso_schema.schema_test.id
-  template_name   = mso_schema_template_anp.anp.template
-  anp_name        = mso_schema_template_anp.anp.name
-  name            = "epg"
-  display_name    = "epg"
-  bd_name         = mso_schema_template_bd.bd.name
-  vrf_name        = mso_schema_template_vrf.vrf_preferred_group.name
-  preferred_group = true
+  schema_id                     = mso_schema.schema_test.id
+  template_name                 = mso_schema_template_anp.anp.template
+  anp_name                      = mso_schema_template_anp.anp.name
+  name                          = "epg"
+  display_name                  = "epg"
+  bd_name                       = mso_schema_template_bd.bd.name
+  vrf_name                      = mso_schema_template_vrf.vrf_preferred_group.name
+  preferred_group               = true
+  site_aware_policy_enforcement = true
 }
 
 data "mso_schema_template_vrf" "vrf_preferred_group_data" {

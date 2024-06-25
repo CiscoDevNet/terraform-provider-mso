@@ -57,6 +57,10 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"site_aware_policy_enforcement": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -116,6 +120,10 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 					}
 					if vrfCont.Exists("description") {
 						d.Set("description", models.StripQuotes(vrfCont.S("description").String()))
+					}
+					if vrfCont.Exists("siteAwarePolicyEnforcementMode") {
+						siteAwarePolicyEnforcementMode, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("siteAwarePolicyEnforcementMode").String()))
+						d.Set("site_aware_policy_enforcement", siteAwarePolicyEnforcementMode)
 					}
 					found = true
 					break
