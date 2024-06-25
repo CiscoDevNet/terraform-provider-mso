@@ -36,8 +36,6 @@ func errorForObjectNotFound(err error, dn string, con *container.Container, d *s
 	return nil
 }
 
-// CHANGE TO UTILS IF YOU ADD MORE FUNCTIONS
-
 // extractServiceGraphNodesFromContainer extracts the nodes from the given container.
 //
 // Parameters:
@@ -181,7 +179,7 @@ func getPathFromId(id string) string {
 	return fmt.Sprintf("/%s", strings.Join(strings.Split(id, "/")[1:], "/"))
 }
 
-func setPatchPayloadToContainer(payloadContainer *container.Container, op, path string, value interface{}) error {
+func addPatchPayloadToContainer(payloadContainer *container.Container, op, path string, value interface{}) error {
 
 	payloadMap := map[string]interface{}{"op": op, "path": path, "value": value}
 

@@ -283,18 +283,18 @@ func resourceMSOSchemaSiteBdUpdate(d *schema.ResourceData, m interface{}) error 
 	payloadCon := container.New()
 	payloadCon.Array()
 
-	err := setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/bdRef", siteId, templateName, bdName), bdRefMap)
+	err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/bdRef", siteId, templateName, bdName), bdRefMap)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/hostBasedRouting", siteId, templateName, bdName), host)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/hostBasedRouting", siteId, templateName, bdName), host)
 	if err != nil {
 		return err
 	}
 
 	if mac != "" {
-		err := setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/mac", siteId, templateName, bdName), mac)
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/mac", siteId, templateName, bdName), mac)
 		if err != nil {
 			return err
 		}
