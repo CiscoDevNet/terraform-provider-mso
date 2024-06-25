@@ -853,13 +853,13 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	payloadCon := container.New()
 	payloadCon.Array()
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/displayName", basePath), displayName)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/displayName", basePath), displayName)
 	if err != nil {
 		return err
 	}
 
 	if layer2_unknown_unicast != "" {
-		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2UnknownUnicast", basePath), layer2_unknown_unicast)
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2UnknownUnicast", basePath), layer2_unknown_unicast)
 		if err != nil {
 			return err
 		}
@@ -869,7 +869,7 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 		if unknown_multicast_flooding == "optimized_flooding" {
 			unknown_multicast_flooding = "opt-flood"
 		}
-		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unkMcastAct", basePath), unknown_multicast_flooding)
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unkMcastAct", basePath), unknown_multicast_flooding)
 		if err != nil {
 			return err
 		}
@@ -881,7 +881,7 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 		} else if multi_destination_flooding == "flood_in_bd" {
 			multi_destination_flooding = "bd-flood"
 		}
-		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/multiDstPktAct", basePath), multi_destination_flooding)
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/multiDstPktAct", basePath), multi_destination_flooding)
 		if err != nil {
 			return err
 		}
@@ -891,67 +891,67 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 		if ipv6_unknown_multicast_flooding == "optimized_flooding" {
 			ipv6_unknown_multicast_flooding = "opt-flood"
 		}
-		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/v6unkMcastAct", basePath), ipv6_unknown_multicast_flooding)
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/v6unkMcastAct", basePath), ipv6_unknown_multicast_flooding)
 		if err != nil {
 			return err
 		}
 	}
 
 	if virtual_mac_address != "" {
-		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), virtual_mac_address)
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), virtual_mac_address)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/description", basePath), description)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/description", basePath), description)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/intersiteBumTrafficAllow", basePath), intersite_bum_traffic)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/intersiteBumTrafficAllow", basePath), intersite_bum_traffic)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/optimizeWanBandwidth", basePath), optimize_wan_bandwidth)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/optimizeWanBandwidth", basePath), optimize_wan_bandwidth)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2Stretch", basePath), layer2_stretch)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2Stretch", basePath), layer2_stretch)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l3MCast", basePath), layer3_multicast)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l3MCast", basePath), layer3_multicast)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/arpFlood", basePath), arp_flooding)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/arpFlood", basePath), arp_flooding)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unicastRouting", basePath), unicast_routing)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unicastRouting", basePath), unicast_routing)
 	if err != nil {
 		return err
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vrfRef", basePath), vrfRefMap)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vrfRef", basePath), vrfRefMap)
 	if err != nil {
 		return err
 	}
 
 	if len(dhcpPolMap) != 0 {
-		err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabel", basePath), dhcpPolMap)
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabel", basePath), dhcpPolMap)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = setPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabels", basePath), dhcpPolList)
+	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabels", basePath), dhcpPolList)
 	if err != nil {
 		return err
 	}
