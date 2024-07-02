@@ -1,3 +1,14 @@
+## 1.2.0 (July 2, 2024)
+BUG FIXES:
+- Prevent destroy operation for static ports in bulk list when updating the list
+- Fix update and delete of mso_schema_template_anp_epg
+- Fix to prevent subnets from mso_schema_template_bd to be removed when the template bd attributes are updated
+- Fix to prevent panic when labels are null in mso_site datasource
+- Fix to prevent the L3out reference from being removed when host based routing for bd is updated in mso_schema_site_bd
+
+IMPROVEMENTS:
+- Add support for site_aware_policy_enforcement in mso_schema_template_vrf (#274)
+
 ## 1.1.0 (April 5, 2024)
 BUG FIXES:
 - Fix maximum TLS version to 1.3.
