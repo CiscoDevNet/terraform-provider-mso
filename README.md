@@ -8,7 +8,7 @@ Requirements
 - [Go](https://golang.org/doc/install) Latest Version
 
 ## Building The Provider ##
-Clone this repository to: `$GOPATH/src/github.com/ciscoecosystem/terraform-provider-mso`.
+Clone this repository to: `$GOPATH/src/github.com/CiscoDevNet/terraform-provider-mso`.
 Clone mso-go-client to `$GOPATH/src/github.com/ciscoecosystem/mso-go-client`.
 
 ```sh

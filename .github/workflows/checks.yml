@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  # Permission for checking out code
+  contents: read
+
+jobs:
+  build:
+    name: Check & Build Provider
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - run: chmod +x ./scripts/gofmtcheck.sh
+      - name: gofmt Check
+        run: ./scripts/gofmtcheck.sh
+      - run: go mod tidy
+      - run: go mod vendor
+      - name: Check vendor for changes
+        run: git diff --exit-code
+      - name: Build
+        run: go build -v
+
+  go-releaser:
+    name: Dry-Run GoReleaser Check
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+      - uses: actions/setup-go@v5
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+          version: latest
+      - name: GoReleaser Release Check
+        run: goreleaser release --skip=publish,sign --snapshot --clean
+
+  # acceptance:
+  #   name: Acceptance Tests
+  #   if: github.repository_owner == 'CiscoDevNet'
+  #   needs: [build]
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     MSO_USERNAME: 'ansible_github_ci'
+  #     MSO_PASSWORD: 'sJ94G92#8dq2hx*K4qh'
+  #   concurrency:
+  #       group: tf-mso-ci-test-${{ matrix.ndo_host.name }}
+  #       cancel-in-progress: false
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       ndo_host:
+  #         - name: v4.1
+  #           url: 'https://173.36.219.32/'
+  #         - name: v4.3
+  #           url: 'https://173.36.219.35/'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-go@v5
+  #       with:
+  #         go-version-file: 'go.mod'
+  #     - uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: '1.7.*'
+  #         terraform_wrapper: false
+  #     - name: Terraform Acceptance Test (NDO ${{ matrix.ndo_host.name }})
+  #       run: go test github.com/CiscoDevNet/terraform-provider-mso/mso -v -race -timeout 300m -coverprofile=coverage.out -covermode=atomic
+  #       env:
+  #         TF_ACC: '1'
+  #         TF_ACC_STATE_LINEAGE: '1'
+  #         MSO_URL: ${{ matrix.ndo_host.url }}
+  #     - name: Upload coverage to Codecov
+  #       # Upload Coverage on latest only
+  #       if: ${{ matrix.ndo_host.name == 'v4.3'}}
+  #       uses: codecov/codecov-action@v4
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
