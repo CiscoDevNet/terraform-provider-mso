@@ -1,3 +1,7 @@
+## 1.2.1 (July 12, 2024)
+BUG FIXES:
+- Add check to avoid error in plan when mso_schema_site_service_graph resource is used when template does not exist yet.
+
 ## 1.2.0 (July 2, 2024)
 BUG FIXES:
 - Prevent destroy operation for static ports in bulk list when updating the list

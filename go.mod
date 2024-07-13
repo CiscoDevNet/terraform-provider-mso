@@ -1,4 +1,4 @@
-module github.com/terraform-providers/terraform-provider-mso
+module github.com/CiscoDevNet/terraform-provider-mso
 
 go 1.13
 
