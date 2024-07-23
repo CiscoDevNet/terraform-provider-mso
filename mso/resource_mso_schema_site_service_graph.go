@@ -111,44 +111,53 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 				return err
 			}
 
-			sgCont, _, err := getTemplateServiceGraphCont(cont, templateName.(string), graphName.(string))
-			if strings.Contains(fmt.Sprint(err), "No Template found") {
-				// The function getTemplateServiceGraphCont() is not required when the template is attched to physical site.
-				return nil
-			} else if err != nil {
-				log.Printf("graphcont err %v", err)
-				return err
-			} else {
-				/* The function getTemplateServiceGraphCont() is required when the template is attached to cloud sites.
-				provider_connector_type is applicable only for cloud sites. */
-				var templateServiceNodeList []string
-				serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
-				for _, val := range serviceNodes {
-					serviceNodeValues := val.(map[string]interface{})
-					nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
+			_, serviceNode := diff.GetChange("service_node")
+			if len(serviceNode.([]interface{})) != 0 {
+				for _, node := range serviceNode.([]interface{}) {
+					serviceNodeMap := node.(map[string]interface{})
+					if !valueInSliceofStrings(serviceNodeMap["provider_connector_type"].(string), []string{"none", "redir"}) { // If provider_connector_type is not none, then validate the user input.
+						sgCont, _, err := getTemplateServiceGraphCont(cont, templateName.(string), graphName.(string))
+						if strings.Contains(fmt.Sprint(err), "No Template found") {
+							// The function getTemplateServiceGraphCont() is not required when the template is attached to physical site.
+							return nil
+						} else if err != nil {
+							log.Printf("graphcont err %v", err)
+							return err
+						} else {
+							/* The function getTemplateServiceGraphCont() is required when the template is attached to cloud sites.
+							provider_connector_type is applicable only for cloud sites. */
+							var templateServiceNodeList []string
+							serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
+							for _, val := range serviceNodes {
+								serviceNodeValues := val.(map[string]interface{})
+								nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
 
-					nodeType, err := getNodeNameFromId(msoClient, nodeId)
-					if err != nil {
-						return err
+								nodeType, err := getNodeNameFromId(msoClient, nodeId)
+								if err != nil {
+									return err
+								}
+
+								templateServiceNodeList = append(templateServiceNodeList, nodeType)
+							}
+
+							/* Loop trough the templateServiceNodeList and validate the site level user input(provider_connector_type)
+							to verify it's value for nodetype 'other' and 'firewall'. */
+							_, siteServiceNodes := diff.GetChange("service_node")
+
+							for i, val := range siteServiceNodes.([]interface{}) {
+								serviceNode := val.(map[string]interface{})
+								if templateServiceNodeList[i] == "other" && !valueInSliceofStrings(serviceNode["provider_connector_type"].(string), []string{"none", "redir"}) {
+									return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir] when template's service node type is other, got %s.", i, serviceNode["provider_connector_type"])
+								} else if templateServiceNodeList[i] == "firewall" && !valueInSliceofStrings(serviceNode["provider_connector_type"].(string), []string{"none", "redir", "snat", "dnat", "snat_dnat"}) {
+									return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir, snat, dnat, snat_dnat] when template's service node type is firewall, got %s.", i, serviceNode["provider_connector_type"])
+								}
+							}
+							return nil
+						}
 					}
-
-					templateServiceNodeList = append(templateServiceNodeList, nodeType)
 				}
-
-				/* Loop trough the templateServiceNodeList and validate the site level user input(provider_connector_type)
-				to verify it's value for nodetype 'other' and 'firewall'. */
-				_, siteServiceNodes := diff.GetChange("service_node")
-
-				for i, val := range siteServiceNodes.([]interface{}) {
-					serviceNode := val.(map[string]interface{})
-					if templateServiceNodeList[i] == "other" && !valueInSliceofStrings(serviceNode["provider_connector_type"].(string), []string{"none", "redir"}) {
-						return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir] when template's service node type is other, got %s.", i, serviceNode["provider_connector_type"])
-					} else if templateServiceNodeList[i] == "firewall" && !valueInSliceofStrings(serviceNode["provider_connector_type"].(string), []string{"none", "redir", "snat", "dnat", "snat_dnat"}) {
-						return fmt.Errorf("The expected value for service_node.%d.provider_connector_type have to be one of [none, redir, snat, dnat, snat_dnat] when template's service node type is firewall, got %s.", i, serviceNode["provider_connector_type"])
-					}
-				}
-				return nil
 			}
+			return nil
 		},
 	}
 }

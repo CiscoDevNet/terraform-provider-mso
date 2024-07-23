@@ -52,6 +52,7 @@ func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"service_graph_template_name": &schema.Schema{
