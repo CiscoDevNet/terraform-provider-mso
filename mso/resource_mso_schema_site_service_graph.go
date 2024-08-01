@@ -121,7 +121,6 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 							// The function getTemplateServiceGraphCont() is not required when the template is attached to physical site.
 							return nil
 						} else if err != nil {
-							log.Printf("graphcont err %v", err)
 							return err
 						} else {
 							/* The function getTemplateServiceGraphCont() is required when the template is attached to cloud sites.
