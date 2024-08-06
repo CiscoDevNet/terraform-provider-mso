@@ -527,7 +527,7 @@ func resourceMSOTemplateContractRead(d *schema.ResourceData, m interface{}) erro
 	err = setContractFromSchema(d, schemaCont, schemaId, templateName, contractName)
 	if err != nil {
 		d.SetId("")
-		log.Printf("[DEBUG] %v", err)
+		log.Printf("[DEBUG] Resetting Id due to setContractFromSchema returning '%s'", err)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
