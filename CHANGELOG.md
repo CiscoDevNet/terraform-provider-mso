@@ -1,3 +1,7 @@
+## 1.2.2 (August 6, 2024)
+BUG FIXES:
+- Fix idempotency issues in mso_schema_template_contract, mso_schema_site_contract_service_graph and mso_schema_site_service_graph resources.
+
 ## 1.2.1 (July 12, 2024)
 BUG FIXES:
 - Add check to avoid error in plan when mso_schema_site_service_graph resource is used when template does not exist yet.
