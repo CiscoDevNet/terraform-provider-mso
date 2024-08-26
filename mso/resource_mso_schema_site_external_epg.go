@@ -56,6 +56,23 @@ func resourceMSOSchemaSiteExternalEpg() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"l3out_template": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"l3out_schema": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+			"l3out_on_apic": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		}),
 	}
 }
@@ -147,6 +164,9 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 	externalEpgName := d.Get("external_epg_name").(string)
 	templateName := d.Get("template_name").(string)
 	l3outName := d.Get("l3out_name").(string)
+	l3outTemplate := d.Get("l3out_template").(string)
+	l3outSchema := d.Get("l3out_schema").(string)
+	l3outOnApic := d.Get("l3out_on_apic").(bool)
 
 	siteEpgMap := make(map[string]interface{})
 
@@ -156,14 +176,19 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 		if err != nil {
 			return err
 		}
-
+		
 		l3outRefMap := make(map[string]interface{})
 
-		l3outRefMap["schemaId"] = schemaId
-		l3outRefMap["templateName"] = templateName
-		l3outRefMap["l3outName"] = l3outName
+		if l3outOnApic {
+			siteEpgMap["l3outRef"] = ""
+		} else {		
+			l3outRefMap["schemaId"] = l3outSchema
+			l3outRefMap["templateName"] = l3outTemplate
+			l3outRefMap["l3outName"] = l3outName
 
-		siteEpgMap["l3outRef"] = l3outRefMap
+			siteEpgMap["l3outRef"] = l3outRefMap
+		} 
+		
 		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 	} else {
 		siteEpgMap["l3outDn"] = ""
@@ -287,6 +312,9 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 	templateName := d.Get("template_name").(string)
 	externalEpgName := d.Get("external_epg_name").(string)
 	l3outName := d.Get("l3out_name").(string)
+	l3outTemplate := d.Get("l3out_template").(string)
+	l3outSchema := d.Get("l3out_schema").(string)
+	l3outOnApic := d.Get("l3out_on_apic").(bool)
 
 	siteEpgMap := make(map[string]interface{})
 
@@ -299,11 +327,16 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 
 		l3outRefMap := make(map[string]interface{})
 
-		l3outRefMap["schemaId"] = schemaId
-		l3outRefMap["templateName"] = templateName
-		l3outRefMap["l3outName"] = l3outName
+		if l3outOnApic {
+			siteEpgMap["l3outRef"] = ""
+		} else {
 
-		siteEpgMap["l3outRef"] = l3outRefMap
+			l3outRefMap["schemaId"] = l3outSchema
+			l3outRefMap["templateName"] = l3outTemplate
+			l3outRefMap["l3outName"] = l3outName
+
+			siteEpgMap["l3outRef"] = l3outRefMap
+		} 
 		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 	} else {
 		siteEpgMap["l3outDn"] = ""
