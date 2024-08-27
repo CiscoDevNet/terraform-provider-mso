@@ -32,6 +32,9 @@ resource "mso_schema_site_external_epg" "external_epg_1" {
 ## Attribute Reference ##
 
 * `l3out_name` - (Optional) Name of the L3Out.
+* `l3out_schema_id` - (Optional) Schema ID of the L3Out.
+* `l3out_template_name` - (Optional) Template of the L3Out.
+* `l3out_on_apic` - (Optional) Whether L3Out is created only locally on APIC.
 
 ## Importing ##
 
