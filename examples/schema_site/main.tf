@@ -50,9 +50,12 @@ resource "mso_tenant" "tenant_1" {
 }
 
 resource "mso_schema" "schema_1" {
-  name          = var.schema_name
-  template_name = var.template_name
-  tenant_id     = mso_tenant.tenant_1.id
+  name           = var.schema_name
+  template {
+    tenant_id    = mso_tenant.tenant_1.id
+    name         = var.template_name
+    display_name = var.template_name
+  }
 }
 
 resource "mso_schema_site" "schema_site_1" {
@@ -61,10 +64,10 @@ resource "mso_schema_site" "schema_site_1" {
   template_name = var.template_name
 }
 
-// when a template should be undeployed from site before disassociation the 'undeploy_on_delete' argument should be set to true prior to terraform destroy  
+// when a template should be undeployed from site before disassociation the 'undeploy_on_destroy' argument should be set to true prior to terraform destroy  
 resource "mso_schema_site" "schema_site_2" {
-  schema_id          = mso_schema.schema_1.id
-  site_id            = mso_site.site_test_1.id
-  template_name      = var.template_name
-  undeploy_on_delete = true
+  schema_id           = mso_schema.schema_1.id
+  site_id             = mso_site.site_test_1.id
+  template_name       = var.template_name
+  undeploy_on_destroy = true
 }
