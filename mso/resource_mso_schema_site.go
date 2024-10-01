@@ -206,7 +206,7 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 	templateName := d.Get("template_name").(string)
 
 	if d.Get("undeploy_on_destroy").(bool) {
-		req, err := msoClient.MakeRestRequest("GET", fmt.Sprintf("mso/api/v1/deploy/status/schema/%s/template/%s", schemaId, templateName), nil, true)
+		req, err := msoClient.MakeRestRequest("GET", fmt.Sprintf("api/v1/deploy/status/schema/%s/template/%s", schemaId, templateName), nil, true)
 		if err != nil {
 			log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 			return err
@@ -217,9 +217,9 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 		if deployMap, ok := obj.Data().(map[string]interface{}); ok {
-			if statusList, ok := deployMap["status"].([]map[string]interface{}); ok && len(statusList) > 0 {
+			if statusList, ok := deployMap["status"].([]interface{}); ok && len(statusList) > 0 {
 				for _, statusMap := range statusList {
-					if statusMap["siteId"] == siteId && statusMap["status"].(map[string]interface{})["siteStatus"] == "Succeeded" {
+					if statusMap.(map[string]interface{})["siteId"] == siteId && statusMap.(map[string]interface{})["status"].(map[string]interface{})["siteStatus"] == "Succeeded" {
 						versionInt, err := msoClient.CompareVersion("3.7.0.0")
 						if versionInt == -1 {
 							payload, err := container.ParseJSON([]byte(fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "undeploy": ["%s"]}`, schemaId, templateName, siteId)))
