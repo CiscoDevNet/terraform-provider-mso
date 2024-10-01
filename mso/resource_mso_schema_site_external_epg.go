@@ -61,17 +61,19 @@ func resourceMSOSchemaSiteExternalEpg() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"l3out_on_apic"},
 			},
 			"l3out_schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"l3out_on_apic"},
 			},
 			"l3out_on_apic": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
+				ConflictsWith: []string{"l3out_schema_id", "l3out_template_name"},
 			},
 		}),
 	}
@@ -132,7 +134,6 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 								d.Set("l3out_name", matchL3out[3])
 								d.Set("l3out_schema_id", matchL3out[1])
 								d.Set("l3out_template_name", matchL3out[2])
-								d.Set("l3out_on_apic", false)
 							} else {
 								return nil, fmt.Errorf("Error in parsing l3outRef to get L3Out name")
 							}
@@ -144,7 +145,7 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 								d.Set("l3out_name", matchL3out[1])
 								d.Set("l3out_on_apic", true)
 							} else {
-								return fmt.Errorf("Error in parsing l3outDn to get L3Out name")
+								return nil, fmt.Errorf("Error in parsing l3outDn to get L3Out name")
 							}
 						}
 
@@ -195,9 +196,17 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 
 		if l3outOnApic {
 			siteEpgMap["l3outRef"] = ""
-		} else {		
-			l3outRefMap["schemaId"] = l3outSchema
-			l3outRefMap["templateName"] = l3outTemplate
+		} else {
+			if l3outTemplate == "" {
+				l3outRefMap["templateName"] = templateName
+			} else {
+				l3outRefMap["templateName"] = l3outTemplate
+			}
+			if l3outSchema == "" {
+				l3outRefMap["schemaId"] = schemaId
+			} else {
+				l3outRefMap["schemaId"] = l3outSchema
+			}
 			l3outRefMap["l3outName"] = l3outName
 
 			siteEpgMap["l3outRef"] = l3outRefMap
@@ -296,7 +305,6 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 								d.Set("l3out_name", matchL3out[3])
 								d.Set("l3out_schema_id", matchL3out[1])
 								d.Set("l3out_template_name", matchL3out[2])
-								d.Set("l3out_on_apic", false)
 							} else {
 								return fmt.Errorf("Error in parsing l3outRef to get L3Out name")
 							}
@@ -305,7 +313,7 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 							matchL3out := reL3out.FindStringSubmatch(l3outDn)
 							log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead l3outDn: %s matchL3out: %s", l3outDn, matchL3out)
 							if len(matchL3out) >= 2 {
-								d.Set("l3out_name", matchL3out[1])
+								d.Set("l3out_name", matchL3out[2])
 								d.Set("l3out_on_apic", true)
 							} else {
 								return fmt.Errorf("Error in parsing l3outDn to get L3Out name")
@@ -358,9 +366,16 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 		if l3outOnApic {
 			siteEpgMap["l3outRef"] = ""
 		} else {
-
-			l3outRefMap["schemaId"] = l3outSchema
-			l3outRefMap["templateName"] = l3outTemplate
+			if l3outTemplate == "" {
+				l3outRefMap["templateName"] = templateName
+			} else {
+				l3outRefMap["templateName"] = l3outTemplate
+			}
+			if l3outSchema == "" {
+				l3outRefMap["schemaId"] = schemaId
+			} else {
+				l3outRefMap["schemaId"] = l3outSchema
+			}
 			l3outRefMap["l3outName"] = l3outName
 
 			siteEpgMap["l3outRef"] = l3outRefMap
