@@ -55,5 +55,11 @@ The only attribute exported with this resource is `id`. Which is set to the id o
 An existing MSO Schema Site can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_site.site1 {schema_id}/site/{site_name}
+terraform import mso_schema_site.site1 {schema_id}/site/{site_name}/template/{template_name}
+```
+
+Optionally the `undeploy_on_destroy` argument can be set to `true` during import with the following command:
+
+```bash
+terraform import mso_schema_site.site1 {schema_id}/site/{site_name}/template/{template_name}/undeploy_on_destroy/true
 ```
