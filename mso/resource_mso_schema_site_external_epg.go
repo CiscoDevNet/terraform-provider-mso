@@ -56,6 +56,25 @@ func resourceMSOSchemaSiteExternalEpg() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"l3out_template_name": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"l3out_on_apic"},
+			},
+			"l3out_schema_id": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
+				ConflictsWith: []string{"l3out_on_apic"},
+			},
+			"l3out_on_apic": &schema.Schema{
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ConflictsWith: []string{"l3out_schema_id", "l3out_template_name"},
+			},
 		}),
 	}
 }
@@ -106,14 +125,27 @@ func resourceMSOSchemaSiteExternalEpgImport(d *schema.ResourceData, m interface{
 						d.Set("site_id", apiSiteId)
 
 						l3outRef := models.StripQuotes(externalEpgCont.S("l3outRef").String())
+						l3outDn := models.StripQuotes(externalEpgCont.S("l3outDn").String())
 						if l3outRef != "{}" && l3outRef != "" {
 							reL3out := regexp.MustCompile("/schemas/(.*?)/templates/(.*?)/l3outs/(.*)")
 							matchL3out := reL3out.FindStringSubmatch(l3outRef)
 							log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead l3outRef: %s matchL3out: %s", l3outRef, matchL3out)
 							if len(matchL3out) >= 4 {
 								d.Set("l3out_name", matchL3out[3])
+								d.Set("l3out_schema_id", matchL3out[1])
+								d.Set("l3out_template_name", matchL3out[2])
 							} else {
 								return nil, fmt.Errorf("Error in parsing l3outRef to get L3Out name")
+							}
+						} else if l3outDn != "{}" && l3outDn != "" {
+							reL3out := regexp.MustCompile("uni/tn-(.*?)/out-(.*)")
+							matchL3out := reL3out.FindStringSubmatch(l3outDn)
+							log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead l3outDn: %s matchL3out: %s", l3outDn, matchL3out)
+							if len(matchL3out) >= 2 {
+								d.Set("l3out_name", matchL3out[1])
+								d.Set("l3out_on_apic", true)
+							} else {
+								return nil, fmt.Errorf("Error in parsing l3outDn to get L3Out name")
 							}
 						}
 
@@ -147,6 +179,9 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 	externalEpgName := d.Get("external_epg_name").(string)
 	templateName := d.Get("template_name").(string)
 	l3outName := d.Get("l3out_name").(string)
+	l3outTemplate := d.Get("l3out_template_name").(string)
+	l3outSchema := d.Get("l3out_schema_id").(string)
+	l3outOnApic := d.Get("l3out_on_apic").(bool)
 
 	siteEpgMap := make(map[string]interface{})
 
@@ -159,11 +194,24 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 
 		l3outRefMap := make(map[string]interface{})
 
-		l3outRefMap["schemaId"] = schemaId
-		l3outRefMap["templateName"] = templateName
-		l3outRefMap["l3outName"] = l3outName
+		if l3outOnApic {
+			siteEpgMap["l3outRef"] = ""
+		} else {
+			if l3outTemplate == "" {
+				l3outRefMap["templateName"] = templateName
+			} else {
+				l3outRefMap["templateName"] = l3outTemplate
+			}
+			if l3outSchema == "" {
+				l3outRefMap["schemaId"] = schemaId
+			} else {
+				l3outRefMap["schemaId"] = l3outSchema
+			}
+			l3outRefMap["l3outName"] = l3outName
 
-		siteEpgMap["l3outRef"] = l3outRefMap
+			siteEpgMap["l3outRef"] = l3outRefMap
+		}
+
 		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 	} else {
 		siteEpgMap["l3outDn"] = ""
@@ -248,14 +296,27 @@ func resourceMSOSchemaSiteExternalEpgRead(d *schema.ResourceData, m interface{})
 						d.Set("site_id", apiSiteId)
 
 						l3outRef := models.StripQuotes(externalEpgCont.S("l3outRef").String())
+						l3outDn := models.StripQuotes(externalEpgCont.S("l3outDn").String())
 						if l3outRef != "{}" && l3outRef != "" {
 							reL3out := regexp.MustCompile("/schemas/(.*?)/templates/(.*?)/l3outs/(.*)")
 							matchL3out := reL3out.FindStringSubmatch(l3outRef)
 							log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead l3outRef: %s matchL3out: %s", l3outRef, matchL3out)
 							if len(matchL3out) >= 4 {
 								d.Set("l3out_name", matchL3out[3])
+								d.Set("l3out_schema_id", matchL3out[1])
+								d.Set("l3out_template_name", matchL3out[2])
 							} else {
 								return fmt.Errorf("Error in parsing l3outRef to get L3Out name")
+							}
+						} else if l3outDn != "{}" && l3outDn != "" {
+							reL3out := regexp.MustCompile("uni/tn-(.*?)/out-(.*)")
+							matchL3out := reL3out.FindStringSubmatch(l3outDn)
+							log.Printf("[TRACE] resourceMSOSchemaSiteExternalEpgRead l3outDn: %s matchL3out: %s", l3outDn, matchL3out)
+							if len(matchL3out) >= 2 {
+								d.Set("l3out_name", matchL3out[2])
+								d.Set("l3out_on_apic", true)
+							} else {
+								return fmt.Errorf("Error in parsing l3outDn to get L3Out name")
 							}
 						}
 
@@ -287,6 +348,9 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 	templateName := d.Get("template_name").(string)
 	externalEpgName := d.Get("external_epg_name").(string)
 	l3outName := d.Get("l3out_name").(string)
+	l3outTemplate := d.Get("l3out_template_name").(string)
+	l3outSchema := d.Get("l3out_schema_id").(string)
+	l3outOnApic := d.Get("l3out_on_apic").(bool)
 
 	siteEpgMap := make(map[string]interface{})
 
@@ -299,11 +363,23 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 
 		l3outRefMap := make(map[string]interface{})
 
-		l3outRefMap["schemaId"] = schemaId
-		l3outRefMap["templateName"] = templateName
-		l3outRefMap["l3outName"] = l3outName
+		if l3outOnApic {
+			siteEpgMap["l3outRef"] = ""
+		} else {
+			if l3outTemplate == "" {
+				l3outRefMap["templateName"] = templateName
+			} else {
+				l3outRefMap["templateName"] = l3outTemplate
+			}
+			if l3outSchema == "" {
+				l3outRefMap["schemaId"] = schemaId
+			} else {
+				l3outRefMap["schemaId"] = l3outSchema
+			}
+			l3outRefMap["l3outName"] = l3outName
 
-		siteEpgMap["l3outRef"] = l3outRefMap
+			siteEpgMap["l3outRef"] = l3outRefMap
+		}
 		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 	} else {
 		siteEpgMap["l3outDn"] = ""

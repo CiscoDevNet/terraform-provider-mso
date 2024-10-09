@@ -32,6 +32,9 @@ resource "mso_schema_site_external_epg" "external_epg_1" {
 ## Attribute Reference ##
 
 * `l3out_name` - (Optional) Name of the L3Out.
+* `l3out_schema_id` - (Optional) ID of the schema that defines the referenced L3Out. If this attribute is unspecified, it defaults to the current schema. This is mutually exclusive with `l3out_on_apic`.
+* `l3out_template_name` - (Optional) The template that defines the referenced L3Out. If this parameter is unspecified, it defaults to the current template. This is mutually exclusive with `l3out_on_apic`.
+* `l3out_on_apic` - (Optional) Indicates that L3Out is created only localy on APIC. This is mutually exclusive with `l3out_schema_id` and `l3out_template_name`.
 
 ## Importing ##
 
