@@ -109,7 +109,8 @@ func resourceMSOSchemaSiteImport(d *schema.ResourceData, m interface{}) ([]*sche
 		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
 		if apiSiteId == stateSiteId && apiTemplate == template {
-			d.SetId(fmt.Sprintf("%s/sites/%s-%s", schemaId, stateSiteId, template))
+			// d.SetId(fmt.Sprintf("%s/sites/%s-%s", schemaId, stateSiteId, template))
+			d.SetId(apiSiteId)
 			d.Set("schema_id", schemaId)
 			d.Set("site_id", apiSiteId)
 			d.Set("template_name", apiTemplate)
@@ -184,7 +185,8 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
 		if apiSiteId == stateSiteId && apiTemplate == stateTemplate {
-			d.SetId(fmt.Sprintf("%s/sites/%s-%s", schemaId, stateSiteId, stateTemplate))
+			// d.SetId(fmt.Sprintf("%s/sites/%s-%s", schemaId, stateSiteId, stateTemplate))
+			d.SetId(apiSiteId)
 			d.Set("schema_id", schemaId)
 			d.Set("site_id", apiSiteId)
 			d.Set("template_name", apiTemplate)
