@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -63,6 +64,7 @@ func resourceMSOSchemaSiteImport(d *schema.ResourceData, m interface{}) ([]*sche
 	get_attribute := strings.Split(d.Id(), "/")
 	schemaId := get_attribute[0]
 	name := get_attribute[2]
+	template := get_attribute[4]
 	con, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/sites"))
 	if err != nil {
 		return nil, err
@@ -106,21 +108,30 @@ func resourceMSOSchemaSiteImport(d *schema.ResourceData, m interface{}) ([]*sche
 		apiSiteId := models.StripQuotes(tempCont.S("siteId").String())
 		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSiteId == stateSiteId {
-			d.SetId(apiSiteId)
+		if apiSiteId == stateSiteId && apiTemplate == template {
+			d.SetId(fmt.Sprintf("%s/sites/%s-%s", schemaId, stateSiteId, template))
 			d.Set("schema_id", schemaId)
 			d.Set("site_id", apiSiteId)
 			d.Set("template_name", apiTemplate)
+
+			// when undeploy var is provided set it else set default value
+			if len(get_attribute) == 7 {
+				boolValue, err := strconv.ParseBool(get_attribute[6])
+				if err != nil {
+					return nil, fmt.Errorf("Boolean value for 'undeploy_on_destroy' cannot be parsed: %s", boolValue)
+				}
+				d.Set("undeploy_on_destroy", boolValue)
+			} else {
+				d.Set("undeploy_on_destroy", false)
+			}
+
 			found = true
 		}
 
 	}
 
 	if !found {
-		d.SetId("")
-		d.Set("schema_id", "")
-		d.Set("site_id", "")
-		d.Set("template_name", "")
+		return nil, fmt.Errorf("Resource not found for %s", d.Id())
 	}
 
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
@@ -173,7 +184,7 @@ func resourceMSOSchemaSiteRead(d *schema.ResourceData, m interface{}) error {
 		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
 		if apiSiteId == stateSiteId && apiTemplate == stateTemplate {
-			d.SetId(apiSiteId)
+			d.SetId(fmt.Sprintf("%s/sites/%s-%s", schemaId, stateSiteId, stateTemplate))
 			d.Set("schema_id", schemaId)
 			d.Set("site_id", apiSiteId)
 			d.Set("template_name", apiTemplate)
