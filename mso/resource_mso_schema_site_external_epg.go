@@ -57,22 +57,22 @@ func resourceMSOSchemaSiteExternalEpg() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"l3out_template_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
 				ConflictsWith: []string{"l3out_on_apic"},
 			},
 			"l3out_schema_id": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ValidateFunc:  validation.StringLenBetween(1, 1000),
 				ConflictsWith: []string{"l3out_on_apic"},
 			},
 			"l3out_on_apic": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:          schema.TypeBool,
+				Optional:      true,
 				ConflictsWith: []string{"l3out_schema_id", "l3out_template_name"},
 			},
 		}),
@@ -191,7 +191,7 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 		if err != nil {
 			return err
 		}
-		
+
 		l3outRefMap := make(map[string]interface{})
 
 		if l3outOnApic {
@@ -210,8 +210,8 @@ func resourceMSOSchemaSiteExternalEpgCreate(d *schema.ResourceData, m interface{
 			l3outRefMap["l3outName"] = l3outName
 
 			siteEpgMap["l3outRef"] = l3outRefMap
-		} 
-		
+		}
+
 		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 	} else {
 		siteEpgMap["l3outDn"] = ""
@@ -379,7 +379,7 @@ func resourceMSOSchemaSiteExternalEpgUpdate(d *schema.ResourceData, m interface{
 			l3outRefMap["l3outName"] = l3outName
 
 			siteEpgMap["l3outRef"] = l3outRefMap
-		} 
+		}
 		siteEpgMap["l3outDn"] = fmt.Sprintf("uni/tn-%s/out-%s", tenantName, l3outName)
 	} else {
 		siteEpgMap["l3outDn"] = ""
