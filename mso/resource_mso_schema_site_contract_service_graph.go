@@ -3,6 +3,7 @@ package mso
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -309,27 +310,22 @@ func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.Resou
 
 								allMap := make(map[string]interface{})
 
-								providerClusterInterface := strings.Split(siteMap["provider_connector_cluster_interface"].(string), "/")
-								providerClusterInterfaceToken := strings.Split(providerClusterInterface[len(providerClusterInterface)-1], "-")
-								allMap["provider_connector_cluster_interface"] = providerClusterInterfaceToken[1]
+								re := regexp.MustCompile("uni/tn-(.*)/lDevVip-(.*)/lIf-(.*)")
+								provSplit := re.FindStringSubmatch(siteMap["provider_connector_cluster_interface"].(string))
+								allMap["provider_connector_cluster_interface"] = provSplit[3]
+								consSplit := re.FindStringSubmatch(siteMap["consumer_connector_cluster_interface"].(string))
+								allMap["consumer_connector_cluster_interface"] = consSplit[3]
 
-								consumerClusterInterface := strings.Split(siteMap["consumer_connector_cluster_interface"].(string), "/")
-								consumerClusterInterfaceToken := strings.Split(consumerClusterInterface[len(consumerClusterInterface)-1], "-")
-								allMap["consumer_connector_cluster_interface"] = consumerClusterInterfaceToken[1]
-
+								re = regexp.MustCompile("uni/tn-(.*)/svcCont/svcRedirectPol-(.*)")
 								if siteMap["provider_connector_redirect_policy"] != nil {
-									providerRedirectPolicy := strings.Split(siteMap["provider_connector_redirect_policy"].(string), "/")
-									providerRedirectPolicyToken1 := strings.Split(providerRedirectPolicy[1], "-")
-									allMap["provider_connector_redirect_policy_tenant"] = providerRedirectPolicyToken1[1]
-									providerRedirectPolicyToken2 := strings.Split(providerRedirectPolicy[len(providerRedirectPolicy)-1], "-")
-									allMap["provider_connector_redirect_policy"] = providerRedirectPolicyToken2[1]
+									split := re.FindStringSubmatch(siteMap["provider_connector_redirect_policy"].(string))
+									allMap["provider_connector_redirect_policy_tenant"] = split[1]
+									allMap["provider_connector_redirect_policy"] = split[2]
 								}
 								if siteMap["consumer_connector_redirect_policy"] != nil {
-									consumerRedirectPolicy := strings.Split(siteMap["consumer_connector_redirect_policy"].(string), "/")
-									consumerRedirectPolicyToken1 := strings.Split(consumerRedirectPolicy[1], "-")
-									allMap["consumer_connector_redirect_policy_tenant"] = consumerRedirectPolicyToken1[1]
-									consumerRedirectPolicyToken2 := strings.Split(consumerRedirectPolicy[len(consumerRedirectPolicy)-1], "-")
-									allMap["consumer_connector_redirect_policy"] = consumerRedirectPolicyToken2[1]
+									split := re.FindStringSubmatch(siteMap["consumer_connector_redirect_policy"].(string))
+									allMap["consumer_connector_redirect_policy_tenant"] = split[1]
+									allMap["consumer_connector_redirect_policy"] = split[2]
 								}
 								if siteMap["consumer_subnet_ips"] != nil {
 									allMap["consumer_subnet_ips"] = siteMap["consumer_subnet_ips"]
