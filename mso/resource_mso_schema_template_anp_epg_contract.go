@@ -98,6 +98,8 @@ func resourceMSOTemplateAnpEpgContractImport(d *schema.ResourceData, m interface
 	stateANP := get_attribute[4]
 	stateEPG := get_attribute[6]
 	stateContract := get_attribute[8]
+	stateRelationshipType := get_attribute[10]
+
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -145,7 +147,7 @@ func resourceMSOTemplateAnpEpgContractImport(d *schema.ResourceData, m interface
 								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 								match := re.FindStringSubmatch(contractRef)
 								apiContract := match[3]
-								if apiContract == stateContract {
+								if apiContract == stateContract && apiRelationshipType == stateRelationshipType {
 									d.SetId(apiContract)
 									d.Set("contract_name", match[3])
 									d.Set("contract_schema_id", match[1])
