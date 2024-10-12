@@ -45,5 +45,5 @@ No attributes are exported.
 An existing MSO Schema Template Application Network Profile Endpoint Group Contract can be [imported][docs-import] into this resource via its Id/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_schema_template_anp_epg_contract.contract1 {schema_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/contract/{contract_name}/relationship_type/{consumer|provider}
+terraform import mso_schema_template_anp_epg_contract.contract1 {schema_id}/template/{template_name}/anp/{anp_name}/epg/{epg_name}/contract/{contract_name}/relationshipType/{consumer|provider}
 ```
