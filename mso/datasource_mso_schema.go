@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -76,26 +77,39 @@ func datasourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	name := d.Get("name").(string)
-	con, err := msoClient.GetViaURL("api/v1/schemas")
+
+	schemaId, err := getSchemaIdFromName(msoClient, name)
+
+	var dataCon *container.Container
 	if err != nil {
 		return err
-	}
-	data := con.S("schemas").Data().([]interface{})
-	var flag bool
-	var count int
-	for _, info := range data {
-		val := info.(map[string]interface{})
-		if val["displayName"].(string) == name {
-			flag = true
-			break
+	} else if schemaId != "" {
+		dataCon, err = msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+		if err != nil {
+			return err
 		}
-		count = count + 1
-	}
-	if flag != true {
-		return fmt.Errorf("Schema of specified name not found")
+	} else {
+		con, err := msoClient.GetViaURL("api/v1/schemas")
+		if err != nil {
+			return err
+		}
+		data := con.S("schemas").Data().([]interface{})
+		var flag bool
+		var count int
+		for _, info := range data {
+			val := info.(map[string]interface{})
+			if val["displayName"].(string) == name {
+				flag = true
+				break
+			}
+			count = count + 1
+		}
+		if flag != true {
+			return fmt.Errorf("Schema of specified name not found")
+		}
+		dataCon = con.S("schemas").Index(count)
 	}
 
-	dataCon := con.S("schemas").Index(count)
 	d.SetId(models.StripQuotes(dataCon.S("id").String()))
 	d.Set("name", models.StripQuotes(dataCon.S("displayName").String()))
 	d.Set("description", models.StripQuotes(dataCon.S("description").String()))
