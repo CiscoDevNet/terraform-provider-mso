@@ -94,8 +94,6 @@ func resourceMSOSchemaSiteAnpEpgStaticleafImport(d *schema.ResourceData, m inter
 	stateEpg := get_attribute[8]
 	statePath := import_split[2]
 
-	log.Printf("[TRACE] resourceMSOSchemaSiteAnpEpgStaticleafImport stateEpg: %s statePath: %s", stateEpg, statePath)
-
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
 		if err != nil {
