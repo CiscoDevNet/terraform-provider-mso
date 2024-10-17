@@ -220,3 +220,23 @@ func doPatchRequest(msoClient *client.Client, path string, payloadCon *container
 
 	return nil
 }
+
+func getSchemaIdFromName(msoClient *client.Client, name string) (string, error) {
+
+	con, err := msoClient.GetViaURL("/api/v1/schemas/list-identity")
+
+	if err != nil {
+		return "", nil
+	}
+
+	schemas := con.S("schemas").Data().([]interface{})
+	for _, schema := range schemas {
+		if displayName, ok := schema.(map[string]interface{})["displayName"]; ok && displayName == name {
+			if id, ok := schema.(map[string]interface{})["id"]; ok {
+				return id.(string), nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("Schema of specified name not found")
+}
