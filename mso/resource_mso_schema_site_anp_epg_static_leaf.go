@@ -88,10 +88,13 @@ func resourceMSOSchemaSiteAnpEpgStaticleafImport(d *schema.ResourceData, m inter
 	}
 
 	stateSite := get_attribute[2]
+	stateTemplate := get_attribute[4]
 	found := false
-	stateAnp := get_attribute[4]
-	stateEpg := get_attribute[6]
+	stateAnp := get_attribute[6]
+	stateEpg := get_attribute[8]
 	statePath := import_split[2]
+
+	log.Printf("[TRACE] resourceMSOSchemaSiteAnpEpgStaticleafImport stateEpg: %s statePath: %s", stateEpg, statePath)
 
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "sites")
@@ -99,8 +102,9 @@ func resourceMSOSchemaSiteAnpEpgStaticleafImport(d *schema.ResourceData, m inter
 			return nil, err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get Anp list")
@@ -329,6 +333,7 @@ func resourceMSOSchemaSiteAnpEpgStaticleafRead(d *schema.ResourceData, m interfa
 
 	stateSite := d.Get("site_id").(string)
 	found := false
+	stateTemplate := d.Get("template_name").(string)
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
 	statePath := d.Get("path").(string)
@@ -339,8 +344,9 @@ func resourceMSOSchemaSiteAnpEpgStaticleafRead(d *schema.ResourceData, m interfa
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
