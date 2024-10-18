@@ -439,6 +439,7 @@ func resourceMSOSchemaSiteAnpEpgStaticleafDelete(d *schema.ResourceData, m inter
 
 	index := -1
 	stateSite := d.Get("site_id").(string)
+	stateTemplate := d.Get("template_name").(string)
 	stateAnp := d.Get("anp_name").(string)
 	stateEpg := d.Get("epg_name").(string)
 	statePath := d.Get("path").(string)
@@ -449,8 +450,9 @@ func resourceMSOSchemaSiteAnpEpgStaticleafDelete(d *schema.ResourceData, m inter
 			return err
 		}
 		apiSite := models.StripQuotes(tempCont.S("siteId").String())
+		apiTemplate := models.StripQuotes(tempCont.S("templateName").String())
 
-		if apiSite == stateSite {
+		if apiSite == stateSite && apiTemplate == stateTemplate {
 			anpCount, err := tempCont.ArrayCount("anps")
 			if err != nil {
 				return fmt.Errorf("Unable to get Anp list")
