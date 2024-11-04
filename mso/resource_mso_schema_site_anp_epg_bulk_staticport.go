@@ -77,9 +77,11 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"leaf": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
+							Type:     schema.TypeString,
+							Optional: true,
+							// Remove computed because when a user updates the list and causes index shifts
+							//  the leaf state value will be used at the location of the list index when not provided in config.
+							// Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"path": {
@@ -94,27 +96,35 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						"deployment_immediacy": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							// Remove computed because when a user updates the list and causes index shifts
+							//  the deployment_immediacy state value will be used at the location of the list index when not provided in config.
+							// Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{
 								"immediate",
 								"lazy",
 							}, false),
 						},
 						"fex": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
+							Type:     schema.TypeString,
+							Optional: true,
+							// Remove computed because when a user updates the list and causes index shifts
+							//  the fex state value will be used at the location of the list index when not provided in config.
+							// Computed:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						"micro_seg_vlan": {
 							Type:     schema.TypeInt,
 							Optional: true,
-							Computed: true,
+							// Remove computed because when a user updates the list and causes index shifts
+							//  the micro_seg_vlan state value will be used at the location of the list index when not provided in config.
+							// Computed: true,
 						},
 						"mode": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							// Remove computed because when a user updates the list and causes index shifts
+							//  the mode state value will be used at the location of the list index when not provided in config.
+							// Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{
 								"native",
 								"regular",
