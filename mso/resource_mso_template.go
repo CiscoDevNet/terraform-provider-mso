@@ -461,31 +461,3 @@ func resourceMSOTemplateImport(d *schema.ResourceData, m interface{}) ([]*schema
 	log.Println("[DEBUG] MSO Template Resource: Import Completed", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
-
-func getListOfStringsFromSchemaList(d *schema.ResourceData, key string) []string {
-	if values, ok := d.GetOk(key); ok {
-		return convertToListOfStrings(values.([]interface{}))
-	}
-	return nil
-}
-
-func convertToListOfStrings(values []interface{}) []string {
-	result := []string{}
-	for _, item := range values {
-		result = append(result, item.(string))
-	}
-	return result
-}
-
-func duplicatesInList(list []string) []string {
-	duplicates := []string{}
-	set := make(map[string]int)
-	for index, item := range list {
-		if _, ok := set[item]; ok {
-			duplicates = append(duplicates, item)
-		} else {
-			set[item] = index
-		}
-	}
-	return duplicates
-}
