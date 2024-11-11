@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -136,10 +135,6 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 		return fmt.Errorf("Unable to get Static Port list")
 	}
 
-	portPath := regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/extpaths-(?P<fexValue>.*)\/pathep-\[(?P<pathValue>.*)\])`)
-	vpcPath := regexp.MustCompile(`(topology\/(?P<podValue>.*)\/protpaths-(?P<leafValue>.*)\/pathep-\[(?P<pathValue>.*)\])`)
-	dpcPath := regexp.MustCompile(`(topology\/(?P<podValue>.*)\/paths-(?P<leafValue>.*)\/pathep-\[(?P<pathValue>.*)\])`)
-
 	staticPortsList := make([]interface{}, 0, 1)
 	for i := 0; i < portCount; i++ {
 		portCont, err := epgCont.ArrayElement(i, "staticPorts")
@@ -165,22 +160,7 @@ func datasourceMSOSchemaSiteAnpEpgBulkStaticPortRead(d *schema.ResourceData, m i
 			staticPortMap["mode"] = models.StripQuotes(portCont.S("mode").String())
 		}
 
-		pathValue := models.StripQuotes(portCont.S("path").String())
-
-		matchedMap := make(map[string]string)
-
-		if portPath.MatchString(pathValue) {
-			matchedMap = getStaticPortPathValues(pathValue, portPath)
-			staticPortMap["fex"] = matchedMap["fexValue"]
-		} else if vpcPath.MatchString(pathValue) {
-			matchedMap = getStaticPortPathValues(pathValue, vpcPath)
-		} else if dpcPath.MatchString(pathValue) {
-			matchedMap = getStaticPortPathValues(pathValue, dpcPath)
-		}
-
-		staticPortMap["pod"] = matchedMap["podValue"]
-		staticPortMap["leaf"] = matchedMap["leafValue"]
-		staticPortMap["path"] = matchedMap["pathValue"]
+		setValuesFromPortPath(staticPortMap, models.StripQuotes(portCont.S("path").String()))
 
 		staticPortsList = append(staticPortsList, staticPortMap)
 	}

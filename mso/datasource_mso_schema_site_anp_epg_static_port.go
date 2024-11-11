@@ -147,16 +147,8 @@ func datasourceMSOSchemaSiteAnpEpgStaticPortRead(d *schema.ResourceData, m inter
 		if err != nil {
 			return err
 		}
-		if pathType == "port" && fex != "" {
-			portPath = fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", pod, leaf, fex, path)
-		} else if pathType == "vpc" {
-			portPath = fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", pod, leaf, path)
-		} else {
-			portPath = fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", pod, leaf, path)
-		}
-		currentPortPath := models.StripQuotes(portCont.S("path").String())
-		currentType := models.StripQuotes(portCont.S("type").String())
-		if portPath == currentPortPath && pathType == currentType {
+		portPath = createPortPath(pathType, pod, leaf, fex, path)
+		if portPath == models.StripQuotes(portCont.S("path").String()) && pathType == models.StripQuotes(portCont.S("type").String()) {
 			found = true
 			d.SetId(fmt.Sprintf("%s/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%s", schemaId, siteId, templateName, anp, epg, portPath))
 			if portCont.Exists("type") {
