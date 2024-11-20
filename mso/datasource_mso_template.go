@@ -76,7 +76,7 @@ func datasourceMSOTemplateRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	ndoTemplate.SetToSchema(d)
+	ndoTemplate.SetSchemaResourceData(d)
 	d.Set("template_id", d.Id())
 	log.Println("[DEBUG] MSO Template Datasource: Read Completed", d.Id())
 	return nil

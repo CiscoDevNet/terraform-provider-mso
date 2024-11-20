@@ -155,7 +155,7 @@ type ndoTemplate struct {
 	msoClient    *client.Client
 }
 
-func (ndoTemplate *ndoTemplate) SetToSchema(d *schema.ResourceData) {
+func (ndoTemplate *ndoTemplate) SetSchemaResourceData(d *schema.ResourceData) {
 	d.SetId(ndoTemplate.id)
 	d.Set("template_name", ndoTemplate.templateName)
 	d.Set("template_type", ndoTemplate.templateType)
@@ -167,16 +167,16 @@ func (ndoTemplate *ndoTemplate) validateConfig() []error {
 	errors := []error{}
 
 	if ndoTemplate.tenantId != "" && !ndoTemplateTypes[ndoTemplate.templateType].tenant {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("Tenant cannot be attached to template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf(fmt.Sprintf("A Tenant cannot be attached to a template of type %s.", ndoTemplate.templateType)))
 	}
 	if ndoTemplate.tenantId == "" && ndoTemplateTypes[ndoTemplate.templateType].tenant {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("Tenant is required for template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf(fmt.Sprintf("A Tenant is required for a template of type %s. Use the `tenant_id` attribute to specify the Tenant to associate with this template.", ndoTemplate.templateType)))
 	}
 	if len(ndoTemplate.sites) == 0 && ndoTemplateTypes[ndoTemplate.templateType].siteAmount == 1 {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("Site is required for template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf(fmt.Sprintf("At least one site is required for a template of type %s.", ndoTemplate.templateType)))
 	}
 	if len(ndoTemplate.sites) > 1 && ndoTemplateTypes[ndoTemplate.templateType].siteAmount == 1 {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("Only one site is allowed for template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf(fmt.Sprintf("Only one site is allowed for a template of type %s.", ndoTemplate.templateType)))
 	}
 	duplicates := duplicatesInList(ndoTemplate.sites)
 	if len(duplicates) > 0 {
@@ -359,7 +359,7 @@ func resourceMSOTemplateRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	ndoTemplate.SetToSchema(d)
+	ndoTemplate.SetSchemaResourceData(d)
 	log.Println("[DEBUG] MSO Template Resource: Read Completed", d.Id())
 	return nil
 }
@@ -457,7 +457,7 @@ func resourceMSOTemplateImport(d *schema.ResourceData, m interface{}) ([]*schema
 	if err != nil {
 		return nil, err
 	}
-	ndoTemplate.SetToSchema(d)
+	ndoTemplate.SetSchemaResourceData(d)
 	log.Println("[DEBUG] MSO Template Resource: Import Completed", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
