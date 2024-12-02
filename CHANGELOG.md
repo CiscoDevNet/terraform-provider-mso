@@ -1,3 +1,21 @@
+## 1.3.0 (December 2, 2024)
+BUG FIXES:
+- Fix fex and micro_seg_vlan attributes in resource_mso_schema_site_anp_epg_bulk_staticport to be correctly set when index shift occur in the static_ports list
+- Fix importing for mso_schema_site to support multiple templates in the same schema with the same site
+- Fix import order in mso_schema_site_bd_subnet and docs in mso_schema_template_bd_subnet (#305)
+- Fix customize diff validation in mso_schema_site_service_graph to avoid retrieving all schemas when the schema id is unknown during plan
+- Fix import for mso_schema_template_anp_epg_static_leaf to include template (DCNE-214) (#306)
+- Fix importing for mso_schema_template_anp_epg_contract to select the contract with the correct type
+- Fix read and import for mso_schema_site_anp resource to select anp in correct site and template combination
+- Optimization through an additional api call at list-identity schema endpoint to avoid retrieval of all schemas in order to get the id of a schema (#302)
+- Fix importing for mso_schema_site_contract_service_graph redirect policy and cluster interface when they include hyphens in naming
+- Fix undeployment on destroy by checking first if template is deployed for resource mso_schema_site.
+
+IMPROVEMENTS:
+- Add l3out_schema_id, l3out_template and l3out_on_apic attributes to mso_schema_site_external_epg (#291)
+- Add resource and datasource for mso_template
+- Add support for vpc connected to fex in resource mso_schema_site_anp_epg_bulk_staticport
+
 ## 1.2.2 (August 6, 2024)
 BUG FIXES:
 - Fix idempotency issues in mso_schema_template_contract, mso_schema_site_contract_service_graph and mso_schema_site_service_graph resources.
