@@ -149,6 +149,10 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 					},
 				},
 			},
+			"ep_move_detection_mode": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -241,6 +245,13 @@ func setSchemaTemplateBDAttrs(schemaId, templateName, bdName string, cont *conta
 						d.Set("virtual_mac_address", vmac)
 					} else {
 						d.Set("virtual_mac_address", "")
+					}
+
+					epMoveDetectMode := models.StripQuotes(bdCont.S("epMoveDetectMode").String())
+					if epMoveDetectMode != "{}" {
+						d.Set("ep_move_detection_mode", epMoveDetectMode)
+					} else {
+						d.Set("ep_move_detection_mode", "none") // set to default value of none when not present
 					}
 
 					if bdCont.Exists("intersiteBumTrafficAllow") {

@@ -200,6 +200,15 @@ func resourceMSOTemplateBD() *schema.Resource {
 					},
 				},
 			},
+			"ep_move_detection_mode": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"none",
+					"garp",
+				}, false),
+			},
 		}),
 	}
 }
@@ -277,6 +286,14 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					} else {
 						d.Set("virtual_mac_address", "")
 					}
+
+					epMoveDetectMode := models.StripQuotes(bdCont.S("epMoveDetectMode").String())
+					if epMoveDetectMode != "{}" {
+						d.Set("ep_move_detection_mode", epMoveDetectMode)
+					} else {
+						d.Set("ep_move_detection_mode", "none") // set to default value of none when not present
+					}
+
 					if bdCont.Exists("intersiteBumTrafficAllow") {
 						d.Set("intersite_bum_traffic", bdCont.S("intersiteBumTrafficAllow").Data().(bool))
 					}
@@ -406,7 +423,7 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ep_move_detection_mode, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -437,6 +454,9 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
 		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ep_move_detection_mode"); ok {
+		ep_move_detection_mode = tempVar.(string)
 	}
 	if tempVar, ok := d.GetOk("arp_flooding"); ok {
 		arp_flooding = tempVar.(bool)
@@ -518,7 +538,7 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 	vrfRefMap["templateName"] = vrf_template_name
 	vrfRefMap["vrfName"] = vrfName
 	path := fmt.Sprintf("/templates/%s/bds/-", templateName)
-	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, description, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
+	bdStruct := models.NewTemplateBD("add", path, name, displayName, layer2_unknown_unicast, unknown_multicast_flooding, multi_destination_flooding, ipv6_unknown_multicast_flooding, virtual_mac_address, ep_move_detection_mode, description, intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, arp_flooding, unicast_routing, vrfRefMap, dhcpPolMap, dhcpPolList)
 	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), bdStruct)
 
 	if err != nil {
@@ -604,6 +624,13 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 						d.Set("virtual_mac_address", vmac)
 					} else {
 						d.Set("virtual_mac_address", "")
+					}
+
+					epMoveDetectMode := models.StripQuotes(bdCont.S("epMoveDetectMode").String())
+					if epMoveDetectMode != "{}" {
+						d.Set("ep_move_detection_mode", epMoveDetectMode)
+					} else {
+						d.Set("ep_move_detection_mode", "none") // set to default value of none when not present
 					}
 
 					if bdCont.Exists("intersiteBumTrafficAllow") {
@@ -737,7 +764,7 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
+	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ep_move_detection_mode, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
 
 	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
 		intersite_bum_traffic = tempVar.(bool)
@@ -768,6 +795,9 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
 		virtual_mac_address = tempVar.(string)
+	}
+	if tempVar, ok := d.GetOk("ep_move_detection_mode"); ok {
+		ep_move_detection_mode = tempVar.(string)
 	}
 	if tempVar, ok := d.GetOk("arp_flooding"); ok {
 		arp_flooding = tempVar.(bool)
@@ -899,6 +929,13 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 
 	if virtual_mac_address != "" {
 		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), virtual_mac_address)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ep_move_detection_mode != "" {
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/epMoveDetectMode", basePath), ep_move_detection_mode)
 		if err != nil {
 			return err
 		}

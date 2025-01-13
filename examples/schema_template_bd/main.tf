@@ -36,6 +36,19 @@ resource "mso_schema_template_vrf" "vrf" {
   display_name = "test_bd_vrf"
 }
 
+// Endpoint move detect mode
+
+resource "mso_schema_template_bd" "bd_ep" {
+  schema_id              = mso_schema.schema_1.id
+  template_name          = one(mso_schema.schema_1.template).name
+  vrf_name               = mso_schema_template_vrf.vrf.name
+  name                   = "bd_ep_demo"
+  display_name           = "bd_ep_demo"
+  arp_flooding           = true
+  ep_move_detection_mode = "garp"
+}
+
+
 // MSO versions 3.2 and higher
 resource "mso_schema_template_bd" "bd" {
   schema_id                       = mso_schema.schema_1.id
