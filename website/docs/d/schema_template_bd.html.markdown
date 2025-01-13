@@ -49,6 +49,7 @@ data "mso_schema_template_bd" "example" {
 * `ipv6_unknown_multicast_flooding` - (Read-Only) The IPv6 unknown multicast flooding settings of the BD.
 * `arp_flooding` - (Read-Only) The ARP flooding settings of the BD.
 * `virtual_mac_address` - (Read-Only) The virtual mac address of the BD.
+* `ep_move_detection_mode` - (Read-Only) Trigger an endpoint move based on incoming Gratuitous Address Resolution Protocol (GARP) packets.
 * `unicast_routing` - (Read-Only) Whether unicast routing is enabled.
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
