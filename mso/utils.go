@@ -285,12 +285,12 @@ func setValuesFromPortPath(staticPortMap map[string]interface{}, pathValue strin
 
 func createPortPath(path_type, static_port_pod, static_port_leaf, static_port_fex, static_port_path string) string {
 
-	if path_type == "port" && static_port_fex != "" {
-		return fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
-	} else if path_type == "vpc" && static_port_fex != "" {
+	if path_type == "vpc" && static_port_fex != "" {
 		return fmt.Sprintf("topology/%s/protpaths-%s/extprotpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
 	} else if path_type == "vpc" {
 		return fmt.Sprintf("topology/%s/protpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
+	} else if static_port_fex != "" {
+		return fmt.Sprintf("topology/%s/paths-%s/extpaths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_fex, static_port_path)
 	} else {
 		return fmt.Sprintf("topology/%s/paths-%s/pathep-[%s]", static_port_pod, static_port_leaf, static_port_path)
 	}
