@@ -1,3 +1,8 @@
+## 1.4.0 (January 22, 2025)\
+IMPROVEMENTS:
+- Add support for dpc path_type input with fex for mso_schema_site_anp_epg_staticport and mso_schema_site_anp_epg_bulk_staticport resources
+- Add support for endpoint move detection mode in schema_template_bd
+
 ## 1.3.0 (December 2, 2024)
 BUG FIXES:
 - Fix fex and micro_seg_vlan attributes in resource_mso_schema_site_anp_epg_bulk_staticport to be correctly set when index shift occur in the static_ports list
