@@ -119,7 +119,7 @@ func resourceMSOSchemaSiteImport(d *schema.ResourceData, m interface{}) ([]*sche
 			if len(get_attribute) == 7 {
 				boolValue, err := strconv.ParseBool(get_attribute[6])
 				if err != nil {
-					return nil, fmt.Errorf("Boolean value for 'undeploy_on_destroy' cannot be parsed: %s", boolValue)
+					return nil, fmt.Errorf("Boolean value for 'undeploy_on_destroy' cannot be parsed: %v", boolValue)
 				}
 				d.Set("undeploy_on_destroy", boolValue)
 			} else {

@@ -117,6 +117,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_contract_service_graph":          resourceMSOSchemaSiteContractServiceGraph(),
 			"mso_schema_site_contract_service_graph_listener": resourceMSOSchemaSiteContractServiceGraphListener(),
 			"mso_template":                                    resourceMSOTemplate(),
+			"mso_tenant_policies_ipsla_monitoring_policy":     resourceMSOIPSLAMonitoringPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -174,6 +175,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_site_contract_service_graph":          dataSourceMSOSchemaSiteContractServiceGraph(),
 			"mso_schema_site_contract_service_graph_listener": dataSourceMSOSchemaSiteContractServiceGraphListener(),
 			"mso_template":                                    datasourceMSOTemplate(),
+			"mso_tenant_policies_ipsla_monitoring_policy":     datasourceMSOIPSLAMonitoringPolicy(),
 		},
 
 		ConfigureFunc: configureClient,

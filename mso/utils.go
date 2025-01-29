@@ -323,3 +323,78 @@ func duplicatesInList(list []string) []string {
 	}
 	return duplicates
 }
+
+func GetTemplateIdFromResourceId(input string) (string, error) {
+	parts := strings.Split(input, "/")
+	if parts[0] != "templateId" {
+		return "", fmt.Errorf("Invalid resource id provided")
+	}
+	return parts[1], nil
+}
+
+func GetPolicyNameFromResourceId(input, policyType string) (string, error) {
+	parts := strings.Split(input, "/")
+
+	for i := 0; i < len(parts)-1; i++ {
+		if parts[i] == policyType {
+			if i+1 < len(parts) {
+				return parts[i+1], nil
+			}
+			return "", fmt.Errorf("No value found after policyType")
+		}
+	}
+
+	return "", fmt.Errorf("PolicyType not found in the id")
+}
+
+func GetPolicyIndexByKeyAndValue(cont *container.Container, policyIdentifier, policyIdentifierValue string, templateElements ...string) (int, error) {
+	index := -1
+
+	policyArray := cont.S(templateElements...)
+	if policyArray.Data() == nil {
+		return index, fmt.Errorf("Policy type %s is not a list or does not exist", templateElements[len(templateElements)-1])
+	}
+
+	policyCount, err := cont.ArrayCount(templateElements...)
+	if err != nil {
+		return index, err
+	}
+
+	for i := 0; i < policyCount; i++ {
+		policy := policyArray.Index(i)
+		identifierValue := policy.S(policyIdentifier).Data().(string)
+		if identifierValue == policyIdentifierValue {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		return index, fmt.Errorf("Policy %s %s not found in policy list", policyIdentifier, policyIdentifierValue)
+	}
+
+	return index, nil
+}
+
+func GetPolicyByName(cont *container.Container, policyName string, templateElements ...string) (*container.Container, error) {
+	policyObject := cont.S(templateElements...)
+	if policyObject.Data() != nil {
+		policyCount, err := cont.ArrayCount(templateElements...)
+		if err == nil {
+			for i := 0; i < policyCount; i++ {
+				policy := policyObject.Index(i)
+				name, ok := policy.S("name").Data().(string)
+				if ok && name == policyName {
+					return policy, nil
+				}
+			}
+		} else {
+			name, ok := policyObject.S("name").Data().(string)
+			if ok && name == policyName {
+				return policyObject, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("Policy name %s not found", policyName)
+}
