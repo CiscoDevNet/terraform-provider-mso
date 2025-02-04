@@ -12,8 +12,6 @@ import (
 )
 
 const msoTemplateTenantName = "tf_test_mso_template_tenant"
-const msoTemplateSiteName1 = "ansible_test"
-const msoTemplateSiteName2 = "ansible_test_2"
 
 var msoTemplateId string
 
@@ -281,23 +279,7 @@ func testAccMSOTemplateState(resourceName string, stateTemplate *TemplateTest, s
 	}
 }
 
-func testSiteConfigAnsibleTest() string {
-	return fmt.Sprintf(`
-	data "mso_site" "%s" {
-		name = "%s"
-	}
-	`, msoTemplateSiteName1, msoTemplateSiteName1)
-}
-
-func testSiteConfigAnsibleTest2() string {
-	return fmt.Sprintf(`
-	data "mso_site" "%s" {
-		name = "%s"
-	}
-	`, msoTemplateSiteName2, msoTemplateSiteName2)
-}
-
-func testTenantConfig() string {
+func testAccTenantConfig() string {
 	return fmt.Sprintf(`
 	%s%s
 	resource "mso_tenant" "%s" {
@@ -320,7 +302,7 @@ func testAccMSOTemplateResourceTenantConfig() string {
 		template_type = "tenant"
 		tenant_id = mso_tenant.%s.id
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func testAccMSOTemplateResourceTenantNameChangeConfig() string {
@@ -330,7 +312,7 @@ func testAccMSOTemplateResourceTenantNameChangeConfig() string {
 		template_type = "tenant"
 		tenant_id = mso_tenant.%s.id
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func testAccMSOTemplateResourceTenantNoSitesConfig() string {
@@ -341,7 +323,7 @@ func testAccMSOTemplateResourceTenantNoSitesConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = []
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func testAccMSOTemplateResourceTenanSiteAnsibleTestConfig() string {
@@ -352,7 +334,7 @@ func testAccMSOTemplateResourceTenanSiteAnsibleTestConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceTenanSiteAnsibleTest2Config() string {
@@ -363,7 +345,7 @@ func testAccMSOTemplateResourceTenanSiteAnsibleTest2Config() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName2)
 }
 
 func testAccMSOTemplateResourceTenanTwoSitesConfig() string {
@@ -374,7 +356,7 @@ func testAccMSOTemplateResourceTenanTwoSitesConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
 func testAccMSOTemplateResourceTenanTwoSitesReversedConfig() string {
@@ -385,7 +367,7 @@ func testAccMSOTemplateResourceTenanTwoSitesReversedConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName2, msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName2, msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceTenantErrorDuplicateSitesConfig() string {
@@ -396,7 +378,7 @@ func testAccMSOTemplateResourceTenantErrorDuplicateSitesConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceTenanErrorNoTenantConfig() string {
@@ -463,7 +445,7 @@ func testAccMSOTemplateResourceL3outConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceL3outErrorNoTenantConfig() string {
@@ -483,7 +465,7 @@ func testAccMSOTemplateResourceL3outErrorNoSitesConfig() string {
 		template_type = "l3out"
 		tenant_id = mso_tenant.%s.id
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func testAccMSOTemplateResourceL3outErrorTwositesConfig() string {
@@ -494,7 +476,7 @@ func testAccMSOTemplateResourceL3outErrorTwositesConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
 func testAccMSOTemplateResourceL3outErrorChangeSiteConfig() string {
@@ -505,7 +487,7 @@ func testAccMSOTemplateResourceL3outErrorChangeSiteConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName2)
 }
 
 func TestAccMSOTemplateResourceFabricPolicy(t *testing.T) {
@@ -554,7 +536,7 @@ func testAccMSOTemplateResourceFabricPolicyErrorTenantConfig() string {
 		template_type = "fabric_policy"
 		tenant_id = mso_tenant.%s.id
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func TestAccMSOTemplateResourceFabricResource(t *testing.T) {
@@ -603,7 +585,7 @@ func testAccMSOTemplateResourceFabricResourceErrorTenantConfig() string {
 		template_type = "fabric_resource"
 		tenant_id = mso_tenant.%s.id
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func TestAccMSOTemplateResourceMonitoringTenant(t *testing.T) {
@@ -653,7 +635,7 @@ func testAccMSOTemplateResourceMonitoringTenantErrorNoTenantConfig() string {
 		template_type = "monitoring_tenant"
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceMonitoringTenantErrorNoSiteConfig() string {
@@ -663,7 +645,7 @@ func testAccMSOTemplateResourceMonitoringTenantErrorNoSiteConfig() string {
 		template_type = "monitoring_tenant"
 		tenant_id = mso_tenant.%s.id
 	}
-	`, testTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName)
 }
 
 func testAccMSOTemplateResourceMonitoringTenantErrorTwoSitesConfig() string {
@@ -674,7 +656,7 @@ func testAccMSOTemplateResourceMonitoringTenantErrorTwoSitesConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
 func testAccMSOTemplateResourceMonitoringTenantConfig() string {
@@ -685,7 +667,7 @@ func testAccMSOTemplateResourceMonitoringTenantConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
 
 func TestAccMSOTemplateResourceMonitoringAccess(t *testing.T) {
@@ -736,7 +718,7 @@ func testAccMSOTemplateResourceMonitoringAccessErrorTenantConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceMonitoringAccessErrorNoSiteConfig() string {
@@ -745,7 +727,7 @@ func testAccMSOTemplateResourceMonitoringAccessErrorNoSiteConfig() string {
 		template_name = "test_template_monitoring_access"
 		template_type = "monitoring_access"
 	}
-	`, testTenantConfig())
+	`, testAccTenantConfig())
 }
 
 func testAccMSOTemplateResourceMonitoringAccessErrorTwoSitesConfig() string {
@@ -755,7 +737,7 @@ func testAccMSOTemplateResourceMonitoringAccessErrorTwoSitesConfig() string {
 		template_type = "monitoring_access"
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateSiteName1, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
 func testAccMSOTemplateResourceMonitoringAccessConfig() string {
@@ -765,7 +747,7 @@ func testAccMSOTemplateResourceMonitoringAccessConfig() string {
 		template_type = "monitoring_access"
 		sites = [data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateSiteName1)
+	`, testAccTenantConfig(), msoTemplateSiteName1)
 }
 
 func TestAccMSOTemplateResourceServiceDevice(t *testing.T) {
@@ -804,7 +786,7 @@ func testAccMSOTemplateResourceServiceDeviceErrorNoTenantConfig() string {
 		template_name = "test_template_service_device"
 		template_type = "service_device"
 	}
-	`, testTenantConfig())
+	`, testAccTenantConfig())
 }
 
 func testAccMSOTemplateResourceServiceDeviceConfig() string {
@@ -815,5 +797,5 @@ func testAccMSOTemplateResourceServiceDeviceConfig() string {
 		tenant_id = mso_tenant.%s.id
 		sites = [data.mso_site.%s.id, data.mso_site.%s.id]
 	}
-	`, testTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }

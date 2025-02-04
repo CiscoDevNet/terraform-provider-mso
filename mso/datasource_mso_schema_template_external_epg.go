@@ -34,6 +34,10 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"uuid": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"external_epg_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -134,6 +138,7 @@ func dataSourceMSOTemplateExternalepgRead(d *schema.ResourceData, m interface{})
 				if apiExternalepg == stateExternalepg {
 					d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s", schemaId, stateTemplate, stateExternalepg))
 					d.Set("external_epg_name", apiExternalepg)
+					d.Set("uuid", models.StripQuotes(externalepgCont.S("uuid").String()))
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
