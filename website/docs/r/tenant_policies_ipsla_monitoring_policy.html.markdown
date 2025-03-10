@@ -3,7 +3,7 @@ layout: "mso"
 page_title: "MSO: mso_tenant_policies_ipsla_monitoring_policy"
 sidebar_current: "docs-mso-resource-tenant_policies_ipsla_monitoring_policy"
 description: |-
-Manages IPSLA Monitoring Policies on Cisco Nexus Dashboard Orchestrator (NDO).
+  Manages IPSLA Monitoring Policies on Cisco Nexus Dashboard Orchestrator (NDO)
 ---
 
 
