@@ -36,6 +36,10 @@ func datasourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"uuid": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"bd_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,

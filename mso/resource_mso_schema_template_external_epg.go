@@ -45,6 +45,10 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"uuid": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"display_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -180,6 +184,7 @@ func resourceMSOTemplateExtenalepgImport(d *schema.ResourceData, m interface{}) 
 				if apiExternalepg == stateExternalepg {
 					d.SetId(get_attribute[4])
 					d.Set("external_epg_name", apiExternalepg)
+					d.Set("uuid", models.StripQuotes(externalepgCont.S("uuid").String()))
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))
@@ -477,6 +482,7 @@ func resourceMSOTemplateExtenalepgRead(d *schema.ResourceData, m interface{}) er
 				if apiExternalepg == stateExternalepg {
 					d.SetId(apiExternalepg)
 					d.Set("external_epg_name", apiExternalepg)
+					d.Set("uuid", models.StripQuotes(externalepgCont.S("uuid").String()))
 					d.Set("schema_id", schemaId)
 					d.Set("template_name", apiTemplate)
 					d.Set("display_name", models.StripQuotes(externalepgCont.S("displayName").String()))

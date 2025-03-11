@@ -51,6 +51,10 @@ func resourceMSOSchemaTemplateAnpEpg() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			"uuid": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"bd_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -214,6 +218,7 @@ func resourceMSOSchemaTemplateAnpEpgSetAttr(schemaId, stateTemplate, stateANP, s
 						if apiEPG == stateEPG {
 							d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s", schemaId, stateTemplate, stateANP, stateEPG))
 							d.Set("name", apiEPG)
+							d.Set("uuid", models.StripQuotes(epgCont.S("uuid").String()))
 							d.Set("display_name", models.StripQuotes(epgCont.S("displayName").String()))
 							d.Set("description", models.StripQuotes(epgCont.S("description").String()))
 							d.Set("intra_epg", models.StripQuotes(epgCont.S("intraEpg").String()))

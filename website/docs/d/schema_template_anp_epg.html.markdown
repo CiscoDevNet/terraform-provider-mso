@@ -32,6 +32,7 @@ data "mso_schema_template_anp_epg" "example" {
 
 ## Attribute Reference ##
 
+* `uuid` - (Read-Only) The UUID of the EPG.
 * `bd_name` - (Read-Only) The name of the BD associated with the EPG.
 * `bd_schema_id` - (Read-Only) The schema ID of the BD associated with the EPG.
 * `bd_template_name` - (Read-Only) The template name of the BD associated with the EPG.
