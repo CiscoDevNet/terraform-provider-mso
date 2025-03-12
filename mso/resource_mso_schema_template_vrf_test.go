@@ -2,219 +2,200 @@ package mso
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccSchemaTemplateVrf_Basic(t *testing.T) {
-	var s SchemaTemplateVrfTest
+func TestAccMSOSchemaTemplateVrfResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMsoSchemaTemplateVrfDestroy,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("vrf982"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMsoSchemaTemplateVrfExists("mso_schema.schema1", "mso_schema_template_vrf.vrf1", &s),
-					testAccCheckMsoSchemaTemplateVrfAttributes("vrf982", &s),
+				PreConfig: func() { fmt.Println("Test: Create Schema Template VRF") },
+				Config:    testAccMSOSchemaTemplateVrfConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "description", "Terraform test Schema Template VRF"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "display_name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "ip_data_plane_learning", "enabled"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "vzany", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "preferred_group", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "site_aware_policy_enforcement", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "layer3_multicast", "false"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update Create Schema Template VRF by enabling Layer3 Multicast") },
+				Config:    testAccMSOSchemaTemplateVrfConfigUpdateEnablingLayer3Multicast(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "display_name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "ip_data_plane_learning", "enabled"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "description", "Terraform test Schema Template VRF with Layer3 Multicast"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "vzany", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "preferred_group", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "site_aware_policy_enforcement", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "layer3_multicast", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points",
+						map[string]string{
+							"ip_address": "1.1.1.2",
+							"type":       "static",
+						},
+					),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Update Create Schema Template VRF by enabling Layer3 Multicast and adding an extra RP")
+				},
+				Config: testAccMSOSchemaTemplateVrfConfigUpdateAddingExtraRp(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "display_name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "ip_data_plane_learning", "enabled"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "description", "Terraform test Schema Template VRF with Layer3 Multicast"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "vzany", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "preferred_group", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "site_aware_policy_enforcement", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "layer3_multicast", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points.#", "2"),
+					customTestCheckResourceTypeSetAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points",
+						map[string]string{
+							"ip_address": "1.1.1.2",
+							"type":       "static",
+						},
+					),
+					customTestCheckResourceTypeSetAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points",
+						map[string]string{
+							"ip_address": "1.1.1.3",
+							"type":       "fabric",
+						},
+					),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Update Create Schema Template VRF by enabling Layer3 Multicast and removing an extra RP")
+				},
+				Config: testAccMSOSchemaTemplateVrfConfigUpdateRemovingExtraRp(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "display_name", "tf_test_schema_template_vrf"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "ip_data_plane_learning", "enabled"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "description", "Terraform test Schema Template VRF with Layer3 Multicast"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "vzany", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "preferred_group", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "site_aware_policy_enforcement", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "layer3_multicast", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_schema_template_vrf.schema_template_vrf", "rendezvous_points",
+						map[string]string{
+							"ip_address": "1.1.1.2",
+							"type":       "static",
+						},
+					),
 				),
 			},
 		},
+		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_schema_template_vrf", "vrf"),
 	})
 }
 
-func TestAccMsoSchemaTemplateVrf_Update(t *testing.T) {
-	var s SchemaTemplateVrfTest
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMsoSchemaTemplateVrfDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("vrf982"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMsoSchemaTemplateVrfExists("mso_schema.schema1", "mso_schema_template_vrf.vrf1", &s),
-					testAccCheckMsoSchemaTemplateVrfAttributes("vrf982", &s),
-				),
-			},
-			{
-				Config: testAccCheckMsoSchemaTemplateVrfConfig_basic("vrf983"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMsoSchemaTemplateVrfExists("mso_schema.schema1", "mso_schema_template_vrf.vrf1", &s),
-					testAccCheckMsoSchemaTemplateVrfAttributes("vrf983", &s),
-				),
-			},
-		},
-	})
+func testAccMSOSchemaTemplateForVrfConfig() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema" "schema_for_vrf" {
+		name = "tf_test_schema_for_vrf"
+		template {
+			name         = "tf_test_schema_template"
+			display_name = "tf_test_schema_template"
+			tenant_id    = mso_tenant.%s.id
+			template_type = "aci_multi_site"
+		}
+} `, testAccMSOTenantPoliciesMcastRouteMapPolicyConfigCreate(), msoTemplateTenantName)
 }
 
-func testAccCheckMsoSchemaTemplateVrfConfig_basic(name string) string {
-	return fmt.Sprintf(`
-
-	resource "mso_schema" "schema1" {
-		name          = "shah8"
-		template_name = "temp5"
-		tenant_id     = "5e9d09482c000068500a269a"
-	  
-	  }
-
-	resource "mso_schema_template_vrf" "vrf1" {
-		schema_id="${mso_schema.schema1.id}"
-		template="temp5"
-		name= "vrf982"
-		display_name="%s"
-		layer3_multicast=true
-		vzany=false
-	  }
-	`, name)
+func testAccMSOSchemaTemplateVrfConfigCreate() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema_template_vrf" "schema_template_vrf" {
+		schema_id                     = mso_schema.schema_for_vrf.id
+		template                      = tolist(mso_schema.schema_for_vrf.template)[0].name
+		name                          = "tf_test_schema_template_vrf"
+		display_name                  = "tf_test_schema_template_vrf"
+		description                   = "Terraform test Schema Template VRF"
+		ip_data_plane_learning        = "enabled"
+		vzany                         = false
+		preferred_group               = false
+		site_aware_policy_enforcement = false
+		layer3_multicast              = false
+	}`, testAccMSOSchemaTemplateForVrfConfig())
 }
 
-func testAccCheckMsoSchemaTemplateVrfExists(schemaName string, schemaTemplateVrfName string, stv *SchemaTemplateVrfTest) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs1, err1 := s.RootModule().Resources[schemaName]
-		rs2, err2 := s.RootModule().Resources[schemaTemplateVrfName]
-
-		if !err1 {
-			return fmt.Errorf("Schema %s not found", schemaName)
+func testAccMSOSchemaTemplateVrfConfigUpdateEnablingLayer3Multicast() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema_template_vrf" "schema_template_vrf" {
+		schema_id                     = mso_schema.schema_for_vrf.id
+		template                      = tolist(mso_schema.schema_for_vrf.template)[0].name
+		name                          = "tf_test_schema_template_vrf"
+		display_name                  = "tf_test_schema_template_vrf"
+		description                   = "Terraform test Schema Template VRF with Layer3 Multicast"
+		ip_data_plane_learning        = "enabled"
+		vzany                         = false
+		preferred_group               = false
+		site_aware_policy_enforcement = false
+		layer3_multicast              = true
+		rendezvous_points {
+			ip_address                      = "1.1.1.2"
+			type                            = "static"
+			mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
 		}
-		if !err2 {
-			return fmt.Errorf("Schema Template Vrf record %s not found", schemaTemplateVrfName)
-		}
-
-		if rs1.Primary.ID == "" {
-			return fmt.Errorf("No Schema id was set")
-		}
-		if rs2.Primary.ID == "" {
-			return fmt.Errorf("No Schema Template Vrf id was set")
-		}
-
-		client := testAccProvider.Meta().(*client.Client)
-		con, err := client.GetViaURL("api/v1/schemas/" + rs1.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		stvt := SchemaTemplateVrfTest{}
-		stvt.SchemaId = rs1.Primary.ID
-
-		count, err := con.ArrayCount("templates")
-		if err != nil {
-			return err
-		}
-
-		for i := 0; i < count; i++ {
-			tempCont, err := con.ArrayElement(i, "templates")
-			stvt.Template = models.StripQuotes(tempCont.S("name").String())
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return fmt.Errorf("No Vrf found")
-			}
-			for j := 0; j < vrfCount; j++ {
-				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
-				if err != nil {
-					return err
-				}
-				if vrfCont.Exists("name") {
-					stvt.Name = models.StripQuotes(vrfCont.S("name").String())
-
-				}
-
-				if vrfCont.Exists("displayName") {
-					stvt.DisplayName = models.StripQuotes(vrfCont.S("displayName").String())
-				}
-
-				if vrfCont.Exists("l3MCast") {
-					l3Mcast, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("l3MCast").String()))
-					stvt.Layer3Multicast = l3Mcast
-				}
-
-				if vrfCont.Exists("vzAnyEnabled") {
-					vzAnyEnabled, _ := strconv.ParseBool(models.StripQuotes(vrfCont.S("vzAnyEnabled").String()))
-					stvt.VZAny = vzAnyEnabled
-				}
-			}
-		}
-
-		stvc := &stvt
-
-		*stv = *stvc
-		return nil
-	}
+	}`, testAccMSOSchemaTemplateForVrfConfig())
 }
 
-func testAccCheckMsoSchemaTemplateVrfDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
-
-	rs1, err1 := s.RootModule().Resources["mso_schema.schema1"]
-
-	if !err1 {
-		return fmt.Errorf("Schema %s not found", "mso_schema.schema1")
-	}
-
-	schemaid := rs1.Primary.ID
-	for _, rs := range s.RootModule().Resources {
-
-		if rs.Type == "mso_schema_template_vrf" {
-			con, err := client.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaid))
-			if err != nil {
-				return nil
-			} else {
-				count, err := con.ArrayCount("templates")
-				if err != nil {
-					return fmt.Errorf("No Template found")
-				}
-				for i := 0; i < count; i++ {
-					tempCont, err := con.ArrayElement(i, "templates")
-					if err != nil {
-						return fmt.Errorf("No template exists")
-					}
-					vrfCount, err := tempCont.ArrayCount("vrfs")
-					if err != nil {
-						return fmt.Errorf("No Vrf found")
-					}
-					for j := 0; j < vrfCount; j++ {
-						vrfCont, err := tempCont.ArrayElement(j, "vrfs")
-						if err != nil {
-							return err
-						}
-						name := models.StripQuotes(vrfCont.S("name").String())
-
-						if rs.Primary.ID == name {
-							return fmt.Errorf("Schema Template Vrf record still exists")
-
-						}
-
-					}
-				}
-			}
+func testAccMSOSchemaTemplateVrfConfigUpdateAddingExtraRp() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema_template_vrf" "schema_template_vrf" {
+		schema_id                     = mso_schema.schema_for_vrf.id
+		template                      = tolist(mso_schema.schema_for_vrf.template)[0].name
+		name                          = "tf_test_schema_template_vrf"
+		display_name                  = "tf_test_schema_template_vrf"
+		description                   = "Terraform test Schema Template VRF with Layer3 Multicast"
+		ip_data_plane_learning        = "enabled"
+		vzany                         = false
+		preferred_group               = false
+		site_aware_policy_enforcement = false
+		layer3_multicast              = true
+		rendezvous_points {
+			ip_address                      = "1.1.1.2"
+			type                            = "static"
+			mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
 		}
-	}
-	return nil
+		rendezvous_points {
+			ip_address                      = "1.1.1.3"
+			type                            = "fabric"
+		}
+	}`, testAccMSOSchemaTemplateForVrfConfig())
 }
 
-func testAccCheckMsoSchemaTemplateVrfAttributes(name string, stv *SchemaTemplateVrfTest) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if name != stv.DisplayName {
-			return fmt.Errorf("Bad Schema Template Vrf Name %s", stv.DisplayName)
+func testAccMSOSchemaTemplateVrfConfigUpdateRemovingExtraRp() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema_template_vrf" "schema_template_vrf" {
+		schema_id                     = mso_schema.schema_for_vrf.id
+		template                      = tolist(mso_schema.schema_for_vrf.template)[0].name
+		name                          = "tf_test_schema_template_vrf"
+		display_name                  = "tf_test_schema_template_vrf"
+		description                   = "Terraform test Schema Template VRF with Layer3 Multicast"
+		ip_data_plane_learning        = "enabled"
+		vzany                         = false
+		preferred_group               = false
+		site_aware_policy_enforcement = false
+		layer3_multicast              = true
+		rendezvous_points {
+			ip_address                      = "1.1.1.2"
+			type                            = "static"
+			mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
 		}
-		return nil
-	}
-}
-
-type SchemaTemplateVrfTest struct {
-	Id              string `json:",omitempty"`
-	SchemaId        string `json:",omitempty"`
-	Template        string `json:",omitempty"`
-	Name            string `json:",omitempty"`
-	DisplayName     string `json:",omitempty"`
-	Layer3Multicast bool   `json:",omitempty"`
-	VZAny           bool   `json:",omitempty"`
+	}`, testAccMSOSchemaTemplateForVrfConfig())
 }
