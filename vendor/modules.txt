@@ -91,7 +91,7 @@ github.com/bgentry/go-netrc/netrc
 # github.com/bgentry/speakeasy v0.1.0
 ## explicit
 github.com/bgentry/speakeasy
-# github.com/ciscoecosystem/mso-go-client v1.30.0
+# github.com/ciscoecosystem/mso-go-client v1.31.0
 ## explicit; go 1.12
 github.com/ciscoecosystem/mso-go-client/client
 github.com/ciscoecosystem/mso-go-client/container

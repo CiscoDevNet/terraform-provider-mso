@@ -6,7 +6,7 @@ type SchemaTemplateVrf struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaTemplateVrf(ops, path, Name, displayName, ipDataPlaneLearning, desc string, l3m, vzany, preferredGroup, siteAwarePolicyEnforcementMode bool) *SchemaSite {
+func NewSchemaTemplateVrf(ops, path, Name, displayName, ipDataPlaneLearning, desc string, l3m, vzany, preferredGroup, siteAwarePolicyEnforcementMode bool, rendezvousPoints []interface{}) *SchemaSite {
 	var VrfMap map[string]interface{}
 
 	if ops != "remove" {
@@ -21,6 +21,9 @@ func NewSchemaTemplateVrf(ops, path, Name, displayName, ipDataPlaneLearning, des
 		}
 		if ipDataPlaneLearning != "" {
 			VrfMap["ipDataPlaneLearning"] = ipDataPlaneLearning
+		}
+		if rendezvousPoints != nil {
+			VrfMap["rpConfigs"] = rendezvousPoints
 		}
 	} else {
 		VrfMap = nil
