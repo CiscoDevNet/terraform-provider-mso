@@ -76,12 +76,12 @@ resource "mso_tenant_policies_dhcp_relay_policy" "tf_test_dhcp_relay_policy" {
   name        = "tf_test_dhcp_relay_policy"
   template_id = mso_template.tf_test_tenant_policy_template.id
   providers {
-    dhcp_server_address = "1.1.1.1"
-    application_epg     = mso_schema_template_anp_epg.tf_test_anp_epg.uuid
+    dhcp_server_address  = "1.1.1.1"
+    application_epg_uuid = mso_schema_template_anp_epg.tf_test_anp_epg.uuid
   }
   providers {
     dhcp_server_address        = "2.2.2.2"
-    external_epg               = mso_schema_template_external_epg.tf_test_ext_epg.uuid
+    external_epg_uuid          = mso_schema_template_external_epg.tf_test_ext_epg.uuid
     dhcp_server_vrf_preference = true
   }
 }

@@ -30,6 +30,6 @@ data "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
 * `description` - (Read-Only) The description of the DHCP relay policy.
 * `providers` - (Read-Only) A list of providers for the DHCP relay policy.
   * `dhcp_server_address` - (Read-Only) The DHCP server IP address of the provider.
-  * `application_epg` - (Read-Only) The UUID of the Application Profile EPG.
-  * `external_epg` - (Read-Only) The UUID of the External EPG.
+  * `application_epg_uuid` - (Read-Only) The UUID of the Application Profile EPG.
+  * `external_epg_uuid` - (Read-Only) The UUID of the External EPG.
   * `dhcp_server_vrf_preference` - (Read-Only) Indicates whether the server VRF is used.

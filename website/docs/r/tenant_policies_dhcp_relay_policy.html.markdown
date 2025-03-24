@@ -18,12 +18,12 @@ resource "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
   template_id = mso_template.tenant_policy_template.id
   description = "example_dhcp_relay_policy"
   providers {
-    dhcp_server_address = "1.1.1.1"
-    application_epg     = mso_schema_template_anp_epg.anp_epg.uuid
+    dhcp_server_address  = "1.1.1.1"
+    application_epg_uuid = mso_schema_template_anp_epg.anp_epg.uuid
   }
   providers {
     dhcp_server_address        = "2.2.2.2"
-    external_epg               = mso_schema_template_external_epg.ext_epg.uuid
+    external_epg_uuid          = mso_schema_template_external_epg.ext_epg.uuid
     dhcp_server_vrf_preference = true
   }
 }
@@ -36,8 +36,8 @@ resource "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
 * `description` - (Optional) The description of the DHCP relay policy.
 * `providers` - (Required) A list of providers for the DHCP relay policy.
   * `dhcp_server_address` - (Required) The DHCP server IP address of the provider.
-  * `application_epg` - (Optional) The UUID of the Application Profile EPG.
-  * `external_epg` - (Optional) The UUID of the External EPG.
+  * `application_epg_uuid` - (Optional) The UUID of the Application Profile EPG.
+  * `external_epg_uuid` - (Optional) The UUID of the External EPG.
   * `dhcp_server_vrf_preference` - (Optional) Indicates whether the server VRF is used.
 
 ## Attribute Reference ##
