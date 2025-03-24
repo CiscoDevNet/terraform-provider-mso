@@ -98,10 +98,10 @@ resource "mso_schema_template_anp_epg" "%[1]s" {
 func testSchemaTemplateVrfConfig() string {
 	return fmt.Sprintf(`
 resource "mso_schema_template_vrf" "%[1]s" {
-	name                   = "%[1]s"
-	display_name           = "%[1]s"
-	schema_id              = mso_schema.%[2]s.id
-	template               = "%[3]s"
+	name         = "%[1]s"
+	display_name = "%[1]s"
+	schema_id    = mso_schema.%[2]s.id
+	template     = "%[3]s"
 }
 `, msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName)
 }
@@ -109,11 +109,11 @@ resource "mso_schema_template_vrf" "%[1]s" {
 func testSchemaTemplateExtEpgConfig() string {
 	return fmt.Sprintf(`
 resource "mso_schema_template_external_epg" "%[1]s" {
-	external_epg_name          = "%[1]s"
-	display_name               = "%[1]s"
-	vrf_name                   = mso_schema_template_vrf.%[2]s.name
-	schema_id                  = mso_schema.%[3]s.id
-	template_name              = "%[4]s"
+	external_epg_name = "%[1]s"
+	display_name      = "%[1]s"
+	vrf_name          = mso_schema_template_vrf.%[2]s.name
+	schema_id         = mso_schema.%[3]s.id
+	template_name     = "%[4]s"
 }
 `, msoSchemaTemplateExtEpgName, msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName)
 }

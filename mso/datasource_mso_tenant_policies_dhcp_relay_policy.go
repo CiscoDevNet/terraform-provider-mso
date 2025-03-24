@@ -38,11 +38,11 @@ func datasourceMSOTenantPoliciesDHCPRelayPolicy() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"application_epg": {
+						"application_epg_uuid": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"external_epg": {
+						"external_epg_uuid": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},

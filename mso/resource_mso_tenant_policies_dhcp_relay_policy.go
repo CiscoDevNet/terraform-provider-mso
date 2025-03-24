@@ -51,11 +51,11 @@ func resourceMSOTenantPoliciesDHCPRelayPolicy() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.IsIPAddress,
 						},
-						"application_epg": {
+						"application_epg_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"external_epg": {
+						"external_epg_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -67,19 +67,25 @@ func resourceMSOTenantPoliciesDHCPRelayPolicy() *schema.Resource {
 				},
 			},
 		},
-		CustomizeDiff: func(d *schema.ResourceDiff, v interface{}) error {
-			for index, provider := range d.Get("providers").(*schema.Set).List() {
-				providerMap := provider.(map[string]interface{})
-				appEPG, appEPGExists := providerMap["application_epg"].(string)
-				extEPG, extEPGExists := providerMap["external_epg"].(string)
-
-				if appEPGExists && extEPGExists && appEPG != "" && extEPG != "" {
-					return fmt.Errorf("only one of 'application_epg' or 'external_epg' can be set for a provider at index position: %d", index)
-				}
-			}
-			return nil
-		},
 	}
+}
+
+func checkDHCPRelayPolicyProviders(d *schema.ResourceData) error {
+	errors := make([]string, 0)
+	for index, provider := range d.Get("providers").(*schema.Set).List() {
+		providerMap := provider.(map[string]interface{})
+		applicationEpgUuid := providerMap["application_epg_uuid"].(string)
+		externalEpgUuid := providerMap["external_epg_uuid"].(string)
+		if applicationEpgUuid != "" && externalEpgUuid != "" {
+			errors = append(errors, fmt.Sprintf("\nError: Set either 'application_epg_uuid' or 'external_epg_uuid', not both for a provider at index position: %d\n", index))
+		} else if applicationEpgUuid == "" && externalEpgUuid == "" {
+			errors = append(errors, fmt.Sprintf("\nError: Please set either 'application_epg_uuid' or 'external_epg_uuid' for a provider at index position: %d\n", index))
+		}
+	}
+	if len(errors) > 0 {
+		return fmt.Errorf("%v", errors)
+	}
+	return nil
 }
 
 func setDHCPRelayPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
@@ -102,12 +108,12 @@ func setDHCPRelayPolicyData(d *schema.ResourceData, response *container.Containe
 
 		applicationEPG := models.StripQuotes(provider.S("epgRef").String())
 		if applicationEPG != "{}" {
-			providerMap["application_epg"] = applicationEPG
+			providerMap["application_epg_uuid"] = applicationEPG
 		}
 
 		externalEPG := models.StripQuotes(provider.S("externalEpgRef").String())
 		if externalEPG != "{}" {
-			providerMap["external_epg"] = externalEPG
+			providerMap["external_epg_uuid"] = externalEPG
 		}
 
 		providers = append(providers, providerMap)
@@ -116,15 +122,20 @@ func setDHCPRelayPolicyData(d *schema.ResourceData, response *container.Containe
 	return nil
 }
 
-func buildMSOTenantPoliciesDHCPRelayPolicyPayload(d *schema.ResourceData) map[string]interface{} {
+func resourceMSOTenantPoliciesDHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] MSO DHCP Relay Policy Resource - Beginning Create: %v", d.Id())
+
+	err := checkDHCPRelayPolicyProviders(d)
+	if err != nil {
+		return err
+	}
+
+	msoClient := m.(*client.Client)
+
 	payload := map[string]interface{}{
 		"name":        d.Get("name").(string),
 		"description": d.Get("description").(string),
 		"providers":   []interface{}{},
-	}
-
-	if uuid, ok := d.GetOk("uuid"); ok {
-		payload["uuid"] = uuid.(string)
 	}
 
 	for _, provider := range d.Get("providers").(*schema.Set).List() {
@@ -134,30 +145,23 @@ func buildMSOTenantPoliciesDHCPRelayPolicyPayload(d *schema.ResourceData) map[st
 			"useServerVrf": providerData["dhcp_server_vrf_preference"].(bool),
 		}
 
-		epgRef := providerData["application_epg"].(string)
-		if epgRef != "{}" {
-			providerPayload["epgRef"] = epgRef
+		applicationEpgUuid := providerData["application_epg_uuid"].(string)
+		if applicationEpgUuid != "{}" {
+			providerPayload["epgRef"] = applicationEpgUuid
 		}
 
-		externalEpgRef := providerData["external_epg"].(string)
-		if externalEpgRef != "{}" {
-			providerPayload["externalEpgRef"] = externalEpgRef
+		externalEpgUuid := providerData["external_epg_uuid"].(string)
+		if externalEpgUuid != "{}" {
+			providerPayload["externalEpgRef"] = externalEpgUuid
 		}
 
 		payload["providers"] = append(payload["providers"].([]interface{}), providerPayload)
 	}
 
-	return payload
-}
-
-func resourceMSOTenantPoliciesDHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] MSO DHCP Relay Policy Resource - Beginning Create: %v", d.Id())
-	msoClient := m.(*client.Client)
-
-	payloadModel := models.GetPatchPayload("add", "/tenantPolicyTemplate/template/dhcpRelayPolicies/-", buildMSOTenantPoliciesDHCPRelayPolicyPayload(d))
+	payloadModel := models.GetPatchPayload("add", "/tenantPolicyTemplate/template/dhcpRelayPolicies/-", payload)
 	templateId := d.Get("template_id").(string)
 
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateId), payloadModel)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateId), payloadModel)
 	if err != nil {
 		return err
 	}
@@ -198,6 +202,12 @@ func resourceMSOTenantPoliciesDHCPRelayPolicyRead(d *schema.ResourceData, m inte
 
 func resourceMSOTenantPoliciesDHCPRelayPolicyUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] MSO DHCP Relay Policy Resource - Beginning Update: %v", d.Id())
+
+	err := checkDHCPRelayPolicyProviders(d)
+	if err != nil {
+		return err
+	}
+
 	msoClient := m.(*client.Client)
 	templateId := d.Get("template_id").(string)
 
@@ -206,14 +216,57 @@ func resourceMSOTenantPoliciesDHCPRelayPolicyUpdate(d *schema.ResourceData, m in
 		return err
 	}
 
-	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, d.Get("uuid").(string), "tenantPolicyTemplate", "template", "dhcpRelayPolicies")
+	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "uuid", d.Get("uuid").(string), "tenantPolicyTemplate", "template", "dhcpRelayPolicies")
 	if err != nil {
 		return err
 	}
 
-	payloadModel := models.GetPatchPayload("replace", fmt.Sprintf("/tenantPolicyTemplate/template/dhcpRelayPolicies/%d", policyIndex), buildMSOTenantPoliciesDHCPRelayPolicyPayload(d))
+	payloadCon := container.New()
+	payloadCon.Array()
 
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateId), payloadModel)
+	dhcpRelayPolicyPath := fmt.Sprintf("/tenantPolicyTemplate/template/dhcpRelayPolicies/%d", policyIndex)
+	if d.HasChange("name") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/name", dhcpRelayPolicyPath), d.Get("name"))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("description") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/description", dhcpRelayPolicyPath), d.Get("description"))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("providers") {
+		providersMapList := make([]map[string]interface{}, 0)
+		for _, provider := range d.Get("providers").(*schema.Set).List() {
+			providerData := provider.(map[string]interface{})
+			providerPayload := map[string]interface{}{
+				"ip":           providerData["dhcp_server_address"].(string),
+				"useServerVrf": providerData["dhcp_server_vrf_preference"].(bool),
+			}
+
+			applicationEpgUuid := providerData["application_epg_uuid"].(string)
+			if applicationEpgUuid != "{}" {
+				providerPayload["epgRef"] = applicationEpgUuid
+			}
+
+			externalEpgUuid := providerData["external_epg_uuid"].(string)
+			if externalEpgUuid != "{}" {
+				providerPayload["externalEpgRef"] = externalEpgUuid
+			}
+
+			providersMapList = append(providersMapList, providerPayload)
+		}
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/providers", dhcpRelayPolicyPath), providersMapList)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateId), payloadCon)
 	if err != nil {
 		return err
 	}
@@ -232,7 +285,7 @@ func resourceMSOTenantPoliciesDHCPRelayPolicyDelete(d *schema.ResourceData, m in
 		return err
 	}
 
-	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, d.Get("uuid").(string), "tenantPolicyTemplate", "template", "dhcpRelayPolicies")
+	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "uuid", d.Get("uuid").(string), "tenantPolicyTemplate", "template", "dhcpRelayPolicies")
 	if err != nil {
 		return err
 	}
