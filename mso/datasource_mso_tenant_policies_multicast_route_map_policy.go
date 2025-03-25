@@ -35,19 +35,24 @@ func datasourceMSOMcastRouteMapPolicy() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"order": {
-							Type: schema.TypeInt,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"group_ip": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"source_ip": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"rp_ip": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"action": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},
@@ -68,7 +73,7 @@ func dataSourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m interface{})
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "McastRouteMapPolicies")
+	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "mcastRouteMapPolicies")
 	if err != nil {
 		return err
 	}

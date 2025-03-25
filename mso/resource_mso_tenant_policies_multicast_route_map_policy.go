@@ -43,8 +43,7 @@ func resourceMSOMcastRouteMapPolicy() *schema.Resource {
 			},
 			"multicast_route_map_entries": {
 				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
+				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"order": {
@@ -55,18 +54,22 @@ func resourceMSOMcastRouteMapPolicy() *schema.Resource {
 						"group_ip": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 						"source_ip": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 						"rp_ip": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 						"action": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 							ValidateFunc: validation.StringInSlice([]string{
 								"permit", "deny",
 							}, false),
@@ -78,25 +81,27 @@ func resourceMSOMcastRouteMapPolicy() *schema.Resource {
 	}
 }
 
-func setMcastRouteMapEntryList(mcastRouteMapEntries *schema.Set) []any {
-	mcastRouteMapEntryList := make([]any, 0, 1)
-	multicast_route_map_entry_list := mcastRouteMapEntries.List()
-	for _, val := range multicast_route_map_entry_list {
-		mcastRouteMapEntry := make(map[string]any)
-		multicast_route_map_entry := val.(map[string]any)
-		mcastRouteMapEntry["order"] = multicast_route_map_entry["order"].(int)
-		mcastRouteMapEntry["group"] = multicast_route_map_entry["group_ip"].(string)
-		mcastRouteMapEntry["source"] = multicast_route_map_entry["source_ip"].(string)
-		mcastRouteMapEntry["rp"] = multicast_route_map_entry["rp_ip"].(string)
-		mcastRouteMapEntry["action"] = multicast_route_map_entry["action"].(string)
-		mcastRouteMapEntryList = append(mcastRouteMapEntryList, mcastRouteMapEntry)
+func setMcastRouteMapEntryList(mcastRouteMapEntries *schema.Set) []map[string]any {
+	multicastRouteMapEntryList := mcastRouteMapEntries.List()
+	mcastRouteMapEntryList := make([]map[string]any, len(multicastRouteMapEntryList))
+
+	for i, val := range multicastRouteMapEntryList {
+		multicastRouteMapEntry := val.(map[string]any)
+		mcastRouteMapEntryList[i] = map[string]any{
+			"order":  multicastRouteMapEntry["order"].(int),
+			"group":  multicastRouteMapEntry["group_ip"].(string),
+			"source": multicastRouteMapEntry["source_ip"].(string),
+			"rp":     multicastRouteMapEntry["rp_ip"].(string),
+			"action": multicastRouteMapEntry["action"].(string),
+		}
 	}
+
 	return mcastRouteMapEntryList
 }
 
 func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 
-	d.SetId(fmt.Sprintf("templateId/%s/McastRouteMapPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
+	d.SetId(fmt.Sprintf("templateId/%s/MulticastRouteMapPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
 	d.Set("description", models.StripQuotes(response.S("description").String()))
@@ -110,7 +115,7 @@ func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Cont
 			return fmt.Errorf("unable to parse the multicast route map entries list")
 		}
 		mcastRouteMapEntry := make(map[string]any)
-		mcastRouteMapEntry["order"] = mcastRouteMapEntryCont.S("order").Data().(int)
+		mcastRouteMapEntry["order"] = mcastRouteMapEntryCont.S("order").Data().(float64)
 		mcastRouteMapEntry["group_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("group").String())
 		mcastRouteMapEntry["source_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("source").String())
 		mcastRouteMapEntry["rp_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("rp").String())
@@ -154,7 +159,7 @@ func resourceMSOMcastRouteMapPolicyCreate(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/McastRouteMapPolicy/%s", templateId, d.Get("name").(string)))
+	d.SetId(fmt.Sprintf("templateId/%s/MulticastRouteMapPolicy/%s", templateId, d.Get("name").(string)))
 	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Create Complete: %v", d.Id())
 	return resourceMSOMcastRouteMapPolicyRead(d, m)
 }
@@ -173,7 +178,7 @@ func resourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "McastRouteMapPolicy")
+	policyName, err := GetPolicyNameFromResourceId(d.Id(), "MulticastRouteMapPolicy")
 	if err != nil {
 		return err
 	}
@@ -233,7 +238,7 @@ func resourceMSOMcastRouteMapPolicyUpdate(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/McastRouteMapPolicy/%s", templateId, d.Get("name").(string)))
+	d.SetId(fmt.Sprintf("templateId/%s/MulticastRouteMapPolicy/%s", templateId, d.Get("name").(string)))
 	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Update Complete: %v", d.Id())
 	return resourceMSOMcastRouteMapPolicyRead(d, m)
 }

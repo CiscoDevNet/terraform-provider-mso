@@ -3,14 +3,14 @@ layout: "mso"
 page_title: "MSO: mso_tenant_policies_multicast_route_map_policy"
 sidebar_current: "docs-mso-data-source-tenant_policies_multicast_route_map_policy"
 description: |-
-  Data source for Multicast Route Policy.
+  Data source for Multicast Route Map Policy.
 ---
 
 
 
 # mso_tenant_policies_multicast_route_map_policy #
 
-Data source for Multicast Route Policy.
+Data source for Multicast Route Map Policy.
 
 ## GUI Information ##
 
@@ -27,14 +27,13 @@ data "mso_tenant_policies_multicast_route_map_policy" "multicast_route_map_polic
 
 ## Argument Reference ##
 
-* `template_id` - (Required) The unique ID of the template.
-* `name` - (Required) The name of the Multicast Route Policy policy.
+* `template_id` - (Required) The unique ID of the Tenant Policy template.
+* `name` - (Required) The name of the Multicast Route Map Policy.
 
 ## Attribute Reference ##
 
-* `uuid` - (Read-Only) The UUID of the Multicast Route Policy policy.
-* `id` - (Read-Only) The unique identifier of the Multicast Route Policy policy in the template.
-* `description` - (Read-Only) The description of the Multicast Route Policy policy.
+* `uuid` - (Read-Only) The UUID of the Multicast Route Map Policy.
+* `description` - (Read-Only) The description of the Multicast Route Map Policy.
 * `multicast_route_map_entries` - (Read-Only) The list of Multicast Route Map entries.
   * `multicast_route_map_entries.order` - (Read-Only) The order in which the rule for an entry is evaluated.
   * `multicast_route_map_entries.group_ip` - (Read-Only) The Group IP address.

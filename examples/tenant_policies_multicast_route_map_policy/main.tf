@@ -25,7 +25,7 @@ resource "mso_template" "tenant_template" {
   tenant_id     = data.mso_tenant.example_tenant.id
 }
 
-# tenant policies ipsla monitoring policy example
+# tenant policies multicast route map policy example
 
 resource "mso_tenant_policies_multicast_route_map_policy" "multicast_route_map_policy" {
   template_id = mso_template.tenant_template.id
@@ -37,5 +37,10 @@ resource "mso_tenant_policies_multicast_route_map_policy" "multicast_route_map_p
     source_ip = "1.1.1.1/1"
     rp_ip     = "1.1.1.2"
     action    = "permit"
+  }
+  multicast_route_map_entries {
+    order     = 2
+    group_ip  = "230.3.3.3/32"
+    action    = "deny"
   }
 }
