@@ -29,7 +29,7 @@ func datasourceMSOMcastRouteMapPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"multicast_route_map_entries": {
+			"route_map_entries_multicast": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -62,7 +62,7 @@ func datasourceMSOMcastRouteMapPolicy() *schema.Resource {
 }
 
 func dataSourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Data Source - Beginning Read")
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Data Source - Beginning Read")
 	msoClient := m.(*client.Client)
 
 	templateId := d.Get("template_id").(string)
@@ -79,6 +79,6 @@ func dataSourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m interface{})
 	}
 
 	setMcastRouteMapPolicyData(d, policy, templateId)
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Data Source - Read Complete : %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Data Source - Read Complete : %v", d.Id())
 	return nil
 }

@@ -41,7 +41,7 @@ func resourceMSOMcastRouteMapPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"multicast_route_map_entries": {
+			"route_map_entries_multicast": {
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Resource{
@@ -101,7 +101,7 @@ func setMcastRouteMapEntryList(mcastRouteMapEntries *schema.Set) []map[string]an
 
 func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 
-	d.SetId(fmt.Sprintf("templateId/%s/MulticastRouteMapPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
+	d.SetId(fmt.Sprintf("templateId/%s/RouteMapPolicyMulticast/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
 	d.Set("description", models.StripQuotes(response.S("description").String()))
@@ -122,21 +122,21 @@ func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Cont
 		mcastRouteMapEntry["action"] = models.StripQuotes(mcastRouteMapEntryCont.S("action").String())
 		mcastRouteMapEntryList = append(mcastRouteMapEntryList, mcastRouteMapEntry)
 	}
-	d.Set("multicast_route_map_entries", mcastRouteMapEntryList)
+	d.Set("route_map_entries_multicast", mcastRouteMapEntryList)
 
 	return nil
 
 }
 
 func resourceMSOMcastRouteMapPolicyImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Beginning Import: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Beginning Import: %v", d.Id())
 	resourceMSOMcastRouteMapPolicyRead(d, m)
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Import Complete: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
 
 func resourceMSOMcastRouteMapPolicyCreate(d *schema.ResourceData, m any) error {
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Beginning Create: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Beginning Create: %v", d.Id())
 	msoClient := m.(*client.Client)
 
 	payload := map[string]any{}
@@ -147,7 +147,7 @@ func resourceMSOMcastRouteMapPolicyCreate(d *schema.ResourceData, m any) error {
 		payload["description"] = description.(string)
 	}
 
-	if mcastRouteMapEntries, ok := d.GetOk("multicast_route_map_entries"); ok {
+	if mcastRouteMapEntries, ok := d.GetOk("route_map_entries_multicast"); ok {
 		payload["mcastRtMapEntryList"] = setMcastRouteMapEntryList(mcastRouteMapEntries.(*schema.Set))
 	}
 
@@ -159,13 +159,13 @@ func resourceMSOMcastRouteMapPolicyCreate(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/MulticastRouteMapPolicy/%s", templateId, d.Get("name").(string)))
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Create Complete: %v", d.Id())
+	d.SetId(fmt.Sprintf("templateId/%s/RouteMapPolicyMulticast/%s", templateId, d.Get("name").(string)))
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Create Complete: %v", d.Id())
 	return resourceMSOMcastRouteMapPolicyRead(d, m)
 }
 
 func resourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m any) error {
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Beginning Read: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
 
 	templateId, err := GetTemplateIdFromResourceId(d.Id())
@@ -178,7 +178,7 @@ func resourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "MulticastRouteMapPolicy")
+	policyName, err := GetPolicyNameFromResourceId(d.Id(), "RouteMapPolicyMulticast")
 	if err != nil {
 		return err
 	}
@@ -189,12 +189,12 @@ func resourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m any) error {
 	}
 
 	setMcastRouteMapPolicyData(d, policy, templateId)
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Read Complete : %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Read Complete : %v", d.Id())
 	return nil
 }
 
 func resourceMSOMcastRouteMapPolicyUpdate(d *schema.ResourceData, m any) error {
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Beginning Update: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Beginning Update: %v", d.Id())
 	msoClient := m.(*client.Client)
 	templateId := d.Get("template_id").(string)
 
@@ -226,8 +226,8 @@ func resourceMSOMcastRouteMapPolicyUpdate(d *schema.ResourceData, m any) error {
 		}
 	}
 
-	if d.HasChange("multicast_route_map_entries") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/mcastRtMapEntryList", updatePath), setMcastRouteMapEntryList(d.Get("multicast_route_map_entries").(*schema.Set)))
+	if d.HasChange("route_map_entries_multicast") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/mcastRtMapEntryList", updatePath), setMcastRouteMapEntryList(d.Get("route_map_entries_multicast").(*schema.Set)))
 		if err != nil {
 			return err
 		}
@@ -238,13 +238,13 @@ func resourceMSOMcastRouteMapPolicyUpdate(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/MulticastRouteMapPolicy/%s", templateId, d.Get("name").(string)))
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Update Complete: %v", d.Id())
+	d.SetId(fmt.Sprintf("templateId/%s/RouteMapPolicyMulticast/%s", templateId, d.Get("name").(string)))
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Update Complete: %v", d.Id())
 	return resourceMSOMcastRouteMapPolicyRead(d, m)
 }
 
 func resourceMSOMcastRouteMapPolicyDelete(d *schema.ResourceData, m any) error {
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Beginning Delete: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Beginning Delete: %v", d.Id())
 	msoClient := m.(*client.Client)
 
 	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", d.Get("template_id").(string)))
@@ -265,6 +265,6 @@ func resourceMSOMcastRouteMapPolicyDelete(d *schema.ResourceData, m any) error {
 	}
 
 	d.SetId("")
-	log.Printf("[DEBUG] MSO Multicast Route Map Policy Resource - Delete Complete: %v", d.Id())
+	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Delete Complete: %v", d.Id())
 	return nil
 }
