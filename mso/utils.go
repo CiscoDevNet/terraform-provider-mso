@@ -10,9 +10,7 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 const version = 1
@@ -399,33 +397,4 @@ func GetPolicyByName(cont *container.Container, policyName string, templateEleme
 	}
 
 	return nil, fmt.Errorf("Policy name %s not found", policyName)
-}
-
-func testAccVerifyKeyValue(resourceAttrsMap *map[string]string, resourceAttrRootkey, stateKey, stateValue string) {
-	stateKeySplit := strings.Split(stateKey, ".")
-	for inputKey, inputValue := range *resourceAttrsMap {
-		if strings.Contains(stateKey, resourceAttrRootkey) && stateKeySplit[len(stateKeySplit)-1] == inputKey && (stateValue == inputValue || (inputValue == "reference" && stateValue != "")) {
-			delete(*resourceAttrsMap, inputKey)
-			break
-		}
-	}
-}
-
-func customTestCheckResourceAttr(resourceName, resourceAttrRootkey string, resourceAttrsMap map[string]string) resource.TestCheckFunc {
-	return func(is *terraform.State) error {
-		rootModule, err := is.RootModule().Resources[resourceName]
-		if !err {
-			return fmt.Errorf("%v", err)
-		}
-		if rootModule.Primary.ID == "" {
-			return fmt.Errorf("No ID is set for the template")
-		}
-		for stateKey, stateValue := range rootModule.Primary.Attributes {
-			testAccVerifyKeyValue(&resourceAttrsMap, resourceAttrRootkey, stateKey, stateValue)
-		}
-		if len(resourceAttrsMap) > 0 {
-			return fmt.Errorf("Assertion check failed,\nCurrent state file content: %v\nComparable to unmatched values: %v", rootModule.Primary.Attributes, resourceAttrsMap)
-		}
-		return nil
-	}
 }

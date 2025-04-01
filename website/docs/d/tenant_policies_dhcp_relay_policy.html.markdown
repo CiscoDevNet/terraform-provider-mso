@@ -10,6 +10,10 @@ description: |-
 
 Data source for DHCP Relay Policy.
 
+## GUI Information ##
+
+* `Location` - Manage -> Tenant Template -> Tenant Policies -> DHCP Relay Policy
+
 ## Example Usage ##
 
 ```hcl
@@ -26,6 +30,7 @@ data "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
 
 ## Attribute Reference ##
 
+* `id` - (Read-Only) The unique identifier of the DHCP relay policy in the template.
 * `uuid` - (Read-Only) The UUID of the DHCP relay policy.
 * `description` - (Read-Only) The description of the DHCP relay policy.
 * `providers` - (Read-Only) A list of providers for the DHCP relay policy.

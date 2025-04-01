@@ -10,6 +10,10 @@ description: |-
 
 Manages DHCP Relay Policies on Cisco Nexus Dashboard Orchestrator (NDO)
 
+## GUI Information ##
+
+* `Location` - Manage -> Tenant Template -> Tenant Policies -> DHCP Relay Policy
+
 ## Example Usage ##
 
 ```hcl
@@ -42,11 +46,12 @@ resource "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
 
 ## Attribute Reference ##
 
+* `id` - The unique identifier of the DHCP relay policy in the template.
 * `uuid` - The UUID of the DHCP relay policy.
 
 ## Importing ##
 
-An existing MSO Schema Template can be [imported][docs-import] into this resource via its ID/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+An existing MSO DHCP relay policy can be [imported][docs-import] into this resource via its ID/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```
 terraform import mso_tenant_policies_dhcp_relay_policy.dhcp_relay_policy templateId/{template_id}/DHCPRelayPolicy/{name}
