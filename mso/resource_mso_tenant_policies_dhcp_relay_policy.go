@@ -122,23 +122,9 @@ func setDHCPRelayPolicyData(d *schema.ResourceData, response *container.Containe
 	return nil
 }
 
-func resourceMSOTenantPoliciesDHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] MSO DHCP Relay Policy Resource - Beginning Create: %v", d.Id())
-
-	err := checkDHCPRelayPolicyProviders(d)
-	if err != nil {
-		return err
-	}
-
-	msoClient := m.(*client.Client)
-
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"providers":   []interface{}{},
-	}
-
-	for _, provider := range d.Get("providers").(*schema.Set).List() {
+func getProvidersMapList(providers []interface{}) []map[string]interface{} {
+	providersMapList := make([]map[string]interface{}, 0)
+	for _, provider := range providers {
 		providerData := provider.(map[string]interface{})
 		providerPayload := map[string]interface{}{
 			"ip":           providerData["dhcp_server_address"].(string),
@@ -155,9 +141,28 @@ func resourceMSOTenantPoliciesDHCPRelayPolicyCreate(d *schema.ResourceData, m in
 			providerPayload["externalEpgRef"] = externalEpgUuid
 		}
 
-		payload["providers"] = append(payload["providers"].([]interface{}), providerPayload)
+		providersMapList = append(providersMapList, providerPayload)
+	}
+	return providersMapList
+}
+
+func resourceMSOTenantPoliciesDHCPRelayPolicyCreate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] MSO DHCP Relay Policy Resource - Beginning Create: %v", d.Id())
+
+	err := checkDHCPRelayPolicyProviders(d)
+	if err != nil {
+		return err
 	}
 
+	msoClient := m.(*client.Client)
+
+	payload := map[string]interface{}{
+		"name":        d.Get("name").(string),
+		"description": d.Get("description").(string),
+		"providers":   []interface{}{},
+	}
+
+	payload["providers"] = getProvidersMapList(d.Get("providers").(*schema.Set).List())
 	payloadModel := models.GetPatchPayload("add", "/tenantPolicyTemplate/template/dhcpRelayPolicies/-", payload)
 	templateId := d.Get("template_id").(string)
 
@@ -240,27 +245,7 @@ func resourceMSOTenantPoliciesDHCPRelayPolicyUpdate(d *schema.ResourceData, m in
 	}
 
 	if d.HasChange("providers") {
-		providersMapList := make([]map[string]interface{}, 0)
-		for _, provider := range d.Get("providers").(*schema.Set).List() {
-			providerData := provider.(map[string]interface{})
-			providerPayload := map[string]interface{}{
-				"ip":           providerData["dhcp_server_address"].(string),
-				"useServerVrf": providerData["dhcp_server_vrf_preference"].(bool),
-			}
-
-			applicationEpgUuid := providerData["application_epg_uuid"].(string)
-			if applicationEpgUuid != "{}" {
-				providerPayload["epgRef"] = applicationEpgUuid
-			}
-
-			externalEpgUuid := providerData["external_epg_uuid"].(string)
-			if externalEpgUuid != "{}" {
-				providerPayload["externalEpgRef"] = externalEpgUuid
-			}
-
-			providersMapList = append(providersMapList, providerPayload)
-		}
-		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/providers", dhcpRelayPolicyPath), providersMapList)
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/providers", dhcpRelayPolicyPath), getProvidersMapList(d.Get("providers").(*schema.Set).List()))
 		if err != nil {
 			return err
 		}
