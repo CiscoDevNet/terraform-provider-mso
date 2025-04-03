@@ -24,7 +24,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers.#", "2"),
 					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
 						map[string]string{
-							"application_epg_uuid":       "reference",
+							"application_epg_uuid":       fmt.Sprintf("mso_schema_template_anp_epg.%s.uuid", msoSchemaTemplateAnpEpgName),
 							"dhcp_server_address":        "1.1.1.1",
 							"dhcp_server_vrf_preference": "false",
 							"external_epg_uuid":          "",
@@ -35,7 +35,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyDataSource(t *testing.T) {
 							"application_epg_uuid":       "",
 							"dhcp_server_address":        "2.2.2.2",
 							"dhcp_server_vrf_preference": "true",
-							"external_epg_uuid":          "reference",
+							"external_epg_uuid":          fmt.Sprintf("mso_schema_template_external_epg.%s.uuid", msoSchemaTemplateExtEpgName),
 						},
 					),
 				),
