@@ -91,7 +91,6 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update DHCP Relay Policy - Remove One Provider") },
 				Config:    testAccMSOTenantPoliciesDHCPRelayPolicyConfigUpdateRemoveProvider(name),
 				Check: resource.ComposeTestCheckFunc(
-
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", "Updated DHCP Relay Policy"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
@@ -110,7 +109,6 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update DHCP Relay Policy - Add the provider back to the list") },
 				Config:    testAccMSOTenantPoliciesDHCPRelayPolicyConfigUpdateAddProvider(name),
 				Check: resource.ComposeTestCheckFunc(
-
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", "Updated DHCP Relay Policy"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
@@ -132,6 +130,13 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 						},
 					),
 				),
+			},
+			{
+				PreConfig:                 func() { fmt.Println("Test: Update DHCP Relay Policy with invalid DHCP server address") },
+				Config:                    testAccMSOTenantPoliciesDHCPRelayPolicyConfigUpdateAddProviderWithInvalidDHCPServerAddress(name),
+				Destroy:                   false,
+				PreventPostDestroyRefresh: true,
+				ExpectError:               regexp.MustCompile(`expected providers.0.dhcp_server_address to contain a valid IP, got: google.com`),
 			},
 			{
 				PreConfig:         func() { fmt.Println("Test: Import DHCP Relay Policy") },
@@ -243,4 +248,19 @@ resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	}
 }
 `, dhcpRelayPolicyParentConfig, name, msoTenantPolicyTemplateName, msoSchemaTemplateExtEpgName, msoSchemaTemplateAnpEpgName)
+}
+
+func testAccMSOTenantPoliciesDHCPRelayPolicyConfigUpdateAddProviderWithInvalidDHCPServerAddress(name string) string {
+	return fmt.Sprintf(`%[1]s
+resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
+	name        = "%[2]s"
+	template_id = mso_template.%[3]s.id
+	description = "Updated DHCP Relay Policy"
+	providers {
+		dhcp_server_address        = "google.com"
+		external_epg_uuid          = mso_schema_template_external_epg.%[4]s.uuid
+		dhcp_server_vrf_preference = false
+	}
+}
+`, dhcpRelayPolicyParentConfig, name, msoTenantPolicyTemplateName, msoSchemaTemplateExtEpgName)
 }
