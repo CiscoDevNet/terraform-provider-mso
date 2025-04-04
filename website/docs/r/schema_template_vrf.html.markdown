@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_vrf"
 sidebar_current: "docs-mso-resource-schema_template_vrf"
 description: |-
-  Manages MSO Resource Schema Template VRF
+  Manages Resource for Schema Template VRF on Cisco Nexus Dashboard Orchestrator (NDO).
 ---
 
 # mso_schema_template_vrf #
 
-Manages MSO Resource Schema Template VRF
+Manages Resource for Schema Template VRF on Cisco Nexus Dashboard Orchestrator (NDO).
 
 ## GUI Information ##
 
@@ -40,10 +40,10 @@ resource "mso_schema_template_vrf" "example_vrf" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The Schema ID.
+* `schema_id` - (Required) The unique ID of the Schema.
 * `name` - (Required) The name of the VRF.
 * `template` - (Required) The name of the Template associated to the Schema.
-* `display_name` - (Required) The name of the VRF as displayed on the MSO web interface.
+* `display_name` - (Required) The name of the VRF as displayed on the NDO/MSO web interface.
 * `description` - (Optional) The description of the VRF.
 * `layer3_multicast` - (Optional) Whether to enable L3 multicast.
 * `vzany` - (Optional) Whether to enable vzany.
@@ -52,12 +52,12 @@ resource "mso_schema_template_vrf" "example_vrf" {
 * `site_aware_policy_enforcement` - (Optional) Whether to enable site aware policy enforcement mode.
 * `rendezvous_points` - (Optional) The list of Rendezvous Points.
   * `rendezvous_points.ip_address` - (Required) The IP Address of the Rendezvous Point.
-  * `rendezvous_points.type` - (Required) The type of the Rendezvous Point.  Allowed values are `static`, `fabric` and `unknown`.
+  * `rendezvous_points.type` - (Required) The type of the Rendezvous Point. Allowed values are `static`, `fabric` and `unknown`.
   * `rendezvous_points.mutlicast_route_map_policy_uuid` - (Optional) The UUID of the Route Map Policy for Multicast to be associated with the Rendezvous Point.
 
 ## Attribute Reference ##
 
-* `uuid` - The UUID of the Route Map Policy for Multicast.
+* `uuid` - The NDO UUID of the Route Map Policy for Multicast.
 
 ## Importing ##
 
