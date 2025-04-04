@@ -3,12 +3,12 @@ layout: "mso"
 page_title: "MSO: mso_schema_template_vrf"
 sidebar_current: "docs-mso-data-source-schema_template_vrf"
 description: |-
-  Data source for MSO Schema Template VRF.
+  Data source for Schema Template VRF on Cisco Nexus Dashboard Orchestrator (NDO).
 ---
 
 # mso_schema_template_vrf #
 
-Data source for MSO Schema Template VRF.
+Data source for Schema Template VRF on Cisco Nexus Dashboard Orchestrator (NDO).
 
 ## GUI Information ##
 
@@ -28,14 +28,14 @@ data "mso_schema_template_vrf" "example_vrf" {
 
 ## Argument Reference ##
 
-* `schema_id` - (Required) The schema ID of the VRF.
+* `schema_id` - (Required) The unique ID of the Schema.
 * `template` - (Required) The name of the Template associated to the Schema.
 * `name` - (Required) The name of the VRF.
 
 ## Attribute Reference ##
 
-* `uuid` - (Read-Only) The UUID of the VRF.
-* `display_name` - (Read-Only) The name of the VRF as displayed on the MSO UI.
+* `uuid` - (Read-Only) The NDO UUID of the VRF.
+* `display_name` - (Read-Only) The name of the VRF as displayed on the NDO/MSO UI.
 * `layer3_multicast` - (Read-Only) Whether L3 multicast is enabled.
 * `vzany` - (Read-Only) Whether vzany is enabled.
 * `ip_data_plane_learning` - (Read-Only) Whether IP data plane learning is enabled.
@@ -44,5 +44,5 @@ data "mso_schema_template_vrf" "example_vrf" {
 * `site_aware_policy_enforcement` - (Read-Only) Whether site aware policy enforcement mode is enabled.
 * `rendezvous_points` - (Read-Only) The list of Rendezvous Points.
   * `rendezvous_points.ip_address` - (Read-Only) The IP Address of the Rendezvous Point.
-  * `rendezvous_points.type` - (Read-Only) The type of the Rendezvous Point.  Allowed values are `static`, `fabric` and `unknown`.
+  * `rendezvous_points.type` - (Read-Only) The type of the Rendezvous Point.
   * `rendezvous_points.mutlicast_route_map_policy_uuid` - (Read-Only) The UUID of the Route Map Policy for Multicast associated with the Rendezvous Point.

@@ -155,13 +155,13 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 						if err != nil {
 							return err
 						}
-						rendezvousPoints := make([]interface{}, 0)
+						rendezvousPoints := make([]any, 0)
 						for k := range rpCount {
 							rpCont, err := vrfCont.ArrayElement(k, "rpConfigs")
 							if err != nil {
 								return err
 							}
-							rpConfig := make(map[string]interface{})
+							rpConfig := make(map[string]any)
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
 							rpConfig["mutlicast_route_map_policy_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
