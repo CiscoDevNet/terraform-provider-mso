@@ -87,10 +87,14 @@ func testCheckResourceDestroyPolicy(s *terraform.State, resource, policyType str
 	return nil
 }
 
+func IsReference(s string) bool {
+	return strings.HasPrefix(s, "mso_") || strings.HasPrefix(s, "data.mso_")
+}
+
 func testAccVerifyKeyValue(resourceAttrsMap *map[string]string, resourceAttrRootkey, stateKey, stateValue string) {
 	stateKeySplit := strings.Split(stateKey, ".")
 	for inputKey, inputValue := range *resourceAttrsMap {
-		if strings.Contains(stateKey, resourceAttrRootkey) && stateKeySplit[len(stateKeySplit)-1] == inputKey && (stateValue == inputValue || (inputValue == "reference" && stateValue != "")) {
+		if strings.Contains(stateKey, resourceAttrRootkey) && stateKeySplit[len(stateKeySplit)-1] == inputKey && (stateValue == inputValue || (IsReference(inputValue) && stateValue != "")) {
 			delete(*resourceAttrsMap, inputKey)
 			break
 		}

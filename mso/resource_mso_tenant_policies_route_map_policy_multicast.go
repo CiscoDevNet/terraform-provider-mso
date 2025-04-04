@@ -61,7 +61,7 @@ func resourceMSOMcastRouteMapPolicy() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"rp_ip": {
+						"rendezvous_point_ip": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
@@ -91,7 +91,7 @@ func setMcastRouteMapEntryList(mcastRouteMapEntries *schema.Set) []map[string]an
 			"order":  multicastRouteMapEntry["order"].(int),
 			"group":  multicastRouteMapEntry["group_ip"].(string),
 			"source": multicastRouteMapEntry["source_ip"].(string),
-			"rp":     multicastRouteMapEntry["rp_ip"].(string),
+			"rp":     multicastRouteMapEntry["rendezvous_point_ip"].(string),
 			"action": multicastRouteMapEntry["action"].(string),
 		}
 	}
@@ -118,7 +118,7 @@ func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Cont
 		mcastRouteMapEntry["order"] = mcastRouteMapEntryCont.S("order").Data().(float64)
 		mcastRouteMapEntry["group_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("group").String())
 		mcastRouteMapEntry["source_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("source").String())
-		mcastRouteMapEntry["rp_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("rp").String())
+		mcastRouteMapEntry["rendezvous_point_ip"] = models.StripQuotes(mcastRouteMapEntryCont.S("rp").String())
 		mcastRouteMapEntry["action"] = models.StripQuotes(mcastRouteMapEntryCont.S("action").String())
 		mcastRouteMapEntryList = append(mcastRouteMapEntryList, mcastRouteMapEntry)
 	}
