@@ -8,7 +8,7 @@ description: |-
 
 # mso_tenant_policies_dhcp_relay_policy #
 
-Manages DHCP Relay Policies on Cisco Nexus Dashboard Orchestrator (NDO)
+Manages DHCP Relay Policies on Cisco Nexus Dashboard Orchestrator (NDO). This resource is only supported on ND v3.1 (NDO v4.3) and later.
 
 ## GUI Information ##
 
@@ -40,8 +40,8 @@ resource "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
 * `description` - (Optional) The description of the DHCP relay policy.
 * `providers` - (Required) A list of providers for the DHCP relay policy.
   * `dhcp_server_address` - (Required) The DHCP server IP address of the provider.
-  * `application_epg_uuid` - (Optional) The UUID of the Application Profile EPG.
-  * `external_epg_uuid` - (Optional) The UUID of the External EPG.
+  * `application_epg_uuid` - (Optional) The UUID of the Application Profile EPG, `application_epg_uuid` is required only when `external_epg_uuid` is not set, as both cannot be used at the same time.
+  * `external_epg_uuid` - (Optional) The UUID of the External EPG, `external_epg_uuid` is required only when `application_epg_uuid` is not set, as both cannot be used at the same time.
   * `dhcp_server_vrf_preference` - (Optional) Indicates whether the server VRF is used.
 
 ## Attribute Reference ##
