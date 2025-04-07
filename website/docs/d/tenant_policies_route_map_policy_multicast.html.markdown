@@ -40,4 +40,4 @@ data "mso_tenant_policies_route_map_policy_multicast" "route_map_policy_multicas
   * `route_map_entries_multicast.group_ip` - (Read-Only) The Group IP address.
   * `route_map_entries_multicast.source_ip` - (Read-Only) The Source IP address.
   * `route_map_entries_multicast.rendezvous_point_ip` - (Read-Only) The Rendezvous Point IP address.
-  * `route_map_entries_multicast.action` - (Read-Only) The action defined for a entry.
+  * `route_map_entries_multicast.action` - (Read-Only) The action defined for an entry.
