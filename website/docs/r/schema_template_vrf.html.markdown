@@ -42,7 +42,7 @@ resource "mso_schema_template_vrf" "example_vrf" {
 
 * `schema_id` - (Required) The unique ID of the Schema.
 * `name` - (Required) The name of the VRF.
-* `template` - (Required) The name of the Template associated to the Schema.
+* `template` - (Required) The name of the Template associated with the Schema.
 * `display_name` - (Required) The name of the VRF as displayed on the NDO/MSO web interface.
 * `description` - (Optional) The description of the VRF.
 * `layer3_multicast` - (Optional) Whether to enable L3 multicast.
