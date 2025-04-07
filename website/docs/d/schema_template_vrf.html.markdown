@@ -29,7 +29,7 @@ data "mso_schema_template_vrf" "example_vrf" {
 ## Argument Reference ##
 
 * `schema_id` - (Required) The unique ID of the Schema.
-* `template` - (Required) The name of the Template associated to the Schema.
+* `template` - (Required) The name of the Template associated with the Schema.
 * `name` - (Required) The name of the VRF.
 
 ## Attribute Reference ##
