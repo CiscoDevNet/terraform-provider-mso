@@ -14,7 +14,7 @@ Manages Route Map Policies for Multicast on Cisco Nexus Dashboard Orchestrator (
 
 ## GUI Information ##
 
-* `Location` - Manage -> Tenant Template -> Tenant Policies -> Route Map Policy for Multicast for Multicast
+* `Location` - Manage -> Tenant Template -> Tenant Policies -> Route Map Policy for Multicast
 
 ## Example Usage ##
 
@@ -48,7 +48,7 @@ resource "mso_tenant_policies_route_map_policy_multicast" "route_map_policy_mult
   * `route_map_entries_multicast.group_ip` - (Optional) The Group IP address. The Group IP range must be between `224.0.0.0` and `239.255.255.255` with a netmask between `/8` and `/32`. The subnet mask must be provided.
   * `route_map_entries_multicast.source_ip` - (Optional) The Source IP address.
   * `route_map_entries_multicast.rendezvous_point_ip` - (Optional) The Rendezvous Point IP address.
-  * `route_map_entries_multicast.action` - (Optional) The action defined for a entry. Allowed values are `permit`, `deny`.
+  * `route_map_entries_multicast.action` - (Optional) The action defined for an entry. Allowed values are `permit`, `deny`.
 
 ## Attribute Reference ##
 
