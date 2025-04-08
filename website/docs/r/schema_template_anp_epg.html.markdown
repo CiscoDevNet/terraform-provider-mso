@@ -61,7 +61,7 @@ resource "mso_schema_template_anp_epg" "anp_epg" {
 
 ## Attribute Reference ##
 
-* `uuid` - The UUID of the EPG.
+* `uuid` - (Read-Only) The NDO UUID of the EPG.
 
 ## Importing ##
 
