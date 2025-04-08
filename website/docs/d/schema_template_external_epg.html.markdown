@@ -30,7 +30,7 @@ data "mso_schema_template_external_epg" "example" {
 
 ## Attribute Reference ##
 
-* `uuid` - (Read-Only) The UUID of the External EPG.
+* `uuid` - (Read-Only) The NDO UUID of the External EPG.
 * `display_name` - (Read-Only) The name of the External EPG as displayed on the MSO UI.
 * `external_epg_type` - (Read-Only) The type of the External EPG.
 * `vrf_name` - (Read-Only) The name of the VRF associated with the External EPG.
