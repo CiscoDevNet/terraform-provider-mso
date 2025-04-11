@@ -33,11 +33,11 @@ data "mso_tenant_policies_route_map_policy_multicast" "route_map_policy_multicas
 ## Attribute Reference ##
 
 * `uuid` - (Read-Only) The NDO UUID of the Route Map Policy for Multicast.
-* `id` - The unique terraform identifier of the Route Map Policy for Multicast.
+* `id` - (Read-Only) The unique terraform identifier of the Route Map Policy for Multicast.
 * `description` - (Read-Only) The description of the Route Map Policy for Multicast.
-* `route_map_entries_multicast` - (Read-Only) The list of Route Map entries for Multicast.
-  * `route_map_entries_multicast.order` - (Read-Only) The order in which the rule for an entry is evaluated.
-  * `route_map_entries_multicast.group_ip` - (Read-Only) The Group IP address.
-  * `route_map_entries_multicast.source_ip` - (Read-Only) The Source IP address.
-  * `route_map_entries_multicast.rendezvous_point_ip` - (Read-Only) The Rendezvous Point IP address.
-  * `route_map_entries_multicast.action` - (Read-Only) The action defined for an entry.
+* `route_map_multicast_entries` - (Read-Only) The list of Route Map entries for Multicast.
+  * `route_map_multicast_entries.order` - (Read-Only) The order in which the rule for an entry is evaluated.
+  * `route_map_multicast_entries.group_ip` - (Read-Only) The Group IP address.
+  * `route_map_multicast_entries.source_ip` - (Read-Only) The Source IP address.
+  * `route_map_multicast_entries.rendezvous_point_ip` - (Read-Only) The Rendezvous Point IP address.
+  * `route_map_multicast_entries.action` - (Read-Only) The action defined for an entry.
