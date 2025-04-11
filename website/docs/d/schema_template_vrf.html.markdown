@@ -42,7 +42,7 @@ data "mso_schema_template_vrf" "example_vrf" {
 * `preferred_group` - (Read-Only) Whether to preferred group is enabled.
 * `description` - (Read-Only) The description of the VRF.
 * `site_aware_policy_enforcement` - (Read-Only) Whether site aware policy enforcement mode is enabled.
-* `rendezvous_points` - (Read-Only) The list of Rendezvous Points.
+* `rendezvous_points` - (Read-Only) The list of Rendezvous Points. This attribute is supported in NDO v3.0(1) and higher.
   * `rendezvous_points.ip_address` - (Read-Only) The IP Address of the Rendezvous Point.
   * `rendezvous_points.type` - (Read-Only) The type of the Rendezvous Point.
-  * `rendezvous_points.mutlicast_route_map_policy_uuid` - (Read-Only) The UUID of the Route Map Policy for Multicast associated with the Rendezvous Point.
+  * `rendezvous_points.route_map_policy_multicast_uuid` - (Read-Only) The UUID of the Route Map Policy for Multicast associated with the Rendezvous Point.

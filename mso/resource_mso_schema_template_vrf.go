@@ -112,7 +112,7 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 							}, false),
 							Required: true,
 						},
-						"mutlicast_route_map_policy_uuid": {
+						"route_map_policy_multicast_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
@@ -200,7 +200,7 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m any) ([]*schem
 							rpConfig := make(map[string]any)
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
-							rpConfig["mutlicast_route_map_policy_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
+							rpConfig["route_map_policy_multicast_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
 							rendezvousPoints = append(rendezvousPoints, rpConfig)
 						}
 						d.Set("rendezvous_points", rendezvousPoints)
@@ -292,8 +292,8 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m any) error {
 			if rendezvousPoint["type"] != "" {
 				rpConfig["rpType"] = fmt.Sprintf("%v", rendezvousPoint["type"])
 			}
-			if rendezvousPoint["mutlicast_route_map_policy_uuid"] != "" {
-				rpConfig["mcastRtMapPolicyRef"] = fmt.Sprintf("%v", rendezvousPoint["mutlicast_route_map_policy_uuid"])
+			if rendezvousPoint["route_map_policy_multicast_uuid"] != "" {
+				rpConfig["mcastRtMapPolicyRef"] = fmt.Sprintf("%v", rendezvousPoint["route_map_policy_multicast_uuid"])
 			}
 			rendezvousPoints = append(rendezvousPoints, rpConfig)
 		}
@@ -380,8 +380,8 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m any) error {
 			if rendezvousPoint["type"] != "" {
 				rpConfig["rpType"] = fmt.Sprintf("%v", rendezvousPoint["type"])
 			}
-			if rendezvousPoint["mutlicast_route_map_policy_uuid"] != "" {
-				rpConfig["mcastRtMapPolicyRef"] = fmt.Sprintf("%v", rendezvousPoint["mutlicast_route_map_policy_uuid"])
+			if rendezvousPoint["route_map_policy_multicast_uuid"] != "" {
+				rpConfig["mcastRtMapPolicyRef"] = fmt.Sprintf("%v", rendezvousPoint["route_map_policy_multicast_uuid"])
 			}
 			rendezvousPoints = append(rendezvousPoints, rpConfig)
 		}
@@ -488,7 +488,7 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 							rpConfig := make(map[string]any)
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
-							rpConfig["mutlicast_route_map_policy_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
+							rpConfig["route_map_policy_multicast_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
 							rendezvousPoints = append(rendezvousPoints, rpConfig)
 						}
 						d.Set("rendezvous_points", rendezvousPoints)

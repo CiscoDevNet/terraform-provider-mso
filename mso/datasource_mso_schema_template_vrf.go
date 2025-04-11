@@ -78,7 +78,7 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"mutlicast_route_map_policy_uuid": {
+						"route_map_policy_multicast_uuid": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -164,7 +164,7 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 							rpConfig := make(map[string]any)
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
-							rpConfig["mutlicast_route_map_policy_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
+							rpConfig["route_map_policy_multicast_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
 							rendezvousPoints = append(rendezvousPoints, rpConfig)
 						}
 						d.Set("rendezvous_points", rendezvousPoints)
