@@ -41,7 +41,7 @@ func resourceMSOMcastRouteMapPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"route_map_entries_multicast": {
+			"route_map_multicast_entries": {
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Resource{
@@ -122,7 +122,7 @@ func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Cont
 		mcastRouteMapEntry["action"] = models.StripQuotes(mcastRouteMapEntryCont.S("action").String())
 		mcastRouteMapEntryList = append(mcastRouteMapEntryList, mcastRouteMapEntry)
 	}
-	d.Set("route_map_entries_multicast", mcastRouteMapEntryList)
+	d.Set("route_map_multicast_entries", mcastRouteMapEntryList)
 
 	return nil
 
@@ -147,7 +147,7 @@ func resourceMSOMcastRouteMapPolicyCreate(d *schema.ResourceData, m any) error {
 		payload["description"] = description.(string)
 	}
 
-	if mcastRouteMapEntries, ok := d.GetOk("route_map_entries_multicast"); ok {
+	if mcastRouteMapEntries, ok := d.GetOk("route_map_multicast_entries"); ok {
 		payload["mcastRtMapEntryList"] = setMcastRouteMapEntryList(mcastRouteMapEntries.(*schema.Set))
 	}
 
@@ -226,8 +226,8 @@ func resourceMSOMcastRouteMapPolicyUpdate(d *schema.ResourceData, m any) error {
 		}
 	}
 
-	if d.HasChange("route_map_entries_multicast") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/mcastRtMapEntryList", updatePath), setMcastRouteMapEntryList(d.Get("route_map_entries_multicast").(*schema.Set)))
+	if d.HasChange("route_map_multicast_entries") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/mcastRtMapEntryList", updatePath), setMcastRouteMapEntryList(d.Get("route_map_multicast_entries").(*schema.Set)))
 		if err != nil {
 			return err
 		}

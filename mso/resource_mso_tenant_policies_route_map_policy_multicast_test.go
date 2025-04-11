@@ -19,8 +19,8 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "name", "tf_test_route_map_policy_multicast"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "description", "Terraform test Route Map Policy for Multicast"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast",
+					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
 						map[string]string{
 							"order":               "1",
 							"group_ip":            "226.2.2.2/8",
@@ -38,7 +38,7 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 				Config:                    testAccMSOTenantPoliciesMcastRouteMapPolicyConfigCreateWithInvalidOrder(),
 				Destroy:                   false,
 				PreventPostDestroyRefresh: true,
-				ExpectError:               regexp.MustCompile(`config is invalid: expected route_map_entries_multicast\.0\.order to be in the range \(0 - 65535\), got 65536`),
+				ExpectError:               regexp.MustCompile(`config is invalid: expected route_map_multicast_entries\.0\.order to be in the range \(0 - 65535\), got 65536`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Update Route Map Policy for Multicast adding extra entry") },
@@ -46,8 +46,8 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "name", "tf_test_route_map_policy_multicast"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "description", "Terraform test Route Map Policy for Multicast adding extra entry"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast.#", "2"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast",
+					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries.#", "2"),
+					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
 						map[string]string{
 							"order":               "1",
 							"group_ip":            "226.2.2.2/8",
@@ -56,7 +56,7 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 							"action":              "permit",
 						},
 					),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast",
+					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
 						map[string]string{
 							"order":               "2",
 							"group_ip":            "226.3.3.3/24",
@@ -73,8 +73,8 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "name", "tf_test_route_map_policy_multicast"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "description", "Terraform test Route Map Policy for Multicast removing extra entry"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_entries_multicast",
+					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
 						map[string]string{
 							"order":               "1",
 							"group_ip":            "226.2.2.2/8",
@@ -102,7 +102,7 @@ func testAccMSOTenantPoliciesMcastRouteMapPolicyConfigCreate() string {
 		template_id = mso_template.template_tenant.id
 		name        = "tf_test_route_map_policy_multicast"
 		description = "Terraform test Route Map Policy for Multicast"
-		route_map_entries_multicast {
+		route_map_multicast_entries {
 			order                   = 1
 			group_ip                = "226.2.2.2/8"
 			source_ip               = "1.1.1.1/1"
@@ -118,7 +118,7 @@ func testAccMSOTenantPoliciesMcastRouteMapPolicyConfigCreateWithInvalidOrder() s
 		template_id = mso_template.template_tenant.id
 		name        = "tf_test_route_map_policy_multicast_error"
 		description = "Terraform test Route Map Policy for Multicast with invalid order"
-		route_map_entries_multicast {
+		route_map_multicast_entries {
 			order                   = 65536
 			group_ip                = "226.2.2.2/8"
 			source_ip               = "1.1.1.1/1"
@@ -134,14 +134,14 @@ func testAccMSOTenantPoliciesMcastRouteMapPolicyConfigUpdateAddingExtraEntry() s
 		template_id = mso_template.template_tenant.id
 		name        = "tf_test_route_map_policy_multicast"
 		description = "Terraform test Route Map Policy for Multicast adding extra entry"
-		route_map_entries_multicast {
+		route_map_multicast_entries {
 			order                   = 1
 			group_ip                = "226.2.2.2/8"
 			source_ip               = "1.1.1.1/1"
 			rendezvous_point_ip     = "1.1.1.2"
 			action                  = "permit"
 		}
-		route_map_entries_multicast {
+		route_map_multicast_entries {
 			order                   = 2
 			group_ip                = "226.3.3.3/24"
 			source_ip               = "2.2.2.2/2"
@@ -157,7 +157,7 @@ func testAccMSOTenantPoliciesMcastRouteMapPolicyConfigUpdateRemovingExtraEntry()
 		template_id = mso_template.template_tenant.id
 		name        = "tf_test_route_map_policy_multicast"
 		description = "Terraform test Route Map Policy for Multicast removing extra entry"
-		route_map_entries_multicast {
+		route_map_multicast_entries {
 			order                   = 1
 			group_ip                = "226.2.2.2/8"
 			source_ip               = "1.1.1.1/1"

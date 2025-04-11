@@ -29,7 +29,7 @@ func datasourceMSOMcastRouteMapPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"route_map_entries_multicast": {
+			"route_map_multicast_entries": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -46,7 +46,7 @@ func datasourceMSOMcastRouteMapPolicy() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"rp_ip": {
+						"rendezvous_point_ip": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
