@@ -32,7 +32,7 @@ resource "mso_schema_template_vrf" "example_vrf" {
   rendezvous_points {
     ip_address                      = "1.1.1.2"
     type                            = "static"
-    mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
+    route_map_policy_multicast_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
   }
 }
 
@@ -50,10 +50,10 @@ resource "mso_schema_template_vrf" "example_vrf" {
 * `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled or disabled. Allowed values are `disabled`and `enabled`. Default to `enabled`.
 * `preferred_group` - (Optional) Whether to enable preferred Endpoint Group.
 * `site_aware_policy_enforcement` - (Optional) Whether to enable site aware policy enforcement mode.
-* `rendezvous_points` - (Optional) The list of Rendezvous Points.
+* `rendezvous_points` - (Optional) The list of Rendezvous Points. This attribute is supported in NDO v3.0(1) and higher.
   * `rendezvous_points.ip_address` - (Required) The IP Address of the Rendezvous Point.
   * `rendezvous_points.type` - (Required) The type of the Rendezvous Point. Allowed values are `static`, `fabric` and `unknown`.
-  * `rendezvous_points.mutlicast_route_map_policy_uuid` - (Optional) The UUID of the Route Map Policy for Multicast to be associated with the Rendezvous Point.
+  * `rendezvous_points.route_map_policy_multicast_uuid` - (Optional) The UUID of the Route Map Policy for Multicast to be associated with the Rendezvous Point.
 
 ## Attribute Reference ##
 

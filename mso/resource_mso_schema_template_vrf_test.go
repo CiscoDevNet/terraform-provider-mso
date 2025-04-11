@@ -149,7 +149,7 @@ func testAccMSOSchemaTemplateVrfConfigUpdateEnablingLayer3Multicast() string {
 		rendezvous_points {
 			ip_address                      = "1.1.1.2"
 			type                            = "static"
-			mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
+			route_map_policy_multicast_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
 		}
 	}`, testAccMSOSchemaTemplateForVrfConfig())
 }
@@ -170,7 +170,7 @@ func testAccMSOSchemaTemplateVrfConfigUpdateAddingExtraRp() string {
 		rendezvous_points {
 			ip_address                      = "1.1.1.2"
 			type                            = "static"
-			mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
+			route_map_policy_multicast_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
 		}
 		rendezvous_points {
 			ip_address                      = "1.1.1.3"
@@ -195,7 +195,7 @@ func testAccMSOSchemaTemplateVrfConfigUpdateRemovingExtraRp() string {
 		rendezvous_points {
 			ip_address                      = "1.1.1.2"
 			type                            = "static"
-			mutlicast_route_map_policy_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
+			route_map_policy_multicast_uuid = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.uuid
 		}
 	}`, testAccMSOSchemaTemplateForVrfConfig())
 }
