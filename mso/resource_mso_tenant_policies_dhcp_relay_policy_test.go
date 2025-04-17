@@ -17,12 +17,12 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 		DisableBinaryDriver: true,
 		Steps: []resource.TestStep{
 			{
-				PreConfig:   func() { fmt.Println("Test: Create DHCP Relay Policy without providers") },
+				PreConfig:   func() { fmt.Println("Test: Create DHCP Relay Policy without dhcp_relay_providers") },
 				Config:      testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreateErrorWithoutProviders(name),
-				ExpectError: regexp.MustCompile(`config is invalid: "providers": required field is not set`),
+				ExpectError: regexp.MustCompile(`config is invalid: "dhcp_relay_providers": required field is not set`),
 			},
 			{
-				PreConfig:                 func() { fmt.Println("Test: Create DHCP Relay Policy with invalid providers") },
+				PreConfig:                 func() { fmt.Println("Test: Create DHCP Relay Policy with invalid dhcp_relay_providers") },
 				Config:                    testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreateErrorWithInvalidProviders(name),
 				Destroy:                   false,
 				PreventPostDestroyRefresh: true,
@@ -35,8 +35,8 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", ""),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers.#", "2"),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers.#", "2"),
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       fmt.Sprintf("mso_schema_template_anp_epg.%s.uuid", msoSchemaTemplateAnpEpgName),
 							"dhcp_server_address":        "1.1.1.1",
@@ -44,7 +44,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 							"external_epg_uuid":          "",
 						},
 					),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       "",
 							"dhcp_server_address":        "2.2.2.2",
@@ -55,7 +55,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig:                 func() { fmt.Println("Test: Update DHCP Relay Policy with invalid providers") },
+				PreConfig:                 func() { fmt.Println("Test: Update DHCP Relay Policy with invalid dhcp_relay_providers") },
 				Config:                    testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreateErrorWithInvalidProviders(name),
 				Destroy:                   false,
 				PreventPostDestroyRefresh: true,
@@ -68,8 +68,8 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", "Updated DHCP Relay Policy"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers.#", "2"),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers.#", "2"),
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       fmt.Sprintf("mso_schema_template_anp_epg.%s.uuid", msoSchemaTemplateAnpEpgName),
 							"dhcp_server_address":        "1.1.1.1",
@@ -77,7 +77,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 							"external_epg_uuid":          "",
 						},
 					),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       "",
 							"dhcp_server_address":        "2.2.2.2",
@@ -94,8 +94,8 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", "Updated DHCP Relay Policy"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers.#", "1"),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers.#", "1"),
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       fmt.Sprintf("mso_schema_template_anp_epg.%s.uuid", msoSchemaTemplateAnpEpgName),
 							"dhcp_server_address":        "1.1.1.1",
@@ -112,8 +112,8 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
 					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", "Updated DHCP Relay Policy"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers.#", "2"),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers.#", "2"),
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       fmt.Sprintf("mso_schema_template_anp_epg.%s.uuid", msoSchemaTemplateAnpEpgName),
 							"dhcp_server_address":        "1.1.1.2",
@@ -121,7 +121,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 							"external_epg_uuid":          "",
 						},
 					),
-					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "providers",
+					customTestCheckResourceTypeSetAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
 						map[string]string{
 							"application_epg_uuid":       "",
 							"dhcp_server_address":        "2.2.2.2",
@@ -136,7 +136,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 				Config:                    testAccMSOTenantPoliciesDHCPRelayPolicyConfigUpdateAddProviderWithInvalidDHCPServerAddress(name),
 				Destroy:                   false,
 				PreventPostDestroyRefresh: true,
-				ExpectError:               regexp.MustCompile(`expected providers.0.dhcp_server_address to contain a valid IP, got: google.com`),
+				ExpectError:               regexp.MustCompile(`expected dhcp_relay_providers.0.dhcp_server_address to contain a valid IP, got: google.com`),
 			},
 			{
 				PreConfig:         func() { fmt.Println("Test: Import DHCP Relay Policy") },
@@ -165,12 +165,12 @@ func testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreateErrorWithInvalidProvider
 resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address  = "1.1.1.1"
 		application_epg_uuid = mso_schema_template_anp_epg.%[4]s.uuid
 		external_epg_uuid    = mso_schema_template_external_epg.%[5]s.uuid
 	}
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "2.2.2.2"
 		dhcp_server_vrf_preference = true
 	}
@@ -183,11 +183,11 @@ func testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreate(name string) string {
 resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address  = "1.1.1.1"
 		application_epg_uuid = mso_schema_template_anp_epg.%[4]s.uuid
 	}
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "2.2.2.2"
 		external_epg_uuid          = mso_schema_template_external_epg.%[5]s.uuid
 		dhcp_server_vrf_preference = true
@@ -202,12 +202,12 @@ resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
 	description = "Updated DHCP Relay Policy"
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "1.1.1.1"
 		application_epg_uuid       = mso_schema_template_anp_epg.%[4]s.uuid
 		dhcp_server_vrf_preference = true
 	}
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "2.2.2.2"
 		external_epg_uuid          = mso_schema_template_external_epg.%[5]s.uuid
 		dhcp_server_vrf_preference = false
@@ -222,7 +222,7 @@ resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
 	description = "Updated DHCP Relay Policy"
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address  = "1.1.1.1"
 		application_epg_uuid = mso_schema_template_anp_epg.%[4]s.uuid
 	}
@@ -236,12 +236,12 @@ resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
 	description = "Updated DHCP Relay Policy"
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "2.2.2.2"
 		external_epg_uuid          = mso_schema_template_external_epg.%[4]s.uuid
 		dhcp_server_vrf_preference = false
 	}
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "1.1.1.2"
 		application_epg_uuid       = mso_schema_template_anp_epg.%[5]s.uuid
 		dhcp_server_vrf_preference = true
@@ -256,7 +256,7 @@ resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
 	description = "Updated DHCP Relay Policy"
-	providers {
+	dhcp_relay_providers {
 		dhcp_server_address        = "google.com"
 		external_epg_uuid          = mso_schema_template_external_epg.%[4]s.uuid
 		dhcp_server_vrf_preference = false
