@@ -18,67 +18,67 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 
 		SchemaVersion: version,
 		Schema: (map[string]*schema.Schema{
-			"schema_id": {
+			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"template": {
+			"template": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"name": {
+			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"display_name": {
+			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"uuid": {
+			"uuid": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"layer3_multicast": {
+			"layer3_multicast": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"vzany": {
+			"vzany": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"ip_data_plane_learning": {
+			"ip_data_plane_learning": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"preferred_group": {
+			"preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"description": {
+			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"site_aware_policy_enforcement": {
+			"site_aware_policy_enforcement": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"rendezvous_points": {
+			"rendezvous_points": &schema.Schema{
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"ip_address": {
+						"ip_address": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"type": {
+						"type": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"route_map_policy_multicast_uuid": {
+						"route_map_policy_multicast_uuid": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -88,7 +88,7 @@ func datasourceMSOSchemaTemplateVrf() *schema.Resource {
 		}),
 	}
 }
-func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
+func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) error {
 	schemaId := d.Get("schema_id").(string)
 	msoClient := m.(*client.Client)
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -98,7 +98,7 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
-		return fmt.Errorf("no template found")
+		return fmt.Errorf("No Template found")
 	}
 
 	templateName := d.Get("template").(string)
@@ -114,9 +114,9 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 		if currentTemplateName == templateName {
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
-				return fmt.Errorf("no vrf found")
+				return fmt.Errorf("No Vrf found")
 			}
-			for j := range vrfCount {
+			for j := 0; j < vrfCount; j++ {
 				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
 				if err != nil {
 					return err
@@ -155,13 +155,13 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 						if err != nil {
 							return err
 						}
-						rendezvousPoints := make([]any, 0)
+						rendezvousPoints := make([]interface{}, 0)
 						for k := range rpCount {
 							rpCont, err := vrfCont.ArrayElement(k, "rpConfigs")
 							if err != nil {
 								return err
 							}
-							rpConfig := make(map[string]any)
+							rpConfig := make(map[string]interface{})
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
 							rpConfig["route_map_policy_multicast_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())

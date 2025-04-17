@@ -25,47 +25,47 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 
 		Schema: (map[string]*schema.Schema{
 
-			"schema_id": {
+			"schema_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"template": {
+			"template": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"display_name": {
+			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"uuid": {
+			"uuid": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"layer3_multicast": {
+			"layer3_multicast": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
 
-			"vzany": {
+			"vzany": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
 
-			"ip_data_plane_learning": {
+			"ip_data_plane_learning": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -75,35 +75,35 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 				}, false),
 			},
 
-			"preferred_group": {
+			"preferred_group": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
 
-			"description": {
+			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"site_aware_policy_enforcement": {
+			"site_aware_policy_enforcement": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
 
-			"rendezvous_points": {
+			"rendezvous_points": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"ip_address": {
+						"ip_address": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"type": {
+						"type": &schema.Schema{
 							Type: schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{
 								"static",
@@ -112,7 +112,7 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 							}, false),
 							Required: true,
 						},
-						"route_map_policy_multicast_uuid": {
+						"route_map_policy_multicast_uuid": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
@@ -124,7 +124,7 @@ func resourceMSOSchemaTemplateVrf() *schema.Resource {
 	}
 }
 
-func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
+func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] Schema Template Vrf: Beginning Import")
 	msoClient := m.(*client.Client)
 	get_attribute := strings.Split(d.Id(), "/")
@@ -136,12 +136,12 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m any) ([]*schem
 	d.Set("schema_id", schemaId)
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
-		return nil, fmt.Errorf("no template found")
+		return nil, fmt.Errorf("No Template found")
 	}
 	templateName := get_attribute[2]
 	vrfName := get_attribute[4]
 	found := false
-	for i := range count {
+	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return nil, err
@@ -151,9 +151,9 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m any) ([]*schem
 			d.Set("template", currentTemplateName)
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 			if err != nil {
-				return nil, fmt.Errorf("no vrf found")
+				return nil, fmt.Errorf("No Vrf found")
 			}
-			for j := range vrfCount {
+			for j := 0; j < vrfCount; j++ {
 				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
 				if err != nil {
 					return nil, err
@@ -191,13 +191,13 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m any) ([]*schem
 						if err != nil {
 							return nil, fmt.Errorf("no rendezvous points found")
 						}
-						rendezvousPoints := make([]any, 0)
+						rendezvousPoints := make([]interface{}, 0)
 						for k := range rpCount {
 							rpCont, err := vrfCont.ArrayElement(k, "rpConfigs")
 							if err != nil {
 								return nil, fmt.Errorf("unable to parse the rendezvous points list")
 							}
-							rpConfig := make(map[string]any)
+							rpConfig := make(map[string]interface{})
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
 							rpConfig["route_map_policy_multicast_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
@@ -225,7 +225,7 @@ func resourceMSOSchemaTemplateVrfImport(d *schema.ResourceData, m any) ([]*schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m any) error {
+func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema Template Vrf: Beginning Creation")
 	msoClient := m.(*client.Client)
 
@@ -279,13 +279,13 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m any) error {
 		siteAwarePolicyEnforcementMode = site_aware_policy_enforcement.(bool)
 	}
 
-	rendezvousPoints := make([]any, 0, 1)
+	rendezvousPoints := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("rendezvous_points"); ok {
 		rp_list := val.(*schema.Set).List()
 		for _, val := range rp_list {
 
-			rpConfig := make(map[string]any)
-			rendezvousPoint := val.(map[string]any)
+			rpConfig := make(map[string]interface{})
+			rendezvousPoint := val.(map[string]interface{})
 			if rendezvousPoint["ip_address"] != "" {
 				rpConfig["ipAddress"] = fmt.Sprintf("%v", rendezvousPoint["ip_address"])
 			}
@@ -313,7 +313,7 @@ func resourceMSOSchemaTemplateVrfCreate(d *schema.ResourceData, m any) error {
 	return resourceMSOSchemaTemplateVrfRead(d, m)
 }
 
-func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m any) error {
+func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Schema Template Vrf: Beginning Creation")
 	msoClient := m.(*client.Client)
 
@@ -367,13 +367,13 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m any) error {
 		siteAwarePolicyEnforcementMode = site_aware_policy_enforcement.(bool)
 	}
 
-	rendezvousPoints := make([]any, 0, 1)
+	rendezvousPoints := make([]interface{}, 0, 1)
 	if val, ok := d.GetOk("rendezvous_points"); ok {
 		rp_list := val.(*schema.Set).List()
 		for _, val := range rp_list {
 
-			rpConfig := make(map[string]any)
-			rendezvousPoint := val.(map[string]any)
+			rpConfig := make(map[string]interface{})
+			rendezvousPoint := val.(map[string]interface{})
 			if rendezvousPoint["ip_address"] != "" {
 				rpConfig["ipAddress"] = fmt.Sprintf("%v", rendezvousPoint["ip_address"])
 			}
@@ -401,7 +401,7 @@ func resourceMSOSchemaTemplateVrfUpdate(d *schema.ResourceData, m any) error {
 	return resourceMSOSchemaTemplateVrfRead(d, m)
 }
 
-func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
+func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
@@ -412,14 +412,14 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
-		return fmt.Errorf("no template found")
+		return fmt.Errorf("No Template found")
 	}
 
 	templateName := d.Get("template").(string)
 	vrfName := d.Get("name").(string)
 	found := false
 
-	for i := range count {
+	for i := 0; i < count; i++ {
 
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -432,9 +432,9 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 			vrfCount, err := tempCont.ArrayCount("vrfs")
 
 			if err != nil {
-				return fmt.Errorf("no vrf found")
+				return fmt.Errorf("No Vrf found")
 			}
-			for j := range vrfCount {
+			for j := 0; j < vrfCount; j++ {
 				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
 
 				if err != nil {
@@ -479,13 +479,13 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 						if err != nil {
 							return err
 						}
-						rendezvousPoints := make([]any, 0)
+						rendezvousPoints := make([]interface{}, 0)
 						for k := range rpCount {
 							rpCont, err := vrfCont.ArrayElement(k, "rpConfigs")
 							if err != nil {
 								return err
 							}
-							rpConfig := make(map[string]any)
+							rpConfig := make(map[string]interface{})
 							rpConfig["ip_address"] = models.StripQuotes(rpCont.S("ipAddress").String())
 							rpConfig["type"] = models.StripQuotes(rpCont.S("rpType").String())
 							rpConfig["route_map_policy_multicast_uuid"] = models.StripQuotes(rpCont.S("mcastRtMapPolicyRef").String())
@@ -512,7 +512,7 @@ func resourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m any) error {
 	return nil
 }
 
-func resourceMSOSchemaTemplateVrfDelete(d *schema.ResourceData, m any) error {
+func resourceMSOSchemaTemplateVrfDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Destroy", d.Id())
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
