@@ -29,7 +29,7 @@ func datasourceMSOTenantPoliciesDHCPRelayPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"providers": {
+			"dhcp_relay_providers": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{

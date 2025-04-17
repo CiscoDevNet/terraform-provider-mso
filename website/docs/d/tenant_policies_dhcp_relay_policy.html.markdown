@@ -8,7 +8,7 @@ description: |-
 
 # mso_tenant_policies_dhcp_relay_policy #
 
-Data source for DHCP Relay Policy. This date source is supported in NDO v4.4(1) or higher.
+Data source for DHCP Relay Policy. This data source is supported in NDO v4.4(1) or higher.
 
 ## GUI Information ##
 
@@ -33,8 +33,8 @@ data "mso_tenant_policies_dhcp_relay_policy" "dhcp_relay_policy" {
 * `uuid` - (Read-Only) The NDO UUID of the DHCP relay policy.
 * `id` - (Read-Only) The unique terraform identifier of the DHCP relay policy.
 * `description` - (Read-Only) The description of the DHCP relay policy.
-* `providers` - (Read-Only) A list of providers for the DHCP relay policy.
+* `dhcp_relay_providers` - (Read-Only) A list of providers for the DHCP relay policy.
   * `dhcp_server_address` - (Read-Only) The DHCP server IP address of the provider.
   * `application_epg_uuid` - (Read-Only) The NDO UUID of the Application Profile EPG.
   * `external_epg_uuid` - (Read-Only) The NDO UUID of the External EPG.
-  * `dhcp_server_vrf_preference` - (Read-Only) Indicates whether the server VRF is used.
+  * `dhcp_server_vrf_preference` - (Read-Only) Enabling DHCP Server VRF Preference allows the switch to route DHCP relay packets from the server VRF, regardless of any contract between the client and server EPGs. Consequently, the server VRF requires at least one IP address on all leaf switches where client bridge domains are deployed.
