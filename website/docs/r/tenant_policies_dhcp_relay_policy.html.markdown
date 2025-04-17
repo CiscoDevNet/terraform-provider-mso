@@ -8,7 +8,7 @@ description: |-
 
 # mso_tenant_policies_dhcp_relay_policy #
 
-Manages DHCP Relay Policies on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO v4.4(1) or higher.
+Manages DHCP Relay Policies on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO v4.3 or higher.
 
 ## GUI Information ##
 

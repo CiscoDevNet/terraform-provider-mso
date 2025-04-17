@@ -8,7 +8,7 @@ description: |-
 
 # mso_tenant_policies_dhcp_relay_policy #
 
-Data source for DHCP Relay Policy. This data source is supported in NDO v4.4(1) or higher.
+Data source for DHCP Relay Policy. This data source is supported in NDO v4.3 or higher.
 
 ## GUI Information ##
 
