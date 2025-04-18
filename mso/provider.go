@@ -119,6 +119,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_template":                                    resourceMSOTemplate(),
 			"mso_tenant_policies_ipsla_monitoring_policy":     resourceMSOIPSLAMonitoringPolicy(),
 			"mso_tenant_policies_route_map_policy_multicast":  resourceMSOMcastRouteMapPolicy(),
+			"mso_tenant_policies_dhcp_relay_policy":           resourceMSOTenantPoliciesDHCPRelayPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -178,6 +179,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_template":                                    datasourceMSOTemplate(),
 			"mso_tenant_policies_ipsla_monitoring_policy":     datasourceMSOIPSLAMonitoringPolicy(),
 			"mso_tenant_policies_route_map_policy_multicast":  datasourceMSOMcastRouteMapPolicy(),
+			"mso_tenant_policies_dhcp_relay_policy":           datasourceMSOTenantPoliciesDHCPRelayPolicy(),
 		},
 
 		ConfigureFunc: configureClient,

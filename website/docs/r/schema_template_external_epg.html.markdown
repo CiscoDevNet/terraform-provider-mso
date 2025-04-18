@@ -58,7 +58,7 @@ NOTE: SchemaID and Template Name for VRF and L3out must be same.
 
 ## Attribute Reference ##
 
-No attributes are exported.
+* `uuid` - (Read-Only) The NDO UUID of the External EPG.
 
 ## Importing ##
 
