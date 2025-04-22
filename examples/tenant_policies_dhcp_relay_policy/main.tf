@@ -44,12 +44,9 @@ resource "mso_schema_template_anp" "tf_test_anp" {
 resource "mso_schema_template_anp_epg" "tf_test_anp_epg" {
   name          = "tf_test_anp_epg"
   display_name  = "tf_test_anp_epg"
-  anp_name      = "tf_test_anp"
+  anp_name      = mso_schema_template_anp.tf_test_anp.name
   schema_id     = mso_schema.tf_test_mso_schema.id
-  template_name = "tf_test_mso_schema_template"
-  depends_on = [
-    mso_schema_template_anp.tf_test_anp
-  ]
+  template_name = mso_schema_template_anp.tf_test_anp.template
 }
 
 resource "mso_schema_template_vrf" "tf_test_vrf" {
