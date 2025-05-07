@@ -18,13 +18,11 @@ func TestAccMSOVlanPoolDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_vlan_pool.vlan_pool", "name", "tf_test_vlan_pool"),
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_vlan_pool.vlan_pool", "description", "Terraform test VLAN Pool"),
-					resource.TestCheckResourceAttr("data.mso_fabric_policies_vlan_pool.vlan_pool", "allocation_mode", "static"),
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range.#", "1"),
 					customTestCheckResourceTypeSetAttr("data.mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range",
 						map[string]string{
-							"from":            "200",
-							"to":              "202",
-							"allocation_mode": "static",
+							"from": "200",
+							"to":   "202",
 						},
 					),
 				),

@@ -26,15 +26,12 @@ resource "mso_fabric_policies_vlan_pool" "vlan_pool" {
   template_id     = mso_template.fabric_policy_template.id
   name            = "vlan_pool"
   description     = "Example description"
-  allocation_mode = "static"
   vlan_range {
     from            = 200
     to              = 202
-    allocation_mode = "static"
   }
   vlan_range {
     from            = 204
     to              = 209
-    allocation_mode = "static"
   }
 }

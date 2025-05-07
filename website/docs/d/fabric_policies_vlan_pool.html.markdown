@@ -3,14 +3,14 @@ layout: "mso"
 page_title: "MSO: mso_fabric_policies_vlan_pool"
 sidebar_current: "docs-mso-data-source-fabric_policies_vlan_pool"
 description: |-
-  Data source for VLAN Pool.
+  Manages VLAN Pools on Cisco Nexus Dashboard Orchestrator (NDO)
 ---
 
 
 
 # mso_fabric_policies_vlan_pool #
 
-Data source for VLAN Pool. This data source is supported in NDO v4.4(1) or higher.
+Manages VLAN Pools on Cisco Nexus Dashboard Orchestrator (NDO). This data source is supported in NDO v4.3(1) or higher.
 
 ## GUI Information ##
 
@@ -33,7 +33,7 @@ data "mso_fabric_policies_vlan_pool" "vlan_pool" {
 ## Attribute Reference ##
 
 * `uuid` - (Read-Only) The NDO UUID of the VLAN Pool.
-* `id` - (Read-Only) The unique terraform identifier of the VLAN Pool.
+* `id` - (Read-Only) The unique Terraform identifier of the VLAN Pool.
 * `description` - (Read-Only) The description of the VLAN Pool.
 * `allocation_mode` - (Read-Only) The allocation mode of the VLAN Pool.
 * `vlan_range` - (Read-Only) The list of encapsulation blocks, each defining a range of VLAN IDs.

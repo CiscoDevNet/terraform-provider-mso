@@ -29,10 +29,6 @@ func datasourceMSOVlanPool() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"allocation_mode": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"vlan_range": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -44,10 +40,6 @@ func datasourceMSOVlanPool() *schema.Resource {
 						},
 						"to": {
 							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"allocation_mode": {
-							Type:     schema.TypeString,
 							Computed: true,
 						},
 					},

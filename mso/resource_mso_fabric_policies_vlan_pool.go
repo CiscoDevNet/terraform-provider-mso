@@ -25,10 +25,12 @@ func resourceMSOVlanPool() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"template_id": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 			},
 			"name": {
 				Type:         schema.TypeString,
+				ForceNew:     true,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 64),
 			},
@@ -40,14 +42,6 @@ func resourceMSOVlanPool() *schema.Resource {
 			"uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"allocation_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"dynamic", "static",
-				}, false),
 			},
 			"vlan_range": {
 				Type:     schema.TypeSet,
@@ -63,14 +57,6 @@ func resourceMSOVlanPool() *schema.Resource {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
-						"allocation_mode": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"dynamic", "static",
-							}, false),
-						},
 					},
 				},
 			},
@@ -80,20 +66,20 @@ func resourceMSOVlanPool() *schema.Resource {
 
 func setVlanRange(rangeEntries *schema.Set) []map[string]any {
 	rangeEntryList := rangeEntries.List()
-	VlanRange := make([]map[string]any, len(rangeEntryList))
+	vlanRange := make([]map[string]any, 0, 1)
 
-	for i, val := range rangeEntryList {
+	for _, val := range rangeEntryList {
 		rangeEntry := val.(map[string]any)
-		VlanRange[i] = map[string]any{
+		encapBlock := map[string]any{
 			"range": map[string]any{
-				"from":      rangeEntry["from"].(int),
-				"to":        rangeEntry["to"].(int),
-				"allocMode": rangeEntry["allocation_mode"].(string),
+				"from": rangeEntry["from"].(int),
+				"to":   rangeEntry["to"].(int),
 			},
 		}
+		vlanRange = append(vlanRange, encapBlock)
 	}
 
-	return VlanRange
+	return vlanRange
 }
 
 func setVlanPoolData(d *schema.ResourceData, response *container.Container, templateId string) error {
@@ -102,11 +88,10 @@ func setVlanPoolData(d *schema.ResourceData, response *container.Container, temp
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
 	d.Set("description", models.StripQuotes(response.S("description").String()))
-	d.Set("allocation_mode", models.StripQuotes(response.S("allocMode").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
 	count, _ := response.ArrayCount("encapBlocks")
-	VlanRange := make([]any, 0)
+	vlanRange := make([]any, 0)
 	for i := range count {
 		encapBlocksCont, err := response.ArrayElement(i, "encapBlocks")
 		if err != nil {
@@ -115,10 +100,9 @@ func setVlanPoolData(d *schema.ResourceData, response *container.Container, temp
 		rangeEntry := make(map[string]any)
 		rangeEntry["from"] = encapBlocksCont.S("range", "from").Data().(float64)
 		rangeEntry["to"] = encapBlocksCont.S("range", "to").Data().(float64)
-		rangeEntry["allocation_mode"] = models.StripQuotes(encapBlocksCont.S("range", "allocMode").String())
-		VlanRange = append(VlanRange, rangeEntry)
+		vlanRange = append(vlanRange, rangeEntry)
 	}
-	d.Set("vlan_range", VlanRange)
+	d.Set("vlan_range", vlanRange)
 
 	return nil
 

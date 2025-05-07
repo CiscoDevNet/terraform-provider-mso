@@ -18,13 +18,11 @@ func TestAccMSOVlanPoolResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "name", "tf_test_vlan_pool"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "description", "Terraform test VLAN Pool"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "allocation_mode", "static"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range.#", "1"),
 					customTestCheckResourceTypeSetAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range",
 						map[string]string{
-							"from":            "200",
-							"to":              "202",
-							"allocation_mode": "static",
+							"from": "200",
+							"to":   "202",
 						},
 					),
 				),
@@ -35,20 +33,17 @@ func TestAccMSOVlanPoolResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "name", "tf_test_vlan_pool"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "description", "Terraform test VLAN Pool adding extra range"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "allocation_mode", "static"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range.#", "2"),
 					customTestCheckResourceTypeSetAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range",
 						map[string]string{
-							"from":            "200",
-							"to":              "202",
-							"allocation_mode": "static",
+							"from": "200",
+							"to":   "202",
 						},
 					),
 					customTestCheckResourceTypeSetAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range",
 						map[string]string{
-							"from":            "204",
-							"to":              "209",
-							"allocation_mode": "static",
+							"from": "204",
+							"to":   "209",
 						},
 					),
 				),
@@ -59,13 +54,11 @@ func TestAccMSOVlanPoolResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "name", "tf_test_vlan_pool"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "description", "Terraform test VLAN Pool removing extra range"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "allocation_mode", "static"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range.#", "1"),
 					customTestCheckResourceTypeSetAttr("mso_fabric_policies_vlan_pool.vlan_pool", "vlan_range",
 						map[string]string{
-							"from":            "200",
-							"to":              "202",
-							"allocation_mode": "static",
+							"from": "200",
+							"to":   "202",
 						},
 					),
 				),
@@ -87,11 +80,9 @@ func testAccMSOVlanPoolConfigCreate() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_vlan_pool"
 		description     = "Terraform test VLAN Pool"
-		allocation_mode = "static"
 		vlan_range {
 			from            = 200
 			to              = 202
-			allocation_mode = "static"
 		}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
@@ -102,16 +93,13 @@ func testAccMSOVlanPoolConfigUpdateAddingExtraRange() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_vlan_pool"
 		description     = "Terraform test VLAN Pool adding extra range"
-		allocation_mode = "static"
 		vlan_range {
 			from            = 200
 			to              = 202
-			allocation_mode = "static"
 		}
 		vlan_range {
 			from            = 204
 			to              = 209
-			allocation_mode = "static"
 		}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
@@ -122,11 +110,9 @@ func testAccMSOVlanPoolConfigUpdateRemovingExtraRange() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_vlan_pool"
 		description     = "Terraform test VLAN Pool removing extra range"
-		allocation_mode = "static"
 		vlan_range {
 			from            = 200
 			to              = 202
-			allocation_mode = "static"
 		}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
