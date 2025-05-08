@@ -90,12 +90,15 @@ func setVlanPoolData(d *schema.ResourceData, response *container.Container, temp
 	d.Set("description", models.StripQuotes(response.S("description").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
-	count, _ := response.ArrayCount("encapBlocks")
+	count, err := response.ArrayCount("encapBlocks")
+	if err != nil {
+		return fmt.Errorf("unable to count the number of encapsulation blocks for vlan range: %s", err)
+	}
 	vlanRange := make([]any, 0)
 	for i := range count {
 		encapBlocksCont, err := response.ArrayElement(i, "encapBlocks")
 		if err != nil {
-			return fmt.Errorf("unable to parse encapsulation blocks for vlan range")
+			return fmt.Errorf("unable to parse element %d from the list of encapsulation blocks for vlan range: %s", i, err)
 		}
 		rangeEntry := make(map[string]any)
 		rangeEntry["from"] = encapBlocksCont.S("range", "from").Data().(float64)
