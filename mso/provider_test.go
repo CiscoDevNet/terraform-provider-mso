@@ -87,13 +87,13 @@ func testCheckResourceDestroyPolicy(s *terraform.State, resource, policyType str
 	return nil
 }
 
-func testCheckResourceDestroyPolicyWithTemplateIdAndArguments(resource string, objectPath ...string) func(s *terraform.State) error {
+func testCheckResourceDestroyPolicyWithPathAttributesAndArguments(resource string, objectPath ...string) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
-		return testCheckResourceDestroyPolicyWithTemplateId(s, resource, objectPath...)
+		return testCheckResourceDestroyPolicyWithPathAttributes(s, resource, objectPath...)
 	}
 }
 
-func testCheckResourceDestroyPolicyWithTemplateId(s *terraform.State, resource string, objectPath ...string) error {
+func testCheckResourceDestroyPolicyWithPathAttributes(s *terraform.State, resource string, objectPath ...string) error {
 	msoClient := testAccPreCheck(nil)
 	for name, rs := range s.RootModule().Resources {
 		if rs.Type == resource {

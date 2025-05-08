@@ -70,7 +70,7 @@ func TestAccMSOVlanPoolResource(t *testing.T) {
 				ImportStateVerify: true,
 			},
 		},
-		CheckDestroy: testCheckResourceDestroyPolicyWithTemplateIdAndArguments("mso_fabric_policies_vlan_pool", "fabricPolicyTemplate", "template", "vlanPools"),
+		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_fabric_policies_vlan_pool", "fabricPolicyTemplate", "template", "vlanPools"),
 	})
 }
 
