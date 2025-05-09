@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -56,17 +55,7 @@ func dataSourceMSOVlanPoolRead(d *schema.ResourceData, m interface{}) error {
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "vlanPools")
-	if err != nil {
-		return err
-	}
-
-	setVlanPoolData(d, policy, templateId)
+	setVlanPoolData(d, msoClient, templateId, policyName)
 	log.Printf("[DEBUG] MSO VLAN Pool Data Source - Read Complete : %v", d.Id())
 	return nil
 }

@@ -35,8 +35,6 @@ data "mso_fabric_policies_vlan_pool" "vlan_pool" {
 * `uuid` - (Read-Only) The NDO UUID of the VLAN Pool.
 * `id` - (Read-Only) The unique Terraform identifier of the VLAN Pool.
 * `description` - (Read-Only) The description of the VLAN Pool.
-* `allocation_mode` - (Read-Only) The allocation mode of the VLAN Pool.
 * `vlan_range` - (Read-Only) The list of encapsulation blocks, each defining a range of VLAN IDs.
   * `vlan_range.from` - (Read-Only) The starting VLAN ID of the encapsulation block.
   * `vlan_range.to` - (Read-Only) The ending VLAN ID of the encapsulation block.
-  * `vlan_range.allocation_mode` - (Read-Only) The allocation mode of the encapsulation block.

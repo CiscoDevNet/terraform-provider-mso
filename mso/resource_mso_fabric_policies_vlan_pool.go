@@ -82,21 +82,31 @@ func setVlanRange(rangeEntries *schema.Set) []map[string]any {
 	return vlanRange
 }
 
-func setVlanPoolData(d *schema.ResourceData, response *container.Container, templateId string) error {
+func setVlanPoolData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
 
-	d.SetId(fmt.Sprintf("templateId/%s/VlanPool/%s", templateId, models.StripQuotes(response.S("name").String())))
+	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	if err != nil {
+		return err
+	}
+
+	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "vlanPools")
+	if err != nil {
+		return err
+	}
+
+	d.SetId(fmt.Sprintf("templateId/%s/VlanPool/%s", templateId, models.StripQuotes(policy.S("name").String())))
 	d.Set("template_id", templateId)
-	d.Set("name", models.StripQuotes(response.S("name").String()))
-	d.Set("description", models.StripQuotes(response.S("description").String()))
-	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
+	d.Set("name", models.StripQuotes(policy.S("name").String()))
+	d.Set("description", models.StripQuotes(policy.S("description").String()))
+	d.Set("uuid", models.StripQuotes(policy.S("uuid").String()))
 
-	count, err := response.ArrayCount("encapBlocks")
+	count, err := policy.ArrayCount("encapBlocks")
 	if err != nil {
 		return fmt.Errorf("unable to count the number of encapsulation blocks for vlan range: %s", err)
 	}
 	vlanRange := make([]any, 0)
 	for i := range count {
-		encapBlocksCont, err := response.ArrayElement(i, "encapBlocks")
+		encapBlocksCont, err := policy.ArrayElement(i, "encapBlocks")
 		if err != nil {
 			return fmt.Errorf("unable to parse element %d from the list of encapsulation blocks for vlan range: %s", i, err)
 		}
@@ -113,7 +123,19 @@ func setVlanPoolData(d *schema.ResourceData, response *container.Container, temp
 
 func resourceMSOVlanPoolImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Beginning Import: %v", d.Id())
-	resourceMSOVlanPoolRead(d, m)
+	msoClient := m.(*client.Client)
+
+	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	policyName, err := GetPolicyNameFromResourceId(d.Id(), "VlanPool")
+	if err != nil {
+		return nil, err
+	}
+
+	setVlanPoolData(d, msoClient, templateId, policyName)
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -151,27 +173,10 @@ func resourceMSOVlanPoolRead(d *schema.ResourceData, m any) error {
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
 
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
-	if err != nil {
-		return err
-	}
+	templateId := d.Get("template_id").(string)
+	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "VlanPool")
-	if err != nil {
-		return err
-	}
-
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "vlanPools")
-	if err != nil {
-		return err
-	}
-
-	setVlanPoolData(d, policy, templateId)
+	setVlanPoolData(d, msoClient, templateId, policyName)
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Read Complete : %v", d.Id())
 	return nil
 }
