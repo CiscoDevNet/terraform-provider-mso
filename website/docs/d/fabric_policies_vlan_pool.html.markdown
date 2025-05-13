@@ -3,14 +3,14 @@ layout: "mso"
 page_title: "MSO: mso_fabric_policies_vlan_pool"
 sidebar_current: "docs-mso-data-source-fabric_policies_vlan_pool"
 description: |-
-  Manages VLAN Pools on Cisco Nexus Dashboard Orchestrator (NDO)
+  Data source for VLAN Pools on Cisco Nexus Dashboard Orchestrator (NDO)
 ---
 
 
 
 # mso_fabric_policies_vlan_pool #
 
-Manages VLAN Pools on Cisco Nexus Dashboard Orchestrator (NDO). This data source is supported in NDO v4.3(1) or higher.
+Data source for VLAN Pools on Cisco Nexus Dashboard Orchestrator (NDO). This data source is supported in NDO v4.3(1) or higher.
 
 ## GUI Information ##
 
