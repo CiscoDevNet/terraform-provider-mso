@@ -87,6 +87,43 @@ func testCheckResourceDestroyPolicy(s *terraform.State, resource, policyType str
 	return nil
 }
 
+func testCheckResourceDestroyPolicyWithPathAttributesAndArguments(resource string, objectPath ...string) func(s *terraform.State) error {
+	return func(s *terraform.State) error {
+		return testCheckResourceDestroyPolicyWithPathAttributes(s, resource, objectPath...)
+	}
+}
+
+func testCheckResourceDestroyPolicyWithPathAttributes(s *terraform.State, resource string, objectPath ...string) error {
+	msoClient := testAccPreCheck(nil)
+	for name, rs := range s.RootModule().Resources {
+		if rs.Type == resource {
+			response, err := msoClient.GetViaURL((fmt.Sprintf("api/v1/templates/%s", rs.Primary.Attributes["template_id"])))
+			if err != nil {
+				continue
+			}
+			policyObjects := response.S(objectPath...)
+			if policyObjects.Data() != nil {
+				policyCount, err := response.ArrayCount(objectPath...)
+				if err == nil {
+					for i := range policyCount {
+						policy := policyObjects.Index(i)
+						uuid, ok := policy.S("uuid").Data().(string)
+						if ok && uuid == rs.Primary.Attributes["uuid"] {
+							return fmt.Errorf("terraform destroy was unsuccessful. The resource '%s' with ID '%s' still exists", name, rs.Primary.ID)
+						}
+					}
+				} else {
+					uuid, ok := policyObjects.S("uuid").Data().(string)
+					if ok && uuid == rs.Primary.Attributes["uuid"] {
+						return fmt.Errorf("terraform destroy was unsuccessful. The resource '%s' with ID '%s' still exists", name, rs.Primary.ID)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func IsReference(s string) bool {
 	return strings.HasPrefix(s, "mso_") || strings.HasPrefix(s, "data.mso_")
 }
