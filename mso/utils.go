@@ -227,7 +227,7 @@ func getSchemaIdFromName(msoClient *client.Client, name string) (string, error) 
 	con, err := msoClient.GetViaURL("/api/v1/schemas/list-identity")
 
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	schemas := con.S("schemas").Data().([]interface{})
