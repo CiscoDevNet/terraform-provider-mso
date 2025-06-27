@@ -37,6 +37,7 @@ provider "mso" {
     domain   = "domain-name"
     insecure = true
     platform = "nd"
+    retries  = 4
 }
 
 resource "mso_schema" "foo_schema" {
@@ -57,3 +58,4 @@ Following arguments are supported with Cisco MSO terraform provider.
 * `insecure` - (Optional) This determines whether to use insecure HTTP connection or not. Default value is `true`.
 * `domain`- (Optional) Name of domain. Use this parameter to provide domain name in case of using remote user with the Terraform provider. Defaults to `Local`.
 * `platform`- (Optional) Parameter is used to check the platform from which MSO is accessed. Defaults to `mso`.
+* `retries` - (Optional) Number of retries for REST API calls. Defaults to `2`.
