@@ -63,7 +63,7 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MSO_RETRIES", nil),
-				Description: "Number of retries for REST API calls.",
+				Description: "Number of retries for REST API calls. Defaults to 2.",
 			},
 		},
 
