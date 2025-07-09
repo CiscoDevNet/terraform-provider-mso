@@ -81,10 +81,41 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 		log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 		return err
 	}
-	_, resp, err := msoClient.Do(req)
-	if err != nil || resp.StatusCode != 202 {
+	cont, resp, err := msoClient.Do(req)
+	if resp.StatusCode != 202 || err != nil {
 		log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 		return err
+	}
+
+	taskId := cont.S("id").Data()
+	req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("%s/%s", path, taskId.(string)), nil, true)
+	if err != nil {
+		log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
+		return err
+	}
+
+	cont, resp, err = msoClient.DoWithRetryFunc(req, isTaskStatusPending)
+	if err != nil {
+		log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
+		return err
+	}
+
+	taskStatusContainer := cont.Search("operDetails", "taskStatus")
+	if taskStatusContainer != nil {
+		if status, ok := taskStatusContainer.Data().(string); ok {
+			if status == "Error" {
+				errorMessage := "Could not determine specific deployment error message."
+				errorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage")
+				if errorMessageContainer != nil {
+					if errorMessages, ok := errorMessageContainer.Data().([]interface{}); ok && len(errorMessages) > 0 {
+						if message, ok := errorMessages[0].(string); ok {
+							errorMessage = message
+						}
+					}
+				}
+				return fmt.Errorf("Error on deploy: %s", errorMessage)
+			}
+		}
 	}
 
 	d.SetId(schemaId)
@@ -99,4 +130,15 @@ func resourceNDOSchemaTemplateDeployRead(d *schema.ResourceData, m interface{}) 
 
 func resourceNDOSchemaTemplateDeployDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
+}
+
+func isTaskStatusPending(c *container.Container) bool {
+	taskStatusContainer := c.Search("operDetails", "taskStatus")
+	if taskStatusContainer != nil {
+		if status, ok := taskStatusContainer.Data().(string); ok {
+			log.Printf("[TRACE]: Task is pending.")
+			return (status != "Fail" && status != "Complete" && status != "Error")
+		}
+	}
+	return false
 }

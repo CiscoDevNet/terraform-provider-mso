@@ -40,7 +40,7 @@ var (
 
 func testAccPreCheck(t *testing.T) *client.Client {
 	msoClientTestOnce.Do(func() {
-		var mso_url, mso_username, mso_password string
+		var mso_url, mso_username, mso_password, mso_platform string
 		if v := os.Getenv("MSO_USERNAME"); v == "" {
 			t.Fatal("MSO_USERNAME must be set for acceptance tests")
 		} else {
@@ -56,8 +56,13 @@ func testAccPreCheck(t *testing.T) *client.Client {
 		} else {
 			mso_url = v
 		}
+		if v := os.Getenv("MSO_PLATFORM"); v == "" {
+			mso_platform = "mso"
+		} else {
+			mso_platform = v
+		}
 
-		msoClientTest = client.GetClient(mso_url, mso_username, client.Password(mso_password), client.Insecure(true))
+		msoClientTest = client.GetClient(mso_url, mso_username, client.Password(mso_password), client.Insecure(true), client.Platform(mso_platform))
 	})
 	return msoClientTest
 

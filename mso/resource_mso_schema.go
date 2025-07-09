@@ -489,7 +489,7 @@ func resourceMSOSchemaUpdate(d *schema.ResourceData, m interface{}) error {
 		if len(listAttributesToChange) != 0 {
 			payloadCon := container.New()
 			payloadCon.Array()
-			jsonAttributes, err := container.ParseJSON([]byte(fmt.Sprintf(`[` + strings.Join(listAttributesToChange, ",") + `]`)))
+			jsonAttributes, err := container.ParseJSON([]byte(`[` + strings.Join(listAttributesToChange, ",") + `]`))
 			if err != nil {
 				return err
 			}
@@ -522,7 +522,7 @@ func resourceMSOSchemaRead(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	dn := d.Id()
-	con, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/" + dn))
+	con, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", dn))
 	if err != nil {
 		return errorForObjectNotFound(err, dn, con, d)
 	}

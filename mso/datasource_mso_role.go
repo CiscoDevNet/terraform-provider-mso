@@ -57,7 +57,7 @@ func datasourceMSORoleRead(d *schema.ResourceData, m interface{}) error {
 
 	if con.Exists("status") && con.S("status").Data().(float64) == 404 {
 		version, _ := msoClient.GetVersion()
-		return fmt.Errorf(fmt.Sprintf("%s MSO version '%s' not supported. Please use this datasource only on a non ND-based version of MSO.", con.S("message").Data().(string), version))
+		return fmt.Errorf("%s MSO version '%s' not supported. Please use this datasource only on a non ND-based version of MSO.", con.S("message").Data().(string), version)
 	}
 
 	data := con.S("roles").Data().([]interface{})
