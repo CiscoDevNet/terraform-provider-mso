@@ -1,0 +1,113 @@
+package mso
+
+import (
+	"fmt"
+	"regexp"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+)
+
+const msoTfTenantName = "tf_test_mso_tenant"
+
+func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Cross-template VRF/BD dependency (expecting deployment error)") },
+				Config:      testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig(),
+				ExpectError: regexp.MustCompile(`^errors during apply: Error on deploy:`),
+			},
+		},
+	})
+}
+
+func testAccSingleTenantConfig() string {
+	return fmt.Sprintf(`
+	%s
+	resource "mso_tenant" "%s" {
+		name = "%s"
+		display_name = "%s"
+		site_associations { 
+			site_id = data.mso_site.%s.id 
+		}
+	}
+	`, testSiteConfigAnsibleTest(), msoTfTenantName, msoTfTenantName, msoTfTenantName, msoTemplateSiteName1)
+}
+
+func testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema" "schema_blocks" {
+	name = "demo_schema_blocks2"
+	template {
+		name         = "Template1"
+		display_name = "TEMP1"
+		tenant_id    = mso_tenant.%s.id
+		template_type = "aci_multi_site"
+	}
+	template {
+		name         = "Template2"
+		display_name = "TEMP2"
+		tenant_id    = mso_tenant.%s.id
+		template_type = "aci_multi_site"
+	}
+	}
+
+	resource "mso_schema_site" "schema_site_1" {
+	schema_id     = mso_schema.schema_blocks.id
+	site_id       = data.mso_site.%s.id
+	template_name = tolist(mso_schema.schema_blocks.template)[0].name
+	}
+
+	resource "mso_schema_site" "schema_site_2" {
+	schema_id     = mso_schema.schema_blocks.id
+	site_id       = data.mso_site.%s.id
+	template_name = tolist(mso_schema.schema_blocks.template)[1].name
+	}
+
+	resource "mso_schema_template_vrf" "vrf1" {
+	schema_id       = mso_schema.schema_blocks.id
+	template        = tolist(mso_schema.schema_blocks.template)[0].name
+		name            = "vrf1"
+		display_name    ="vrf"
+		layer3_multicast=true
+	}
+
+	resource "mso_schema_template_bd" "bridgedomain" {
+		schema_id              = mso_schema.schema_blocks.id
+		template_name          = tolist(mso_schema.schema_blocks.template)[0].name
+		name                   = "bd"
+		display_name           = "test"
+		vrf_name               = mso_schema_template_vrf.vrf1.name
+		vrf_schema_id          = mso_schema.schema_blocks.id
+		vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
+		layer2_unknown_unicast = "proxy"
+		intersite_bum_traffic  = false
+		optimize_wan_bandwidth = true
+		layer2_stretch         = true
+		layer3_multicast       = true
+	}
+
+	resource "mso_schema_template_bd" "bridgedomain2" {
+		schema_id              = mso_schema.schema_blocks.id
+		template_name          = tolist(mso_schema.schema_blocks.template)[1].name
+		name                   = "bd2"
+		display_name           = "test"
+		vrf_name               = mso_schema_template_vrf.vrf1.name
+		vrf_schema_id          = mso_schema.schema_blocks.id
+		vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
+		layer2_unknown_unicast = "proxy"
+		intersite_bum_traffic  = false
+		optimize_wan_bandwidth = true
+		layer2_stretch         = true
+		layer3_multicast       = true
+	}
+
+	resource "mso_schema_template_deploy_ndo" "deploy_ndo2" {
+	schema_id     = mso_schema_template_bd.bridgedomain2.schema_id
+	template_name = tolist(mso_schema.schema_blocks.template)[1].name
+	}
+	`, testAccSingleTenantConfig(), msoTfTenantName, msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
+}

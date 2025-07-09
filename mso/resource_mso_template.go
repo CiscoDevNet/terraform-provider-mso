@@ -167,22 +167,22 @@ func (ndoTemplate *ndoTemplate) validateConfig() []error {
 	errors := []error{}
 
 	if ndoTemplate.tenantId != "" && !ndoTemplateTypes[ndoTemplate.templateType].tenant {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("A Tenant cannot be attached to a template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf("A Tenant cannot be attached to a template of type %s.", ndoTemplate.templateType))
 	}
 	if ndoTemplate.tenantId == "" && ndoTemplateTypes[ndoTemplate.templateType].tenant {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("A Tenant is required for a template of type %s. Use the `tenant_id` attribute to specify the Tenant to associate with this template.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf("A Tenant is required for a template of type %s. Use the `tenant_id` attribute to specify the Tenant to associate with this template.", ndoTemplate.templateType))
 	}
 	if len(ndoTemplate.sites) == 0 && ndoTemplateTypes[ndoTemplate.templateType].siteAmount == 1 {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("At least one site is required for a template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf("At least one site is required for a template of type %s.", ndoTemplate.templateType))
 	}
 	if len(ndoTemplate.sites) > 1 && ndoTemplateTypes[ndoTemplate.templateType].siteAmount == 1 {
-		errors = append(errors, fmt.Errorf(fmt.Sprintf("Only one site is allowed for a template of type %s.", ndoTemplate.templateType)))
+		errors = append(errors, fmt.Errorf("Only one site is allowed for a template of type %s.", ndoTemplate.templateType))
 	}
 	duplicates := duplicatesInList(ndoTemplate.sites)
 	if len(duplicates) > 0 {
 		duplicatesErrors := []error{fmt.Errorf("Duplication found in the sites list")}
 		for _, site := range duplicates {
-			duplicatesErrors = append(duplicatesErrors, fmt.Errorf(fmt.Sprintf("Site %s is duplicated", site)))
+			duplicatesErrors = append(duplicatesErrors, fmt.Errorf("Site %s is duplicated", site))
 		}
 		return duplicatesErrors
 	}

@@ -580,5 +580,5 @@ func GetSiteViaName(msoClient *client.Client, name string) (*container.Container
 			return siteCont, nil
 		}
 	}
-	return nil, fmt.Errorf(fmt.Sprintf("Site %v is not a valid Site configured at ND-level. Add Site to ND first.", name))
+	return nil, fmt.Errorf("Site %v is not a valid Site configured at ND-level. Add Site to ND first.", name)
 }

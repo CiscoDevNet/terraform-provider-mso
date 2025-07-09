@@ -475,5 +475,5 @@ func GetTenantNameViaTemplateName(msoClient *client.Client, id string, tempName 
 		}
 
 	}
-	return "", fmt.Errorf(tempName)
+	return "", fmt.Errorf("%s", tempName)
 }
