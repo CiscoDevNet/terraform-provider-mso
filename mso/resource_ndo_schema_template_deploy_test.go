@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -26,18 +25,7 @@ func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
 }
 
 func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
-	logFile, err := os.CreateTemp("", "tf-acc-test-*.log")
-	if err != nil {
-		t.Fatalf("Failed to create temp log file: %v", err)
-	}
-
-	t.Cleanup(func() {
-		logFile.Close()
-		os.Remove(logFile.Name())
-	})
-
-	t.Setenv("TF_LOG", "TRACE")
-	t.Setenv("TF_LOG_PATH", logFile.Name())
+	logFilePath := setupTestLogCapture(t, "TRACE")
 
 	expectedLogs := []string{
 		`\[TRACE\] Task status is \w+`,
@@ -54,7 +42,7 @@ func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Check Retry on Deploy") },
 				Config:    testAccMsoSchemaTemplateVrfAndBdDeployWithRetry(),
-				Check:     customTestCheckLogs(logFile.Name(), expectedLogs),
+				Check:     customTestCheckLogs(logFilePath, expectedLogs),
 			},
 		},
 	})
