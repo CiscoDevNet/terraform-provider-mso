@@ -1,8 +1,10 @@
 package mso
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -158,6 +160,51 @@ func customTestCheckResourceTypeSetAttr(resourceName, resourceAttrRootkey string
 		if len(resourceAttrsMap) > 0 {
 			return fmt.Errorf("Assertion check failed,\nCurrent state file content: %v\nComparable to unmatched values: %v", rootModule.Primary.Attributes, resourceAttrsMap)
 		}
+		return nil
+	}
+}
+
+func customTestCheckLogs(logFilePath string, patterns []string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		file, err := os.Open(logFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to open log file %s: %w", logFilePath, err)
+		}
+		defer file.Close()
+
+		// To check a sequence, we can read the whole file line-by-line into a builder
+		var logBuilder strings.Builder
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			logBuilder.WriteString(scanner.Text() + "\n")
+		}
+
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("error while scanning log file: %w", err)
+		}
+
+		logOutput := logBuilder.String()
+
+		fullPattern := "(?s)" + strings.Join(patterns, ".*")
+
+		matched, err := regexp.MatchString(fullPattern, logOutput)
+		if err != nil {
+			return fmt.Errorf("error compiling regex pattern: %w", err)
+		}
+
+		if !matched {
+			expectedSequence := strings.Join(patterns, "\n...\n")
+			return fmt.Errorf(
+				"expected log sequence not found.\n--- Expected Sequence (regex) ---\n%s\n\n--- Full Log Output ---\n%s",
+				expectedSequence,
+				logOutput,
+			)
+		}
+
+		if err := os.Truncate(logFilePath, 0); err != nil {
+			return fmt.Errorf("failed to truncate log file: %w", err)
+		}
+
 		return nil
 	}
 }

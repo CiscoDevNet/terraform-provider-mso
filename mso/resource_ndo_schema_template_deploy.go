@@ -136,8 +136,8 @@ func isTaskStatusPending(c *container.Container) bool {
 	taskStatusContainer := c.Search("operDetails", "taskStatus")
 	if taskStatusContainer != nil {
 		if status, ok := taskStatusContainer.Data().(string); ok {
-			log.Printf("[TRACE]: Task is pending.")
-			return (status != "Fail" && status != "Complete" && status != "Error")
+			log.Printf("[TRACE] Task status is %s", status)
+			return (status != "Complete" && status != "Error")
 		}
 	}
 	return false
