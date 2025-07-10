@@ -164,6 +164,23 @@ func customTestCheckResourceTypeSetAttr(resourceName, resourceAttrRootkey string
 	}
 }
 
+func setupTestLogCapture(t *testing.T, logLevel string) string {
+	logFile, err := os.CreateTemp("", "tf-acc-test-*.log")
+	if err != nil {
+		t.Fatalf("Failed to create temp log file: %v", err)
+	}
+
+	t.Cleanup(func() {
+		logFile.Close()
+		os.Remove(logFile.Name())
+	})
+
+	t.Setenv("TF_LOG", logLevel)
+	t.Setenv("TF_LOG_PATH", logFile.Name())
+
+	return logFile.Name()
+}
+
 func customTestCheckLogs(logFilePath string, patterns []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		file, err := os.Open(logFilePath)
@@ -172,7 +189,6 @@ func customTestCheckLogs(logFilePath string, patterns []string) resource.TestChe
 		}
 		defer file.Close()
 
-		// To check a sequence, we can read the whole file line-by-line into a builder
 		var logBuilder strings.Builder
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
