@@ -20,6 +20,7 @@ provider "mso" {
   url      = "" # <MSO URL>
   insecure = true
   platform = "nd"
+  retries  = 3
 }
 
 resource "mso_schema_template_deploy_ndo" "template_deployer" {
@@ -41,6 +42,7 @@ resource "mso_schema_template_deploy_ndo" "template_deployer" {
 * This resource is intentionally created non-idempotent so that it deploys the template in every run, it will not fail if there is no change and we deploy or redeploy the template again. When destroying the resource, no action is taken.
 * Prior to deploy or redeploy a schema validation is executed. When schema validation fails, the resource will fail and deploy or redeploy will not be executed.
 * A template can only be undeployed from a site by disassociating the site from the template with the resource mso_schema_site.
+* To adjust the number of retries to ensure successful deployment completion, configure the retries argument in the provider configuration section.
 
 ## Attribute Reference ##
 
