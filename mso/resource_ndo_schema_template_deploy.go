@@ -102,19 +102,17 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 
 	taskStatusContainer := cont.Search("operDetails", "taskStatus")
 	if taskStatusContainer != nil {
-		if status, ok := taskStatusContainer.Data().(string); ok {
-			if status == "Error" {
-				errorMessage := "Could not determine specific deployment error message."
-				errorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage")
-				if errorMessageContainer != nil {
-					if errorMessages, ok := errorMessageContainer.Data().([]interface{}); ok && len(errorMessages) > 0 {
-						if message, ok := errorMessages[0].(string); ok {
-							errorMessage = message
-						}
+		if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
+			errorMessage := "Could not determine specific deployment error message."
+			errorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage")
+			if errorMessageContainer != nil {
+				if errorMessages, ok := errorMessageContainer.Data().([]interface{}); ok && len(errorMessages) > 0 {
+					if message, ok := errorMessages[0].(string); ok {
+						errorMessage = message
 					}
 				}
-				return fmt.Errorf("Error on deploy: %s", errorMessage)
 			}
+			return fmt.Errorf("Error on deploy: %s", errorMessage)
 		}
 	}
 

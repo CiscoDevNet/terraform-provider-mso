@@ -42,29 +42,29 @@ var (
 
 func testAccPreCheck(t *testing.T) *client.Client {
 	msoClientTestOnce.Do(func() {
-		var mso_url, mso_username, mso_password, mso_platform string
-		if v := os.Getenv("MSO_USERNAME"); v == "" {
+		var msoUrl, msoUsername, msoPassword, msoPlatform string
+		if username := os.Getenv("MSO_USERNAME"); username == "" {
 			t.Fatal("MSO_USERNAME must be set for acceptance tests")
 		} else {
-			mso_username = v
+			msoUsername = username
 		}
-		if v := os.Getenv("MSO_PASSWORD"); v == "" {
+		if password := os.Getenv("MSO_PASSWORD"); password == "" {
 			t.Fatal("MSO_PASSWORD must be set for acceptance tests")
 		} else {
-			mso_password = v
+			msoPassword = password
 		}
-		if v := os.Getenv("MSO_URL"); v == "" {
+		if url := os.Getenv("MSO_URL"); url == "" {
 			t.Fatal("MSO_URL must be set for acceptance tests")
 		} else {
-			mso_url = v
+			msoUrl = url
 		}
-		if v := os.Getenv("MSO_PLATFORM"); v == "" {
-			mso_platform = "mso"
+		if platform := os.Getenv("MSO_PLATFORM"); platform == "" {
+			msoPlatform = "mso"
 		} else {
-			mso_platform = v
+			msoPlatform = platform
 		}
 
-		msoClientTest = client.GetClient(mso_url, mso_username, client.Password(mso_password), client.Insecure(true), client.Platform(mso_platform))
+		msoClientTest = client.GetClient(msoUrl, msoUsername, client.Password(msoPassword), client.Insecure(true), client.Platform(msoPlatform))
 	})
 	return msoClientTest
 
@@ -170,15 +170,17 @@ func setupTestLogCapture(t *testing.T, logLevel string) string {
 		t.Fatalf("Failed to create temp log file: %v", err)
 	}
 
+	logFileName := logFile.Name()
+
 	t.Cleanup(func() {
 		logFile.Close()
-		os.Remove(logFile.Name())
+		os.Remove(logFileName)
 	})
 
 	t.Setenv("TF_LOG", logLevel)
-	t.Setenv("TF_LOG_PATH", logFile.Name())
+	t.Setenv("TF_LOG_PATH", logFileName)
 
-	return logFile.Name()
+	return logFileName
 }
 
 func customTestCheckLogs(logFilePath string, patterns []string) resource.TestCheckFunc {
