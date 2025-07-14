@@ -95,7 +95,7 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 	}
 
 	cont, resp, err = msoClient.DoWithRetryFunc(req, isTaskStatusPending)
-	if err != nil {
+	if err != nil && cont == nil {
 		log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 		return err
 	}
