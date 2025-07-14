@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -43,6 +44,7 @@ var (
 func testAccPreCheck(t *testing.T) *client.Client {
 	msoClientTestOnce.Do(func() {
 		var msoUrl, msoUsername, msoPassword, msoPlatform string
+		var msoRetries int
 		if username := os.Getenv("MSO_USERNAME"); username == "" {
 			t.Fatal("MSO_USERNAME must be set for acceptance tests")
 		} else {
@@ -63,8 +65,19 @@ func testAccPreCheck(t *testing.T) *client.Client {
 		} else {
 			msoPlatform = platform
 		}
+		if retries := os.Getenv("MSO_RETRIES"); retries == "" {
+			msoRetries = 2
+		} else {
+			retriesInt, err := strconv.Atoi(retries)
+			if err != nil {
+				t.Log("Warning: MSO_RETRIES is not a valid integer, using default value 2. Error:", err.Error())
+				msoRetries = 2
+			} else {
+				msoRetries = retriesInt
+			}
+		}
 
-		msoClientTest = client.GetClient(msoUrl, msoUsername, client.Password(msoPassword), client.Insecure(true), client.Platform(msoPlatform))
+		msoClientTest = client.GetClient(msoUrl, msoUsername, client.Password(msoPassword), client.Insecure(true), client.Platform(msoPlatform), client.MaxRetries(msoRetries))
 	})
 	return msoClientTest
 
