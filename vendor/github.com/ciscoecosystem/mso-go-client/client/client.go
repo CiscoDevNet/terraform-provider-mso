@@ -57,6 +57,8 @@ type Client struct {
 	backoffDelayFactor float64
 }
 
+type CallbackRetryFunc func(*container.Container) bool
+
 // singleton implementation of a client
 var clientImpl *Client
 
@@ -385,6 +387,10 @@ func StrtoInt(s string, startIndex int, bitSize int) (int64, error) {
 }
 
 func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, error) {
+	return c.DoWithRetryFunc(req, nil)
+}
+
+func (c *Client) DoWithRetryFunc(req *http.Request, retryFunc CallbackRetryFunc) (*container.Container, *http.Response, error) {
 	log.Printf("[DEBUG] Begining DO method %s", req.URL.String())
 
 	for attempts := 1; ; attempts++ {
@@ -428,17 +434,28 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 			return nil, nil, nil
 		}
 
+		var obj *container.Container
 		// Check 2xx status codes
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			obj, err := container.ParseJSON(bodyBytes)
-			if err == nil {
-				log.Printf("[DEBUG] Exit from do method")
-				return obj, resp, err
+			obj, err = container.ParseJSON(bodyBytes)
+			if err != nil {
+				// Attempt retry if JSON parsing fails but status code is 2xx
+				// Assumption here is that packets were somehow corrupted/lost during transmission
+				log.Printf("[ERROR] Error occurred while JSON parsing (2xx status): %+v", err)
+				retry = true
+			} else {
+				// JSON parsing was successful for a 2xx response.
+				// Now, check the custom retry function.
+				if retryFunc != nil && retryFunc(obj) {
+					log.Printf("[DEBUG] Custom retry function indicated a retry is needed for 2xx response")
+					retry = true
+				} else {
+					// If JSON parsed successfully and retryFunc does not indicate a retry,
+					// then this is a successful operation.
+					log.Printf("[DEBUG] Exit from Do method")
+					return obj, resp, nil
+				}
 			}
-			// Attempt retry if JSON parsing fails but status code is 2xx
-			// Assumption here is that packets were somehow corrupted/lost during transmission
-			log.Printf("[ERROR] Error occured while json parsing %+v", err)
-			retry = true
 		}
 
 		// Attempt retry for the following error codes:
@@ -453,7 +470,7 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 			if ok := c.backoff(attempts); !ok {
 				log.Printf("[ERROR] HTTP Request failed with status code %d, retries exhausted", resp.StatusCode)
 				log.Printf("[DEBUG] Exit from Do method")
-				return nil, resp, fmt.Errorf("[ERROR] HTTP Request failed with status code %d after %d attempts", resp.StatusCode, attempts)
+				return obj, resp, fmt.Errorf("[ERROR] HTTP Request failed with status code %d after %d attempts", resp.StatusCode, attempts)
 			} else {
 				log.Printf("[DEBUG] Retrying HTTP Request after backoff")
 				continue
