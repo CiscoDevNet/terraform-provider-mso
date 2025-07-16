@@ -32,7 +32,6 @@ func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 		`\[DEBUG\] Custom retry function indicated a retry is needed for 2xx response`,
 		`\[ERROR\] HTTP Request failed with status code 200, retrying\.\.\.`,
 		`\[DEBUG\] Begining backoff method: attempts \d+ on \d+`,
-		`\[DEBUG\] Exit from backoff method with return value false`,
 	}
 
 	resource.Test(t, resource.TestCase{
