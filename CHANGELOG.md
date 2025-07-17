@@ -1,4 +1,16 @@
-## 1.4.0 (January 22, 2025)\
+## 1.5.0 (July 17, 2025)
+IMPROVEMENTS:
+- Add mso_fabric_policies_physical_domain resource and datasource.
+- Add mso_fabric_policies_vlan_pool resource and datasource.
+- Add mso_tenant_policies_dhcp_relay_policy resource and datasource.
+- Add mso_tenant_policies_ipsla_monitoring_policy resource and datasource. 
+- Add mso_tenant_policies_route_map_policy_multicast resource and datasource.
+- Add ability to wait for deploy task to finish and display error message if present in resource_ndo_schema_template_deploy.
+- Add retry mechanism to provider for failed API requests due to network or capacity issues.
+- Add uuid attribute to mso_schema_template_anp_epg and mso_schema_template_external_epg resources and datasources.
+- Add rendezvous_points attribute in mso_schema_template_vrf resource and datasource.
+
+## 1.4.0 (January 22, 2025)
 IMPROVEMENTS:
 - Add support for dpc path_type input with fex for mso_schema_site_anp_epg_staticport and mso_schema_site_anp_epg_bulk_staticport resources
 - Add support for endpoint move detection mode in schema_template_bd
