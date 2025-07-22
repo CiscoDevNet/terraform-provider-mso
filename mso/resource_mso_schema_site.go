@@ -245,10 +245,25 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 								log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 								return err
 							}
-							_, resp, err := msoClient.Do(req)
-							if err != nil || resp.StatusCode != 202 {
+							cont, resp, err := msoClient.DoWithRetryFunc(req, isTaskStatusPending)
+							if (err != nil && cont == nil) || resp.StatusCode != 202 {
 								log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 								return err
+							}
+							taskStatusContainer := cont.Search("operDetails", "taskStatus")
+							if taskStatusContainer != nil {
+								if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
+									errorMessage := "Could not determine specific undeployment error message."
+									errorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage")
+									if errorMessageContainer != nil {
+										if errorMessages, ok := errorMessageContainer.Data().([]interface{}); ok && len(errorMessages) > 0 {
+											if message, ok := errorMessages[0].(string); ok {
+												errorMessage = message
+											}
+										}
+									}
+									return fmt.Errorf("Error on undeploy: %s", errorMessage)
+								}
 							}
 						} else if err == nil {
 							_, err := msoClient.GetViaURL(fmt.Sprintf("/api/v1/execute/schema/%s/template/%s?undeploy=%s", schemaId, templateName, siteId))

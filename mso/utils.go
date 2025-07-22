@@ -398,3 +398,14 @@ func GetPolicyByName(cont *container.Container, policyName string, templateEleme
 
 	return nil, fmt.Errorf("Policy name %s not found", policyName)
 }
+
+func isTaskStatusPending(c *container.Container) bool {
+	taskStatusContainer := c.Search("operDetails", "taskStatus")
+	if taskStatusContainer != nil {
+		if status, ok := taskStatusContainer.Data().(string); ok {
+			log.Printf("[TRACE] Task status is %s", status)
+			return (status != "Complete" && status != "Error")
+		}
+	}
+	return false
+}

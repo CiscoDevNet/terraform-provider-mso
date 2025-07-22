@@ -129,14 +129,3 @@ func resourceNDOSchemaTemplateDeployRead(d *schema.ResourceData, m interface{}) 
 func resourceNDOSchemaTemplateDeployDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
-
-func isTaskStatusPending(c *container.Container) bool {
-	taskStatusContainer := c.Search("operDetails", "taskStatus")
-	if taskStatusContainer != nil {
-		if status, ok := taskStatusContainer.Data().(string); ok {
-			log.Printf("[TRACE] Task status is %s", status)
-			return (status != "Complete" && status != "Error")
-		}
-	}
-	return false
-}
