@@ -98,24 +98,19 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 	if err != nil && cont == nil {
 		log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 		return err
-	}
-
-	taskStatusContainer := cont.Search("operDetails", "taskStatus")
-	if taskStatusContainer != nil {
-		if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
-			errorMessage := "Could not determine specific deployment error message."
-			errorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage")
-			if errorMessageContainer != nil {
-				if errorMessages, ok := errorMessageContainer.Data().([]interface{}); ok && len(errorMessages) > 0 {
-					if message, ok := errorMessages[0].(string); ok {
-						errorMessage = message
-					}
+	} else if cont != nil {
+		taskStatusContainer := cont.Search("operDetails", "taskStatus")
+		if taskStatusContainer != nil {
+			if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
+				errorMessage := "Could not determine specific deployment error message."
+				firstErrorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage").Index(0)
+				if message, ok := firstErrorMessageContainer.Data().(string); ok {
+					errorMessage = message
 				}
+				return fmt.Errorf("Error on deploy: %s", errorMessage)
 			}
-			return fmt.Errorf("Error on deploy: %s", errorMessage)
 		}
 	}
-
 	d.SetId(schemaId)
 	log.Printf("[DEBUG] %s: Successful Template Deploy Execution", d.Id())
 	return resourceNDOSchemaTemplateDeployRead(d, m)

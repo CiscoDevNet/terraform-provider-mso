@@ -240,29 +240,41 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 								log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
 								return err
 							}
-							req, err := msoClient.MakeRestRequest("POST", "api/v1/task", payload, true)
+							path := "api/v1/task"
+							req, err := msoClient.MakeRestRequest("POST", path, payload, true)
 							if err != nil {
 								log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 								return err
 							}
-							cont, resp, err := msoClient.DoWithRetryFunc(req, isTaskStatusPending)
-							if (err != nil && cont == nil) || resp.StatusCode != 202 {
+
+							cont, resp, err := msoClient.Do(req)
+							if err != nil || resp.StatusCode != 202 {
 								log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 								return err
 							}
-							taskStatusContainer := cont.Search("operDetails", "taskStatus")
-							if taskStatusContainer != nil {
-								if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
-									errorMessage := "Could not determine specific undeployment error message."
-									errorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage")
-									if errorMessageContainer != nil {
-										if errorMessages, ok := errorMessageContainer.Data().([]interface{}); ok && len(errorMessages) > 0 {
-											if message, ok := errorMessages[0].(string); ok {
-												errorMessage = message
-											}
+
+							taskId := cont.S("id").Data()
+							req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("%s/%s", path, taskId.(string)), nil, true)
+							if err != nil {
+								log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
+								return err
+							}
+
+							cont, resp, err = msoClient.DoWithRetryFunc(req, isTaskStatusPending)
+							if err != nil && cont == nil {
+								log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
+								return err
+							} else if cont != nil {
+								taskStatusContainer := cont.Search("operDetails", "taskStatus")
+								if taskStatusContainer != nil {
+									if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
+										errorMessage := "Could not determine specific undeployment error message."
+										firstErrorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage").Index(0)
+										if message, ok := firstErrorMessageContainer.Data().(string); ok {
+											errorMessage = message
 										}
+										return fmt.Errorf("Error on undeploy: %s", errorMessage)
 									}
-									return fmt.Errorf("Error on undeploy: %s", errorMessage)
 								}
 							}
 						} else if err == nil {
