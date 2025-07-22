@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -463,6 +464,24 @@ func (c *Client) DoWithRetryFunc(req *http.Request, retryFunc CallbackRetryFunc)
 		//  503 Service Unavailable
 		if resp.StatusCode == 429 || resp.StatusCode == 503 {
 			retry = true
+		}
+
+		// Attempt retry for 500 Internal error exception to handle incorrect status code from NDO
+		// This status code / error combination will be converted to a 503 status code in later versions of NDO
+		if resp.StatusCode == 500 {
+			var errorMap map[string]string
+			err := json.Unmarshal(bodyBytes, &errorMap)
+			if err == nil {
+				errorString := errorMap["error"]
+				if errorString == "There was a problem proxying the request" {
+					log.Printf("[DEBUG] Retrying response status 500 error with message: %s", errorString)
+					retry = true
+				} else if errorString != "" {
+					log.Printf("[TRACE] Not retrying response status 500 error with message: %s", errorString)
+				} else {
+					log.Printf("[TRACE] Not retrying response status 500 error without message")
+				}
+			}
 		}
 
 		if retry {
