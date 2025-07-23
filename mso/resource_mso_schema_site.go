@@ -253,8 +253,13 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 								return err
 							}
 
-							taskId := cont.S("id").Data()
-							req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("%s/%s", path, taskId.(string)), nil, true)
+							taskId, ok := cont.S("id").Data().(string)
+							if !ok || taskId == "" {
+								log.Printf("[DEBUG] Task ID not found or is invalid. Data was: %v", cont.S("id").Data())
+								return fmt.Errorf("task ID not found or is invalid")
+							}
+
+							req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("%s/%s", path, taskId), nil, true)
 							if err != nil {
 								log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 								return err
@@ -265,11 +270,11 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 								log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 								return err
 							} else if cont != nil {
-								taskStatusContainer := cont.Search("operDetails", "taskStatus")
+								taskStatusContainer := cont.S("operDetails", "taskStatus")
 								if taskStatusContainer != nil {
 									if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
 										errorMessage := "Could not determine specific undeployment error message."
-										firstErrorMessageContainer := cont.Path("operDetails.detailedStatus.errMessage").Index(0)
+										firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0)
 										if message, ok := firstErrorMessageContainer.Data().(string); ok {
 											errorMessage = message
 										}
