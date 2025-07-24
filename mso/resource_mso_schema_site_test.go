@@ -153,3 +153,81 @@ type SchemaSiteTest struct {
 	SiteId       string `json:",omitempty"`
 	TemplateName string `json:",omitempty"`
 }
+
+func TestAccMsoSchemaSite(t *testing.T) {
+	logFilePath := setupTestLogCapture(t, "TRACE")
+
+	expectedLogs := []string{
+		`\[DEBUG\].*undeploy`,
+		`\[TRACE\] Task status is \w+`,
+		`\[DEBUG\] Custom retry function indicated a retry is needed for 2xx response`,
+		`\[ERROR\] HTTP Request failed with status code 200, retrying\.\.\.`,
+		`\[DEBUG\] Begining backoff method: attempts \d+ on \d+`,
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: MSO Schema Site") },
+				Config:    testAccMsoSchemaSite(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_site.schema_site_1", "template_name", "Template1"),
+				),
+			},
+		},
+		CheckDestroy: customTestCheckLogs(logFilePath, expectedLogs),
+	})
+}
+
+func testAccMsoSchemaSite() string {
+	return fmt.Sprintf(`%s
+	resource "mso_schema" "schema_blocks" {
+		name = "demo_schema_blocks"
+		template {
+			name         = "Template1"
+			display_name = "TEMP1"
+			tenant_id    = mso_tenant.%s.id
+			template_type = "aci_multi_site"
+		}
+	}
+
+	resource "mso_schema_site" "schema_site_1" {
+		schema_id     = mso_schema.schema_blocks.id
+		site_id       = data.mso_site.%s.id
+		template_name = tolist(mso_schema.schema_blocks.template)[0].name
+		undeploy_on_destroy = true
+	}
+
+	resource "mso_schema_template_vrf" "vrf" {
+		count = 50
+		schema_id       = mso_schema.schema_blocks.id
+		template        = tolist(mso_schema.schema_blocks.template)[0].name
+		name            = "vrf${count.index + 1}"
+		display_name    = "VRF-${count.index + 1}"
+		layer3_multicast=true
+	  }
+
+	  resource "mso_schema_template_bd" "bridgedomain" {
+		  schema_id              = mso_schema.schema_blocks.id
+		  template_name          = tolist(mso_schema.schema_blocks.template)[0].name
+		  name                   = "bd"
+		  display_name           = "test"
+		  vrf_name               = mso_schema_template_vrf.vrf[0].name
+		  vrf_schema_id          = mso_schema.schema_blocks.id
+		  vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
+		  layer2_unknown_unicast = "proxy" 
+		  intersite_bum_traffic  = false
+		  optimize_wan_bandwidth = true
+		  layer2_stretch         = true
+		  layer3_multicast       = true  
+	}
+
+	resource "mso_schema_template_deploy_ndo" "deploy_ndo" {
+		force_apply = ""
+		schema_id     = mso_schema_template_bd.bridgedomain.schema_id
+		template_name = tolist(mso_schema.schema_blocks.template)[0].name
+	}
+	`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
+}

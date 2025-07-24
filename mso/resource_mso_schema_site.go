@@ -240,15 +240,47 @@ func resourceMSOSchemaSiteDelete(d *schema.ResourceData, m interface{}) error {
 								log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
 								return err
 							}
-							req, err := msoClient.MakeRestRequest("POST", "api/v1/task", payload, true)
+							path := "api/v1/task"
+							req, err := msoClient.MakeRestRequest("POST", path, payload, true)
 							if err != nil {
 								log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
 								return err
 							}
-							_, resp, err := msoClient.Do(req)
+
+							cont, resp, err := msoClient.Do(req)
 							if err != nil || resp.StatusCode != 202 {
 								log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
 								return err
+							}
+
+							taskId, ok := cont.S("id").Data().(string)
+							if !ok || taskId == "" {
+								log.Printf("[DEBUG] Task ID not found or is invalid. Data was: %v", cont.S("id").Data())
+								return fmt.Errorf("task ID not found or is invalid")
+							}
+
+							req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("%s/%s", path, taskId), nil, true)
+							if err != nil {
+								log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
+								return err
+							}
+
+							cont, resp, err = msoClient.DoWithRetryFunc(req, isTaskStatusPending)
+							if err != nil && cont == nil {
+								log.Printf("[DEBUG] Request failed with resp: %v. Err: %s.", resp, err)
+								return err
+							} else if cont != nil {
+								taskStatusContainer := cont.S("operDetails", "taskStatus")
+								if taskStatusContainer != nil {
+									if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
+										errorMessage := "Could not determine specific undeployment error message."
+										firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0)
+										if message, ok := firstErrorMessageContainer.Data().(string); ok {
+											errorMessage = message
+										}
+										return fmt.Errorf("Error on undeploy: %s", errorMessage)
+									}
+								}
 							}
 						} else if err == nil {
 							_, err := msoClient.GetViaURL(fmt.Sprintf("/api/v1/execute/schema/%s/template/%s?undeploy=%s", schemaId, templateName, siteId))
