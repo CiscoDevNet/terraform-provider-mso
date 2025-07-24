@@ -1,3 +1,8 @@
+## 1.5.1 (July 24, 2025)
+BUG FIXES:
+- Fix mso_schema_site to add a retry mechanism on a pending undeploy operation and display error message when failing to undeploy
+- Add ability to retry status code 500 error when the error string is matching a proxy request error
+
 ## 1.5.0 (July 17, 2025)
 IMPROVEMENTS:
 - Add mso_fabric_policies_physical_domain resource and datasource.
