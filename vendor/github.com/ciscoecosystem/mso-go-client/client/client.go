@@ -53,6 +53,7 @@ type Client struct {
 	version            string
 	skipLoggingPayload bool
 	maxRetries         int
+	maxReAuthRetries   int
 	backoffMinDelay    int
 	backoffMaxDelay    int
 	backoffDelayFactor float64
@@ -113,6 +114,12 @@ func MaxRetries(maxRetries int) Option {
 	}
 }
 
+func MaxReAuthRetries(maxReAuthRetries int) Option {
+	return func(client *Client) {
+		client.maxReAuthRetries = maxReAuthRetries
+	}
+}
+
 func BackoffMinDelay(backoffMinDelay int) Option {
 	return func(client *Client) {
 		client.backoffMinDelay = backoffMinDelay
@@ -139,9 +146,10 @@ func initClient(clientUrl, username string, options ...Option) *Client {
 		log.Fatal(err)
 	}
 	client := &Client{
-		BaseURL:    bUrl,
-		username:   username,
-		httpClient: http.DefaultClient,
+		BaseURL:          bUrl,
+		username:         username,
+		httpClient:       http.DefaultClient,
+		maxReAuthRetries: 3,
 	}
 
 	for _, option := range options {
@@ -393,7 +401,7 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 
 func (c *Client) DoWithRetryFunc(req *http.Request, retryFunc CallbackRetryFunc) (*container.Container, *http.Response, error) {
 	log.Printf("[DEBUG] Begining DO method %s", req.URL.String())
-
+	reAuthCounter := 1
 	for attempts := 1; ; attempts++ {
 		log.Printf("[TRACE] HTTP Request Method and URL: %s %s", req.Method, req.URL.String())
 
@@ -456,6 +464,34 @@ func (c *Client) DoWithRetryFunc(req *http.Request, retryFunc CallbackRetryFunc)
 					log.Printf("[DEBUG] Exit from Do method")
 					return obj, resp, nil
 				}
+			}
+		}
+
+		// Handle session timeout for login based requests
+		if resp.StatusCode == 401 {
+			obj, err = container.ParseJSON(bodyBytes)
+			if err != nil {
+				log.Printf("[DEBUG] Authorization error with status code 401")
+			} else {
+				errorMessage := obj.S("error").String()
+				log.Printf("[DEBUG] Authorization error with status code 401: %+v", errorMessage)
+			}
+			log.Printf("[DEBUG] Checking max re-authentication retries: %v on %v", reAuthCounter, c.maxReAuthRetries)
+			if reAuthCounter < c.maxReAuthRetries {
+				log.Printf("[DEBUG] Retrying authentication after 401 error")
+				c.AuthToken = nil
+				req, err = c.InjectAuthenticationHeader(req, "")
+				if err == nil {
+					retry = true
+					reAuthCounter = reAuthCounter + 1
+					// If re-authentication is successful, not counting previous query as an attempt
+					attempts = attempts - 1
+					log.Printf("[DEBUG] Retrying same request after status 401 and re-authentication")
+				} else {
+					log.Printf("[ERROR] Error when retrying authentication after 401 error: %v", err)
+				}
+			} else {
+				log.Printf("[ERROR] Not retrying authentication after 401 error due to maximum re-authentication retries reached")
 			}
 		}
 
