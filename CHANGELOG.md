@@ -1,3 +1,7 @@
+## 1.5.2 (August 8, 2025)
+BUG FIXES:
+- Add re-login and retry mechanism to fix issue when login session expire and 401 is returned
+
 ## 1.5.1 (July 24, 2025)
 BUG FIXES:
 - Fix mso_schema_site to add a retry mechanism on a pending undeploy operation and display error message when failing to undeploy
