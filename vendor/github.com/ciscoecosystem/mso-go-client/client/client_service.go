@@ -82,8 +82,6 @@ func CheckForErrors(cont *container.Container, method string) error {
 		return errors.New(fmt.Sprintf("%s%s", cont.S("message"), cont.S("info")))
 	} else if cont.Exists("error") {
 		return errors.New(fmt.Sprintf("%s %s", models.StripQuotes(cont.S("error").String()), models.StripQuotes(cont.S("error_code").String())))
-	} else {
-		return nil
 	}
 	return nil
 }
