@@ -1,3 +1,7 @@
+## 1.5.3 (August 21, 2025)
+BUG FIXES:
+- Fix error handling issue that ignore error messages returned by the API for non 200 status responses introduced in v1.5.1
+
 ## 1.5.2 (August 8, 2025)
 BUG FIXES:
 - Add re-login and retry mechanism to fix issue when login session expire and 401 is returned
