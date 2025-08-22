@@ -61,6 +61,7 @@ resource "mso_schema_template_bd" "bd" {
   vrf_name          = mso_schema_template_vrf.vrf.name
   vrf_schema_id     = mso_schema_template_vrf.vrf.schema_id
   vrf_template_name = mso_schema_template_vrf.vrf.template
+  arp_flooding      = true
 }
 
 resource "mso_schema_template_anp" "anp" {
