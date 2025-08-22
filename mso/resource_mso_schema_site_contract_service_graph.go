@@ -317,15 +317,19 @@ func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.Resou
 								allMap["consumer_connector_cluster_interface"] = consSplit[3]
 
 								re = regexp.MustCompile("uni/tn-(.*)/svcCont/svcRedirectPol-(.*)")
-								if siteMap["provider_connector_redirect_policy"] != nil {
+								if siteMap["provider_connector_redirect_policy"] != nil && siteMap["provider_connector_redirect_policy"] != "" {
 									split := re.FindStringSubmatch(siteMap["provider_connector_redirect_policy"].(string))
-									allMap["provider_connector_redirect_policy_tenant"] = split[1]
-									allMap["provider_connector_redirect_policy"] = split[2]
+									if len(split) == 3 {
+										allMap["provider_connector_redirect_policy_tenant"] = split[1]
+										allMap["provider_connector_redirect_policy"] = split[2]
+									}
 								}
-								if siteMap["consumer_connector_redirect_policy"] != nil {
+								if siteMap["consumer_connector_redirect_policy"] != nil && siteMap["consumer_connector_redirect_policy"] != "" {
 									split := re.FindStringSubmatch(siteMap["consumer_connector_redirect_policy"].(string))
-									allMap["consumer_connector_redirect_policy_tenant"] = split[1]
-									allMap["consumer_connector_redirect_policy"] = split[2]
+									if len(split) == 3 {
+										allMap["consumer_connector_redirect_policy_tenant"] = split[1]
+										allMap["consumer_connector_redirect_policy"] = split[2]
+									}
 								}
 								if siteMap["consumer_subnet_ips"] != nil {
 									allMap["consumer_subnet_ips"] = siteMap["consumer_subnet_ips"]
