@@ -3,7 +3,7 @@ module github.com/CiscoDevNet/terraform-provider-mso
 go 1.22
 
 require (
-	github.com/ciscoecosystem/mso-go-client v1.33.3
+	github.com/ciscoecosystem/mso-go-client v1.33.4
 	github.com/hashicorp/terraform-plugin-sdk v1.17.1
 )
 
