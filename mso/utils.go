@@ -409,3 +409,23 @@ func isTaskStatusPending(c *container.Container) bool {
 	}
 	return false
 }
+
+func GetTemplateIdByNameAndType(msoClient *client.Client, templateName, templateType string) (string, error) {
+	cont, err := msoClient.GetViaURL("api/v1/templates/summaries")
+	if err != nil {
+		return "", err
+	}
+
+	templates, err := cont.Children()
+	if err != nil {
+		return "", err
+	}
+
+	for _, template := range templates {
+		if templateName == models.StripQuotes(template.S("templateName").String()) && ndoTemplateTypes[templateType].templateType == models.StripQuotes(template.S("templateType").String()) {
+			return models.StripQuotes(template.S("templateId").String()), nil
+		}
+	}
+
+	return "", fmt.Errorf("Template with name '%s' not found for template Type '%s'.", templateName, templateType)
+}
