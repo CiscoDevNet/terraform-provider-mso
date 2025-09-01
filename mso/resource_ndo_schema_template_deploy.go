@@ -33,13 +33,36 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 1000),
+			},
+
+			"template_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "application",
+				ValidateFunc: validation.StringInSlice([]string{
+					"application",
+					"tenant",
+					"l3out",
+					"fabric_policy",
+					"fabric_resource",
+					"monitoring_tenant",
+					"monitoring_access",
+					"service_device",
+				}, false),
+			},
+
+			"template_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
@@ -60,22 +83,55 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 
 func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Template Deploy Execution", d.Id())
-	templateName := d.Get("template_name").(string)
-	schemaId := d.Get("schema_id").(string)
+	template_id, templateIdProvided := d.GetOk("template_id")
+	templateName, templateNameProvided := d.GetOk("template_name")
+	templateType := d.Get("template_type").(string)
 	path := "api/v1/task"
 
 	msoClient := m.(*client.Client)
+	var payload *container.Container
+	var payloadErr error
 
-	schemaValidate := models.SchemValidate{SchmaId: d.Get("schema_id").(string)}
-	_, err := msoClient.ReadSchemaValidate(&schemaValidate)
-	if err != nil {
-		return err
+	if templateType == "application" && !templateIdProvided {
+		schemaId, schemaIdProvided := d.GetOk("schema_id")
+
+		if !schemaIdProvided || !templateNameProvided {
+			return fmt.Errorf("When 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type %s", templateType)
+		}
+		schemaValidate := models.SchemValidate{SchmaId: d.Get("schema_id").(string)}
+		_, err := msoClient.ReadSchemaValidate(&schemaValidate)
+		if err != nil {
+			return err
+		}
+		payload, payloadErr = container.ParseJSON([]byte(fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "isRedeploy": %v}`, schemaId.(string), templateName.(string), d.Get("re_deploy").(bool))))
+		if payloadErr != nil {
+			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", payloadErr)
+			return payloadErr
+		}
+	} else {
+		var resolvedTemplateId string
+		if templateIdProvided {
+			resolvedTemplateId = template_id.(string)
+		} else {
+			if !templateNameProvided {
+				return fmt.Errorf("When 'template_id' is not provided, 'template_name' must be set for template_type %s", templateType)
+			}
+			template_id, err := GetTemplateIdByNameAndType(msoClient, templateName.(string), templateType)
+			if err != nil {
+				return err
+			}
+			resolvedTemplateId = template_id
+			if err := d.Set("template_id", template_id); err != nil {
+				return fmt.Errorf("error setting resolved template_id in state: %w", err)
+			}
+		}
+		payload, payloadErr = container.ParseJSON([]byte(fmt.Sprintf(`{"templateId": "%s", "isRedeploy": %v}`, resolvedTemplateId, d.Get("re_deploy").(bool))))
+		if payloadErr != nil {
+			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", payloadErr)
+			return payloadErr
+		}
 	}
-	payload, err := container.ParseJSON([]byte(fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "isRedeploy": %v}`, schemaId, templateName, d.Get("re_deploy").(bool))))
-	if err != nil {
-		log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
-		return err
-	}
+
 	req, err := msoClient.MakeRestRequest("POST", path, payload, true)
 	if err != nil {
 		log.Printf("[DEBUG] MakeRestRequest failed with err: %s.", err)
@@ -91,6 +147,12 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 	if !ok || taskId == "" {
 		log.Printf("[DEBUG] Task ID not found or is invalid. Data was: %v", cont.S("id").Data())
 		return fmt.Errorf("task ID not found or is invalid")
+	}
+
+	schemaId, ok := cont.S("reqDetails", "schemaId").Data().(string)
+	if !ok || schemaId == "" {
+		log.Printf("[DEBUG] Schema ID not found or is invalid. Data was: %v", cont.S("reqDetails", "schemaId").Data())
+		return fmt.Errorf("schema ID not found or is invalid")
 	}
 
 	req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("%s/%s", path, taskId), nil, true)
