@@ -83,14 +83,13 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 
 func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Template Deploy Execution", d.Id())
-	template_id, templateIdProvided := d.GetOk("template_id")
+	templateId, templateIdProvided := d.GetOk("template_id")
 	templateName, templateNameProvided := d.GetOk("template_name")
 	templateType := d.Get("template_type").(string)
 	path := "api/v1/task"
 
 	msoClient := m.(*client.Client)
-	var payload *container.Container
-	var payloadErr error
+	var payloadStr string
 
 	if templateType == "application" && !templateIdProvided {
 		schemaId, schemaIdProvided := d.GetOk("schema_id")
@@ -103,33 +102,31 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 		if err != nil {
 			return err
 		}
-		payload, payloadErr = container.ParseJSON([]byte(fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "isRedeploy": %v}`, schemaId.(string), templateName.(string), d.Get("re_deploy").(bool))))
-		if payloadErr != nil {
-			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", payloadErr)
-			return payloadErr
-		}
+		payloadStr = fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "isRedeploy": %v}`, schemaId.(string), templateName.(string), d.Get("re_deploy").(bool))
 	} else {
 		var resolvedTemplateId string
 		if templateIdProvided {
-			resolvedTemplateId = template_id.(string)
+			resolvedTemplateId = templateId.(string)
 		} else {
 			if !templateNameProvided {
 				return fmt.Errorf("When 'template_id' is not provided, 'template_name' must be set for template_type %s", templateType)
 			}
-			template_id, err := GetTemplateIdByNameAndType(msoClient, templateName.(string), templateType)
+			templateId, err := GetTemplateIdByNameAndType(msoClient, templateName.(string), templateType)
 			if err != nil {
 				return err
 			}
-			resolvedTemplateId = template_id
-			if err := d.Set("template_id", template_id); err != nil {
+			resolvedTemplateId = templateId
+			if err := d.Set("template_id", resolvedTemplateId); err != nil {
 				return fmt.Errorf("error setting resolved template_id in state: %w", err)
 			}
 		}
-		payload, payloadErr = container.ParseJSON([]byte(fmt.Sprintf(`{"templateId": "%s", "isRedeploy": %v}`, resolvedTemplateId, d.Get("re_deploy").(bool))))
-		if payloadErr != nil {
-			log.Printf("[DEBUG] Parse of JSON failed with err: %s.", payloadErr)
-			return payloadErr
-		}
+		payloadStr = fmt.Sprintf(`{"templateId": "%s", "isRedeploy": %v}`, resolvedTemplateId, d.Get("re_deploy").(bool))
+	}
+
+	payload, err := container.ParseJSON([]byte(payloadStr))
+	if err != nil {
+		log.Printf("[DEBUG] Parse of JSON failed with err: %s.", err)
+		return err
 	}
 
 	req, err := msoClient.MakeRestRequest("POST", path, payload, true)
