@@ -26,16 +26,19 @@ func resourceMSORest() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-
 			"method": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-
 			"payload": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"retrigger": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 		}),
 	}
@@ -66,6 +69,7 @@ func resourceMSORestCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceMSORestRead(d *schema.ResourceData, m interface{}) error {
+	d.Set("retrigger", false)
 	return nil
 }
 
