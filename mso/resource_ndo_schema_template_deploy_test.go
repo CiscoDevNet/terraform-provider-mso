@@ -47,20 +47,41 @@ func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 	})
 }
 
-func TestAccNdoSchemaTemplateDeploy_ValidationError(t *testing.T) {
+func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingSchemaId(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Schema id validation") },
 				Config:      testAccNdoSchemaTemplateDeploy_ErrorAppMissingSchemaId(),
 				ExpectError: regexp.MustCompile("When 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
 			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingTemplateName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Template name validation") },
 				Config:      testAccNdoSchemaTemplateDeploy_ErrorAppMissingTemplateName(),
 				ExpectError: regexp.MustCompile("When 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
 			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ValidationError_NonAppMissingName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Template name validation with template_type tenant") },
 				Config:      testAccNdoSchemaTemplateDeploy_ErrorNonAppMissingName(),
 				ExpectError: regexp.MustCompile("When 'template_id' is not provided, 'template_name' must be set for template_type tenant"),
 			},
@@ -68,18 +89,29 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError(t *testing.T) {
 	})
 }
 
-func TestAccNdoSchemaTemplateDeploy_SuccessOnly(t *testing.T) {
+func TestAccNdoSchemaTemplateDeploy_Success_WithTemplateId(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithTemplateId(),
-				Check:  resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
+				PreConfig: func() { fmt.Println("Test: Deploy with template id") },
+				Config:    testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithTemplateId(),
+				Check:     resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
 			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_Success_WithoutTemplateId(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
 			{
-				Config: testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithoutTemplateId(),
-				Check:  resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
+				PreConfig: func() { fmt.Println("Test: Deploy without template id") },
+				Config:    testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithoutTemplateId(),
+				Check:     resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
 			},
 		},
 	})
