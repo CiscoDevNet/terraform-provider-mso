@@ -95,7 +95,7 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 		schemaId, schemaIdProvided := d.GetOk("schema_id")
 
 		if !schemaIdProvided || !templateNameProvided {
-			return fmt.Errorf("When 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type %s", templateType)
+			return fmt.Errorf("when 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type %s", templateType)
 		}
 		schemaValidate := models.SchemValidate{SchmaId: d.Get("schema_id").(string)}
 		_, err := msoClient.ReadSchemaValidate(&schemaValidate)
@@ -109,7 +109,7 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 			resolvedTemplateId = templateId.(string)
 		} else {
 			if !templateNameProvided {
-				return fmt.Errorf("When 'template_id' is not provided, 'template_name' must be set for template_type %s", templateType)
+				return fmt.Errorf("when 'template_id' is not provided, 'template_name' must be set for template_type %s", templateType)
 			}
 			templateId, err := GetTemplateIdByNameAndType(msoClient, templateName.(string), templateType)
 			if err != nil {
