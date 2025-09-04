@@ -55,7 +55,7 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingSchemaId(t *testing.T
 			{
 				PreConfig:   func() { fmt.Println("Test: Schema id validation") },
 				Config:      testAccNdoSchemaTemplateDeploy_ErrorAppMissingSchemaId(),
-				ExpectError: regexp.MustCompile("When 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
+				ExpectError: regexp.MustCompile("when 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
 			},
 		},
 	})
@@ -69,7 +69,7 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingTemplateName(t *testi
 			{
 				PreConfig:   func() { fmt.Println("Test: Template name validation") },
 				Config:      testAccNdoSchemaTemplateDeploy_ErrorAppMissingTemplateName(),
-				ExpectError: regexp.MustCompile("When 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
+				ExpectError: regexp.MustCompile("when 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
 			},
 		},
 	})
@@ -83,7 +83,7 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_NonAppMissingName(t *testing
 			{
 				PreConfig:   func() { fmt.Println("Test: Template name validation with template_type tenant") },
 				Config:      testAccNdoSchemaTemplateDeploy_ErrorNonAppMissingName(),
-				ExpectError: regexp.MustCompile("When 'template_id' is not provided, 'template_name' must be set for template_type tenant"),
+				ExpectError: regexp.MustCompile("when 'template_id' is not provided, 'template_name' must be set for template_type tenant"),
 			},
 		},
 	})

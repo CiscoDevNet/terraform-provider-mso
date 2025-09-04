@@ -83,7 +83,7 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 
 func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Template Deploy Execution", d.Id())
-	templateId, templateIdProvided := d.GetOk("template_id")
+	_, templateIdProvided := d.GetOk("template_id")
 	templateName, templateNameProvided := d.GetOk("template_name")
 	templateType := d.Get("template_type").(string)
 	path := "api/v1/task"
@@ -104,10 +104,7 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 		}
 		payloadStr = fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "isRedeploy": %v}`, schemaId.(string), templateName.(string), d.Get("re_deploy").(bool))
 	} else {
-		var resolvedTemplateId string
-		if templateIdProvided {
-			resolvedTemplateId = templateId.(string)
-		} else {
+		if !templateIdProvided {
 			if !templateNameProvided {
 				return fmt.Errorf("when 'template_id' is not provided, 'template_name' must be set for template_type %s", templateType)
 			}
@@ -115,12 +112,11 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 			if err != nil {
 				return err
 			}
-			resolvedTemplateId = templateId
-			if err := d.Set("template_id", resolvedTemplateId); err != nil {
+			if err := d.Set("template_id", templateId); err != nil {
 				return fmt.Errorf("error setting resolved template_id in state: %w", err)
 			}
 		}
-		payloadStr = fmt.Sprintf(`{"templateId": "%s", "isRedeploy": %v}`, resolvedTemplateId, d.Get("re_deploy").(bool))
+		payloadStr = fmt.Sprintf(`{"templateId": "%s", "isRedeploy": %v}`, d.Get("template_id").(string), d.Get("re_deploy").(bool))
 	}
 
 	payload, err := container.ParseJSON([]byte(payloadStr))

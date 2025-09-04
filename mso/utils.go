@@ -410,15 +410,15 @@ func isTaskStatusPending(c *container.Container) bool {
 	return false
 }
 
-func GetTemplateIdByNameAndType(msoClient *client.Client, templateName, templateType string) (string, error) {
+func GetTemplateIdByNameAndType(msoClient *client.Client, templateName, templateType string) (interface{}, error) {
 	cont, err := msoClient.GetViaURL("api/v1/templates/summaries")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	templates, err := cont.Children()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	for _, template := range templates {
@@ -427,5 +427,5 @@ func GetTemplateIdByNameAndType(msoClient *client.Client, templateName, template
 		}
 	}
 
-	return "", fmt.Errorf("Template with name '%s' not found for template Type '%s'.", templateName, templateType)
+	return nil, fmt.Errorf("Template with name '%s' not found for template Type '%s'.", templateName, templateType)
 }
