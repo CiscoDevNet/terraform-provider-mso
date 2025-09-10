@@ -47,6 +47,76 @@ func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 	})
 }
 
+func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingSchemaId(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Schema id validation") },
+				Config:      testAccNdoSchemaTemplateDeploy_ErrorAppMissingSchemaId(),
+				ExpectError: regexp.MustCompile("when 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingTemplateName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Template name validation") },
+				Config:      testAccNdoSchemaTemplateDeploy_ErrorAppMissingTemplateName(),
+				ExpectError: regexp.MustCompile("when 'template_id' is not provided, both 'schema_id' and 'template_name' must be set for template_type"),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ValidationError_NonAppMissingName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Template name validation with template_type tenant") },
+				Config:      testAccNdoSchemaTemplateDeploy_ErrorNonAppMissingName(),
+				ExpectError: regexp.MustCompile("when 'template_id' is not provided, 'template_name' must be set for template_type tenant"),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_Success_WithTemplateId(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Deploy with template id") },
+				Config:    testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithTemplateId(),
+				Check:     resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_Success_WithoutTemplateId(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Deploy without template id") },
+				Config:    testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithoutTemplateId(),
+				Check:     resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
+			},
+		},
+	})
+}
+
 func testAccSingleTenantConfig() string {
 	return fmt.Sprintf(`
 	%s
@@ -184,4 +254,81 @@ func testAccMsoSchemaTemplateVrfAndBdDeployWithRetry() string {
 		template_name = tolist(mso_schema.schema_blocks.template)[0].name
 	}
 	`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
+}
+
+func testAccNdoSchemaTemplateDeploy_ErrorAppMissingSchemaId() string {
+	return `
+    resource "mso_schema_template_deploy_ndo" "deploy_error" {
+        template_name = "test_name"
+        
+    }
+    `
+}
+
+func testAccNdoSchemaTemplateDeploy_ErrorAppMissingTemplateName() string {
+	return `
+    resource "mso_schema_template_deploy_ndo" "deploy_error" {
+        schema_id = "schema_id"
+    }
+    `
+}
+
+func testAccNdoSchemaTemplateDeploy_ErrorNonAppMissingName() string {
+	return `
+    resource "mso_schema_template_deploy_ndo" "deploy_error" {
+        template_type = "tenant"
+    }
+    `
+}
+
+func testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithTemplateId() string {
+	return fmt.Sprintf(`%s
+	resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
+	    template_id        = mso_template.template_tenant.id
+	    name               = "test_ipsla_policy"
+	    description        = "HTTP Type"
+	    sla_type           = "http"
+	    destination_port   = 80
+	    http_version       = "HTTP11"
+	    http_uri           = "/example"
+	    sla_frequency      = 120
+	    detect_multiplier  = 4
+	    request_data_size  = 64
+	    type_of_service    = 18
+	    operation_timeout  = 100
+	    threshold          = 100
+	    ipv6_traffic_class = 255
+	}
+
+	resource "mso_schema_template_deploy_ndo" "deploy" {
+		force_apply = ""
+		template_id = mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy.template_id
+	}`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithoutTemplateId() string {
+	return fmt.Sprintf(`%s
+	resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
+	    template_id        = mso_template.template_tenant.id
+	    name               = "test_ipsla_policy2"
+	    description        = "HTTP Type"
+	    sla_type           = "http"
+	    destination_port   = 80
+	    http_version       = "HTTP11"
+	    http_uri           = "/example"
+	    sla_frequency      = 120
+	    detect_multiplier  = 4
+	    request_data_size  = 64
+	    type_of_service    = 18
+	    operation_timeout  = 100
+	    threshold          = 100
+	    ipv6_traffic_class = 255
+	}
+
+	resource "mso_schema_template_deploy_ndo" "deploy" {
+		depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy]
+		force_apply = ""
+		template_name = mso_template.template_tenant.template_name
+		template_type = "tenant"
+	}`, testAccMSOTemplateResourceTenantConfig())
 }
