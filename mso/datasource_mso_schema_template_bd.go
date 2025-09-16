@@ -153,6 +153,10 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"uuid": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -220,6 +224,7 @@ func setSchemaTemplateBDAttrs(schemaId, templateName, bdName string, cont *conta
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("description", models.StripQuotes(bdCont.S("description").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("uuid", models.StripQuotes(bdCont.S("uuid").String()))
 					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
 						d.Set("unknown_multicast_flooding", "optimized_flooding")
 					} else {
