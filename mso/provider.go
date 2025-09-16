@@ -129,6 +129,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_dhcp_relay_policy":           resourceMSOTenantPoliciesDHCPRelayPolicy(),
 			"mso_fabric_policies_vlan_pool":                   resourceMSOVlanPool(),
 			"mso_fabric_policies_physical_domain":             resourceMSOPhysicalDomain(),
+			"mso_service_device_cluster":                      resourceMSOServiceDeviceCluster(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -191,6 +192,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_dhcp_relay_policy":           datasourceMSOTenantPoliciesDHCPRelayPolicy(),
 			"mso_fabric_policies_vlan_pool":                   datasourceMSOVlanPool(),
 			"mso_fabric_policies_physical_domain":             datasourceMSOPhysicalDomain(),
+			"mso_service_device_cluster":                      datasourceMSOServiceDeviceCluster(),
 		},
 
 		ConfigureFunc: configureClient,
