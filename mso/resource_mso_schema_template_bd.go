@@ -209,6 +209,10 @@ func resourceMSOTemplateBD() *schema.Resource {
 					"garp",
 				}, false),
 			},
+			"uuid": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		}),
 	}
 }
@@ -261,6 +265,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("description", models.StripQuotes(bdCont.S("description").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("uuid", models.StripQuotes(bdCont.S("uuid").String()))
 					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
 						d.Set("unknown_multicast_flooding", "optimized_flooding")
 					} else {
@@ -599,6 +604,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					d.Set("display_name", models.StripQuotes(bdCont.S("displayName").String()))
 					d.Set("description", models.StripQuotes(bdCont.S("description").String()))
 					d.Set("layer2_unknown_unicast", models.StripQuotes(bdCont.S("l2UnknownUnicast").String()))
+					d.Set("uuid", models.StripQuotes(bdCont.S("uuid").String()))
 					if models.StripQuotes(bdCont.S("unkMcastAct").String()) == "opt-flood" {
 						d.Set("unknown_multicast_flooding", "optimized_flooding")
 					} else {

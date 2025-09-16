@@ -30,7 +30,7 @@ func datasourceMSOMcastRouteMapPolicy() *schema.Resource {
 				Computed: true,
 			},
 			"route_map_multicast_entries": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

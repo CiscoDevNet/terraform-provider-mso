@@ -177,6 +177,49 @@ func customTestCheckResourceTypeSetAttr(resourceName, resourceAttrRootkey string
 	}
 }
 
+func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck map[string]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource not found: %s", resourceName)
+		}
+		groupedAttrs := make(map[string]map[string]string)
+		re := regexp.MustCompile(fmt.Sprintf(`^%s\.(\d+)\.(.*)$`, setName))
+
+		for key, val := range rs.Primary.Attributes {
+			matches := re.FindStringSubmatch(key)
+			if len(matches) == 3 {
+				hash := matches[1]
+				attrName := matches[2]
+				if _, ok := groupedAttrs[hash]; !ok {
+					groupedAttrs[hash] = make(map[string]string)
+				}
+				groupedAttrs[hash][attrName] = val
+			}
+		}
+
+		for _, elemAttrs := range groupedAttrs {
+			match := true
+			for expectedKey, expectedVal := range attrsToCheck {
+				if val, ok := elemAttrs[expectedKey]; ok {
+					if fmt.Sprintf("%v", val) != expectedVal {
+						match = false
+						break
+					}
+				} else {
+					match = false
+					break
+				}
+			}
+
+			if match {
+				return nil
+			}
+		}
+		return fmt.Errorf("No element in set '%s' found with the following attributes: %v", setName, attrsToCheck)
+	}
+}
+
 func setupTestLogCapture(t *testing.T, logLevel string) string {
 	logFile, err := os.CreateTemp("", "tf-acc-test-*.log")
 	if err != nil {
