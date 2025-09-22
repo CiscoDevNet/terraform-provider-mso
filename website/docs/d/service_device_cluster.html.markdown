@@ -31,16 +31,17 @@ data "mso_service_device_cluster" "cluster" {
 
 ## Attribute Reference ##
 
-* `uuid` - (Read-Only) The UUID of the Service Device Cluster.
+* `uuid` - (Read-Only) The NDO UUID of the Service Device Cluster.
+* `id` - (Read-Only) The unique terraform identifier of the Service Device Cluster in the template.
 * `description` - (Read-Only) The description of the Service Device Cluster.
 * `device_mode` - (Read-Only) The operational mode of the device (e.g., layer3).
 * `device_type` - (Read-Only) The type of device (e.g., firewall).
 * `interface_properties` - (Read-Only) A set of interface properties associated with the cluster. Each element has the following attributes:
 * `name` - (Read-Only) The name of the interface.
-* `bd_uuid` - (Read-Only) The UUID of the associated Bridge Domain (BD).
-* `external_epg_uuid` - (Read-Only) The UUID of the associated External EPG.
-* `ipsla_monitoring_policy_uuid` - (Read-Only) The UUID of the applied IP SLA monitoring policy.
-* `qos_policy_uuid` - (Read-Only) The UUID of the applied Quality of Service (QoS) policy.
+* `bd_uuid` - (Read-Only) The NDO UUID of the associated Bridge Domain (BD).
+* `external_epg_uuid` - (Read-Only) The NDO UUID of the associated External EPG.
+* `ipsla_monitoring_policy_uuid` - (Read-Only) The NDO UUID of the applied IP SLA monitoring policy.
+* `qos_policy_uuid` - (Read-Only) The NDO UUID of the applied Quality of Service (QoS) policy.
 * `preferred_group` - (Read-Only) Whether the interface belongs to a preferred group.
 * `rewrite_source_mac` - (Read-Only) Whether source MAC address rewriting is enabled.
 * `anycast` - (Read-Only) Whether anycast is enabled for this interface.
