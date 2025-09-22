@@ -95,10 +95,10 @@ resource "mso_service_device_cluster" "cluster" {
 * `device_type` - (Required) Defines the type of device being configured. Allowed values are firewall, load_balancer, other.
 * `interface_properties` - (Required) A set of interface properties blocks. The order of these blocks does not matter.
 * `name` - (Required) The name of the interface. This must be unique within the cluster.
-* `bd_uuid` - (Optional) The UUID of the Bridge Domain (BD) to associate with this interface. Conflicts with external_epg_uuid.
-* `external_epg_uuid` - (Optional) The UUID of the External EPG to associate with this interface. Conflicts with bd_uuid.
-* `ipsla_monitoring_policy_uuid` - (Optional) The UUID of an IP SLA monitoring policy to apply to this interface.
-* `qos_policy_uuid` - (Optional) The UUID of a Quality of Service (QoS) policy to apply to this interface.
+* `bd_uuid` - (Optional) The NDO UUID of the Bridge Domain (BD) to associate with this interface. Conflicts with external_epg_uuid.
+* `external_epg_uuid` - (Optional) The NDO UUID of the External EPG to associate with this interface. Conflicts with bd_uuid.
+* `ipsla_monitoring_policy_uuid` - (Optional) The NDO UUID of an IP SLA monitoring policy to apply to this interface.
+* `qos_policy_uuid` - (Optional) The NDO UUID of a Quality of Service (QoS) policy to apply to this interface.
 * `preferred_group` - (Optional) Whether the interface belongs to a preferred group. Defaults to false.
 * `rewrite_source_mac` - (Optional) Whether to rewrite the source MAC address. Defaults to false.
 * `anycast` - (Optional) Indicates if anycast is enabled for this interface. Defaults to false.
@@ -114,8 +114,8 @@ resource "mso_service_device_cluster" "cluster" {
 
 ## Attribute Reference ##
 
-* `uuid` - The UUID of the Service Device Cluster.
-* `id` - The unique identifier of the Service Device Cluster in the template.
+* `uuid` - The NDO UUID of the Service Device Cluster.
+* `id` - The terraform identifier of the Service Device Cluster in the template.
 
 ## Importing ##
 
