@@ -157,6 +157,27 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 				},
 			},
 		},
+		CustomizeDiff: func(d *schema.ResourceDiff, m interface{}) error {
+			interfaceValue, ok := d.GetOk("interface_properties")
+			if !ok {
+				return nil
+			}
+			set := interfaceValue.(*schema.Set)
+			for _, raw := range set.List() {
+				listItem := raw.(map[string]interface{})
+				count := 0
+				if bdUUID, _ := listItem["bd_uuid"].(string); bdUUID != "" {
+					count++
+				}
+				if extEpgUUID, _ := listItem["external_epg_uuid"].(string); extEpgUUID != "" {
+					count++
+				}
+				if count != 1 {
+					return fmt.Errorf("interface_properties: exactly one of bd_uuid or external_epg_uuid must be set")
+				}
+			}
+			return nil
+		},
 	}
 }
 
