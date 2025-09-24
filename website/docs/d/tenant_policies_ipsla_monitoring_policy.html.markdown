@@ -3,7 +3,7 @@ layout: "mso"
 page_title: "MSO: mso_tenant_policies_ipsla_monitoring_policy"
 sidebar_current: "docs-mso-data-source-tenant_policies_ipsla_monitoring_policy"
 description: |-
-Data source for IPSLA Monitoring Policy.
+  Data source for IPSLA Monitoring Policy.
 ---
 
 
@@ -33,7 +33,7 @@ data "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
 ## Attribute Reference ##
 
 * `uuid` - (Read-Only) The UUID of the IPSLA monitoring policy.
-* `id` - The unique identifier of the IPSLA monitoring policy in the template.
+* `id` - (Read-Only) The unique identifier of the IPSLA monitoring policy in the template.
 * `description` - (Read-Only) The description of the IPSLA monitoring policy.
 * `sla_type` - (Read-Only) The type of Service Level Agreement (SLA).
 * `destination_port` - (Read-Only) The destination port for the IPSLA.

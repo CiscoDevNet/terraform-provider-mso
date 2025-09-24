@@ -3,7 +3,7 @@ layout: "mso"
 page_title: "MSO: mso_service_device_cluster"
 sidebar_current: "docs-mso-data-source-service_device_cluster"
 description: |-
-Data source for Service Device Cluster.
+  Data source for Service Device Cluster.
 ---
 
 # mso_service_device_cluster #

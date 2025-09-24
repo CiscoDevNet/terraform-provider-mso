@@ -3,7 +3,7 @@ layout: "mso"
 page_title: "MSO: mso_service_device_cluster"
 sidebar_current: "docs-mso-resource-service_device_cluster"
 description: |-
-Manages Service Device Clusters on Cisco Nexus Dashboard Orchestrator (NDO)
+  Manages Service Device Clusters on Cisco Nexus Dashboard Orchestrator (NDO)
 ---
 
 # mso_service_device_cluster #
@@ -115,7 +115,7 @@ resource "mso_service_device_cluster" "cluster" {
 ## Attribute Reference ##
 
 * `uuid` - The NDO UUID of the Service Device Cluster.
-* `id` - The terraform identifier of the Service Device Cluster in the template.
+* `id` - The unique terraform identifier of the Service Device Cluster in the template.
 
 ## Importing ##
 
