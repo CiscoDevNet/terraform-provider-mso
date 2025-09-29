@@ -277,23 +277,12 @@ func buildServiceDeviceClusterPayload(d *schema.ResourceData) map[string]interfa
 	payload["deviceMode"] = d.Get("device_mode").(string)
 	payload["deviceLocation"] = "onPremise"
 
-	if d.Get("device_type").(string) == "load_balancer" {
-		payload["deviceType"] = "loadBalancer"
-	} else {
-		payload["deviceType"] = d.Get("device_type").(string)
-	}
+	payload["deviceType"] = normalizeDeviceType(d.Get("device_type").(string))
 
 	interfaces := buildServiceDeviceClusterInterfacesPayload(d)
 	payload["interfaces"] = interfaces
 
-	numInterfaces := len(interfaces)
-	if numInterfaces == 1 {
-		payload["connectivityMode"] = "oneArm"
-	} else if numInterfaces == 2 {
-		payload["connectivityMode"] = "twoArm"
-	} else {
-		payload["connectivityMode"] = "advanced"
-	}
+	payload["connectivityMode"] = getConnectivityMode(len(interfaces))
 
 	return payload
 }
@@ -403,6 +392,24 @@ func setServiceDeviceClusterData(d *schema.ResourceData, response *container.Con
 	return nil
 }
 
+func normalizeDeviceType(rawDeviceType string) string {
+	if rawDeviceType == "load_balancer" {
+		return "loadBalancer"
+	}
+	return rawDeviceType
+}
+
+func getConnectivityMode(numInterfaces int) string {
+	switch numInterfaces {
+	case 1:
+		return "oneArm"
+	case 2:
+		return "twoArm"
+	default:
+		return "advanced"
+	}
+}
+
 func resourceMSOServiceDeviceClusterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Service Device Cluster Resource - Beginning Import: %v", d.Id())
 	resourceMSOServiceDeviceClusterRead(d, m)
@@ -497,29 +504,15 @@ func resourceMSOServiceDeviceClusterUpdate(d *schema.ResourceData, m interface{}
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/deviceMode", updatePath), d.Get("device_mode").(string))
 	}
 	if d.HasChange("device_type") {
-		var deviceType string
-		if d.Get("device_type").(string) == "load_balancer" {
-			deviceType = "loadBalancer"
-		} else {
-			deviceType = d.Get("device_type").(string)
-		}
+		deviceType := normalizeDeviceType(d.Get("device_type").(string))
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/deviceType", updatePath), deviceType)
 	}
 
 	if d.HasChange("interface_properties") {
-		log.Printf(" HERE Detected change in interface_properties. Replacing the entire block.")
 		interfaces := buildServiceDeviceClusterInterfacesPayload(d)
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/interfaces", updatePath), interfaces)
 
-		var connectivityMode string
-		numInterfaces := len(interfaces)
-		if numInterfaces == 1 {
-			connectivityMode = "oneArm"
-		} else if numInterfaces == 2 {
-			connectivityMode = "twoArm"
-		} else {
-			connectivityMode = "advanced"
-		}
+		connectivityMode := getConnectivityMode(len(interfaces))
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/connectivityMode", updatePath), connectivityMode)
 	}
 
