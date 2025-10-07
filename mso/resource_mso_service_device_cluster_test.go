@@ -45,8 +45,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 						"load_balance_hashing": "destinationIP",
 					}),
 					CustomTestCheckTypeSetElemAttrs("mso_service_device_cluster.cluster", "interface_properties", map[string]string{
-						"name":    "interface3",
-						"anycast": "true",
+						"name": "interface3",
 					}),
 				),
 			},
@@ -63,8 +62,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 						"threshold_down_action": "permit",
 					}),
 					CustomTestCheckTypeSetElemAttrs("mso_service_device_cluster.cluster", "interface_properties", map[string]string{
-						"name":    "interface3",
-						"anycast": "true",
+						"name": "interface3",
 					}),
 				),
 			},
@@ -187,7 +185,6 @@ func testAccMSOServiceDeviceClusterConfigUpdateThreeInterfaces() string {
         interface_properties {
             name                         = "interface3"
             bd_uuid                      = mso_schema_template_bd.bd2.uuid
-            anycast                      = true
         }
     }`, testAccMSOServiceDeviceClusterDependencies())
 }
@@ -211,7 +208,6 @@ func testAccMSOServiceDeviceClusterConfigUpdateTwoInterfaces() string {
         interface_properties {
             name                         = "interface3"
             bd_uuid                      = mso_schema_template_bd.bd2.uuid
-            anycast                      = true
         }
     }`, testAccMSOServiceDeviceClusterDependencies())
 }
