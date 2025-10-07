@@ -148,7 +148,7 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 						"threshold_down_action": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							Default:  "deny",
 							ValidateFunc: validation.StringInSlice([]string{
 								"permit", "deny", "bypass",
 							}, false),
@@ -192,59 +192,62 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 
 		advancedConfig := make(map[string]interface{})
 
-		if v, ok := iface["rewrite_source_mac"]; ok {
-			advancedConfig["rewriteSourceMac"] = v.(bool)
-		}
-		if v, ok := iface["anycast"]; ok {
-			advancedConfig["anycast"] = v.(bool)
-		}
-		if v, ok := iface["config_static_mac"]; ok {
-			advancedConfig["configStaticMac"] = v.(bool)
-		}
-		if v, ok := iface["is_backup_redirect_ip"]; ok {
-			advancedConfig["isBackupRedirectIP"] = v.(bool)
-		}
-		if v, ok := iface["pod_aware_redirection"]; ok {
-			advancedConfig["podAwareRedirection"] = v.(bool)
-		}
 		if v, ok := iface["preferred_group"]; ok {
 			advancedConfig["preferredGroup"] = v.(bool)
 		}
-		if v, ok := iface["resilient_hashing"]; ok {
-			advancedConfig["resilientHashing"] = v.(bool)
-		}
-		if v, ok := iface["tag_based_sorting"]; ok {
-			advancedConfig["tag"] = v.(bool)
-		}
-
-		if v, ok := iface["load_balance_hashing"].(string); ok && v != "" {
-			advancedConfig["loadBalanceHashing"] = v
-		}
-
-		if v, ok := iface["qos_policy_uuid"].(string); ok && v != "" {
+		if v, ok := iface["qos_policy_uuid"].(string); ok {
 			advancedConfig["qosPolicyRef"] = v
 		}
 
-		thresholdConfig := make(map[string]interface{})
-		if v := iface["max_threshold"].(int); v > 0 {
-			thresholdConfig["maxThreshold"] = v
-		}
-		if v := iface["min_threshold"].(int); v > 0 {
-			thresholdConfig["minThreshold"] = v
-		}
-		if v, ok := iface["threshold_down_action"].(string); ok && v != "" {
-			thresholdConfig["thresholdDownAction"] = v
-			advancedConfig["thresholdForRedirectDestination"] = true
-		}
-
-		if len(thresholdConfig) > 0 {
-			advancedConfig["thresholdForRedirect"] = thresholdConfig
-		}
-
 		interfacePayload := map[string]interface{}{
-			"name":                 iface["name"].(string),
-			"isAdvancedIntfConfig": true,
-			"redirect":             true,
+			"name": iface["name"].(string),
+		}
+
+		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok {
+			interfacePayload["ipslaMonitoringRef"] = v
+		}
+		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok && v != "" {
+			interfacePayload["redirect"] = true
+			advancedConfig["advancedTrackingOptions"] = true
+			if v, ok := iface["config_static_mac"]; ok {
+				advancedConfig["configStaticMac"] = v.(bool)
+			}
+			if v, ok := iface["is_backup_redirect_ip"]; ok {
+				advancedConfig["isBackupRedirectIP"] = v.(bool)
+			}
+			if v, ok := iface["resilient_hashing"]; ok {
+				advancedConfig["resilientHashing"] = v.(bool)
+			}
+			if v, ok := iface["tag_based_sorting"]; ok {
+				advancedConfig["tag"] = v.(bool)
+			}
+			if v, ok := iface["rewrite_source_mac"]; ok {
+				advancedConfig["rewriteSourceMac"] = v.(bool)
+			}
+			if v, ok := iface["anycast"]; ok {
+				advancedConfig["anycast"] = v.(bool)
+			}
+			if v, ok := iface["pod_aware_redirection"]; ok {
+				advancedConfig["podAwareRedirection"] = v.(bool)
+			}
+			if v, ok := iface["load_balance_hashing"].(string); ok {
+				advancedConfig["loadBalanceHashing"] = v
+			}
+			thresholdConfig := make(map[string]interface{})
+
+			if v, ok := iface["min_threshold"].(int); ok && v >= 0 {
+				thresholdConfig["minThreshold"] = v
+			}
+			if v, ok := iface["max_threshold"].(int); ok && v > 0 {
+				thresholdConfig["maxThreshold"] = v
+			}
+			if v, ok := iface["threshold_down_action"].(string); ok {
+				thresholdConfig["thresholdDownAction"] = v
+			}
+			if len(thresholdConfig) > 2 {
+				advancedConfig["thresholdForRedirectDestination"] = true
+				advancedConfig["thresholdForRedirect"] = thresholdConfig
+			}
 		}
 
 		if len(advancedConfig) > 0 {
@@ -252,17 +255,17 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 			interfacePayload["isAdvancedIntfConfig"] = true
 		}
 
-		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok && v != "" {
-			interfacePayload["ipslaMonitoringRef"] = v
-			advancedConfig["advancedTrackingOptions"] = true
+		if v, ok := iface["bd_uuid"].(string); ok {
+			interfacePayload["bdRef"] = v
 		}
-
 		if v, ok := iface["bd_uuid"].(string); ok && v != "" {
 			interfacePayload["deviceInterfaceType"] = "bd"
-			interfacePayload["bdRef"] = v
-		} else if v, ok := iface["external_epg_uuid"].(string); ok && v != "" {
-			interfacePayload["deviceInterfaceType"] = "l3out"
+		}
+		if v, ok := iface["external_epg_uuid"].(string); ok {
 			interfacePayload["externalEpgRef"] = v
+		}
+		if v, ok := iface["external_epg_uuid"].(string); ok && v != "" {
+			interfacePayload["deviceInterfaceType"] = "l3out"
 		}
 
 		payload[i] = interfacePayload
