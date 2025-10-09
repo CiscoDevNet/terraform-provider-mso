@@ -149,29 +149,28 @@ func parseServiceChainingId(id string) (string, string, string, error) {
 
 func buildServiceChainingPayload(name, nodeFilter string, serviceNodes []interface{}) map[string]interface{} {
 	serviceNodesPayload := make([]interface{}, 0, len(serviceNodes))
-	for i, sn := range serviceNodes {
-		node := sn.(map[string]interface{})
-		idx := i + 1
+	for i, serviceNode := range serviceNodes {
+		node := serviceNode.(map[string]interface{})
 
 		nodePayload := map[string]interface{}{
 			"name":       node["name"].(string),
 			"deviceType": node["device_type"].(string),
 			"deviceRef":  node["device_ref"].(string),
-			"index":      idx,
+			"index":      i + 1,
 		}
 
-		if ccList, ok := node["consumer_connector"].([]interface{}); ok && len(ccList) > 0 {
-			cc := ccList[0].(map[string]interface{})
+		if consConnectorList, ok := node["consumer_connector"].([]interface{}); ok && len(consConnectorList) > 0 {
+			consConnector := consConnectorList[0].(map[string]interface{})
 			nodePayload["consumerConnector"] = map[string]interface{}{
-				"interfaceName": cc["interface_name"].(string),
-				"isRedirect":    cc["is_redirect"].(bool),
+				"interfaceName": consConnector["interface_name"].(string),
+				"isRedirect":    consConnector["is_redirect"].(bool),
 			}
 		}
-		if pcList, ok := node["provider_connector"].([]interface{}); ok && len(pcList) > 0 {
-			pc := pcList[0].(map[string]interface{})
+		if provConnectorList, ok := node["provider_connector"].([]interface{}); ok && len(provConnectorList) > 0 {
+			provConnector := provConnectorList[0].(map[string]interface{})
 			nodePayload["providerConnector"] = map[string]interface{}{
-				"interfaceName": pc["interface_name"].(string),
-				"isRedirect":    pc["is_redirect"].(bool),
+				"interfaceName": provConnector["interface_name"].(string),
+				"isRedirect":    provConnector["is_redirect"].(bool),
 			}
 		}
 
@@ -300,19 +299,19 @@ func setServiceChainingFromSchema(d *schema.ResourceData, schemaCont *container.
 	}
 
 	var contractDetails map[string]interface{}
-	for _, t := range templates.([]interface{}) {
-		tm := t.(map[string]interface{})
-		if tm["name"].(string) == templateName {
+	for _, template := range templates.([]interface{}) {
+		templateMap := template.(map[string]interface{})
+		if templateMap["name"].(string) == templateName {
 			d.Set("template_name", templateName)
-			contracts, ok := tm["contracts"].([]interface{})
+			contracts, ok := templateMap["contracts"].([]interface{})
 			if !ok || len(contracts) == 0 {
 				return fmt.Errorf("no contracts found in template %s", templateName)
 			}
-			for _, c := range contracts {
-				cm := c.(map[string]interface{})
-				if cm["name"].(string) == contractName {
+			for _, contract := range contracts {
+				contractMap := contract.(map[string]interface{})
+				if contractMap["name"].(string) == contractName {
 					d.Set("contract_name", contractName)
-					contractDetails = cm
+					contractDetails = contractMap
 					break
 				}
 			}
@@ -325,30 +324,30 @@ func setServiceChainingFromSchema(d *schema.ResourceData, schemaCont *container.
 		return fmt.Errorf("contract %s not found in template %s", contractName, templateName)
 	}
 
-	scIface, ok := contractDetails["serviceChaining"]
-	if !ok || scIface == nil {
+	serviceChainingIface, ok := contractDetails["serviceChaining"]
+	if !ok || serviceChainingIface == nil {
 		d.SetId("")
 		return fmt.Errorf("serviceChaining not found in contract %s", contractName)
 	}
 
-	sc, ok := scIface.(map[string]interface{})
+	serviceChain, ok := serviceChainingIface.(map[string]interface{})
 	if !ok {
 		d.SetId("")
 		return fmt.Errorf("invalid serviceChaining structure in contract %s", contractName)
 	}
 
-	if nameVal, ok := sc["name"].(string); ok {
+	if nameVal, ok := serviceChain["name"].(string); ok {
 		d.Set("name", nameVal)
 	}
 
-	if nf, ok := sc["nodeFilter"].(string); ok {
-		d.Set("node_filter", nf)
+	if nodeFilter, ok := serviceChain["nodeFilter"].(string); ok {
+		d.Set("node_filter", nodeFilter)
 	}
 
-	if sns, ok := sc["serviceNodes"].([]interface{}); ok {
-		out := make([]interface{}, 0, len(sns))
-		for _, sn := range sns {
-			nodeMap := sn.(map[string]interface{})
+	if serviceNodes, ok := serviceChain["serviceNodes"].([]interface{}); ok {
+		out := make([]interface{}, 0, len(serviceNodes))
+		for _, serviceNode := range serviceNodes {
+			nodeMap := serviceNode.(map[string]interface{})
 			item := map[string]interface{}{
 				"name":        nodeMap["name"],
 				"device_type": nodeMap["deviceType"],
@@ -357,19 +356,19 @@ func setServiceChainingFromSchema(d *schema.ResourceData, schemaCont *container.
 				"uuid":        nodeMap["uuid"],
 			}
 
-			if cc, ok := nodeMap["consumerConnector"].(map[string]interface{}); ok {
+			if consConnector, ok := nodeMap["consumerConnector"].(map[string]interface{}); ok {
 				item["consumer_connector"] = []interface{}{
 					map[string]interface{}{
-						"interface_name": cc["interfaceName"],
-						"is_redirect":    cc["isRedirect"],
+						"interface_name": consConnector["interfaceName"],
+						"is_redirect":    consConnector["isRedirect"],
 					},
 				}
 			}
-			if pc, ok := nodeMap["providerConnector"].(map[string]interface{}); ok {
+			if provConnector, ok := nodeMap["providerConnector"].(map[string]interface{}); ok {
 				item["provider_connector"] = []interface{}{
 					map[string]interface{}{
-						"interface_name": pc["interfaceName"],
-						"is_redirect":    pc["isRedirect"],
+						"interface_name": provConnector["interfaceName"],
+						"is_redirect":    provConnector["isRedirect"],
 					},
 				}
 			}
