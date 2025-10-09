@@ -12,7 +12,7 @@ Manages Schema Template Contract Service Chaining on Cisco Nexus Dashboard Orche
 
 ## GUI Information ##
 
-* `Location` - Manage -> Manage -> Tenant Template -> Applications -> Schemas -> <Schema Name> -> <Template Name> -> Contracts -> <Contract Name> -> Service Chaining
+* `Location` - Manage -> Tenant Template -> Applications -> Schemas -> <Schema Name> -> <Template Name> -> Contracts -> <Contract Name> -> Service Chaining
 
 ## Example Usage ##
 
