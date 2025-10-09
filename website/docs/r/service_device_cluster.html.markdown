@@ -110,7 +110,7 @@ resource "mso_service_device_cluster" "cluster" {
   * `tag_based_sorting` - (Optional) Indicates if tag-based sorting is enabled. Defaults to false.
   * `min_threshold` - (Optional) The minimum threshold value for redirect. Valid range: 0-100.
   * `max_threshold` - (Optional) The maximum threshold value for redirect. Valid range: 0-100.
-  * `threshold_down_action` - (Optional) The action to take when the threshold is down. Allowed values are permit, deny, bypass. Defaults to deny.
+  * `threshold_down_action` - (Optional) The action to take when the threshold is down. Allowed values are permit, deny, bypass. Default value is deny.
 
 ## Attribute Reference ##
 
