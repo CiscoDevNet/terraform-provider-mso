@@ -108,9 +108,9 @@ resource "mso_service_device_cluster" "cluster" {
   * `pod_aware_redirection` - (Optional) Indicates if pod-aware redirection is enabled. Defaults to false.
   * `resilient_hashing` - (Optional) Indicates if resilient hashing is enabled. Defaults to false.
   * `tag_based_sorting` - (Optional) Indicates if tag-based sorting is enabled. Defaults to false.
-  * `min_threshold` - (Optional) The minimum threshold value for redirect. Valid range: 0-100. Defaults to 0.
-  * `max_threshold` - (Optional) The maximum threshold value for redirect. Valid range: 0-100. Defaults to 0.
-  * `threshold_down_action` - (Optional) The action to take when the threshold is down. Allowed values are permit, deny, bypass.
+  * `min_threshold` - (Optional) The minimum threshold value for redirect. Valid range: 0-100.
+  * `max_threshold` - (Optional) The maximum threshold value for redirect. Valid range: 0-100.
+  * `threshold_down_action` - (Optional) The action to take when the threshold is down. Allowed values are permit, deny, bypass. Defaults to deny.
 
 ## Attribute Reference ##
 
