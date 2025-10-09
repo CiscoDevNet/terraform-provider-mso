@@ -12,7 +12,7 @@ Data source for a Schema Template Contract Service Chaining configuration on Cis
 
 ## GUI Information ##
 
-* `Location` - Manage -> Manage -> Tenant Template -> Applications -> Schemas -> <Schema Name> -> <Template Name> -> Contracts -> <Contract Name> -> Service Chaining
+* `Location` - Manage -> Tenant Template -> Applications -> Schemas -> <Schema Name> -> <Template Name> -> Contracts -> <Contract Name> -> Service Chaining
 
 ## Example Usage ##
 
