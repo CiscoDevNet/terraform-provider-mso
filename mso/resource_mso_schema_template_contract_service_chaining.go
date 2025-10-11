@@ -51,8 +51,8 @@ func resourceMSOSchemaTemplateContractServiceChaining() *schema.Resource {
 			"node_filter": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "allow-all",
-				ValidateFunc: validation.StringLenBetween(1, 100),
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"allow-all", "filters-from-contract"}, false),
 			},
 			"service_nodes": {
 				Type:        schema.TypeList,
