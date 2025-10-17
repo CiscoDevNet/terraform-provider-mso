@@ -138,17 +138,17 @@ resource "mso_schema_template_contract_service_chaining" "chain" {
 * `schema_id` - (Required) The ID of the schema where the contract resides.
 * `template_name` - (Required) The name of the template where the contract resides.
 * `contract_name` - (Required) The name of the contract to which this service chain will be applied.
-* `node_filter` - (Optional) The node filter for the service chain. Defaults to allow-all.
-* `service_nodes` - (Required) A list of service nodes that form the service chain. The order of the nodes in this list defines the order in the service chain.
+* `node_filter` - (Optional) Specifies the name of a filter used to selectively redirect a subset of the contract-permitted traffic through the service chain. Allowed values are allow-all and filters-from-contract.
+* `service_nodes` - (Required) A list of the service nodes that constitute the service chain, presented in their processing order. Each element details the configuration of a single service node.
   * `name` - (Required) A unique name for the service node within the chain.
   * `device_type` - (Required) The type of the service device. Allowed values are firewall, loadBalancer, and other.
   * `device_ref` - (Required) The NDO UUID of the mso_service_device_cluster to be used for this node.
   * `consumer_connector` - (Required) A block that defines the consumer-side connection for the service node.
     * `interface_name` - (Required) The name of the interface on the service device cluster that will act as the consumer connector.
-    * `is_redirect` - (Optional) Specifies if the connector is a redirect. Defaults to false.
+    * `is_redirect` - (Optional) When is_redirect is set to true, the consumer_connector specifies the interface that receives traffic diverted by a policy, rather than traffic flowing directly through the service device. Defaults to false.
   * `provider_connector` - (Required) A block that defines the provider-side connection for the service node.
     * `interface_name` - (Required) The name of the interface on the service device cluster that will act as the provider connector.
-    * `is_redirect` - (Optional) Specifies if the connector is a redirect. Defaults to false.
+    * `is_redirect` - (Optional) When is_redirect is set to true, the provider_connector specifies the interface used to send traffic back into the network fabric after it has been processed by the service device. Defaults to false.
 
 ## Attribute Reference ##
 
