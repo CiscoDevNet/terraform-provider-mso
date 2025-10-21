@@ -8,7 +8,7 @@ description: |-
 
 # mso_schema_template_contract_service_chaining #
 
-Data source for a Schema Template Contract Service Chaining configuration on Cisco Nexus Dashboard Orchestrator (NDO).
+Data source for a Schema Template Contract Service Chaining configuration on Cisco Nexus Dashboard Orchestrator (NDO). This data source is supported in NDO v4.2(3) and higher.
 
 ## GUI Information ##
 
