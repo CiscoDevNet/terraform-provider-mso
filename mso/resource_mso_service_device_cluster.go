@@ -191,7 +191,6 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 		iface := val.(map[string]interface{})
 
 		advancedConfig := make(map[string]interface{})
-
 		if v, ok := iface["preferred_group"]; ok {
 			advancedConfig["preferredGroup"] = v.(bool)
 		}
@@ -233,8 +232,8 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 			if v, ok := iface["load_balance_hashing"].(string); ok {
 				advancedConfig["loadBalanceHashing"] = v
 			}
-			thresholdConfig := make(map[string]interface{})
 
+			thresholdConfig := make(map[string]interface{})
 			if v, ok := iface["min_threshold"].(int); ok && v >= 0 {
 				thresholdConfig["minThreshold"] = v
 			}
@@ -279,12 +278,9 @@ func buildServiceDeviceClusterPayload(d *schema.ResourceData) map[string]interfa
 	payload["description"] = d.Get("description").(string)
 	payload["deviceMode"] = d.Get("device_mode").(string)
 	payload["deviceLocation"] = "onPremise"
-
 	payload["deviceType"] = normalizeDeviceType(d.Get("device_type").(string))
-
 	interfaces := buildServiceDeviceClusterInterfacesPayload(d)
 	payload["interfaces"] = interfaces
-
 	payload["connectivityMode"] = getConnectivityMode(len(interfaces))
 
 	return payload
@@ -295,12 +291,11 @@ func setServiceDeviceClusterData(d *schema.ResourceData, response *container.Con
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
+	d.Set("device_mode", models.StripQuotes(response.S("deviceMode").String()))
 
 	if response.Exists("description") {
 		d.Set("description", models.StripQuotes(response.S("description").String()))
 	}
-
-	d.Set("device_mode", models.StripQuotes(response.S("deviceMode").String()))
 
 	deviceType := models.StripQuotes(response.S("deviceType").String())
 	if deviceType == "loadBalancer" {
@@ -328,10 +323,8 @@ func setServiceDeviceClusterData(d *schema.ResourceData, response *container.Con
 		if iface.Exists("ipslaMonitoringRef") {
 			prop["ipsla_monitoring_policy_uuid"] = models.StripQuotes(iface.S("ipslaMonitoringRef").String())
 		}
-
 		if iface.Exists("advancedIntfConfig") {
 			advancedConfig := iface.S("advancedIntfConfig")
-
 			if advancedConfig.Exists("qosPolicyRef") {
 				qosPolicyRef := models.StripQuotes(advancedConfig.S("qosPolicyRef").String())
 				if qosPolicyRef == "{}" {
@@ -340,7 +333,6 @@ func setServiceDeviceClusterData(d *schema.ResourceData, response *container.Con
 					prop["qos_policy_uuid"] = qosPolicyRef
 				}
 			}
-
 			if advancedConfig.Exists("preferredGroup") {
 				prop["preferred_group"] = advancedConfig.S("preferredGroup").Data().(bool)
 			}
@@ -365,11 +357,9 @@ func setServiceDeviceClusterData(d *schema.ResourceData, response *container.Con
 			if advancedConfig.Exists("tag") {
 				prop["tag_based_sorting"] = advancedConfig.S("tag").Data().(bool)
 			}
-
 			if advancedConfig.Exists("loadBalanceHashing") {
 				prop["load_balance_hashing"] = models.StripQuotes(advancedConfig.S("loadBalanceHashing").String())
 			}
-
 			if advancedConfig.Exists("thresholdForRedirect") {
 				thresholdConfig := advancedConfig.S("thresholdForRedirect")
 				if thresholdConfig.Exists("minThreshold") {

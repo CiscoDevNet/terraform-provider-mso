@@ -13,7 +13,7 @@ Manages Service Device Clusters on Cisco Nexus Dashboard Orchestrator (NDO).
 
 ## GUI Information ##
 
-* `Location` - Manage -> Service Device Template -> Service Device Cluster
+* `Location` - Manage -> Tenant Template -> Service Device Template -> Service Device Cluster
 
 ## Example Usage ##
 
