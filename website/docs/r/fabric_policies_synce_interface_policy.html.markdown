@@ -23,7 +23,7 @@ resource "mso_fabric_policies_synce_interface_policy" "synce_interface_policy" {
   template_id     = mso_template.fabric_policy_template.id
   name            = "synce_interface_policy"
   description     = "Example description"
-	admin_state     = "enabled"
+  admin_state     = "enabled"
   sync_state_msg  = "enabled"
   selection_input = "enabled"
   src_priority    = 120
@@ -39,8 +39,8 @@ resource "mso_fabric_policies_synce_interface_policy" "synce_interface_policy" {
 * `admin_state` - (Optional) The administrative state of the SyncE Interface Policy. Allowed values are `enabled` and `disabled`. Default to `disabled`.
 * `sync_state_msg` - (Optional) The sync state message of the SyncE Interface Policy. Allowed values are `enabled` and `disabled`. Default to `disabled`.
 * `selection_input` - (Optional) The selection input of the SyncE Interface Policy. Allowed values are `enabled` and `disabled`. Default to `disabled`.
-* `src_priority` - (Optional) The source priority of the SyncE Interface Policy. Valid range: 1-254. Default to 100
-* `wait_to_restore` - (Optional) The delay before attempting to restore synchronization on a SyncE Interface after a disruption. Valid range: 0-12. Default to 5
+* `src_priority` - (Optional) The source priority of the SyncE Interface Policy. It requires `selection_input` to be set to `enabled`. Valid range: 1-254. Default to 100
+* `wait_to_restore` - (Optional) The delay before attempting to restore synchronization on a SyncE Interface after a disruption. It requires `selection_input` to be set to `enabled`. Valid range: 0-12. Default to 5
 
 ## Attribute Reference ##
 
