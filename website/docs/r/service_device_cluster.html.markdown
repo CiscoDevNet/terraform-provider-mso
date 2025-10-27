@@ -8,11 +8,14 @@ description: |-
 
 # mso_service_device_cluster #
 
-Manages Service Device Clusters on Cisco Nexus Dashboard Orchestrator (NDO).
+Manages Service Device Clusters on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO 4.2(3) and higher.
 
 
 ## GUI Information ##
+For ND 4.1 and later:
+* `Location` - Manage -> Orchestration -> Tenant Template -> Service Device Template -> Service Device Cluster
 
+For ND 3.2:
 * `Location` - Manage -> Tenant Template -> Service Device Template -> Service Device Cluster
 
 ## Example Usage ##
