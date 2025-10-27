@@ -165,5 +165,5 @@ An existing MSO Schema Template Contract Service Chaining can be [imported][docs
 
 
 ```bash
-terraform import mso_schema_template_contract_service_chaining.chain schemas/{schema_id}/templates/{template_name}/contracts/{contract_name}/serviceChaining
+terraform import mso_schema_template_contract_service_chaining.chain {schema_id}/templates/{template_name}/contracts/{contract_name}/serviceChaining
 ```
