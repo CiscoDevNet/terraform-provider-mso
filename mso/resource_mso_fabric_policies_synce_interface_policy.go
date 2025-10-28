@@ -84,7 +84,6 @@ func resourceMSOSyncEInterfacePolicy() *schema.Resource {
 }
 
 func setSyncEInterfacePolicyData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-
 	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
 		return err
@@ -95,9 +94,10 @@ func setSyncEInterfacePolicyData(d *schema.ResourceData, msoClient *client.Clien
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/SyncEInterfacePolicy/%s", templateId, models.StripQuotes(policy.S("name").String())))
+	name := models.StripQuotes(policy.S("name").String())
+	d.SetId(fmt.Sprintf("templateId/%s/SyncEInterfacePolicy/%s", templateId, name))
 	d.Set("template_id", templateId)
-	d.Set("name", models.StripQuotes(policy.S("name").String()))
+	d.Set("name", name)
 	d.Set("description", models.StripQuotes(policy.S("description").String()))
 	d.Set("uuid", models.StripQuotes(policy.S("uuid").String()))
 	d.Set("admin_state", models.StripQuotes(policy.S("adminState").String()))
@@ -115,7 +115,6 @@ func setSyncEInterfacePolicyData(d *schema.ResourceData, msoClient *client.Clien
 	d.Set("wait_to_restore", policy.S("waitToRestore").Data().(float64))
 
 	return nil
-
 }
 
 func resourceMSOSyncEInterfacePolicyImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
