@@ -10,7 +10,7 @@ description: |-
 
 # mso_fabric_policies_synce_interface_policy #
 
-Manages SyncE Interface Policys on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO v4.3(1) or higher.
+Manages SyncE Interface Policies on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO v4.3(1) or higher.
 
 ## GUI Information ##
 
