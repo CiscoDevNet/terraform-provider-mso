@@ -130,6 +130,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_vlan_pool":                   resourceMSOVlanPool(),
 			"mso_fabric_policies_physical_domain":             resourceMSOPhysicalDomain(),
 			"mso_service_device_cluster":                      resourceMSOServiceDeviceCluster(),
+			"mso_schema_template_contract_service_chaining":   resourceMSOSchemaTemplateContractServiceChaining(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -193,6 +194,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_vlan_pool":                   datasourceMSOVlanPool(),
 			"mso_fabric_policies_physical_domain":             datasourceMSOPhysicalDomain(),
 			"mso_service_device_cluster":                      datasourceMSOServiceDeviceCluster(),
+			"mso_schema_template_contract_service_chaining":   datasourceMSOSchemaTemplateContractServiceChaining(),
 		},
 
 		ConfigureFunc: configureClient,
