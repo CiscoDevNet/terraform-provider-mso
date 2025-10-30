@@ -34,8 +34,8 @@ func TestAccMSOSyncEInterfacePolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "admin_state", "disabled"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "sync_state_msg", "disabled"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "selection_input", "disabled"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "src_priority", "100"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "wait_to_restore", "5"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "src_priority", "120"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_synce_interface_policy.synce_interface_policy", "wait_to_restore", "6"),
 				),
 			},
 			{
@@ -72,7 +72,5 @@ func testAccMSOSyncEInterfacePolicyConfigUpdate() string {
 		admin_state     = "disabled"
 		sync_state_msg  = "disabled"
 		selection_input = "disabled"
-		src_priority    = 100
-		wait_to_restore = 5
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
