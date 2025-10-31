@@ -98,7 +98,7 @@ func resourceMSOMacsecPolicy() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"macsec_key": {
+			"macsec_keys": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
@@ -190,7 +190,7 @@ func setMacsecPolicyData(d *schema.ResourceData, msoClient *client.Client, templ
 		macsecKeyEntry["end_time"] = models.StripQuotes(macsecKeysCont.S("end").String())
 		macsecKeys = append(macsecKeys, macsecKeyEntry)
 	}
-	d.Set("macsec_key", macsecKeys)
+	d.Set("macsec_keys", macsecKeys)
 
 	return nil
 
@@ -264,7 +264,7 @@ func resourceMSOMacsecPolicyCreate(d *schema.ResourceData, m any) error {
 		payload["macsecParams"] = macsecParams
 	}
 
-	if macsecKeyEntries, ok := d.GetOk("macsec_key"); ok {
+	if macsecKeyEntries, ok := d.GetOk("macsec_keys"); ok {
 		payload["macsecKeys"] = setMacsecKeys(macsecKeyEntries.(*schema.Set))
 	}
 
@@ -382,7 +382,7 @@ func resourceMSOMacsecPolicyUpdate(d *schema.ResourceData, m any) error {
 		}
 	}
 
-	if d.HasChange("macsec_key") {
+	if d.HasChange("macsec_keys") {
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/macsecKeys", updatePath), setMacsecKeys(d.Get("vlan_range").(*schema.Set)))
 		if err != nil {
 			return err

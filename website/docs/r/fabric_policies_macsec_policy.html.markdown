@@ -31,7 +31,7 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
   sak_expire_time        = 60
   confidentiality_offset = "offset30"
   key_server_priority    = 8
-  macsec_key {
+  macsec_keys {
     key_name             = "abc123"
     psk                  = "AA111111111111111111111111111111111111111111111111111111111111aa"
     start_time           = "now"
@@ -53,11 +53,11 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
 * `sak_expire_time` - (Optional) The expiry time for the Security Association Key (SAK) for the MACsec Policy. Allowed value is 0 or valid range: 60-2592000. Defaults to 0 when unset during creation.
 * `confidentiality_offset` - (Optional) The confidentiality offset for the MACsec Policy. This paramater is only configurable for `access` type. Allowed values are `offset0`, `offset30` or `offset50`. Defaults to `offset0` when unset during creation.
 * `key_server_priority` - (Optional) The key server priority for the MACsec Policy. This paramater is only configurable for `access` type. Valid range: 0-255. Defaults to 16 when unset during creation.
-* `macsec_key` - (Optional) The list of MACsec Keys.
-  * `macsec_key.key_name` - (Required) The name of the MACsec Key. Key Name has to be hexadecimal characters [0-9a-fA-F].
-  * `macsec_key.psk` - (Required) The Pre-Shared Key (PSK) for the MACsec Key. PSK has to be hexadecimal characters [0-9a-fA-F]. PSK has to be 64 characters long if cipher suite is `256GcmAes` or `256GcmAesXpn`. PSK has to be 32 characters long if cipher suite is `128GcmAes` or `128GcmAesXpn`.
-  * `macsec_key.start_time` - (Optional) The start time for the MACsec Key. Allowed values are of the following format `YYYY-MM-DD HH:MM:SS` or `now`. The start time for each Key should be unique.
-  * `macsec_key.end_time` - (Optional) TThe end time for the MACsec Key. Allowed values are of the following format `YYYY-MM-DD HH:MM:SS` or `infinite`.
+* `macsec_keys` - (Optional) The list of MACsec Keys.
+  * `macsec_keys.key_name` - (Required) The name of the MACsec Key. Key Name has to be hexadecimal characters [0-9a-fA-F].
+  * `macsec_keys.psk` - (Required) The Pre-Shared Key (PSK) for the MACsec Key. PSK has to be hexadecimal characters [0-9a-fA-F]. PSK has to be 64 characters long if cipher suite is `256GcmAes` or `256GcmAesXpn`. PSK has to be 32 characters long if cipher suite is `128GcmAes` or `128GcmAesXpn`.
+  * `macsec_keys.start_time` - (Optional) The start time for the MACsec Key. Allowed values are of the following format `YYYY-MM-DD HH:MM:SS` or `now`. The start time for each Key should be unique.
+  * `macsec_keys.end_time` - (Optional) TThe end time for the MACsec Key. Allowed values are of the following format `YYYY-MM-DD HH:MM:SS` or `infinite`.
 
 ## Attribute Reference ##
 
@@ -69,5 +69,5 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
 An existing MSO MACsec Policy can be [imported][docs-import] into this resource via its ID/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_fabric_policies_macsec_policy.macsec_policy templateId/{template_id}/VlanPool/{name}
+terraform import mso_fabric_policies_macsec_policy.macsec_policy templateId/{template_id}/macsecPolicy/{name}
 ```

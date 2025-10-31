@@ -60,7 +60,7 @@ func datasourceMacsecPolicy() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"macsec_key": {
+			"macsec_keys": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{

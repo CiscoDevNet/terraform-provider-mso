@@ -26,8 +26,8 @@ func TestAccMSOMacsecPolicyDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "60"),
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
-					resource.TestCheckResourceAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key.#", "1"),
-					customTestCheckResourceTypeSetAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key",
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "1"),
+					customTestCheckResourceTypeSetAttr("data.mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
 							"key_name":   "abc123",
 							"psk":        "AA111111111111111111111111111111111111111111111111111111111111aa",
