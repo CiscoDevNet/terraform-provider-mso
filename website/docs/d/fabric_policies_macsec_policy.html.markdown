@@ -43,6 +43,7 @@ data "mso_fabric_policies_macsec_policy" "macsec_policy" {
 * `sak_expire_time` - (Read-Only) The expiry time for the Security Association Key (SAK) for the MACsec Policy.
 * `confidentiality_offset` - (Read-Only) The confidentiality offset for the MACsec Policy.
 * `key_server_priority` - (Read-Only) The key server priority for the MACsec Policy.
+* `macsec_keys` - (Read-Only) The list of MACsec Keys.
   * `macsec_key.key_name` - (Read-Only) The name of the MACsec Key.
   * `macsec_key.psk` - (Read-Only) The Pre-Shared Key (PSK) for the MACsec Key.
   * `macsec_key.start_time` - (Read-Only) The start time for the MACsec Key.

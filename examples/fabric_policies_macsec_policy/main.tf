@@ -34,7 +34,7 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
   sak_expire_time        = 60
   confidentiality_offset = "offset30"
   key_server_priority    = 8
-  macsec_key {
+  macsec_keys {
     key_name             = "abc123"
     psk                  = "AA111111111111111111111111111111111111111111111111111111111111aa"
     start_time           = "now"

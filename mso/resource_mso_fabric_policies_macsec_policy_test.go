@@ -26,8 +26,8 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "60"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key",
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
 							"key_name":   "abc123",
 							"psk":        "AA111111111111111111111111111111111111111111111111111111111111aa",
@@ -51,8 +51,8 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "60"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key.#", "2"),
-					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key",
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "2"),
+					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
 							"key_name":   "abc123",
 							"psk":        "AA111111111111111111111111111111111111111111111111111111111111aa",
@@ -60,7 +60,7 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 							"end_time":   "2030-09-23 00:00:00",
 						},
 					),
-					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key",
+					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
 							"key_name":   "def456",
 							"psk":        "AA11111111111111111111111111111111111111111111111111111111111aaa",
@@ -82,8 +82,8 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "60"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key",
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
 							"key_name":   "abc123",
 							"psk":        "AA111111111111111111111111111111111111111111111111111111111111aa",
@@ -105,8 +105,8 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "120"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_key",
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
 							"key_name":   "abc123",
 							"psk":        "AA111111111111111111111111111111111111111111111111111111111111ab",
@@ -141,7 +141,7 @@ func testAccMSOMacsecPolicyConfigCreate() string {
 		sak_expire_time        = 60
 		confidentiality_offset = "offset30"
 		key_server_priority    = 8
-		macsec_key {
+		macsec_keys {
 			key_name           = "abc123"
 			psk                = "AA111111111111111111111111111111111111111111111111111111111111aa"
 			start_time         = "2027-09-23 00:00:00"
@@ -164,13 +164,13 @@ func testAccMSOMacsecPolicyConfigUpdateAddingExtraMacSecKey() string {
 		sak_expire_time        = 60
 		confidentiality_offset = "offset30"
 		key_server_priority    = 8
-		macsec_key {
+		macsec_keys {
 			key_name           = "abc123"
 			psk                = "AA111111111111111111111111111111111111111111111111111111111111aa"
 			start_time         = "2027-09-23 00:00:00"
 			end_time           = "2030-09-23 00:00:00"
 		}
-		macsec_key {
+		macsec_keys {
 			key_name           = "def456"
 			psk                = "AA11111111111111111111111111111111111111111111111111111111111aaa"
 			start_time         = "2029-12-11 11:12:13"
@@ -193,7 +193,7 @@ func testAccMSOMacsecPolicyConfigUpdateRemovingExtraMacSecKey() string {
 		sak_expire_time        = 60
 		confidentiality_offset = "offset30"
 		key_server_priority    = 8
-		macsec_key {
+		macsec_keys {
 			key_name           = "abc123"
 			psk                = "AA111111111111111111111111111111111111111111111111111111111111aa"
 			start_time         = "2027-09-23 00:00:00"
@@ -214,7 +214,7 @@ func testAccMSOMacsecPolicyConfigUpdateChangingType() string {
 		window_size            = 256
 		security_policy        = "mustSecure"
 		sak_expire_time        = 120
-		macsec_key {
+		macsec_keys {
 			key_name           = "abc123"
 			psk                = "AA111111111111111111111111111111111111111111111111111111111111ab"
 			start_time         = "2028-12-12 12:12:12"
