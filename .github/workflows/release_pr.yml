@@ -1,0 +1,71 @@
+name: release_pr
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+      
+      # git-cliff generates CHANGELOG.md
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install git-cliff==2.4.0 typos
+      - name: Check new changlog entry for version bump type
+        id: type
+        run: |
+          changelog=$(git cliff --unreleased)
+          case $changelog in
+              *"BREAKING CHANGES:"* )
+                  echo "MAJOR"
+                  echo "bump="MAJOR: version change"" >> $GITHUB_OUTPUT
+                  ;;
+              *"IMPROVEMENTS:"* )
+                  echo "MINOR"
+                  echo "bump="MINOR: version change"" >> $GITHUB_OUTPUT
+                  ;;
+              *"DEPRECATIONS:"* )
+                  echo "MINOR"
+                  echo "bump="MINOR: version change"" >> $GITHUB_OUTPUT
+                  ;;
+              * )
+                  echo "PATCH"
+                  echo "bump="PATCH: version change"" >> $GITHUB_OUTPUT
+                  ;;
+          esac
+      # The --with-commit inserts a commit message to git-cliff without it being in the history.
+      # It is used here to dynamically add version bump commands.
+      - name: Get next version
+        id: vars
+        run: echo "version=$(git cliff --bumped-version --with-commit "${{ steps.type.outputs.bump }}")" >> $GITHUB_OUTPUT
+      - name: Generate changelog output
+        run: git cliff --bump --unreleased --with-commit "${{ steps.type.outputs.bump }}"
+      - name: Prepend new changelog entry
+        run: git cliff --bump --unreleased -p CHANGELOG.md --with-commit "${{ steps.type.outputs.bump }}"
+
+      # Commit changes to release_pr branch
+      - name: Set git config
+        run: git config user.email "193842815+dcne-automation@users.noreply.github.com" && git config user.name "dcne-automation"
+      - name: Commit
+        run: git add -u && git status && git commit -m "[ignore] Update Changelog and annotation_unsupported.go for new release (${{ steps.vars.outputs.version }})"
+      - name: Branch & Push
+        run: git checkout -b release_pr && git push --set-upstream origin release_pr --force && git clean -f -d
+
+      # Create or update release PR
+      - run: gh pr create --base master --head release_pr --title "Pre-Release PR (${{ steps.vars.outputs.version }})" --body ""
+        id: pr
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.DCNE_AUTO_TOKEN }}
+      - run: gh pr edit release_pr --title "Pre-Release PR (${{ steps.vars.outputs.version }})"
+        if: steps.pr.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.DCNE_AUTO_TOKEN }}
