@@ -39,5 +39,5 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
     psk                  = "AA111111111111111111111111111111111111111111111111111111111111aa"
     start_time           = "now"
     end_time             = "2027-09-23 00:00:00"
-	}
+  }
 }
