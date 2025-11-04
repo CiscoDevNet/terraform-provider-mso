@@ -51,8 +51,8 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
 * `window_size` - (Optional) The window size of the MACsec Policy. It defines the maximum number of frames that can be received out of order before a replay attack is detected. Valid range: 0-4294967295. Defaults to 0 for `fabric` type or to 64 for `access` type when unset during creation.
 * `security_policy` - (Optional) The security policy to allow traffic on the link for the MACsec Policy. Allowed values are `shouldSecure` or `mustSecure`. Defaults to `shouldSecure` when unset during creation.
 * `sak_expire_time` - (Optional) The expiry time for the Security Association Key (SAK) for the MACsec Policy. Allowed value is 0 or valid range: 60-2592000. Defaults to 0 when unset during creation.
-* `confidentiality_offset` - (Optional) The confidentiality offset for the MACsec Policy. This paramater is only configurable for `access` type. Allowed values are `offset0`, `offset30` or `offset50`. Defaults to `offset0` when unset during creation.
-* `key_server_priority` - (Optional) The key server priority for the MACsec Policy. This paramater is only configurable for `access` type. Valid range: 0-255. Defaults to 16 when unset during creation.
+* `confidentiality_offset` - (Optional) The confidentiality offset for the MACsec Policy. This parameter is only configurable for `access` type. Allowed values are `offset0`, `offset30` or `offset50`. Defaults to `offset0` when unset during creation.
+* `key_server_priority` - (Optional) The key server priority for the MACsec Policy. This parameter is only configurable for `access` type. Valid range: 0-255. Defaults to 16 when unset during creation.
 * `macsec_keys` - (Optional) The list of MACsec Keys.
   * `macsec_keys.key_name` - (Required) The name of the MACsec Key. Key Name has to be hexadecimal characters [0-9a-fA-F].
   * `macsec_keys.psk` - (Required) The Pre-Shared Key (PSK) for the MACsec Key. PSK has to be hexadecimal characters [0-9a-fA-F]. PSK has to be 64 characters long if cipher suite is `256GcmAes` or `256GcmAesXpn`. PSK has to be 32 characters long if cipher suite is `128GcmAes` or `128GcmAesXpn`.
