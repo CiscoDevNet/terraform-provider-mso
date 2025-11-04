@@ -1,3 +1,20 @@
+# Terraform Provider MSO - Changelog
+
+All notable changes to this project will be documented in this file.
+
+## 1.6.0 (November 5, 2025)
+
+IMPROVEMENTS:
+- Add retrigger attribute to mso_rest to enable updates without payload, path or method changes.
+- Add template_type and template_id attributes to mso_schema_template_deploy_ndo to enable template deployment of any type.
+- Add mso_service_device_cluster resource and datasource.
+- Add mso_fabric_policies_synce_interface_policy resource and datasource.
+- Add uuid read-only attribute to mso_schema_template_bd resource and datasource.
+
+BUG FIXES:
+- Fix error when consumer_connector_redirect_policy or provider_connector_redirect_policy attributes are empty strings in mso_schema_site_contract_service_graph.
+- Fix url attribute on the mso provider to accept appended slash characters.
+
 ## 1.5.3 (August 21, 2025)
 BUG FIXES:
 - Fix error handling issue that ignore error messages returned by the API for non 200 status responses introduced in v1.5.1
