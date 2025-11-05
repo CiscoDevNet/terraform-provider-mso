@@ -47,4 +47,4 @@ data "mso_fabric_policies_macsec_policy" "macsec_policy" {
   * `macsec_key.key_name` - (Read-Only) The name of the MACsec Key.
   * `macsec_key.psk` - (Read-Only) The Pre-Shared Key (PSK) for the MACsec Key.
   * `macsec_key.start_time` - (Read-Only) The start time for the MACsec Key.
-  * `macsec_key.end_time` - (Read-Only) TThe end time for the MACsec Key.
+  * `macsec_key.end_time` - (Read-Only) The end time for the MACsec Key.
