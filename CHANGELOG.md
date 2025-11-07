@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.7.0 (November 07, 2025)
+
+IMPROVEMENTS:
+- Add resource and data source for macsec policy under fabric policy template.
+
 ## 1.6.0 (November 5, 2025)
 
 IMPROVEMENTS:
