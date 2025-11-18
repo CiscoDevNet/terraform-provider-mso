@@ -133,6 +133,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_synce_interface_policy":      resourceMSOSyncEInterfacePolicy(),
 			"mso_fabric_policies_macsec_policy":               resourceMSOMacsecPolicy(),
 			"mso_schema_template_contract_service_chaining":   resourceMSOSchemaTemplateContractServiceChaining(),
+			"mso_tenant_policies_bgp_peer_prefix_policy":      resourceMSOBGPPeerPrefixPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -199,6 +200,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_synce_interface_policy":      datasourceMSOSyncEInterfacePolicy(),
 			"mso_fabric_policies_macsec_policy":               datasourceMacsecPolicy(),
 			"mso_schema_template_contract_service_chaining":   datasourceMSOSchemaTemplateContractServiceChaining(),
+			"mso_tenant_policies_bgp_peer_prefix_policy":      datasourceMSOBGPPeerPrefixPolicy(),
 		},
 
 		ConfigureFunc: configureClient,
