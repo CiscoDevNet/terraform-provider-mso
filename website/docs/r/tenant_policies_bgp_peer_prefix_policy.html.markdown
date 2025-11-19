@@ -33,10 +33,10 @@ resource "mso_tenant_policies_bgp_peer_prefix_policy" "bgp_policy" {
 * `template_id` - (Required) The unique ID of the tenant policy template.
 * `name` - (Required) The name of the BGP Peer Prefix Policy.
 * `description` - (Optional) The description of the BGP Peer Prefix Policy.
-* `action` - (Optional) The action to take when the maximum number of prefixes is reached. Allowed values are log, reject, restart, shutdown.
-* `max_number_of_prefixes` - (Optional) The maximum number of prefixes allowed for the BGP peer. Valid range: 1-300000.
-* `threshold_percentage` - (Optional) The threshold percentage at which a warning is triggered. Valid range: 1-100.
-* `restart_time` - (Optional) The time in seconds to wait before restarting the BGP session after reaching the maximum number of prefixes. Valid range: 1-65535. This parameter is only applicable when action is set to restart.
+* `action` - (Optional) The action to take when the maximum number of prefixes is reached. Allowed values are `log`, `reject`, `restart`, `shutdown`. Defaults to `reject` when unset during creation.
+* `max_number_of_prefixes` - (Optional) The maximum number of prefixes allowed for the BGP peer. Valid range: 1-300000. Defaults to 20000 when unset during creation.
+* `threshold_percentage` - (Optional) The threshold percentage at which a warning is triggered. Valid range: 1-100. Defaults to 75 when unset during creation.
+* `restart_time` - (Optional) The time in seconds to wait before restarting the BGP session after reaching the maximum number of prefixes. Valid range: 1-65535. Defaults to 1 when unset during creation. This parameter is only applicable when action is set to restart.
 
 ## Attribute Reference ##
 
