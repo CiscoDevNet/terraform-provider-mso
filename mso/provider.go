@@ -135,6 +135,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_contract_service_chaining":   resourceMSOSchemaTemplateContractServiceChaining(),
 			"mso_tenant_policies_bgp_peer_prefix_policy":      resourceMSOBGPPeerPrefixPolicy(),
 			"mso_fabric_policies_l3_domain":                   resourceMSOL3Domain(),
+			"mso_tenant_policies_custom_qos_policy":           resourceMSOCustomQoSPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -203,6 +204,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_schema_template_contract_service_chaining":   datasourceMSOSchemaTemplateContractServiceChaining(),
 			"mso_tenant_policies_bgp_peer_prefix_policy":      datasourceMSOBGPPeerPrefixPolicy(),
 			"mso_fabric_policies_l3_domain":                   datasourceMSOL3Domain(),
+			"mso_tenant_policies_custom_qos_policy":           datasourceMSOCustomQoSPolicy(),
 		},
 
 		ConfigureFunc: configureClient,
