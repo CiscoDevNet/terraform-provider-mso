@@ -8,7 +8,7 @@ description: |-
 
 # mso_custom_qos_policy #
 
-Data source for Custom Quality of Service (QoS) Policy. This resource is supported in NDO v4.3 and higher.
+Data source for Custom QoS (Quality of Service) Policy. This resource is supported in NDO v4.3 and higher.
 
 ## GUI Information ##
 

@@ -8,7 +8,7 @@ description: |-
 
 # mso_tenant_policies_custom_qos_policy #
 
-Manages Custom Quality of Service (QoS) Policies on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO v4.3 and higher.
+Manages Custom QoS (Quality of Service) Policies on Cisco Nexus Dashboard Orchestrator (NDO). This resource is supported in NDO v4.3 and higher.
 
 
 ## GUI Information ##
