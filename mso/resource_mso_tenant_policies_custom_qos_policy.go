@@ -11,44 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-var targetCosMap = map[string]string{
-	"background":            "cos0",
-	"best_effort":           "cos1",
-	"excellent_effort":      "cos2",
-	"critical_applications": "cos3",
-	"video":                 "cos4",
-	"voice":                 "cos5",
-	"internetwork_control":  "cos6",
-	"network_control":       "cos7",
-	"unspecified":           "unspecified",
-}
-
-var targetDscpMap = map[string]string{
-	"af11":                 "af11",
-	"af12":                 "af12",
-	"af13":                 "af13",
-	"af21":                 "af21",
-	"af22":                 "af22",
-	"af23":                 "af23",
-	"af31":                 "af31",
-	"af32":                 "af32",
-	"af33":                 "af33",
-	"af41":                 "af41",
-	"af42":                 "af42",
-	"af43":                 "af43",
-	"cs0":                  "cs0",
-	"cs1":                  "cs1",
-	"cs2":                  "cs2",
-	"cs3":                  "cs3",
-	"cs4":                  "cs4",
-	"cs5":                  "cs5",
-	"cs6":                  "cs6",
-	"cs7":                  "cs7",
-	"expedited_forwarding": "expeditedForwarding",
-	"voice_admit":          "voiceAdmit",
-	"unspecified":          "unspecified",
-}
-
 func resourceMSOCustomQoSPolicy() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOCustomQoSPolicyCreate,
@@ -213,38 +175,6 @@ func resourceMSOCustomQoSPolicy() *schema.Resource {
 	}
 }
 
-func convertCosValue(value string) string {
-	if mapped, ok := targetCosMap[value]; ok {
-		return mapped
-	}
-	return value
-}
-
-func convertDscpValue(value string) string {
-	if mapped, ok := targetDscpMap[value]; ok {
-		return mapped
-	}
-	return value
-}
-
-func reverseCosMap(value string) string {
-	for k, v := range targetCosMap {
-		if v == value {
-			return k
-		}
-	}
-	return value
-}
-
-func reverseDscpMap(value string) string {
-	for k, v := range targetDscpMap {
-		if v == value {
-			return k
-		}
-	}
-	return value
-}
-
 func setCustomQoSPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/CustomQoSPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -257,10 +187,10 @@ func setCustomQoSPolicyData(d *schema.ResourceData, response *container.Containe
 	for i := 0; i < dscpMappingsCount; i++ {
 		dscpMapping := response.S("dscpMappings").Index(i)
 		mapping := map[string]interface{}{
-			"dscp_from":    reverseDscpMap(models.StripQuotes(dscpMapping.S("dscpFrom").String())),
-			"dscp_to":      reverseDscpMap(models.StripQuotes(dscpMapping.S("dscpTo").String())),
-			"dscp_target":  reverseDscpMap(models.StripQuotes(dscpMapping.S("dscpTarget").String())),
-			"target_cos":   reverseCosMap(models.StripQuotes(dscpMapping.S("targetCos").String())),
+			"dscp_from":    convertDscpValue(models.StripQuotes(dscpMapping.S("dscpFrom").String())),
+			"dscp_to":      convertDscpValue(models.StripQuotes(dscpMapping.S("dscpTo").String())),
+			"dscp_target":  convertDscpValue(models.StripQuotes(dscpMapping.S("dscpTarget").String())),
+			"target_cos":   convertCosValue(models.StripQuotes(dscpMapping.S("targetCos").String())),
 			"qos_priority": models.StripQuotes(dscpMapping.S("priority").String()),
 		}
 		dscpMappings = append(dscpMappings, mapping)
@@ -272,10 +202,10 @@ func setCustomQoSPolicyData(d *schema.ResourceData, response *container.Containe
 	for i := 0; i < cosMappingsCount; i++ {
 		cosMapping := response.S("cosMappings").Index(i)
 		mapping := map[string]interface{}{
-			"dot1p_from":   reverseCosMap(models.StripQuotes(cosMapping.S("dot1pFrom").String())),
-			"dot1p_to":     reverseCosMap(models.StripQuotes(cosMapping.S("dot1pTo").String())),
-			"dscp_target":  reverseDscpMap(models.StripQuotes(cosMapping.S("dscpTarget").String())),
-			"target_cos":   reverseCosMap(models.StripQuotes(cosMapping.S("targetCos").String())),
+			"dot1p_from":   convertCosValue(models.StripQuotes(cosMapping.S("dot1pFrom").String())),
+			"dot1p_to":     convertCosValue(models.StripQuotes(cosMapping.S("dot1pTo").String())),
+			"dscp_target":  convertDscpValue(models.StripQuotes(cosMapping.S("dscpTarget").String())),
+			"target_cos":   convertCosValue(models.StripQuotes(cosMapping.S("targetCos").String())),
 			"qos_priority": models.StripQuotes(cosMapping.S("priority").String()),
 		}
 		cosMappings = append(cosMappings, mapping)
