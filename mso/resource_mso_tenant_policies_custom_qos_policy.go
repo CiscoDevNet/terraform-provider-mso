@@ -187,10 +187,10 @@ func setCustomQoSPolicyData(d *schema.ResourceData, response *container.Containe
 	for i := 0; i < dscpMappingsCount; i++ {
 		dscpMapping := response.S("dscpMappings").Index(i)
 		mapping := map[string]interface{}{
-			"dscp_from":    convertDscpValue(models.StripQuotes(dscpMapping.S("dscpFrom").String())),
-			"dscp_to":      convertDscpValue(models.StripQuotes(dscpMapping.S("dscpTo").String())),
-			"dscp_target":  convertDscpValue(models.StripQuotes(dscpMapping.S("dscpTarget").String())),
-			"target_cos":   convertCosValue(models.StripQuotes(dscpMapping.S("targetCos").String())),
+			"dscp_from":    convertValueWithMap(models.StripQuotes(dscpMapping.S("dscpFrom").String()), targetDscpMap),
+			"dscp_to":      convertValueWithMap(models.StripQuotes(dscpMapping.S("dscpTo").String()), targetDscpMap),
+			"dscp_target":  convertValueWithMap(models.StripQuotes(dscpMapping.S("dscpTarget").String()), targetDscpMap),
+			"target_cos":   convertValueWithMap(models.StripQuotes(dscpMapping.S("targetCos").String()), targetCosMap),
 			"qos_priority": models.StripQuotes(dscpMapping.S("priority").String()),
 		}
 		dscpMappings = append(dscpMappings, mapping)
@@ -202,10 +202,10 @@ func setCustomQoSPolicyData(d *schema.ResourceData, response *container.Containe
 	for i := 0; i < cosMappingsCount; i++ {
 		cosMapping := response.S("cosMappings").Index(i)
 		mapping := map[string]interface{}{
-			"dot1p_from":   convertCosValue(models.StripQuotes(cosMapping.S("dot1pFrom").String())),
-			"dot1p_to":     convertCosValue(models.StripQuotes(cosMapping.S("dot1pTo").String())),
-			"dscp_target":  convertDscpValue(models.StripQuotes(cosMapping.S("dscpTarget").String())),
-			"target_cos":   convertCosValue(models.StripQuotes(cosMapping.S("targetCos").String())),
+			"dot1p_from":   convertValueWithMap(models.StripQuotes(cosMapping.S("dot1pFrom").String()), targetCosMap),
+			"dot1p_to":     convertValueWithMap(models.StripQuotes(cosMapping.S("dot1pTo").String()), targetCosMap),
+			"dscp_target":  convertValueWithMap(models.StripQuotes(cosMapping.S("dscpTarget").String()), targetDscpMap),
+			"target_cos":   convertValueWithMap(models.StripQuotes(cosMapping.S("targetCos").String()), targetCosMap),
 			"qos_priority": models.StripQuotes(cosMapping.S("priority").String()),
 		}
 		cosMappings = append(cosMappings, mapping)
@@ -246,19 +246,19 @@ func resourceMSOCustomQoSPolicyCreate(d *schema.ResourceData, m interface{}) err
 			dscpMapping := make(map[string]interface{})
 
 			if val, ok := mapping["dscp_from"].(string); ok {
-				dscpMapping["dscpFrom"] = convertDscpValue(val)
+				dscpMapping["dscpFrom"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["dscp_to"].(string); ok {
-				dscpMapping["dscpTo"] = convertDscpValue(val)
+				dscpMapping["dscpTo"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["dscp_target"].(string); ok {
-				dscpMapping["dscpTarget"] = convertDscpValue(val)
+				dscpMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["target_cos"].(string); ok {
-				dscpMapping["targetCos"] = convertCosValue(val)
+				dscpMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["qos_priority"].(string); ok {
@@ -280,19 +280,19 @@ func resourceMSOCustomQoSPolicyCreate(d *schema.ResourceData, m interface{}) err
 			cosMapping := make(map[string]interface{})
 
 			if val, ok := mapping["dot1p_from"].(string); ok {
-				cosMapping["dot1pFrom"] = convertCosValue(val)
+				cosMapping["dot1pFrom"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["dot1p_to"].(string); ok {
-				cosMapping["dot1pTo"] = convertCosValue(val)
+				cosMapping["dot1pTo"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["dscp_target"].(string); ok {
-				cosMapping["dscpTarget"] = convertDscpValue(val)
+				cosMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["target_cos"].(string); ok {
-				cosMapping["targetCos"] = convertCosValue(val)
+				cosMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["qos_priority"].(string); ok {
@@ -391,19 +391,19 @@ func resourceMSOCustomQoSPolicyUpdate(d *schema.ResourceData, m interface{}) err
 			dscpMapping := make(map[string]interface{})
 
 			if val, ok := mapping["dscp_from"].(string); ok {
-				dscpMapping["dscpFrom"] = convertDscpValue(val)
+				dscpMapping["dscpFrom"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["dscp_to"].(string); ok {
-				dscpMapping["dscpTo"] = convertDscpValue(val)
+				dscpMapping["dscpTo"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["dscp_target"].(string); ok {
-				dscpMapping["dscpTarget"] = convertDscpValue(val)
+				dscpMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["target_cos"].(string); ok {
-				dscpMapping["targetCos"] = convertCosValue(val)
+				dscpMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["qos_priority"].(string); ok {
@@ -428,19 +428,19 @@ func resourceMSOCustomQoSPolicyUpdate(d *schema.ResourceData, m interface{}) err
 			cosMapping := make(map[string]interface{})
 
 			if val, ok := mapping["dot1p_from"].(string); ok {
-				cosMapping["dot1pFrom"] = convertCosValue(val)
+				cosMapping["dot1pFrom"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["dot1p_to"].(string); ok {
-				cosMapping["dot1pTo"] = convertCosValue(val)
+				cosMapping["dot1pTo"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["dscp_target"].(string); ok {
-				cosMapping["dscpTarget"] = convertDscpValue(val)
+				cosMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
 			}
 
 			if val, ok := mapping["target_cos"].(string); ok {
-				cosMapping["targetCos"] = convertCosValue(val)
+				cosMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
 			}
 
 			if val, ok := mapping["qos_priority"].(string); ok {
