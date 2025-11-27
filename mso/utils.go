@@ -200,6 +200,28 @@ func addPatchPayloadToContainer(payloadContainer *container.Container, op, path 
 	return payloadContainer.ArrayAppend(jsonContainer.Data())
 }
 
+func removePatchPayloadToContainer(payloadContainer *container.Container, op, path string) error {
+
+	payloadMap := map[string]interface{}{"op": op, "path": path}
+
+	payload, err := json.Marshal(payloadMap)
+	if err != nil {
+		return err
+	}
+
+	jsonContainer, err := container.ParseJSON([]byte(payload))
+	if err != nil {
+		return err
+	}
+
+	err = payloadContainer.ArrayAppend(jsonContainer.Data())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func doPatchRequest(msoClient *client.Client, path string, payloadCon *container.Container) error {
 
 	req, err := msoClient.MakeRestRequest("PATCH", path, payloadCon, true)
