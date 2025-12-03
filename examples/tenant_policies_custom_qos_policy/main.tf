@@ -28,7 +28,7 @@ resource "mso_template" "tenant_template" {
 # tenant policies custom qos policy example
 
 resource "mso_tenant_policies_custom_qos_policy" "qos_policy" {
-  template_id = mso_template.template_tenant.id
+  template_id = mso_template.tenant_template.id
   name        = "test_custom_qos_policy"
   description = "Custom QoS Policy"
 
