@@ -540,12 +540,65 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
-	displayName := d.Get("display_name").(string)
-	scope := d.Get("scope").(string)
-	priority := d.Get("priority").(string)
-	targetDscp := d.Get("target_dscp").(string)
-	filterType := d.Get("filter_type").(string)
-	filterRelationship := d.Get("filter_relationship").([]interface{})
+
+	updatePath := createMSOTemplateContractPath(templateName, contractName)
+	payloadCont := container.New()
+	payloadCont.Array()
+
+	if d.HasChange("display_name") {
+		displayName := d.Get("display_name").(string)
+		if displayName == "" {
+			displayName = contractName
+		}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/displayName", updatePath), displayName)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("scope") {
+		scope := d.Get("scope").(string)
+		if scope == "" {
+			scope = "context"
+		}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/scope", updatePath), scope)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("priority") {
+		priority := d.Get("priority").(string)
+		if priority != "" {
+			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/prio", updatePath), priority)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	if d.HasChange("target_dscp") {
+		targetDscp := d.Get("target_dscp").(string)
+		if targetDscp != "" {
+			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/prio", updatePath), targetDscp)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	if d.HasChange("filter_type") {
+		filterType := d.Get("filter_type").(string)
+		if filterType == "" {
+			filterType = "bothWay"
+		}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/filterType", updatePath), filterType)
+		if err != nil {
+			return err
+		}
+	}
 
 	// TODO remove when filter_relationships and directives are deprecated on next mayor version
 	directives := d.Get("directives").([]interface{})
@@ -553,23 +606,45 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	if d.HasChange("filter_relationships") {
 		deprecatedFilterRelationship := d.Get("filter_relationships").(map[string]interface{})
 		filterRelationships = getDeprecatedFilterRelationshipsFromConfig(schemaId, templateName, deprecatedFilterRelationship, directives)
-	} else {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/filterRelationships", updatePath), filterRelationships)
+		if err != nil {
+			return err
+		}
+	} else if d.HasChange("filter_relationship") {
+		filterRelationship := d.Get("filter_relationship").([]interface{})
 		filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider = getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship, directives)
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/filterRelationships", updatePath), filterRelationships)
+		if err != nil {
+			return err
+		}
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/filterRelationshipsProviderToConsumer", updatePath), filterRelationshipsProviderToConsumer)
+		if err != nil {
+			return err
+		}
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/filterRelationshipsConsumerToProvider", updatePath), filterRelationshipsConsumerToProvider)
+		if err != nil {
+			return err
+		}
 	}
 	// TODO uncomment line below when filter_relationships and directives are deprecated on next mayor version
 	// filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider := getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship)
 
-	var description string
-	if Description, ok := d.GetOk("description"); ok {
-		description = Description.(string)
+	if d.HasChange("description") {
+		var description string
+		if descr, ok := d.GetOk("description"); ok {
+			description = descr.(string)
+		}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), description)
+		if err != nil {
+			return err
+		}
 	}
 
-	path := createMSOTemplateContractPath(templateName, contractName)
-	contractStruct := models.NewTemplateContract("replace", path, contractName, displayName, scope, filterType, targetDscp, priority, description, filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), contractStruct)
+	err := doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCont)
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOTemplateContractRead(d, m)
 }
 
