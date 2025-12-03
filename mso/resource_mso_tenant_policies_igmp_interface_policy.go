@@ -552,7 +552,6 @@ func resourceMSOIGMPInterfacePolicyUpdate(d *schema.ResourceData, m interface{})
 			}
 		}
 	}
-	log.Printf("HERE %v", payloadCont)
 	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateId), payloadCont)
 	if err != nil {
 		return err
