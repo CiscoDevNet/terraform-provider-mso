@@ -516,7 +516,7 @@ func resourceMSOIGMPInterfacePolicyUpdate(d *schema.ResourceData, m interface{})
 				return err
 			}
 		} else {
-			err := removePatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/stateLimitRouteMapRef", updatePath))
+			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/stateLimitRouteMapRef", updatePath), nil)
 			if err != nil {
 				return err
 			}
@@ -531,7 +531,7 @@ func resourceMSOIGMPInterfacePolicyUpdate(d *schema.ResourceData, m interface{})
 				return err
 			}
 		} else {
-			err := removePatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/reportPolicyRouteMapRef", updatePath))
+			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/reportPolicyRouteMapRef", updatePath), nil)
 			if err != nil {
 				return err
 			}
@@ -546,7 +546,7 @@ func resourceMSOIGMPInterfacePolicyUpdate(d *schema.ResourceData, m interface{})
 				return err
 			}
 		} else {
-			err := removePatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/staticReportRouteMapRef", updatePath))
+			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/staticReportRouteMapRef", updatePath), nil)
 			if err != nil {
 				return err
 			}
