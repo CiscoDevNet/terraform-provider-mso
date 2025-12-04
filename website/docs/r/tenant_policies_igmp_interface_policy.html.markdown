@@ -58,9 +58,9 @@ resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
 * `startup_query_interval` - (Optional) The interval in seconds between general queries sent at startup. Default: 31 when unset during creation. Valid range: 1-18000 seconds.
 * `querier_timeout` - (Optional) The time in seconds before a router considers the IGMP querier to be down. Default: 255 when unset during creation. Valid range: 1-65535 seconds.
 * `robustness_variable` - (Optional) Allows tuning for expected packet loss. Higher values provide more robustness but increase recovery time. Default: 2 when unset during creation. Valid range: 1-7.
-* `state_limit_route_map_uuid` - (Optional) The NDO UUID of the route map policy for multicast that controls which multicast groups can be joined. Providing an empty string ("") will remove the reference.
-* `report_policy_route_map_uuid` - (Optional) The NDO UUID of the route map policy for multicast that filters IGMP reports. Providing an empty string ("") will remove the reference.
-* `static_report_route_map_uuid` - (Optional) The NDO UUID of the route map policy for multicast that defines static multicast group memberships. Providing an empty string ("") will remove the reference.
+* `state_limit_route_map_uuid` - (Optional) The NDO UUID of the route map policy for multicast that controls which multicast groups can be joined.
+* `report_policy_route_map_uuid` - (Optional) The NDO UUID of the route map policy for multicast that filters IGMP reports.
+* `static_report_route_map_uuid` - (Optional) The NDO UUID of the route map policy for multicast that defines static multicast group memberships.
 * `maximum_multicast_entries` - (Optional) The maximum number of multicast route entries allowed. Default: 4294967295 when unset during creation. Valid range: 1-4294967295. Note: This parameter is only applicable when state_limit_route_map_uuid is configured.
 * `reserved_multicast_entries` - (Optional) The number of multicast entries reserved and guaranteed for this policy. Default: 0 when unset during creation. Valid range: 0-4294967295.
 

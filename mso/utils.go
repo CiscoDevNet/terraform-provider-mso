@@ -181,23 +181,25 @@ func getPathFromId(id string) string {
 }
 
 func addPatchPayloadToContainer(payloadContainer *container.Container, op, path string, value interface{}) error {
-	payloadMap := map[string]interface{}{"op": op, "path": path}
 
-	if value != nil {
-		payloadMap["value"] = value
-	}
+	payloadMap := map[string]interface{}{"op": op, "path": path, "value": value}
 
 	payload, err := json.Marshal(payloadMap)
 	if err != nil {
 		return err
 	}
 
-	jsonContainer, err := container.ParseJSON(payload)
+	jsonContainer, err := container.ParseJSON([]byte(payload))
 	if err != nil {
 		return err
 	}
 
-	return payloadContainer.ArrayAppend(jsonContainer.Data())
+	err = payloadContainer.ArrayAppend(jsonContainer.Data())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func doPatchRequest(msoClient *client.Client, path string, payloadCon *container.Container) error {

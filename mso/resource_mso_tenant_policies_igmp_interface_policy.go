@@ -509,49 +509,26 @@ func resourceMSOIGMPInterfacePolicyUpdate(d *schema.ResourceData, m interface{})
 	}
 
 	if d.HasChange("state_limit_route_map_uuid") {
-		uuid := d.Get("state_limit_route_map_uuid").(string)
-		if uuid != "" {
-			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/stateLimitRouteMapRef", updatePath), uuid)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/stateLimitRouteMapRef", updatePath), nil)
-			if err != nil {
-				return err
-			}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/stateLimitRouteMapRef", updatePath), d.Get("state_limit_route_map_uuid").(string))
+		if err != nil {
+			return err
 		}
 	}
 
 	if d.HasChange("report_policy_route_map_uuid") {
-		uuid := d.Get("report_policy_route_map_uuid").(string)
-		if uuid != "" {
-			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/reportPolicyRouteMapRef", updatePath), uuid)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/reportPolicyRouteMapRef", updatePath), nil)
-			if err != nil {
-				return err
-			}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/reportPolicyRouteMapRef", updatePath), d.Get("report_policy_route_map_uuid").(string))
+		if err != nil {
+			return err
 		}
 	}
 
 	if d.HasChange("static_report_route_map_uuid") {
-		uuid := d.Get("static_report_route_map_uuid").(string)
-		if uuid != "" {
-			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/staticReportRouteMapRef", updatePath), uuid)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/staticReportRouteMapRef", updatePath), nil)
-			if err != nil {
-				return err
-			}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/staticReportRouteMapRef", updatePath), d.Get("static_report_route_map_uuid").(string))
+		if err != nil {
+			return err
 		}
 	}
+
 	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateId), payloadCont)
 	if err != nil {
 		return err
