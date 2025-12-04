@@ -26,7 +26,7 @@ resource "mso_template" "tenant_template" {
 }
 
 resource "mso_tenant_policies_route_map_policy_multicast" "state_limit" {
-  template_id = mso_template.template_tenant.id
+  template_id = mso_template.tenant_template.id
   name        = "tf_test_state_limit"
   description = "Terraform test Route Map Policy for Multicast"
   route_map_multicast_entries {
@@ -67,7 +67,7 @@ resource "mso_tenant_policies_route_map_policy_multicast" "static_report" {
 # tenant policies igmp interface policy example
 
 resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
-  template_id                  = mso_template.template_tenant.id
+  template_id                  = mso_template.tenant_template.id
   name                         = "test_igmp_interface_policy"
   description                  = "With Route Maps"
   igmp_version                 = "v3"
