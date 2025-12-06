@@ -175,6 +175,72 @@ func resourceMSOCustomQoSPolicy() *schema.Resource {
 	}
 }
 
+func processDscpMappings(dscpMappingsList []interface{}) []interface{} {
+	dscpMappings := make([]interface{}, 0, len(dscpMappingsList))
+
+	for _, item := range dscpMappingsList {
+		mapping := item.(map[string]interface{})
+		dscpMapping := make(map[string]interface{})
+
+		if val, ok := mapping["dscp_from"].(string); ok {
+			dscpMapping["dscpFrom"] = convertValueWithMap(val, targetDscpMap)
+		}
+
+		if val, ok := mapping["dscp_to"].(string); ok {
+			dscpMapping["dscpTo"] = convertValueWithMap(val, targetDscpMap)
+		}
+
+		if val, ok := mapping["dscp_target"].(string); ok {
+			dscpMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
+		}
+
+		if val, ok := mapping["target_cos"].(string); ok {
+			dscpMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
+		}
+
+		if val, ok := mapping["qos_priority"].(string); ok {
+			dscpMapping["priority"] = val
+		}
+
+		dscpMappings = append(dscpMappings, dscpMapping)
+	}
+
+	return dscpMappings
+}
+
+func processCosMappings(cosMappingsList []interface{}) []interface{} {
+	cosMappings := make([]interface{}, 0, len(cosMappingsList))
+
+	for _, item := range cosMappingsList {
+		mapping := item.(map[string]interface{})
+		cosMapping := make(map[string]interface{})
+
+		if val, ok := mapping["dot1p_from"].(string); ok {
+			cosMapping["dot1pFrom"] = convertValueWithMap(val, targetCosMap)
+		}
+
+		if val, ok := mapping["dot1p_to"].(string); ok {
+			cosMapping["dot1pTo"] = convertValueWithMap(val, targetCosMap)
+		}
+
+		if val, ok := mapping["dscp_target"].(string); ok {
+			cosMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
+		}
+
+		if val, ok := mapping["target_cos"].(string); ok {
+			cosMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
+		}
+
+		if val, ok := mapping["qos_priority"].(string); ok {
+			cosMapping["priority"] = val
+		}
+
+		cosMappings = append(cosMappings, cosMapping)
+	}
+
+	return cosMappings
+}
+
 func setCustomQoSPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/CustomQoSPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -227,7 +293,6 @@ func resourceMSOCustomQoSPolicyCreate(d *schema.ResourceData, m interface{}) err
 	msoClient := m.(*client.Client)
 
 	payload := map[string]interface{}{}
-
 	payload["name"] = d.Get("name").(string)
 
 	if description, ok := d.GetOk("description"); ok {
@@ -239,69 +304,13 @@ func resourceMSOCustomQoSPolicyCreate(d *schema.ResourceData, m interface{}) err
 	if dscpMappingsRaw, ok := d.GetOk("dscp_mappings"); ok {
 		dscpMappingsSet := dscpMappingsRaw.(*schema.Set)
 		dscpMappingsList := dscpMappingsSet.List()
-		dscpMappings := make([]interface{}, 0, len(dscpMappingsList))
-
-		for _, item := range dscpMappingsList {
-			mapping := item.(map[string]interface{})
-			dscpMapping := make(map[string]interface{})
-
-			if val, ok := mapping["dscp_from"].(string); ok {
-				dscpMapping["dscpFrom"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["dscp_to"].(string); ok {
-				dscpMapping["dscpTo"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["dscp_target"].(string); ok {
-				dscpMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["target_cos"].(string); ok {
-				dscpMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["qos_priority"].(string); ok {
-				dscpMapping["priority"] = val
-			}
-
-			dscpMappings = append(dscpMappings, dscpMapping)
-		}
-		payload["dscpMappings"] = dscpMappings
+		payload["dscpMappings"] = processDscpMappings(dscpMappingsList)
 	}
 
 	if cosMappingsRaw, ok := d.GetOk("cos_mappings"); ok {
 		cosMappingsSet := cosMappingsRaw.(*schema.Set)
 		cosMappingsList := cosMappingsSet.List()
-		cosMappings := make([]interface{}, 0, len(cosMappingsList))
-
-		for _, item := range cosMappingsList {
-			mapping := item.(map[string]interface{})
-			cosMapping := make(map[string]interface{})
-
-			if val, ok := mapping["dot1p_from"].(string); ok {
-				cosMapping["dot1pFrom"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["dot1p_to"].(string); ok {
-				cosMapping["dot1pTo"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["dscp_target"].(string); ok {
-				cosMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["target_cos"].(string); ok {
-				cosMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["qos_priority"].(string); ok {
-				cosMapping["priority"] = val
-			}
-
-			cosMappings = append(cosMappings, cosMapping)
-		}
-		payload["cosMappings"] = cosMappings
+		payload["cosMappings"] = processCosMappings(cosMappingsList)
 	}
 
 	payloadModel := models.GetPatchPayload("add", "/tenantPolicyTemplate/template/qosPolicies/-", payload)
@@ -362,7 +371,6 @@ func resourceMSOCustomQoSPolicyUpdate(d *schema.ResourceData, m interface{}) err
 	}
 
 	updatePath := fmt.Sprintf("/tenantPolicyTemplate/template/qosPolicies/%d", policyIndex)
-
 	payloadCont := container.New()
 	payloadCont.Array()
 
@@ -384,34 +392,8 @@ func resourceMSOCustomQoSPolicyUpdate(d *schema.ResourceData, m interface{}) err
 	if d.HasChange("dscp_mappings") {
 		dscpMappingsSet := d.Get("dscp_mappings").(*schema.Set)
 		dscpMappingsList := dscpMappingsSet.List()
-		dscpMappings := make([]interface{}, 0, len(dscpMappingsList))
+		dscpMappings := processDscpMappings(dscpMappingsList)
 
-		for _, item := range dscpMappingsList {
-			mapping := item.(map[string]interface{})
-			dscpMapping := make(map[string]interface{})
-
-			if val, ok := mapping["dscp_from"].(string); ok {
-				dscpMapping["dscpFrom"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["dscp_to"].(string); ok {
-				dscpMapping["dscpTo"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["dscp_target"].(string); ok {
-				dscpMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["target_cos"].(string); ok {
-				dscpMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["qos_priority"].(string); ok {
-				dscpMapping["priority"] = val
-			}
-
-			dscpMappings = append(dscpMappings, dscpMapping)
-		}
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/dscpMappings", updatePath), dscpMappings)
 		if err != nil {
 			return err
@@ -421,34 +403,8 @@ func resourceMSOCustomQoSPolicyUpdate(d *schema.ResourceData, m interface{}) err
 	if d.HasChange("cos_mappings") {
 		cosMappingsSet := d.Get("cos_mappings").(*schema.Set)
 		cosMappingsList := cosMappingsSet.List()
-		cosMappings := make([]interface{}, 0, len(cosMappingsList))
+		cosMappings := processCosMappings(cosMappingsList)
 
-		for _, item := range cosMappingsList {
-			mapping := item.(map[string]interface{})
-			cosMapping := make(map[string]interface{})
-
-			if val, ok := mapping["dot1p_from"].(string); ok {
-				cosMapping["dot1pFrom"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["dot1p_to"].(string); ok {
-				cosMapping["dot1pTo"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["dscp_target"].(string); ok {
-				cosMapping["dscpTarget"] = convertValueWithMap(val, targetDscpMap)
-			}
-
-			if val, ok := mapping["target_cos"].(string); ok {
-				cosMapping["targetCos"] = convertValueWithMap(val, targetCosMap)
-			}
-
-			if val, ok := mapping["qos_priority"].(string); ok {
-				cosMapping["priority"] = val
-			}
-
-			cosMappings = append(cosMappings, cosMapping)
-		}
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/cosMappings", updatePath), cosMappings)
 		if err != nil {
 			return err
