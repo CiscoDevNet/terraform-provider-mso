@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.7.0 (December 08, 2025)
+
+IMPROVEMENTS:
+- Add mso_fabric_policies_macsec_policy resource and datasource.
+- Add mso_schema_template_contract_service_chaining resource and datasource.
+- Add mso_tenant_policies_bgp_peer_prefix_policy resource and datasource.
+
+BUG FIXES:
+- Fix mso_schema_template_contract to prevent deletion when attributes change.
+
 ## 1.6.0 (November 5, 2025)
 
 IMPROVEMENTS:
