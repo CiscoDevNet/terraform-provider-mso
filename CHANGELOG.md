@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.7.0 (December 09, 2025)
+
+IMPROVEMENTS:
+- Add resource and data source for macsec policy under fabric policy template.
+- Addition of resource and data source for service chaining under contract in template
+- Addition of resource and data source for bgp peer prefix policy under tenant policies
+
+BUG FIXES:
+- Ensure service graph configuration in schema template contract is not deleted when there are updates to attributes of the contract
+
 ## 1.7.0 (December 08, 2025)
 
 IMPROVEMENTS:
