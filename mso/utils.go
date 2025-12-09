@@ -429,3 +429,10 @@ func GetTemplateIdByNameAndType(msoClient *client.Client, templateName, template
 
 	return nil, fmt.Errorf("Template with name '%s' not found for template Type '%s'.", templateName, templateType)
 }
+
+func convertValueWithMap(value string, conversionMap map[string]string) string {
+	if mapped, ok := conversionMap[value]; ok {
+		return mapped
+	}
+	return value
+}
