@@ -301,8 +301,9 @@ func testAccMSOTemplateResourceTenantConfig() string {
 		template_name = "test_template_tenant"
 		template_type = "tenant"
 		tenant_id = mso_tenant.%s.id
+		sites = [data.mso_site.%s.id]
 	}
-	`, testAccTenantConfig(), msoTemplateTenantName)
+	`, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
 
 func testAccMSOTemplateResourceTenantNameChangeConfig() string {
