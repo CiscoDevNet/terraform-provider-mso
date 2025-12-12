@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 )
 
-const msoTemplateSiteName1 = "APIC1"
+const msoTemplateSiteName1 = "ansible_test"
 const msoTemplateSiteName2 = "ansible_test_2"
 
 var msoTenantName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
