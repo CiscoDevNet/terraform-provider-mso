@@ -43,7 +43,7 @@ data "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
 * `last_member_count` - (Read-Only) The number of group-specific queries sent before the router assumes there are no local members.
 * `last_member_response_time` - (Read-Only) The maximum time in seconds to wait for a response to a group-specific query before removing the group.
 * `startup_query_count` - (Read-Only) The number of queries sent at startup separated by the startup query interval.
-* `startup_query_interval` - (Read-Only) The interval in seconds between general queries sent at startup. Default: 31 when unset during creation. Valid range: 1-18000 seconds.
+* `startup_query_interval` - (Read-Only) The interval in seconds between general queries sent at startup.
 * `querier_timeout` - (Read-Only) The time in seconds before a router considers the IGMP querier to be down.
 * `robustness_variable` - (Read-Only) Allows tuning for expected packet loss. Higher values provide more robustness but increase recovery time.
 * `state_limit_route_map_uuid` - (Read-Only) The NDO UUID of the route map policy for multicast that controls which multicast groups can be joined.
