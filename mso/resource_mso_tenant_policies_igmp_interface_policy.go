@@ -176,22 +176,26 @@ func setIGMPInterfacePolicyData(d *schema.ResourceData, response *container.Cont
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
 	if response.Exists("enableV3Asm") {
-		enableV3Asm, _ := response.S("enableV3Asm").Data().(bool)
-		d.Set("version3_asm", enableV3Asm)
+		if enableV3Asm, ok := response.S("enableV3Asm").Data().(bool); ok {
+			d.Set("version3_asm", enableV3Asm)
+		}
 	}
 
 	if response.Exists("enableFastLeaveControl") {
-		fastLeave, _ := response.S("enableFastLeaveControl").Data().(bool)
-		d.Set("fast_leave", fastLeave)
+		if fastLeave, ok := response.S("enableFastLeaveControl").Data().(bool); ok {
+			d.Set("fast_leave", fastLeave)
+		}
 	}
 
 	if response.Exists("enableReportLinkLocalGroups") {
-		reportLinkLocal, _ := response.S("enableReportLinkLocalGroups").Data().(bool)
-		d.Set("report_link_local_groups", reportLinkLocal)
+		if reportLinkLocal, ok := response.S("enableReportLinkLocalGroups").Data().(bool); ok {
+			d.Set("report_link_local_groups", reportLinkLocal)
+		}
 	}
 
-	d.Set("igmp_version", models.StripQuotes(response.S("igmpQuerierVersion").String()))
-
+	if response.Exists("igmpQuerierVersion") {
+		d.Set("igmp_version", models.StripQuotes(response.S("igmpQuerierVersion").String()))
+	}
 	if response.Exists("groupTimeout") {
 		d.Set("group_timeout", int(response.S("groupTimeout").Data().(float64)))
 	}
@@ -227,11 +231,8 @@ func setIGMPInterfacePolicyData(d *schema.ResourceData, response *container.Cont
 	}
 
 	d.Set("state_limit_route_map_uuid", models.StripQuotes(response.S("stateLimitRouteMapRef").String()))
-	d.Set("state_limit_route_map_name", models.StripQuotes(response.S("stateLimitRouteMapName").String()))
 	d.Set("report_policy_route_map_uuid", models.StripQuotes(response.S("reportPolicyRouteMapRef").String()))
-	d.Set("report_policy_route_map_name", models.StripQuotes(response.S("reportPolicyRouteMapName").String()))
 	d.Set("static_report_route_map_uuid", models.StripQuotes(response.S("staticReportRouteMapRef").String()))
-	d.Set("static_report_route_map_name", models.StripQuotes(response.S("staticReportRouteMapName").String()))
 
 	return nil
 }
