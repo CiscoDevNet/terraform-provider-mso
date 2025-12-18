@@ -121,19 +121,25 @@ func setMLDSnoopingPolicyData(d *schema.ResourceData, response *container.Contai
 	d.Set("description", models.StripQuotes(response.S("description").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
-	d.Set("admin_state", models.StripQuotes(response.S("enableAdminState").String()))
+	if response.Exists("enableAdminState") {
+		d.Set("admin_state", models.StripQuotes(response.S("enableAdminState").String()))
+	}
 
 	if response.Exists("enableFastLeaveControl") {
-		fastLeave, _ := response.S("enableFastLeaveControl").Data().(bool)
-		d.Set("fast_leave_control", fastLeave)
+		if fastLeave, ok := response.S("enableFastLeaveControl").Data().(bool); ok {
+			d.Set("fast_leave_control", fastLeave)
+		}
 	}
 
 	if response.Exists("enableQuerierControl") {
-		querierControl, _ := response.S("enableQuerierControl").Data().(bool)
-		d.Set("querier_control", querierControl)
+		if querierControl, ok := response.S("enableQuerierControl").Data().(bool); ok {
+			d.Set("querier_control", querierControl)
+		}
 	}
 
-	d.Set("querier_version", models.StripQuotes(response.S("mldQuerierVersion").String()))
+	if response.Exists("mldQuerierVersion") {
+		d.Set("querier_version", models.StripQuotes(response.S("mldQuerierVersion").String()))
+	}
 
 	if response.Exists("queryInterval") {
 		d.Set("query_interval", int(response.S("queryInterval").Data().(float64)))
