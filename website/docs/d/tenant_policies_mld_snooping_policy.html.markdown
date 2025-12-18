@@ -25,20 +25,20 @@ data "mso_tenant_policies_mld_snooping_policy" "mld_policy" {
 
 ## Argument Reference ##
 
-`template_id` - (Required) The unique ID of the tenant policy template.
-`name` - (Required) The name of the MLD Snooping Policy to retrieve.
+* `template_id` - (Required) The unique ID of the tenant policy template.
+* `name` - (Required) The name of the MLD Snooping Policy to retrieve.
 
 ## Attribute Reference ##
 
-`uuid` - (Read-Only) The NDO UUID of the MLD Snooping Policy.
-`id` - (Read-Only) The unique terraform identifier of the MLD Snooping Policy in the template.
-`description` - (Read-Only) The description of the MLD Snooping Policy.
-`admin_state` - (Read-Only) The administrative state.
-`fast_leave_control` - (Read-Only) Whether fast leave control is enabled.
-`querier_control` - (Read-Only) Whether querier control is enabled.
-`querier_version` - (Read-Only) The querier version.
-`query_interval` - (Read-Only) The query interval in seconds.
-`query_response_interval` - (Read-Only) The query response interval in seconds.
-`last_member_query_interval` - (Read-Only) The last member query interval in seconds.
-`start_query_interval` - (Read-Only) The start query interval in seconds.
-`start_query_count` - (Read-Only) The start query count.
+* `uuid` - (Read-Only) The NDO UUID of the MLD Snooping Policy.
+* `id` - (Read-Only) The unique terraform identifier of the MLD Snooping Policy in the template.
+* `description` - (Read-Only) The description of the MLD Snooping Policy.
+* `admin_state` - (Read-Only) The administrative state.
+* `fast_leave_control` - (Read-Only) Whether fast leave control is enabled.
+* `querier_control` - (Read-Only) Whether querier control is enabled.
+* `querier_version` - (Read-Only) The querier version.
+* `query_interval` - (Read-Only) The query interval in seconds.
+* `query_response_interval` - (Read-Only) The query response interval in seconds.
+* `last_member_query_interval` - (Read-Only) The last member query interval in seconds.
+* `start_query_interval` - (Read-Only) The start query interval in seconds.
+* `start_query_count` - (Read-Only) The start query count.
