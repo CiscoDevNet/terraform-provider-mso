@@ -19,6 +19,9 @@ var msoSchemaTemplateExtEpgName = acctest.RandStringFromCharSet(10, acctest.Char
 var msoTenantPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateMCPGlobalPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateBdName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantPolicyTemplateIPSLAMonitoringPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantPolicyTemplateIPSLATrackListName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -127,4 +130,36 @@ resource "mso_template" "%[1]s" {
 	template_type = "fabric_policy"
 }
 `, msoFabricPolicyTemplateName)
+}
+
+func testSchemaTemplateBdConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_bd" "%[1]s" {
+	schema_id				= mso_schema.%[2]s.id
+	template_name			= "%[3]s"
+	name					= "%[1]s"
+	display_name			= "%[1]s"
+	layer2_unknown_unicast 	= "proxy"
+	vrf_name				= mso_schema_template_vrf.%[4]s.name
+}
+`, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
+}
+
+func testTenantPolicyTemplateIPSLAMonitoringPolicyConfig() string {
+	return fmt.Sprintf(`
+resource "mso_tenant_policies_ipsla_monitoring_policy" "%[1]s" {
+	template_id        = mso_template.%[2]s.id
+	name               = "%[1]s"
+	sla_type           = "http"
+	destination_port   = 80
+	http_version       = "HTTP11"
+	http_uri           = "/example"
+	sla_frequency      = 120
+	detect_multiplier  = 4
+	request_data_size  = 64
+	type_of_service    = 18
+	operation_timeout  = 100
+	threshold          = 100
+	ipv6_traffic_class = 255
+}`, msoTenantPolicyTemplateIPSLAMonitoringPolicyName, msoTenantPolicyTemplateName)
 }
