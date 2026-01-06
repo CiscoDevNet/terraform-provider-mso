@@ -513,3 +513,35 @@ func GetDeployedSiteIds(msoClient *client.Client, templateId string) ([]string, 
 
 	return nil, fmt.Errorf("template with ID '%s' not found", templateId)
 }
+
+func GetDeployedSiteIdsForApplicationTemplate(msoClient *client.Client, schemaId, templateName string) ([]string, error) {
+	// Query schema to get site associations
+	path := fmt.Sprintf("api/v1/schemas/%s", schemaId)
+	cont, err := msoClient.GetViaURL(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch schema: %w", err)
+	}
+
+	// Get sites associated with this template
+	sites, err := cont.S("sites").Children()
+	if err != nil {
+		return nil, fmt.Errorf("no sites found for schema")
+	}
+
+	var siteIds []string
+	for _, site := range sites {
+		siteTemplateName := models.StripQuotes(site.S("templateName").String())
+		if siteTemplateName == templateName {
+			siteId := models.StripQuotes(site.S("siteId").String())
+			if siteId != "" {
+				siteIds = append(siteIds, siteId)
+			}
+		}
+	}
+
+	if len(siteIds) == 0 {
+		return nil, fmt.Errorf("no sites found associated with template '%s'", templateName)
+	}
+
+	return siteIds, nil
+}
