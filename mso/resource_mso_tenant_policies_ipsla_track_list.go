@@ -102,7 +102,7 @@ func resourceMSOIPSLATrackList() *schema.Resource {
 }
 
 func setIPSLATrackListData(d *schema.ResourceData, response *container.Container, templateId string) error {
-	d.SetId(fmt.Sprintf("templateId/%s/ipslaTrackLists/%s", templateId, models.StripQuotes(response.S("name").String())))
+	d.SetId(fmt.Sprintf("templateId/%s/IPSLATrackLists/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
 	d.Set("description", models.StripQuotes(response.S("description").String()))
@@ -179,7 +179,7 @@ func resourceMSOIPSLATrackListCreate(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/ipslaTrackLists/%s", templateId, d.Get("name").(string)))
+	d.SetId(fmt.Sprintf("templateId/%s/IPSLATrackLists/%s", templateId, d.Get("name").(string)))
 	log.Printf("[DEBUG] MSO IPSLA Track List Resource - Create Complete: %v", d.Id())
 	return resourceMSOIPSLATrackListRead(d, m)
 }
@@ -198,7 +198,7 @@ func resourceMSOIPSLATrackListRead(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "ipslaTrackLists")
+	policyName, err := GetPolicyNameFromResourceId(d.Id(), "IPSLATrackLists")
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,6 @@ func resourceMSOIPSLATrackListUpdate(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("templateId/%s/ipslaTrackLists/%s", templateId, d.Get("name").(string)))
 	log.Printf("[DEBUG] MSO IPSLA Track List Resource - Update Complete: %v", d.Id())
 	return resourceMSOIPSLATrackListRead(d, m)
 }
