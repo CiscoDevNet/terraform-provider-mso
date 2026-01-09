@@ -136,6 +136,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_bgp_peer_prefix_policy":      resourceMSOBGPPeerPrefixPolicy(),
 			"mso_fabric_policies_l3_domain":                   resourceMSOL3Domain(),
 			"mso_tenant_policies_custom_qos_policy":           resourceMSOCustomQoSPolicy(),
+			"mso_tenant_policies_dhcp_option_policy":          resourceMSODHCPOptionPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -205,6 +206,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_bgp_peer_prefix_policy":      datasourceMSOBGPPeerPrefixPolicy(),
 			"mso_fabric_policies_l3_domain":                   datasourceMSOL3Domain(),
 			"mso_tenant_policies_custom_qos_policy":           datasourceMSOCustomQoSPolicy(),
+			"mso_tenant_policies_dhcp_option_policy":          datasourceMSODHCPOptionPolicy(),
 		},
 
 		ConfigureFunc: configureClient,
