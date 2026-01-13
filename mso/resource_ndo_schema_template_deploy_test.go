@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-const msoTfTenantName = "tf_test_mso_tenant"
+const msoTfTenantName = "tf_test_mso_tenant_app"
 
 func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -129,14 +129,6 @@ func TestAccNdoSchemaTemplateDeploy_Undeploy(t *testing.T) {
 					resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
 				),
 			},
-			{
-				PreConfig: func() { fmt.Println("Test: Undeploy tenant template") },
-				Config:    testAccNdoSchemaTemplateDeploy_TenantTemplateUndeploy(),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
-					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.deploy", "undeploy", "true"),
-				),
-			},
 		},
 	})
 }
@@ -159,6 +151,45 @@ func TestAccNdoSchemaTemplateDeploy_UndeployWithSiteIds(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.deploy", "undeploy", "true"),
 					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.deploy", "site_ids.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ValidationError_UndeployWithoutSiteIds(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Undeploy validation - site_ids required") },
+				Config:      testAccNdoSchemaTemplateDeploy_ErrorUndeployWithoutSiteIds(),
+				ExpectError: regexp.MustCompile("when 'undeploy=true', 'site_ids' must be provided"),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ApplicationTemplate_UndeployWithSiteIds(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Deploy application template") },
+				Config:    testAccNdoSchemaTemplateDeploy_ApplicationTemplate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.app_deploy", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.app_deploy", "template_type", "application"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Undeploy application template with site_ids") },
+				Config:    testAccNdoSchemaTemplateDeploy_ApplicationTemplateUndeployWithSiteIds(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.app_deploy", "undeploy", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.app_deploy", "site_ids.#", "1"),
 				),
 			},
 		},
@@ -351,6 +382,7 @@ func testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithTemplateId() string
     resource "mso_schema_template_deploy_ndo" "deploy" {
         force_apply = ""
         template_id = mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy.template_id
+        template_type = "tenant"
         undeploy_on_destroy = true
     }`, testAccMSOTemplateResourceTenantConfig())
 }
@@ -440,30 +472,64 @@ func testAccNdoSchemaTemplateDeploy_TenantTemplateUndeployWithSiteIds() string {
     }`, testAccMSOTemplateResourceTenantConfig(), msoTemplateSiteName1)
 }
 
-func testAccNdoSchemaTemplateDeploy_TenantTemplateUndeploy() string {
+func testAccNdoSchemaTemplateDeploy_ErrorUndeployWithoutSiteIds() string {
+	return `
+    resource "mso_schema_template_deploy_ndo" "deploy_error" {
+        template_id   = "test_template_id"
+        template_type = "tenant"
+        undeploy      = true
+    }
+    `
+}
+
+func testAccNdoSchemaTemplateDeploy_ApplicationTemplate() string {
 	return fmt.Sprintf(`%s
-    resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
-        template_id        = mso_template.template_tenant.id
-        name               = "test_ipsla_undeploy"
-        description        = "HTTP Type"
-        sla_type           = "http"
-        destination_port   = 80
-        http_version       = "HTTP11"
-        http_uri           = "/example"
-        sla_frequency      = 120
-        detect_multiplier  = 4
-        request_data_size  = 64
-        type_of_service    = 18
-        operation_timeout  = 100
-        threshold          = 100
-        ipv6_traffic_class = 255
+    resource "mso_schema" "app_schema" {
+        name = "test_app_schema"
+        template {
+            name          = "AppTemplate1"
+            display_name  = "Application Template 1"
+            tenant_id     = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
     }
 
-    resource "mso_schema_template_deploy_ndo" "deploy" {
-        depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy]
+    resource "mso_schema_site" "app_site" {
+        schema_id     = mso_schema.app_schema.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+    }
+
+    resource "mso_schema_template_deploy_ndo" "app_deploy" {
         force_apply = ""
-        template_name = mso_template.template_tenant.template_name
-        template_type = "tenant"
-        undeploy = true
-    }`, testAccMSOTemplateResourceTenantConfig())
+        schema_id     = mso_schema.app_schema.id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+    }`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
+}
+
+func testAccNdoSchemaTemplateDeploy_ApplicationTemplateUndeployWithSiteIds() string {
+	return fmt.Sprintf(`%s
+    resource "mso_schema" "app_schema" {
+        name = "test_app_schema"
+        template {
+            name          = "AppTemplate1"
+            display_name  = "Application Template 1"
+            tenant_id     = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
+    }
+
+    resource "mso_schema_site" "app_site" {
+        schema_id     = mso_schema.app_schema.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+    }
+
+    resource "mso_schema_template_deploy_ndo" "app_deploy" {
+        force_apply = ""
+        schema_id     = mso_schema_site.app_site.schema_id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+        undeploy      = true
+        site_ids      = [data.mso_site.%s.id]
+    }`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
 }

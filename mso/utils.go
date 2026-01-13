@@ -413,18 +413,15 @@ func GetTemplateIdByNameAndType(msoClient *client.Client, templateName, template
 	if err != nil {
 		return nil, err
 	}
-
 	templates, err := cont.Children()
 	if err != nil {
 		return nil, err
 	}
-
 	for _, template := range templates {
 		if templateName == models.StripQuotes(template.S("templateName").String()) && ndoTemplateTypes[templateType].templateType == models.StripQuotes(template.S("templateType").String()) {
 			return models.StripQuotes(template.S("templateId").String()), nil
 		}
 	}
-
 	return nil, fmt.Errorf("Template with name '%s' not found for template Type '%s'.", templateName, templateType)
 }
 
@@ -440,15 +437,12 @@ func GetTemplateTypeByTemplateId(msoClient *client.Client, templateId string) (s
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch template summaries: %w", err)
 	}
-
 	templates, err := cont.Children()
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template summaries: %w", err)
 	}
-
 	for _, template := range templates {
 		currentTemplateId := models.StripQuotes(template.S("templateId").String())
-
 		if templateId == currentTemplateId {
 			apiTemplateType := models.StripQuotes(template.S("templateType").String())
 
@@ -457,11 +451,32 @@ func GetTemplateTypeByTemplateId(msoClient *client.Client, templateId string) (s
 					return key, nil
 				}
 			}
-
 			return "", fmt.Errorf("unknown template type '%s' returned from API for template ID '%s'", apiTemplateType, templateId)
 		}
 	}
+	return "", fmt.Errorf("template with ID '%s' not found", templateId)
+}
 
+func GetTemplateNameByTemplateId(msoClient *client.Client, templateId string) (string, error) {
+	cont, err := msoClient.GetViaURL("api/v1/templates/summaries")
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch template summaries: %w", err)
+	}
+	templates, err := cont.Children()
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template summaries: %w", err)
+	}
+	for _, template := range templates {
+		currentTemplateId := models.StripQuotes(template.S("templateId").String())
+
+		if templateId == currentTemplateId {
+			templateName := models.StripQuotes(template.S("templateName").String())
+			if templateName == "" {
+				return "", fmt.Errorf("templateName is empty for template ID '%s'", templateId)
+			}
+			return templateName, nil
+		}
+	}
 	return "", fmt.Errorf("template with ID '%s' not found", templateId)
 }
 
@@ -470,47 +485,38 @@ func GetDeployedSiteIds(msoClient *client.Client, templateId string) ([]string, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch template summaries: %w", err)
 	}
-
 	templates, err := cont.Children()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template summaries: %w", err)
 	}
-
 	for _, template := range templates {
 		currentTemplateId := models.StripQuotes(template.S("templateId").String())
-
 		if templateId == currentTemplateId {
 			// Check if template is deployed
 			templateStatus := models.StripQuotes(template.S("templateStatus").String())
 			if templateStatus != "DEPLOYMENT_SUCCESSFUL" {
 				return nil, fmt.Errorf("template is not in DEPLOYMENT_SUCCESSFUL status (current: %s)", templateStatus)
 			}
-
 			// Get site IDs from deploySummary
 			siteDeployments, err := template.S("deploySummmary", "siteDeploymentSummaries").Children()
 			if err != nil {
 				return nil, fmt.Errorf("no site deployment summaries found for template")
 			}
-
 			var siteIds []string
 			for _, siteDeploy := range siteDeployments {
 				siteId := models.StripQuotes(siteDeploy.S("siteId").String())
 				siteStatus := models.StripQuotes(siteDeploy.S("siteStatus").String())
-
 				// Only include sites that are successfully deployed
 				if siteStatus == "DEPLOYMENT_SUCCESSFUL" && siteId != "" {
 					siteIds = append(siteIds, siteId)
 				}
 			}
-
 			if len(siteIds) == 0 {
 				return nil, fmt.Errorf("no successfully deployed sites found for template")
 			}
-
 			return siteIds, nil
 		}
 	}
-
 	return nil, fmt.Errorf("template with ID '%s' not found", templateId)
 }
 
@@ -521,13 +527,11 @@ func GetDeployedSiteIdsForApplicationTemplate(msoClient *client.Client, schemaId
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch schema: %w", err)
 	}
-
 	// Get sites associated with this template
 	sites, err := cont.S("sites").Children()
 	if err != nil {
 		return nil, fmt.Errorf("no sites found for schema")
 	}
-
 	var siteIds []string
 	for _, site := range sites {
 		siteTemplateName := models.StripQuotes(site.S("templateName").String())
@@ -538,10 +542,8 @@ func GetDeployedSiteIdsForApplicationTemplate(msoClient *client.Client, schemaId
 			}
 		}
 	}
-
 	if len(siteIds) == 0 {
 		return nil, fmt.Errorf("no sites found associated with template '%s'", templateName)
 	}
-
 	return siteIds, nil
 }
