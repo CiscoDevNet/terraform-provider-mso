@@ -28,7 +28,7 @@ resource "mso_template" "tenant_template" {
 # tenant policies dhcp option policy example
 
 resource "mso_tenant_policies_dhcp_option_policy" "dhcp_policy" {
-  template_id = mso_template.template_tenant.id
+  template_id = mso_template.tenant_template.id
   name        = "test_dhcp_option_policy"
   description = "Test DHCP Option Policy"
     
