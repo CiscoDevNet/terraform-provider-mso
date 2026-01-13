@@ -75,6 +75,31 @@ func resourceMSODHCPOptionPolicy() *schema.Resource {
 	}
 }
 
+func buildDHCPOptionsPayload(optionsRaw interface{}) []interface{} {
+	optionsSet := optionsRaw.(*schema.Set)
+	optionsList := optionsSet.List()
+	options := make([]interface{}, 0, len(optionsList))
+
+	for _, item := range optionsList {
+		option := item.(map[string]interface{})
+		optionPayload := map[string]interface{}{
+			"name": option["name"].(string),
+		}
+
+		if optionId, ok := option["id"].(int); ok && optionId != 0 {
+			optionPayload["id"] = optionId
+		}
+
+		if data, ok := option["data"].(string); ok && data != "" {
+			optionPayload["data"] = data
+		}
+
+		options = append(options, optionPayload)
+	}
+
+	return options
+}
+
 func setDHCPOptionPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/DHCPOptionPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -82,7 +107,6 @@ func setDHCPOptionPolicyData(d *schema.ResourceData, response *container.Contain
 	d.Set("description", models.StripQuotes(response.S("description").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
-	// Process options set
 	if response.Exists("options") {
 		optionsCount, _ := response.S("options").ArrayCount()
 		options := make([]interface{}, 0, optionsCount)
@@ -130,29 +154,8 @@ func resourceMSODHCPOptionPolicyCreate(d *schema.ResourceData, m interface{}) er
 		payload["description"] = description.(string)
 	}
 
-	// Process options set
 	if optionsRaw, ok := d.GetOk("options"); ok {
-		optionsSet := optionsRaw.(*schema.Set)
-		optionsList := optionsSet.List()
-		options := make([]interface{}, 0, len(optionsList))
-
-		for _, item := range optionsList {
-			option := item.(map[string]interface{})
-			optionPayload := map[string]interface{}{
-				"name": option["name"].(string),
-			}
-
-			if optionId, ok := option["id"].(int); ok && optionId != 0 {
-				optionPayload["id"] = optionId
-			}
-
-			if data, ok := option["data"].(string); ok && data != "" {
-				optionPayload["data"] = data
-			}
-
-			options = append(options, optionPayload)
-		}
-		payload["options"] = options
+		payload["options"] = buildDHCPOptionsPayload(optionsRaw)
 	}
 
 	payloadModel := models.GetPatchPayload("add", "/tenantPolicyTemplate/template/dhcpOptionPolicies/-", payload)
@@ -232,27 +235,7 @@ func resourceMSODHCPOptionPolicyUpdate(d *schema.ResourceData, m interface{}) er
 	}
 
 	if d.HasChange("options") {
-		optionsSet := d.Get("options").(*schema.Set)
-		optionsList := optionsSet.List()
-		options := make([]interface{}, 0, len(optionsList))
-
-		for _, item := range optionsList {
-			option := item.(map[string]interface{})
-			optionPayload := map[string]interface{}{
-				"name": option["name"].(string),
-			}
-
-			if optionId, ok := option["id"].(int); ok && optionId != 0 {
-				optionPayload["id"] = optionId
-			}
-
-			if data, ok := option["data"].(string); ok && data != "" {
-				optionPayload["data"] = data
-			}
-
-			options = append(options, optionPayload)
-		}
-
+		options := buildDHCPOptionsPayload(d.Get("options"))
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/options", updatePath), options)
 		if err != nil {
 			return err
