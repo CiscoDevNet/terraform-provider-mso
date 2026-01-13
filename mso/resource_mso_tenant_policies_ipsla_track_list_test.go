@@ -23,7 +23,7 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "threshold_up", "12"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "type", "weight"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
 						map[string]string{
 							"destination_ip":               "1.1.1.1",
 							"ipsla_monitoring_policy_uuid": fmt.Sprintf("mso_tenant_policies_ipsla_monitoring_policy.%s.uuid", msoTenantPolicyTemplateIPSLAMonitoringPolicyName),
@@ -44,7 +44,7 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "threshold_up", "22"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "type", "percentage"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members.#", "2"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
 						map[string]string{
 							"destination_ip":               "1.1.1.3",
 							"ipsla_monitoring_policy_uuid": fmt.Sprintf("mso_tenant_policies_ipsla_monitoring_policy.%s.uuid", msoTenantPolicyTemplateIPSLAMonitoringPolicyName),
@@ -53,7 +53,7 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 							"weight":                       "10",
 						},
 					),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
 						map[string]string{
 							"destination_ip":               "1.1.1.2",
 							"ipsla_monitoring_policy_uuid": fmt.Sprintf("mso_tenant_policies_ipsla_monitoring_policy.%s.uuid", msoTenantPolicyTemplateIPSLAMonitoringPolicyName),
@@ -74,7 +74,7 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "threshold_up", "12"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "type", "percentage"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members.#", "1"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
 						map[string]string{
 							"destination_ip":               "1.1.1.2",
 							"ipsla_monitoring_policy_uuid": fmt.Sprintf("mso_tenant_policies_ipsla_monitoring_policy.%s.uuid", msoTenantPolicyTemplateIPSLAMonitoringPolicyName),
