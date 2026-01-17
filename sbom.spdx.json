@@ -3,14 +3,14 @@
     "dataLicense": "CC0-1.0",
     "SPDXID": "SPDXRef-DOCUMENT",
     "name": "./",
-    "documentNamespace": "https://anchore.com/syft/dir/ef26b3bc-dd9b-4c33-97e6-3339ac2191ff",
+    "documentNamespace": "https://anchore.com/syft/dir/44c3d2e4-b314-4ef7-9c75-8172ded0676e",
     "creationInfo": {
         "licenseListVersion": "3.27",
         "creators": [
             "Organization: Anchore, Inc",
-            "Tool: syft-1.38.0"
+            "Tool: syft-1.40.0"
         ],
-        "created": "2025-12-08T09:30:16Z"
+        "created": "2026-01-17T01:51:28Z"
     },
     "packages": [
         {
@@ -235,7 +235,7 @@
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
                     "referenceType": "purl",
-                    "referenceLocator": "pkg:golang/github.com/apparentlymart/go-textseg@v12.0.0#v12"
+                    "referenceLocator": "pkg:golang/github.com/apparentlymart/go-textseg/v12@v12.0.0"
                 }
             ]
         },
@@ -264,7 +264,7 @@
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
                     "referenceType": "purl",
-                    "referenceLocator": "pkg:golang/github.com/apparentlymart/go-textseg@v13.0.0#v13"
+                    "referenceLocator": "pkg:golang/github.com/apparentlymart/go-textseg/v13@v13.0.0"
                 }
             ]
         },
@@ -582,7 +582,7 @@
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
                     "referenceType": "purl",
-                    "referenceLocator": "pkg:golang/github.com/googleapis/gax-go@v2.0.5#v2"
+                    "referenceLocator": "pkg:golang/github.com/googleapis/gax-go/v2@v2.0.5"
                 }
             ]
         },
@@ -915,7 +915,7 @@
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
                     "referenceType": "purl",
-                    "referenceLocator": "pkg:golang/github.com/hashicorp/hcl@v2.8.2#v2"
+                    "referenceLocator": "pkg:golang/github.com/hashicorp/hcl/v2@v2.8.2"
                 }
             ]
         },
@@ -1084,7 +1084,7 @@
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
                     "referenceType": "purl",
-                    "referenceLocator": "pkg:golang/github.com/hashicorp/terraform-plugin-test@v2.2.0#v2"
+                    "referenceLocator": "pkg:golang/github.com/hashicorp/terraform-plugin-test/v2@v2.2.0"
                 }
             ]
         },
@@ -1652,7 +1652,7 @@
                 {
                     "referenceCategory": "PACKAGE-MANAGER",
                     "referenceType": "purl",
-                    "referenceLocator": "pkg:golang/github.com/vmihailenco/msgpack@v4.3.12#v4"
+                    "referenceLocator": "pkg:golang/github.com/vmihailenco/msgpack/v4@v4.3.12"
                 }
             ]
         },
@@ -2463,11 +2463,6 @@
             "relationshipType": "DEPENDENCY_OF"
         },
         {
-            "spdxElementId": "SPDXRef-Package-go-module-github.com-ciscoecosystem-mso-go-client-6a0bf67a4f28a8eb",
-            "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-CiscoDevNet-terraform-provider-mso-f5118132e7d0d4ef",
-            "relationshipType": "DEPENDENCY_OF"
-        },
-        {
             "spdxElementId": "SPDXRef-Package-go-module-github.com-zclconf-go-cty-yaml-7897c20838b047c3",
             "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-hashicorp-terraform-plugin-sdk-f042b819c2fb6399",
             "relationshipType": "DEPENDENCY_OF"
@@ -2770,11 +2765,6 @@
         {
             "spdxElementId": "SPDXRef-Package-go-module-github.com-hashicorp-terraform-exec-f006c0e4fc36b3b6",
             "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-hashicorp-terraform-plugin-sdk-f042b819c2fb6399",
-            "relationshipType": "DEPENDENCY_OF"
-        },
-        {
-            "spdxElementId": "SPDXRef-Package-go-module-github.com-hashicorp-terraform-plugin-sdk-f042b819c2fb6399",
-            "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-CiscoDevNet-terraform-provider-mso-f5118132e7d0d4ef",
             "relationshipType": "DEPENDENCY_OF"
         },
         {
