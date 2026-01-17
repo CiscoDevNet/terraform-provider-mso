@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.8.0 (January 17, 2026)
+
+IMPROVEMENTS:
+- Addition of resource and data source for mso_fabric_policies_l3_domain
+- Addition of resource and data source for custom qos policy under tenant policies
+- Addition of resource and data source for mso_tenant_policies_dhcp_option_policy
+
 ## 1.7.0 (December 08, 2025)
 
 IMPROVEMENTS:
