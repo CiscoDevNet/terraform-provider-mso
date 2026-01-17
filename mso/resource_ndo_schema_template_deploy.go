@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -27,6 +28,14 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 			if msoClient.GetPlatform() != "nd" {
 				return errors.New(`The 'mso_schema_template_deploy_ndo' resource is only supported for nd based platforms, 'platform=nd' must be configured in the provider section of your configuration.`)
 			}
+
+			// Validate undeploy configuration
+			undeploy := diff.Get("undeploy").(bool)
+			siteIds := diff.Get("site_ids").([]interface{})
+
+			if undeploy && len(siteIds) == 0 {
+				return errors.New("when 'undeploy=true', 'site_ids' must be provided. To undeploy the template from all associated sites, set undeploy_on_destroy=true and destroy the resource")
+			}
 			return nil
 		},
 
@@ -34,12 +43,14 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 			"schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
@@ -77,18 +88,72 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 				Optional: true,
 				Default:  "always-deploy",
 			},
+
+			"site_ids": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of site IDs where template is deployed.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
+			"undeploy": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Set to true to undeploy the template from select sites provided in 'site_ids' without destroying the resource.",
+			},
+
+			"undeploy_on_destroy": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Undeploys the template from all the sites before the Terraform resource is destroyed.",
+			},
 		}),
 	}
 }
 
 func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning Template Deploy Execution", d.Id())
+
+	undeploy := d.Get("undeploy").(bool)
+
+	if undeploy {
+		return executeTemplateUndeploy(d, m)
+	}
+
+	templateType := d.Get("template_type").(string)
 	_, templateIdProvided := d.GetOk("template_id")
 	templateName, templateNameProvided := d.GetOk("template_name")
-	templateType := d.Get("template_type").(string)
 	path := "api/v1/task"
 
 	msoClient := m.(*client.Client)
+
+	if templateIdProvided {
+		idOfTemplate := d.Get("template_id").(string)
+		actualTemplateType, err := GetTemplateTypeByTemplateId(msoClient, idOfTemplate)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve template_type: %w", err)
+		}
+		if actualTemplateType != templateType {
+			return fmt.Errorf("template_type mismatch: template_id '%s' is associated with template_type '%s', but you provided template_type '%s'. Please change template_type to '%s'",
+				idOfTemplate, actualTemplateType, templateType, actualTemplateType)
+		}
+
+		// If template_name is not provided, retrieve it from API
+		if !templateNameProvided {
+			retrievedTemplateName, err := GetTemplateNameByTemplateId(msoClient, idOfTemplate)
+			if err != nil {
+				return fmt.Errorf("failed to retrieve template_name: %w", err)
+			}
+			if err := d.Set("template_name", retrievedTemplateName); err != nil {
+				return fmt.Errorf("error setting template_name in state: %w", err)
+			}
+			templateName = retrievedTemplateName
+			templateNameProvided = true
+		}
+	}
+
 	var payloadStr string
 
 	if templateType == "application" && !templateIdProvided {
@@ -171,16 +236,161 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 			}
 		}
 	}
-	d.SetId(schemaId)
+
+	if err := d.Set("schema_id", schemaId); err != nil {
+		return fmt.Errorf("error setting schema_id in state: %w", err)
+	}
+	d.SetId(fmt.Sprintf("%s/template/%s", schemaId, d.Get("template_name").(string)))
 	log.Printf("[DEBUG] %s: Successful Template Deploy Execution", d.Id())
 	return resourceNDOSchemaTemplateDeployRead(d, m)
 }
 
 func resourceNDOSchemaTemplateDeployRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("force_apply", "")
+	resourceId := d.Id()
+
+	if resourceId != "" && strings.Contains(resourceId, "/template/") {
+		parts := strings.Split(resourceId, "/template/")
+		if len(parts) == 2 {
+			if err := d.Set("schema_id", parts[0]); err != nil {
+				return fmt.Errorf("error setting schema_id in state: %w", err)
+			}
+			if err := d.Set("template_name", parts[1]); err != nil {
+				return fmt.Errorf("error setting template_name in state: %w", err)
+			}
+			log.Printf("[DEBUG] Parsed resource ID - schema_id: %s, template_name: %s", parts[0], parts[1])
+		}
+	}
+
 	return nil
 }
 
 func resourceNDOSchemaTemplateDeployDelete(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] %s: Beginning Resource Deletion", d.Id())
+
+	undeployOnDestroy := d.Get("undeploy_on_destroy").(bool)
+
+	if undeployOnDestroy {
+		return executeTemplateUndeploy(d, m)
+	}
 	return nil
+}
+
+func executeTemplateUndeploy(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] Executing template undeploy")
+
+	templateType := d.Get("template_type").(string)
+
+	schemaId := d.Get("schema_id").(string)
+	if schemaId == "" {
+		return fmt.Errorf("schema_id which is the resource ID not found in state. Resource must be deployed first before undeploying")
+	}
+
+	msoClient := m.(*client.Client)
+	var err error
+	var siteIds []string
+	var payloadStr string
+
+	if siteIdsRaw, ok := d.GetOk("site_ids"); ok && len(siteIdsRaw.([]interface{})) > 0 {
+		// User provided site IDs
+		siteIdsList := siteIdsRaw.([]interface{})
+		for _, siteId := range siteIdsList {
+			siteIds = append(siteIds, siteId.(string))
+		}
+		log.Printf("[DEBUG] Using user-provided site_ids: %v", siteIds)
+	}
+	// Retrieve site IDs from API
+	if templateType == "application" {
+		templateName := d.Get("template_name").(string)
+		if len(siteIds) == 0 {
+			siteIds, err = GetDeployedSiteIdsForApplicationTemplate(msoClient, schemaId, templateName)
+			if err != nil {
+				return fmt.Errorf("failed to retrieve deployed site_ids for application template: %w", err)
+			}
+		}
+		payloadStr = fmt.Sprintf(`{"schemaId": "%s", "templateName": "%s", "undeploy": [`, schemaId, templateName)
+	} else {
+		templateId, ok := d.GetOk("template_id")
+		if !ok || templateId.(string) == "" {
+			return fmt.Errorf("template_id not found in state. Resource must be deployed first before undeploying")
+		}
+		if len(siteIds) == 0 {
+			siteIds, err = GetDeployedSiteIds(msoClient, templateId.(string))
+			if err != nil {
+				return fmt.Errorf("failed to retrieve deployed site_ids: %w", err)
+			}
+		}
+		payloadStr = fmt.Sprintf(`{"schemaId": "%s", "templateId": "%s", "undeploy": [`, schemaId, templateId.(string))
+	}
+	log.Printf("[DEBUG] Retrieved site_ids from API: %v", siteIds)
+
+	if len(siteIds) == 0 {
+		return fmt.Errorf("no site IDs available for undeploy operation")
+	}
+
+	// Update undeploy payload
+	for i, siteId := range siteIds {
+		if i > 0 {
+			payloadStr += ","
+		}
+		payloadStr += fmt.Sprintf(`"%s"`, siteId)
+	}
+	payloadStr += "]}"
+
+	log.Printf("[DEBUG] Undeploy payload: %s", payloadStr)
+
+	payload, err := container.ParseJSON([]byte(payloadStr))
+	if err != nil {
+		return fmt.Errorf("failed to parse undeploy payload: %w", err)
+	}
+
+	path := "api/v1/task"
+	req, err := msoClient.MakeRestRequest("POST", path, payload, true)
+	if err != nil {
+		return fmt.Errorf("failed to create undeploy request: %w", err)
+	}
+
+	cont, resp, err := msoClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("undeploy request failed: %w", err)
+	}
+
+	if resp.StatusCode != 202 {
+		return fmt.Errorf("unexpected status code %d for undeploy", resp.StatusCode)
+	}
+
+	// Wait for undeploy task completion
+	taskId, ok := cont.S("id").Data().(string)
+	if !ok || taskId == "" {
+		return fmt.Errorf("task ID not found in undeploy response")
+	}
+
+	log.Printf("[DEBUG] Undeploy task ID: %s", taskId)
+
+	req, err = msoClient.MakeRestRequest("GET", fmt.Sprintf("api/v1/task/%s", taskId), nil, true)
+	if err != nil {
+		return fmt.Errorf("failed to check undeploy task status: %w", err)
+	}
+
+	cont, resp, err = msoClient.DoWithRetryFunc(req, isTaskStatusPending)
+	if err != nil && cont == nil {
+		return fmt.Errorf("undeploy task monitoring failed: %w", err)
+	}
+
+	if cont != nil {
+		taskStatusContainer := cont.S("operDetails", "taskStatus")
+		if taskStatusContainer != nil {
+			if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
+				errorMessage := "Could not determine specific undeploy error message."
+				firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0)
+				if message, ok := firstErrorMessageContainer.Data().(string); ok {
+					errorMessage = message
+				}
+				return fmt.Errorf("error on undeploy: %s", errorMessage)
+			}
+		}
+	}
+
+	log.Printf("[DEBUG] %s: Successful Template Undeploy", d.Id())
+	return resourceNDOSchemaTemplateDeployRead(d, m)
 }
