@@ -285,6 +285,7 @@ func resourceMSOIPSLATrackListUpdate(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
+	d.SetId(fmt.Sprintf("templateId/%s/IPSLATrackLists/%s", templateId, d.Get("name").(string)))
 	log.Printf("[DEBUG] MSO IPSLA Track List Resource - Update Complete: %v", d.Id())
 	return resourceMSOIPSLATrackListRead(d, m)
 }
