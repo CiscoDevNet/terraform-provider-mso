@@ -434,3 +434,28 @@ func convertValueWithMap(value string, conversionMap map[string]string) string {
 	}
 	return value
 }
+
+// validateUint32Range is a validation function that checks if an integer
+// is within the specified uint32 range. This approach avoids compile-time overflow
+// errors on 32-bit systems by storing boundaries as uint32 and performing runtime
+// validation using int64 comparisons.
+func validateUint32Range(min, max uint32) schema.SchemaValidateFunc {
+	minInt64 := int64(min)
+	maxInt64 := int64(max)
+
+	return func(i interface{}, k string) ([]string, []error) {
+		v, ok := i.(int)
+		if !ok {
+			return nil, []error{fmt.Errorf("expected type of %s to be int", k)}
+		}
+
+		val := int64(v)
+		if val < minInt64 || val > maxInt64 {
+			return nil, []error{
+				fmt.Errorf("expected %s to be in the range (%d - %d), got %d", k, min, max, v),
+			}
+		}
+
+		return nil, nil
+	}
+}
