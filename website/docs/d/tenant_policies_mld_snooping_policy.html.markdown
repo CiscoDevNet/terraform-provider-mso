@@ -33,12 +33,12 @@ data "mso_tenant_policies_mld_snooping_policy" "mld_policy" {
 * `uuid` - (Read-Only) The NDO UUID of the MLD Snooping Policy.
 * `id` - (Read-Only) The unique terraform identifier of the MLD Snooping Policy in the template.
 * `description` - (Read-Only) The description of the MLD Snooping Policy.
-* `admin_state` - (Read-Only) The administrative state.
-* `fast_leave_control` - (Read-Only) Whether fast leave control is enabled.
-* `querier_control` - (Read-Only) Whether querier control is enabled.
-* `querier_version` - (Read-Only) The querier version.
-* `query_interval` - (Read-Only) The query interval in seconds.
-* `query_response_interval` - (Read-Only) The query response interval in seconds.
-* `last_member_query_interval` - (Read-Only) The last member query interval in seconds.
-* `start_query_interval` - (Read-Only) The start query interval in seconds.
-* `start_query_count` - (Read-Only) The start query count.
+* `admin_state` - (Read-Only) The administrative state of the MLD Snooping Policy.
+* `fast_leave_control` - (Read-Only) Enable or disable fast leave processing. When enabled, the switch immediately removes a multicast group when it receives an MLD Done message.
+* `querier_control` - (Read-Only) Enable or disable querier control. When enabled, the switch can act as an MLD querier.
+* `querier_version` - (Read-Only) The MLD querier version.
+* `query_interval` - (Read-Only) The interval in seconds between MLD general query messages.
+* `query_response_interval` - (Read-Only) The maximum time in seconds that hosts can wait before responding to an MLD query.
+* `last_member_query_interval` - (Read-Only) The interval in seconds between MLD group-specific queries sent in response to an MLD Done message.
+* `start_query_interval` - (Read-Only) The interval in seconds between MLD queries sent at startup.
+* `start_query_count` - (Read-Only) The number of MLD queries sent at startup.
