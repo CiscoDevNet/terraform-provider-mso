@@ -44,8 +44,8 @@ data "mso_tenant_policies_l3out_interface_routing_policy" "routing_policy" {
   * `min_receive_interval` - (Read-Only) The minimum interval in microseconds between received BFD packets. 
   * `min_transmit_interval` - (Read-Only) The minimum interval in microseconds between transmitted BFD packets. 
   * `echo_receive_interval` - (Read-Only) The minimum interval in microseconds between received BFD echo packets. 
-  * `echo_admin_state` - (Read-Only) Echo administrative state.
-  * `interface_control` - (Read-Only) Interface control. 
+  * `echo_admin_state` - (Read-Only) Echo administrative state controls BFD echo mode, which uses a loopback mechanism to reduce control plane overhead.
+  * `interface_control` - (Read-Only) When enabled, brings down the interface on BFD failure for faster protocol convergence.
 * `ospf_interface_settings` - (Read-Only) OSPF interface configuration block.
   * `network_type` - (Read-Only) The OSPF network type.
   * `priority` - (Read-Only) The OSPF router priority for designated router election.
