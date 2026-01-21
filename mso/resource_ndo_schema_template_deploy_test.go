@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-const msoTfTenantName = "tf_test_mso_tenant"
+const msoTfTenantName = "tf_test_mso_tenant_app"
 
 func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -117,143 +117,222 @@ func TestAccNdoSchemaTemplateDeploy_Success_WithoutTemplateId(t *testing.T) {
 	})
 }
 
+func TestAccNdoSchemaTemplateDeploy_Undeploy(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Deploy tenant template") },
+				Config:    testAccNdoSchemaTemplateDeploy_TenantTemplate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_UndeployWithSiteIds(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Deploy tenant template") },
+				Config:    testAccNdoSchemaTemplateDeploy_TenantTemplate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.deploy", "template_id"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Undeploy with explicit site_ids") },
+				Config:    testAccNdoSchemaTemplateDeploy_TenantTemplateUndeployWithSiteIds(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.deploy", "undeploy", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.deploy", "site_ids.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ValidationError_UndeployWithoutSiteIds(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Undeploy validation - site_ids required") },
+				Config:      testAccNdoSchemaTemplateDeploy_ErrorUndeployWithoutSiteIds(),
+				ExpectError: regexp.MustCompile("when 'undeploy=true', 'site_ids' must be provided"),
+			},
+		},
+	})
+}
+
+func TestAccNdoSchemaTemplateDeploy_ApplicationTemplate_UndeployWithSiteIds(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Deploy application template") },
+				Config:    testAccNdoSchemaTemplateDeploy_ApplicationTemplate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_deploy_ndo.app_deploy", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.app_deploy", "template_type", "application"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Undeploy application template with site_ids") },
+				Config:    testAccNdoSchemaTemplateDeploy_ApplicationTemplateUndeployWithSiteIds(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.app_deploy", "undeploy", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_deploy_ndo.app_deploy", "site_ids.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccSingleTenantConfig() string {
 	return fmt.Sprintf(`
-	%s
-	resource "mso_tenant" "%s" {
-		name = "%s"
-		display_name = "%s"
-		site_associations { 
-			site_id = data.mso_site.%s.id 
-		}
-	}
-	`, testSiteConfigAnsibleTest(), msoTfTenantName, msoTfTenantName, msoTfTenantName, msoTemplateSiteName1)
+    %s
+    resource "mso_tenant" "%s" {
+        name = "%s"
+        display_name = "%s"
+        site_associations { 
+            site_id = data.mso_site.%s.id 
+        }
+    }
+    `, testSiteConfigAnsibleTest(), msoTfTenantName, msoTfTenantName, msoTfTenantName, msoTemplateSiteName1)
 }
 
 func testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig() string {
 	return fmt.Sprintf(`%s
-	resource "mso_schema" "schema_blocks" {
-		name = "demo_schema_blocks"
-		template {
-			name         = "Template1"
-			display_name = "TEMP1"
-			tenant_id    = mso_tenant.%s.id
-			template_type = "aci_multi_site"
-		}
-		template {
-			name         = "Template2"
-			display_name = "TEMP2"
-			tenant_id    = mso_tenant.%s.id
-			template_type = "aci_multi_site"
-		}
-	}
+    resource "mso_schema" "schema_blocks" {
+        name = "demo_schema_blocks"
+        template {
+            name         = "Template1"
+            display_name = "TEMP1"
+            tenant_id    = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
+        template {
+            name         = "Template2"
+            display_name = "TEMP2"
+            tenant_id    = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
+    }
 
-	resource "mso_schema_site" "schema_site_1" {
-		schema_id     = mso_schema.schema_blocks.id
-		site_id       = data.mso_site.%s.id
-		template_name = tolist(mso_schema.schema_blocks.template)[0].name
-	}
+    resource "mso_schema_site" "schema_site_1" {
+        schema_id     = mso_schema.schema_blocks.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.schema_blocks.template)[0].name
+    }
 
-	resource "mso_schema_site" "schema_site_2" {
-		schema_id     = mso_schema.schema_blocks.id
-		site_id       = data.mso_site.%s.id
-		template_name = tolist(mso_schema.schema_blocks.template)[1].name
-	}
+    resource "mso_schema_site" "schema_site_2" {
+        schema_id     = mso_schema.schema_blocks.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.schema_blocks.template)[1].name
+    }
 
-	resource "mso_schema_template_vrf" "vrf1" {
-		schema_id       = mso_schema.schema_blocks.id
-		template        = tolist(mso_schema.schema_blocks.template)[0].name
-		name            = "vrf1"
-		display_name    ="vrf"
-		layer3_multicast=true
-	}
+    resource "mso_schema_template_vrf" "vrf1" {
+        schema_id       = mso_schema.schema_blocks.id
+        template        = tolist(mso_schema.schema_blocks.template)[0].name
+        name            = "vrf1"
+        display_name    ="vrf"
+        layer3_multicast=true
+    }
 
-	resource "mso_schema_template_bd" "bridgedomain" {
-		schema_id              = mso_schema.schema_blocks.id
-		template_name          = tolist(mso_schema.schema_blocks.template)[0].name
-		name                   = "bd"
-		display_name           = "test"
-		vrf_name               = mso_schema_template_vrf.vrf1.name
-		vrf_schema_id          = mso_schema.schema_blocks.id
-		vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
-		layer2_unknown_unicast = "proxy"
-		intersite_bum_traffic  = false
-		optimize_wan_bandwidth = true
-		layer2_stretch         = true
-		layer3_multicast       = true
-	}
+    resource "mso_schema_template_bd" "bridgedomain" {
+        schema_id              = mso_schema.schema_blocks.id
+        template_name          = tolist(mso_schema.schema_blocks.template)[0].name
+        name                   = "bd"
+        display_name           = "test"
+        vrf_name               = mso_schema_template_vrf.vrf1.name
+        vrf_schema_id          = mso_schema.schema_blocks.id
+        vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
+        layer2_unknown_unicast = "proxy"
+        intersite_bum_traffic  = false
+        optimize_wan_bandwidth = true
+        layer2_stretch         = true
+        layer3_multicast       = true
+    }
 
-	resource "mso_schema_template_bd" "bridgedomain2" {
-		schema_id              = mso_schema.schema_blocks.id
-		template_name          = tolist(mso_schema.schema_blocks.template)[1].name
-		name                   = "bd2"
-		display_name           = "test"
-		vrf_name               = mso_schema_template_vrf.vrf1.name
-		vrf_schema_id          = mso_schema.schema_blocks.id
-		vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
-		layer2_unknown_unicast = "proxy"
-		intersite_bum_traffic  = false
-		optimize_wan_bandwidth = true
-		layer2_stretch         = true
-		layer3_multicast       = true
-	}
+    resource "mso_schema_template_bd" "bridgedomain2" {
+        schema_id              = mso_schema.schema_blocks.id
+        template_name          = tolist(mso_schema.schema_blocks.template)[1].name
+        name                   = "bd2"
+        display_name           = "test"
+        vrf_name               = mso_schema_template_vrf.vrf1.name
+        vrf_schema_id          = mso_schema.schema_blocks.id
+        vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
+        layer2_unknown_unicast = "proxy"
+        intersite_bum_traffic  = false
+        optimize_wan_bandwidth = true
+        layer2_stretch         = true
+        layer3_multicast       = true
+    }
 
-	resource "mso_schema_template_deploy_ndo" "deploy_ndo2" {
-		schema_id     = mso_schema_template_bd.bridgedomain2.schema_id
-		template_name = tolist(mso_schema.schema_blocks.template)[1].name
-	}
-	`, testAccSingleTenantConfig(), msoTfTenantName, msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
+    resource "mso_schema_template_deploy_ndo" "deploy_ndo2" {
+        schema_id     = mso_schema_template_bd.bridgedomain2.schema_id
+        template_name = tolist(mso_schema.schema_blocks.template)[1].name
+    }
+    `, testAccSingleTenantConfig(), msoTfTenantName, msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
 }
 
 func testAccMsoSchemaTemplateVrfAndBdDeployWithRetry() string {
 	return fmt.Sprintf(`%s
-	resource "mso_schema" "schema_blocks" {
-		name = "demo_schema_blocks"
-		template {
-			name         = "Template1"
-			display_name = "TEMP1"
-			tenant_id    = mso_tenant.%s.id
-			template_type = "aci_multi_site"
-		}
-	}
+    resource "mso_schema" "schema_blocks" {
+        name = "demo_schema_blocks"
+        template {
+            name         = "Template1"
+            display_name = "TEMP1"
+            tenant_id    = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
+    }
 
-	resource "mso_schema_site" "schema_site_1" {
-		schema_id     = mso_schema.schema_blocks.id
-		site_id       = data.mso_site.%s.id
-		template_name = tolist(mso_schema.schema_blocks.template)[0].name
-		undeploy_on_destroy = true
-	}
+    resource "mso_schema_site" "schema_site_1" {
+        schema_id     = mso_schema.schema_blocks.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.schema_blocks.template)[0].name
+        undeploy_on_destroy = true
+    }
 
-	resource "mso_schema_template_vrf" "vrf" {
-		count = 50
-		schema_id       = mso_schema.schema_blocks.id
-		template        = tolist(mso_schema.schema_blocks.template)[0].name
-		name            = "vrf${count.index + 1}"
-		display_name    = "VRF-${count.index + 1}"
-		layer3_multicast=true
-	  }
+    resource "mso_schema_template_vrf" "vrf" {
+        count = 50
+        schema_id       = mso_schema.schema_blocks.id
+        template        = tolist(mso_schema.schema_blocks.template)[0].name
+        name            = "vrf${count.index + 1}"
+        display_name    = "VRF-${count.index + 1}"
+        layer3_multicast=true
+      }
 
-	  resource "mso_schema_template_bd" "bridgedomain" {
-		  schema_id              = mso_schema.schema_blocks.id
-		  template_name          = tolist(mso_schema.schema_blocks.template)[0].name
-		  name                   = "bd"
-		  display_name           = "test"
-		  vrf_name               = mso_schema_template_vrf.vrf[0].name
-		  vrf_schema_id          = mso_schema.schema_blocks.id
-		  vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
-		  layer2_unknown_unicast = "proxy" 
-		  intersite_bum_traffic  = false
-		  optimize_wan_bandwidth = true
-		  layer2_stretch         = true
-		  layer3_multicast       = true  
-	}
+      resource "mso_schema_template_bd" "bridgedomain" {
+          schema_id              = mso_schema.schema_blocks.id
+          template_name          = tolist(mso_schema.schema_blocks.template)[0].name
+          name                   = "bd"
+          display_name           = "test"
+          vrf_name               = mso_schema_template_vrf.vrf[0].name
+          vrf_schema_id          = mso_schema.schema_blocks.id
+          vrf_template_name      = tolist(mso_schema.schema_blocks.template)[0].name
+          layer2_unknown_unicast = "proxy" 
+          intersite_bum_traffic  = false
+          optimize_wan_bandwidth = true
+          layer2_stretch         = true
+          layer3_multicast       = true  
+    }
 
-	resource "mso_schema_template_deploy_ndo" "deploy_ndo" {
-		force_apply = ""
-		schema_id     = mso_schema_template_bd.bridgedomain.schema_id
-		template_name = tolist(mso_schema.schema_blocks.template)[0].name
-	}
-	`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
+    resource "mso_schema_template_deploy_ndo" "deploy_ndo" {
+        force_apply = ""
+        schema_id     = mso_schema_template_bd.bridgedomain.schema_id
+        template_name = tolist(mso_schema.schema_blocks.template)[0].name
+    }
+    `, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
 }
 
 func testAccNdoSchemaTemplateDeploy_ErrorAppMissingSchemaId() string {
@@ -283,52 +362,174 @@ func testAccNdoSchemaTemplateDeploy_ErrorNonAppMissingName() string {
 
 func testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithTemplateId() string {
 	return fmt.Sprintf(`%s
-	resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
-	    template_id        = mso_template.template_tenant.id
-	    name               = "test_ipsla_policy"
-	    description        = "HTTP Type"
-	    sla_type           = "http"
-	    destination_port   = 80
-	    http_version       = "HTTP11"
-	    http_uri           = "/example"
-	    sla_frequency      = 120
-	    detect_multiplier  = 4
-	    request_data_size  = 64
-	    type_of_service    = 18
-	    operation_timeout  = 100
-	    threshold          = 100
-	    ipv6_traffic_class = 255
-	}
+    resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
+        template_id        = mso_template.template_tenant.id
+        name               = "test_ipsla_policy"
+        description        = "HTTP Type"
+        sla_type           = "http"
+        destination_port   = 80
+        http_version       = "HTTP11"
+        http_uri           = "/example"
+        sla_frequency      = 120
+        detect_multiplier  = 4
+        request_data_size  = 64
+        type_of_service    = 18
+        operation_timeout  = 100
+        threshold          = 100
+        ipv6_traffic_class = 255
+    }
 
-	resource "mso_schema_template_deploy_ndo" "deploy" {
-		force_apply = ""
-		template_id = mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy.template_id
-	}`, testAccMSOTemplateResourceTenantConfig())
+    resource "mso_schema_template_deploy_ndo" "deploy" {
+        force_apply = ""
+        template_id = mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy.template_id
+        template_type = "tenant"
+        undeploy_on_destroy = true
+    }`, testAccMSOTemplateResourceTenantConfig())
 }
 
 func testAccNdoSchemaTemplateDeploy_IPSLAMonitoringPolicyWithoutTemplateId() string {
 	return fmt.Sprintf(`%s
-	resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
-	    template_id        = mso_template.template_tenant.id
-	    name               = "test_ipsla_policy2"
-	    description        = "HTTP Type"
-	    sla_type           = "http"
-	    destination_port   = 80
-	    http_version       = "HTTP11"
-	    http_uri           = "/example"
-	    sla_frequency      = 120
-	    detect_multiplier  = 4
-	    request_data_size  = 64
-	    type_of_service    = 18
-	    operation_timeout  = 100
-	    threshold          = 100
-	    ipv6_traffic_class = 255
-	}
+    resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
+        template_id        = mso_template.template_tenant.id
+        name               = "test_ipsla_policy2"
+        description        = "HTTP Type"
+        sla_type           = "http"
+        destination_port   = 80
+        http_version       = "HTTP11"
+        http_uri           = "/example"
+        sla_frequency      = 120
+        detect_multiplier  = 4
+        request_data_size  = 64
+        type_of_service    = 18
+        operation_timeout  = 100
+        threshold          = 100
+        ipv6_traffic_class = 255
+    }
 
-	resource "mso_schema_template_deploy_ndo" "deploy" {
-		depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy]
-		force_apply = ""
-		template_name = mso_template.template_tenant.template_name
-		template_type = "tenant"
-	}`, testAccMSOTemplateResourceTenantConfig())
+    resource "mso_schema_template_deploy_ndo" "deploy" {
+        depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy]
+        force_apply = ""
+        template_name = mso_template.template_tenant.template_name
+        template_type = "tenant"
+        undeploy_on_destroy = true
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccNdoSchemaTemplateDeploy_TenantTemplate() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
+        template_id        = mso_template.template_tenant.id
+        name               = "test_ipsla_undeploy"
+        description        = "HTTP Type"
+        sla_type           = "http"
+        destination_port   = 80
+        http_version       = "HTTP11"
+        http_uri           = "/example"
+        sla_frequency      = 120
+        detect_multiplier  = 4
+        request_data_size  = 64
+        type_of_service    = 18
+        operation_timeout  = 100
+        threshold          = 100
+        ipv6_traffic_class = 255
+    }
+
+    resource "mso_schema_template_deploy_ndo" "deploy" {
+        depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy]
+        force_apply = ""
+        template_name = mso_template.template_tenant.template_name
+        template_type = "tenant"
+        undeploy_on_destroy = true
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccNdoSchemaTemplateDeploy_TenantTemplateUndeployWithSiteIds() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_policy" {
+        template_id        = mso_template.template_tenant.id
+        name               = "test_ipsla_undeploy"
+        description        = "HTTP Type"
+        sla_type           = "http"
+        destination_port   = 80
+        http_version       = "HTTP11"
+        http_uri           = "/example"
+        sla_frequency      = 120
+        detect_multiplier  = 4
+        request_data_size  = 64
+        type_of_service    = 18
+        operation_timeout  = 100
+        threshold          = 100
+        ipv6_traffic_class = 255
+    }
+
+    resource "mso_schema_template_deploy_ndo" "deploy" {
+        depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla_policy]
+        force_apply = ""
+        template_name = mso_template.template_tenant.template_name
+        template_type = "tenant"
+        site_ids = [data.mso_site.%s.id]
+        undeploy = true
+    }`, testAccMSOTemplateResourceTenantConfig(), msoTemplateSiteName1)
+}
+
+func testAccNdoSchemaTemplateDeploy_ErrorUndeployWithoutSiteIds() string {
+	return `
+    resource "mso_schema_template_deploy_ndo" "deploy_error" {
+        template_id   = "test_template_id"
+        template_type = "tenant"
+        undeploy      = true
+    }
+    `
+}
+
+func testAccNdoSchemaTemplateDeploy_ApplicationTemplate() string {
+	return fmt.Sprintf(`%s
+    resource "mso_schema" "app_schema" {
+        name = "test_app_schema"
+        template {
+            name          = "AppTemplate1"
+            display_name  = "Application Template 1"
+            tenant_id     = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
+    }
+
+    resource "mso_schema_site" "app_site" {
+        schema_id     = mso_schema.app_schema.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+    }
+
+    resource "mso_schema_template_deploy_ndo" "app_deploy" {
+        force_apply = ""
+        schema_id     = mso_schema.app_schema.id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+    }`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
+}
+
+func testAccNdoSchemaTemplateDeploy_ApplicationTemplateUndeployWithSiteIds() string {
+	return fmt.Sprintf(`%s
+    resource "mso_schema" "app_schema" {
+        name = "test_app_schema"
+        template {
+            name          = "AppTemplate1"
+            display_name  = "Application Template 1"
+            tenant_id     = mso_tenant.%s.id
+            template_type = "aci_multi_site"
+        }
+    }
+
+    resource "mso_schema_site" "app_site" {
+        schema_id     = mso_schema.app_schema.id
+        site_id       = data.mso_site.%s.id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+    }
+
+    resource "mso_schema_template_deploy_ndo" "app_deploy" {
+        force_apply = ""
+        schema_id     = mso_schema_site.app_site.schema_id
+        template_name = tolist(mso_schema.app_schema.template)[0].name
+        undeploy      = true
+        site_ids      = [data.mso_site.%s.id]
+    }`, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
 }
