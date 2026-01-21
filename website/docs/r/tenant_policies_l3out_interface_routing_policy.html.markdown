@@ -71,8 +71,8 @@ resource "mso_tenant_policies_l3out_interface_routing_policy" "routing_policy" {
   * `min_receive_interval` - (Optional) The minimum interval in microseconds between received BFD packets. Default: 50 when unset during creation. Valid range: 50-999 microseconds.
   * `min_transmit_interval` - (Optional) The minimum interval in microseconds between transmitted BFD packets. Default: 50 when unset during creation. Valid range: 50-999 microseconds.
   * `echo_receive_interval` - (Optional) The minimum interval in microseconds between received BFD echo packets. Default: 50 when unset during creation. Valid range: 50-999 microseconds.
-  * `echo_admin_state` - (Optional) Echo administrative state. Default: `enabled` when unset during creation. Valid values: `enabled`, `disabled`.
-  * `interface_control` - (Optional) Interface control. Default: `false` (disabled) when unset during creation.
+  * `echo_admin_state` - (Optional) Echo administrative state controls BFD echo mode, which uses a loopback mechanism to reduce control plane overhead. Default: `enabled` when unset during creation. Valid values: `enabled`, `disabled`.
+  * `interface_control` - (Optional) When enabled, brings down the interface on BFD failure for faster protocol convergence. Default: `false` (disabled) when unset during creation.
 * `ospf_interface_settings` - (Optional) OSPF interface configuration block. Omitting this block will remove OSPF settings if they exist.
   * `network_type` - (Optional) The OSPF network type. Default: `broadcast` when unset during creation. Valid values: `broadcast`, `point_to_point`.
   * `priority` - (Optional) The OSPF router priority for designated router election. Default: 1 when unset during creation. Valid range: 0-255.
