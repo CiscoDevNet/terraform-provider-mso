@@ -64,7 +64,7 @@ resource "mso_schema_template_deploy_ndo" "tenant_deploy" {
 * `template_type` - (Optional) The type of the template. This is used in combination with template_name to uniquely identify a non-application template. Default is application.
 * `re_deploy` - (Optional) Boolean flag indicating whether to re-deploy the template to the associated sites. Default is false, which would trigger a regular deploy operation.
 * `undeploy` - (Optional) Boolean flag to undeploy the template from specific sites without destroying the Terraform resource. When set to true, site_ids must be provided. This allows for making changes to the template and then redeploying by setting this back to false. Default is false.
-* `undeploy_on_destroy` - (Optional) Boolean flag indicating whether to undeploy the template when the Terraform resource is destroyed. When set to true, running `terraform destroy` will undeploy the template from all associated sites before removing it from state. Default is false.
+* `undeploy_on_destroy` - (Optional) Boolean flag indicating whether to undeploy the template when the Terraform resource is destroyed. When set to true, running `terraform destroy` will undeploy the template from all associated sites before removing it from state. Default is false. Please refer the Notes section for important information regarding this attribute's functionality.
 * `site_ids` - (Optional) List of site IDs to undeploy the template from when `undeploy` is set to true. This attribute is required when `undeploy=true`.
 
 ### Notes ###
@@ -75,7 +75,7 @@ resource "mso_schema_template_deploy_ndo" "tenant_deploy" {
 * A template can only be undeployed from a site by disassociating the site from the template with the resource mso_schema_site.
 * To adjust the number of retries to ensure successful deployment completion, configure the retries argument in the provider configuration section.
 * When `undeploy = true` is set, site_ids must be explicitly provided to specify which sites to undeploy from.
-* When `undeploy_on_destroy = true` is set, all deployed sites will be automatically retrieved from the API during the destroy operation, so site_ids is not required.
+* When `undeploy_on_destroy = true` is set, all deployed sites will be automatically retrieved from the API during the destroy operation, so site_ids is not required. Terraform's destroy operation uses the state file, not the current configuration. If you add `undeploy_on_destroy = true` to an existing resource or change `undeploy_on_destroy` from `false` to `true` in an existing resource, you must run terraform apply before running terraform destroy for the undeploy to take effect.
 
 ## Attribute Reference ##
 
