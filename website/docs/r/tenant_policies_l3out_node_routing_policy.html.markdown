@@ -47,16 +47,16 @@ resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
 * `description` - (Optional) The description of the L3Out Node Routing Policy. When unset during creation, no description is applied.
 * `as_path_multipath_relax` - (Optional) BGP Best Path Control - enables AS path multipath relaxation to allow load balancing across paths with different AS paths. When unset during creation, this setting is not configured.
 * `bfd_multi_hop_settings` - (Optional) BFD multi-hop configuration block. Omitting this block will remove BFD multi-hop settings if they exist.
-* `admin_state` - (Optional) Administrative state. Default: `enabled` when unset during creation. Valid values: `enabled`, `disabled`.
-* `detection_multiplier` - (Optional) The number of consecutive BFD packets that must be missed before the session is declared down. Default: 3 when unset during creation. Valid range: 1-50.
-* `min_receive_interval` - (Optional) The minimum interval in microseconds between received BFD packets. Default: 250 when unset during creation. Valid range: 250-999 microseconds.
-* `min_transmit_interval` - (Optional) The minimum interval in microseconds between transmitted BFD packets. Default: 250 when unset during creation. Valid range: 250-999 microseconds.
+  * `admin_state` - (Optional) Administrative state. Default: `enabled` when unset during creation. Valid values: `enabled`, `disabled`.
+  * `detection_multiplier` - (Optional) The number of consecutive BFD packets that must be missed before the session is declared down. Default: 3 when unset during creation. Valid range: 1-50.
+  * `min_receive_interval` - (Optional) The minimum interval in microseconds between received BFD packets. Default: 250 when unset during creation. Valid range: 250-999 microseconds.
+  * `min_transmit_interval` - (Optional) The minimum interval in microseconds between transmitted BFD packets. Default: 250 when unset during creation. Valid range: 250-999 microseconds.
 * `bgp_node_settings` - (Optional) BGP node configuration block. Omitting this block will remove BGP node settings if they exist.
-* `graceful_restart_helper` - (Optional) Enable or disable BGP graceful restart helper mode, allowing the router to assist peers during restart. Default: `true` (enabled) when unset during creation.
-* `keep_alive_interval` - (Optional) The BGP keepalive interval in seconds. Keepalive messages maintain the BGP session. Default: 60 when unset during creation. Valid range: 0-3600 seconds.
-* `hold_interval` - (Optional) The BGP hold interval in seconds. If no message is received within this time, the session is terminated. Default: 180 when unset during creation. Must be 0 or between 3-3600 seconds.
-* `stale_interval` - (Optional) The BGP stale interval in seconds for graceful restart. Routes are marked stale after this period. Default: 300 when unset during creation. Valid range: 1-3600 seconds.
-* `max_as_limit` - (Optional) Maximum AS path limit to prevent routing loops. A value of 0 means no limit. Default: 0 (no limit) when unset during creation. Valid range: 0-2000.
+  * `graceful_restart_helper` - (Optional) Enable or disable BGP graceful restart helper mode, allowing the router to assist peers during restart. Default: `true` (enabled) when unset during creation.
+  * `keep_alive_interval` - (Optional) The BGP keepalive interval in seconds. Keepalive messages maintain the BGP session. Default: 60 when unset during creation. Valid range: 0-3600 seconds.
+  * `hold_interval` - (Optional) The BGP hold interval in seconds. If no message is received within this time, the session is terminated. Default: 180 when unset during creation. Must be 0 or between 3-3600 seconds.
+  * `stale_interval` - (Optional) The BGP stale interval in seconds for graceful restart. Routes are marked stale after this period. Default: 300 when unset during creation. Valid range: 1-3600 seconds.
+  * `max_as_limit` - (Optional) Maximum AS path limit to prevent routing loops. A value of 0 means no limit. Default: 0 (no limit) when unset during creation. Valid range: 0-2000.
 
 ## Attribute Reference ##
 
