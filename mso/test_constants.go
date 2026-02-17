@@ -6,7 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 )
 
-const msoTemplateSiteName1 = "ansible_test"
+const msoTemplateSiteName1 = "APIC1"
+
+// const msoTemplateSiteName1 = "ansible_test"
 const msoTemplateSiteName2 = "ansible_test_2"
 
 var msoTenantName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -22,6 +24,10 @@ var msoFabricPolicyTemplateMCPGlobalPolicyName = acctest.RandStringFromCharSet(1
 var msoSchemaTemplateBdName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPolicyTemplateIPSLAMonitoringPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPolicyTemplateIPSLATrackListName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricPolicyTemplateInterfaceSettingName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricPolicyTemplateL3DomainName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricPolicyTemplateSyncEInterfacePolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricPolicyTemplateMacsecPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -162,4 +168,38 @@ resource "mso_tenant_policies_ipsla_monitoring_policy" "%[1]s" {
 	threshold          = 100
 	ipv6_traffic_class = 255
 }`, msoTenantPolicyTemplateIPSLAMonitoringPolicyName, msoTenantPolicyTemplateName)
+}
+
+func testFabricPolicyTemplateL3DomainConfig() string {
+	return fmt.Sprintf(`
+resource "mso_fabric_policies_l3_domain" "%[1]s" {
+	template_id    = mso_template.%[2]s.id
+	name           = "%[1]s"
+}
+`, msoFabricPolicyTemplateL3DomainName, msoFabricPolicyTemplateName)
+}
+
+func testFabricPolicyTemplateSyncEInterfacePolicyConfig() string {
+	return fmt.Sprintf(`
+resource "mso_fabric_policies_synce_interface_policy" "%[1]s" {
+	template_id     = mso_template.%[2]s.id
+	name            = "%[1]s"
+}
+`, msoFabricPolicyTemplateSyncEInterfacePolicyName, msoFabricPolicyTemplateName)
+}
+
+func testFabricPolicyTemplateMacsecPolicyConfig() string {
+	return fmt.Sprintf(`
+resource "mso_fabric_policies_macsec_policy" "%[1]s" {
+	template_id            = mso_template.%[2]s.id
+	name                   = "%[1]s"
+	interface_type         = "access"
+	cipher_suite           = "256GcmAes"
+	window_size            = 128
+	security_policy        = "shouldSecure"
+	sak_expire_time        = 60
+	confidentiality_offset = "offset30"
+	key_server_priority    = 8
+}
+`, msoFabricPolicyTemplateMacsecPolicyName, msoFabricPolicyTemplateName)
 }

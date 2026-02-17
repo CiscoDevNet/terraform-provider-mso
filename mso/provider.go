@@ -141,6 +141,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_mcp_global_policy":              resourceMSOMCPGlobalPolicy(),
 			"mso_tenant_policies_ipsla_track_list":               resourceMSOIPSLATrackList(),
 			"mso_tenant_policies_l3out_interface_routing_policy": resourceMSOL3OutInterfaceRoutingPolicy(),
+			"mso_fabric_policies_interface_setting":              resourceMSOInterfaceSetting(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -215,6 +216,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_mcp_global_policy":              datasourceMSOMCPGlobalPolicy(),
 			"mso_tenant_policies_ipsla_track_list":               datasourceMSOIPSLATrackList(),
 			"mso_tenant_policies_l3out_interface_routing_policy": datasourceMSOL3OutInterfaceRoutingPolicy(),
+			"mso_fabric_policies_interface_setting":              datasourceMSOInterfaceSetting(),
 		},
 
 		ConfigureFunc: configureClient,
