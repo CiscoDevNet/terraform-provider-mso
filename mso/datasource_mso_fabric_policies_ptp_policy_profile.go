@@ -33,19 +33,19 @@ func datasourceMSOPtpPolicyProfile() *schema.Resource {
 				Computed: true,
 			},
 			"delay_interval": {
-				Type:         schema.TypeInt,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"sync_interval": {
-				Type:         schema.TypeInt,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"announce_interval": {
-				Type:         schema.TypeInt,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"announce_timeout": {
-				Type:         schema.TypeInt,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"override_node_profile": {
