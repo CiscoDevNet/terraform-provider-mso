@@ -75,6 +75,27 @@ func resourceMSOPtpPolicyProfile() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"local_priority": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
+			},
+			"destination_mac_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"forwardable", "non_forwardable",
+				}, false),
+			},
+			"mismatched_mac_handling": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"drop", "reply_with_config_mac", "reply_with_received_mac",
+				}, false),
+			},
 		},
 	}
 }
@@ -100,13 +121,18 @@ func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, t
 	d.Set("sync_interval", policy.S("syncIntvl").Data().(float64))
 	d.Set("announce_interval", policy.S("announceIntvl").Data().(float64))
 	d.Set("announce_timeout", policy.S("announceTimeout").Data().(float64))
-	template := models.StripQuotes(policy.S("profileTemplate").String())
-	if template == "telecomFullPath" {
-		template = "telecom"
-	}
-	d.Set("profile_template", template)
+	d.Set("profile_template", convertValueWithMap(models.StripQuotes(policy.S("profileTemplate").String()), ptpProfileTemplateMap))
 	if policy.Exists("nodeProfileOverride") {
 		d.Set("override_node_profile", policy.S("nodeProfileOverride").Data().(bool))
+	}
+	if policy.Exists("localPriority") {
+		d.Set("local_priority", policy.S("localPriority").Data().(float64))
+	}
+	if policy.Exists("dstMacType") {
+		d.Set("destination_mac_type", convertValueWithMap(models.StripQuotes(policy.S("dstMacType").String()), ptpDestinationMacMap))
+	}
+	if policy.Exists("dstMacRxNoMatch") {
+		d.Set("mismatched_mac_handling", convertValueWithMap(models.StripQuotes(policy.S("dstMacRxNoMatch").String()), ptpMismatchedMacHandlingMap))
 	}
 
 	return nil
@@ -144,10 +170,7 @@ func resourceMSOPtpPolicyProfileCreate(d *schema.ResourceData, m any) error {
 	}
 
 	if profile_template, ok := d.GetOk("profile_template"); ok {
-		if profile_template == "telecom" {
-			profile_template = "telecomFullPath"
-		}
-		payload["profileTemplate"] = profile_template.(string)
+		payload["profileTemplate"] = convertValueWithMap(profile_template.(string), ptpProfileTemplateMap)
 	}
 
 	if announce_interval, ok := d.GetOk("announce_interval"); ok {
@@ -170,6 +193,18 @@ func resourceMSOPtpPolicyProfileCreate(d *schema.ResourceData, m any) error {
 		if override_node_profile.(bool) {
 			payload["announceIntvl"] = override_node_profile.(bool)
 		}
+	}
+
+	if local_priority, ok := d.GetOk("local_priority"); ok {
+		payload["localPriority"] = local_priority.(int)
+	}
+
+	if destination_mac_type, ok := d.GetOk("destination_mac_type"); ok {
+		payload["dstMacType"] = convertValueWithMap(destination_mac_type.(string), ptpDestinationMacMap)
+	}
+
+	if mismatched_mac_handling, ok := d.GetOk("mismatched_mac_handling"); ok {
+		payload["dstMacRxNoMatch"] = convertValueWithMap(mismatched_mac_handling.(string), ptpMismatchedMacHandlingMap)
 	}
 
 	payloadModel := models.GetPatchPayload("add", "/fabricPolicyTemplate/template/ptpPolicy/profiles/-", payload)
@@ -231,11 +266,7 @@ func resourceMSOPtpPolicyProfileUpdate(d *schema.ResourceData, m any) error {
 	}
 
 	if d.HasChange("profile_template") {
-		profile_template := d.Get("profile_template").(string)
-		if profile_template == "telecom" {
-			profile_template = "telecomFullPath"
-		}
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/profileTemplate", updatePath), profile_template)
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/profileTemplate", updatePath), convertValueWithMap(d.Get("profile_template").(string), ptpProfileTemplateMap))
 		if err != nil {
 			return err
 		}
@@ -272,6 +303,27 @@ func resourceMSOPtpPolicyProfileUpdate(d *schema.ResourceData, m any) error {
 	if d.HasChange("override_node_profile") {
 		override := d.Get("override_node_profile").(bool)
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/nodeProfileOverride", updatePath), override)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("local_priority") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/localPriority", updatePath), d.Get("local_priority").(int))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("destination_mac_type") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/dstMacType", updatePath), convertValueWithMap(d.Get("destination_mac_type").(string), ptpDestinationMacMap))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("mismatched_mac_handling") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/dstMacRxNoMatch", updatePath), convertValueWithMap(d.Get("mismatched_mac_handling").(string), ptpMismatchedMacHandlingMap))
 		if err != nil {
 			return err
 		}

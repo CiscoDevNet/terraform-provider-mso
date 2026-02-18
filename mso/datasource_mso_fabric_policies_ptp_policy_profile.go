@@ -52,6 +52,18 @@ func datasourceMSOPtpPolicyProfile() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"local_priority": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"destination_mac_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"mismatched_mac_handling": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }

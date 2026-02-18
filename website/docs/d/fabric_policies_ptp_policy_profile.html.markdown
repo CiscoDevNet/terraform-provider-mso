@@ -39,3 +39,6 @@ data "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 * `override_node_profile` - (Read-Only) The node profile override of the PTP Profile.
 * `announce_timeout` - (Read-Only) The announce timeout of the PTP Profile.
 * `announce_interval` - (Read-Only) The announce interval of the PTP Profile.
+* `local_priority` - (Read-Only) The local priority of the PTP Profile.
+* `destination_mac_type` - (Read-Only) The destination MAC for PTP messages of the PTP Profile.
+* `mismatched_mac_handling` - (Read-Only) The mismatched destination MAC handling of the PTP Profile.
