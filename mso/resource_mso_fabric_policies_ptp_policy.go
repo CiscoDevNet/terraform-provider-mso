@@ -58,38 +58,38 @@ func resourceMSOPtpPolicy() *schema.Resource {
 				}, false),
 			},
 			"global_priority1": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(0, 255),
 			},
 			"global_priority2": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(0, 255),
 			},
 			"global_domain": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(0, 128),
 			},
 			"fabric_sync_interval": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(-4, 1),
 			},
 			"fabric_delay_interval": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(-4, 5),
 			},
 			"fabric_announce_interval": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(-3, 4),
 			},
 			"fabric_announce_timeout": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntBetween(2, 10),
 			},
 		},
@@ -235,7 +235,7 @@ func resourceMSOPtpPolicyUpdate(d *schema.ResourceData, m any) error {
 
 	payloadCont := container.New()
 	payloadCont.Array()
-	
+
 	if d.HasChange("name") {
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/name", updatePath), d.Get("name").(string))
 		if err != nil {

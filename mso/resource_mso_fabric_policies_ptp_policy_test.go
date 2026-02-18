@@ -2,8 +2,8 @@ package mso
 
 import (
 	"fmt"
-	"testing"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"testing"
 )
 
 func TestAccMSOPtpPolicyResource(t *testing.T) {

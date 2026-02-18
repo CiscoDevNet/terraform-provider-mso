@@ -29,9 +29,9 @@ func resourceMSOPtpPolicyProfile() *schema.Resource {
 				Required: true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				ForceNew: true,
-				Required: true,
+				Type:         schema.TypeString,
+				ForceNew:     true,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 16),
 			},
 			"description": {
@@ -232,7 +232,7 @@ func resourceMSOPtpPolicyProfileUpdate(d *schema.ResourceData, m any) error {
 
 	if d.HasChange("profile_template") {
 		profile_template := d.Get("profile_template").(string)
-		if (profile_template == "telecom") {
+		if profile_template == "telecom" {
 			profile_template = "telecomFullPath"
 		}
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/profileTemplate", updatePath), profile_template)
