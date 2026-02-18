@@ -144,6 +144,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_interface_setting":              resourceMSOInterfaceSetting(),
 			"mso_tenant_policies_igmp_interface_policy":          resourceMSOIGMPInterfacePolicy(),
 			"mso_fabric_policies_ptp_policy":                     resourceMSOPtpPolicy(),
+			"mso_fabric_policies_ptp_policy_profile":             resourceMSOPtpPolicyProfile(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -221,6 +222,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_interface_setting":              datasourceMSOInterfaceSetting(),
 			"mso_tenant_policies_igmp_interface_policy":          datasourceMSOIGMPInterfacePolicy(),
 			"mso_fabric_policies_ptp_policy":                     datasourceMSOPtpPolicy(),
+			"mso_fabric_policies_ptp_policy_profile":             datasourceMSOPtpPolicyProfile(),
 		},
 
 		ConfigureFunc: configureClient,

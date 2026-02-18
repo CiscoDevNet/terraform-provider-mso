@@ -92,83 +92,8 @@ func resourceMSOPtpPolicy() *schema.Resource {
 				Required: true,
 				ValidateFunc: validation.IntBetween(2, 10),
 			},
-			"ptp_profile": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"profile_template": {
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"aes67", "default", "smpte", "telecom",
-							}, false),
-						},
-						"delay_interval": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ValidateFunc: validation.IntBetween(-4, 5),
-						},
-						"sync_interval": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ValidateFunc: validation.IntBetween(-4, 1),
-						},
-						"announce_interval": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ValidateFunc: validation.IntBetween(-3, 4),
-						},
-						"announce_timeout": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ValidateFunc: validation.IntBetween(2, 10),
-						},
-						"override_node_profile": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Computed: true,
-						},
-					},
-				},
-			},
 		},
 	}
-}
-
-func setPtpProfiles(profileEntries *schema.Set) []map[string]any {
-	profileList := profileEntries.List()
-	profiles := make([]map[string]any, 0, 1)
-
-	for _, val := range profileList {
-		ptpProfileEntry := val.(map[string]any)
-		template := ptpProfileEntry["profile_template"].(string)
-		if (template == "telecom") {
-			template = "telecomFullPath"
-		}
-		profile := map[string]any{
-			"name":                  ptpProfileEntry["name"].(string),
-			"description":           ptpProfileEntry["description"].(string),
-			"profileTemplate":       template,
-			"announceIntvl":         ptpProfileEntry["announce_interval"].(int),
-			"syncIntvl":             ptpProfileEntry["sync_interval"].(int),
-			"delayIntvl":            ptpProfileEntry["delay_interval"].(int),
-			"announceTimeout":       ptpProfileEntry["announce_timeout"].(int),
-			"nodeProfileOverride":   ptpProfileEntry["override_node_profile"].(bool),
-			// TODO Maybe more
-		}
-		profiles = append(profiles, profile)
-	}
-
-	return profiles
 }
 
 func setPtpPolicyData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
@@ -199,35 +124,6 @@ func setPtpPolicyData(d *schema.ResourceData, msoClient *client.Client, template
 	d.Set("fabric_sync_interval", globalCont.S("fabSyncIntvl").Data().(float64))
 	d.Set("fabric_delay_interval", globalCont.S("fabDelayIntvl").Data().(float64))
 	d.Set("fabric_announce_timeout", globalCont.S("fabAnnounceTimeout").Data().(float64))
-
-	count, err := policy.ArrayCount("profiles")
-	if err != nil {
-		return fmt.Errorf("unable to count the number of PTP profiles: %s", err)
-	}
-	profiles := make([]any, 0)
-	for i := range count {
-		profilesCont, err := policy.ArrayElement(i, "profiles")
-		if err != nil {
-			return fmt.Errorf("unable to parse element %d from the list of PTP profiles: %s", i, err)
-		}
-		ptpProfileEntry := make(map[string]any)
-		ptpProfileEntry["name"] = models.StripQuotes(profilesCont.S("name").String())
-		ptpProfileEntry["description"] = models.StripQuotes(profilesCont.S("description").String())
-		ptpProfileEntry["delay_interval"] = profilesCont.S("delayIntvl").Data().(float64)
-		ptpProfileEntry["sync_interval"] = profilesCont.S("syncIntvl").Data().(float64)
-		ptpProfileEntry["announce_interval"] = profilesCont.S("announceIntvl").Data().(float64)
-		ptpProfileEntry["announce_timeout"] = profilesCont.S("announceTimeout").Data().(float64)
-		template := models.StripQuotes(profilesCont.S("profileTemplate").String())
-		if (template == "telecomFullPath") {
-			template = "telecom"
-		}
-		ptpProfileEntry["profile_template"] = template
-		if profilesCont.Exists("nodeProfileOverride") {
-			ptpProfileEntry["override_node_profile"] = profilesCont.S("nodeProfileOverride").Data().(bool)
-		}
-		profiles = append(profiles, ptpProfileEntry)
-	}
-	d.Set("ptp_profile", profiles)
 
 	return nil
 }
@@ -303,10 +199,6 @@ func resourceMSOPtpPolicyCreate(d *schema.ResourceData, m any) error {
 
 	if len(globalParams) > 0 {
 		payload["global"] = globalParams
-	}
-
-	if profileEntries, ok := d.GetOk("ptp_profile"); ok {
-		payload["profiles"] = setPtpProfiles(profileEntries.(*schema.Set))
 	}
 
 	payloadModel := models.GetPatchPayload("add", "/fabricPolicyTemplate/template/ptpPolicy", payload)
@@ -416,13 +308,6 @@ func resourceMSOPtpPolicyUpdate(d *schema.ResourceData, m any) error {
 
 	if d.HasChange("fabric_announce_timeout") {
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/global/fabAnnounceTimeout", updatePath), d.Get("fabric_announce_timeout").(int))
-		if err != nil {
-			return err
-		}
-	}
-
-	if d.HasChange("ptp_profile") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/profiles", updatePath), setPtpProfiles(d.Get("ptp_profile").(*schema.Set)))
 		if err != nil {
 			return err
 		}
