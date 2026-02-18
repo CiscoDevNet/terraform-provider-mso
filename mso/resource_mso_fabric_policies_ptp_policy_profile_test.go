@@ -42,8 +42,8 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Create second PTP Policy Profile") },
-				Config:    testAccMSOPtpPolicyProfileConfigCreate2(),
+				PreConfig: func() { fmt.Println("Test: Create Telecom PTP Policy Profile") },
+				Config:    testAccMSOPtpPolicyProfileConfigCreateTelecom(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "name", "tf_ptp_profile_2"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "description", "Terraform test PTP Policy Profile 2"),
@@ -52,6 +52,27 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "sync_interval", "-4"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "announce_interval", "-3"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "announce_timeout", "3"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "local_priority", "120"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "destination_mac_type", "forwardable"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "mismatched_mac_handling", "reply_with_config_mac"),
+					resource.TestCheckNoResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "override_node_profile"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "uuid"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update Telecom PTP Policy Profile") },
+				Config:    testAccMSOPtpPolicyProfileConfigUpdateTelecom(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "name", "tf_ptp_profile_2"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "description", "Terraform test PTP Policy Profile 2"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "profile_template", "telecom"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "delay_interval", "-4"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "sync_interval", "-4"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "announce_interval", "-3"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "announce_timeout", "2"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "local_priority", "99"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "destination_mac_type", "non_forwardable"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "mismatched_mac_handling", "reply_with_received_mac"),
 					resource.TestCheckNoResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "override_node_profile"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "uuid"),
 				),
@@ -107,17 +128,42 @@ func testAccMSOPtpPolicyProfileConfigUpdate() string {
 	}`, testAccMSOPtpPolicyConfigCreate())
 }
 
-func testAccMSOPtpPolicyProfileConfigCreate2() string {
+func testAccMSOPtpPolicyProfileConfigCreateTelecom() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile_2" {
-		template_id           = mso_template.template_fabric_policy.id
-		name                  = "tf_ptp_profile_2"
-		description           = "Terraform test PTP Policy Profile 2"
-		profile_template      = "telecom"
-		announce_interval     = -3
-		delay_interval        = -4
-		sync_interval         = -4
-		announce_timeout      = 3
+		template_id                = mso_template.template_fabric_policy.id
+		name                       = "tf_ptp_profile_2"
+		description                = "Terraform test PTP Policy Profile 2"
+		profile_template           = "telecom"
+		announce_interval          = -3
+		delay_interval             = -4
+		sync_interval              = -4
+		announce_timeout           = 3
+		local_priority             = 120
+		destination_mac_type       = "forwardable"
+		mismatched_mac_handling    = "reply_with_config_mac"
+
+		# Explicit dependency on PTP Policy
+		depends_on = [
+			mso_fabric_policies_ptp_policy.ptp_policy
+		]
+	}`, testAccMSOPtpPolicyProfileConfigUpdate())
+}
+
+func testAccMSOPtpPolicyProfileConfigUpdateTelecom() string {
+	return fmt.Sprintf(`%s
+	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile_2" {
+		template_id                = mso_template.template_fabric_policy.id
+		name                       = "tf_ptp_profile_2"
+		description                = "Terraform test PTP Policy Profile 2"
+		profile_template           = "telecom"
+		announce_interval          = -3
+		delay_interval             = -4
+		sync_interval              = -4
+		announce_timeout           = 2
+		local_priority             = 99
+		destination_mac_type       = "non_forwardable"
+		mismatched_mac_handling    = "reply_with_received_mac"
 
 		# Explicit dependency on PTP Policy
 		depends_on = [
