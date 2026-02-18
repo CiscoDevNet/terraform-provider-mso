@@ -42,13 +42,3 @@ data "mso_fabric_policies_ptp_policy" "ptp_policy" {
 * `fabric_sync_interval` - (Read-Only) The fabric sync interval of the PTP Policy.
 * `fabric_delay_interval` - (Read-Only) The fabric delay interval of the PTP Policy.
 * `fabric_announce_timeout` - (Read-Only) The fabric announce timeout of the PTP Policy.
-* `ptp_profiles` - (Read-Only) The list of PTP Profiles.
-  * `name` - (Read-Only) The name of the PTP Profile.
-  * `uuid` - (Read-Only) The NDO UUID of the PTP Profile.
-  * `description` - (Read-Only) The description of the PTP Profile.
-  * `delay_interval` - (Read-Only) The delay interval of the PTP Profile.
-  * `profile_template` - (Read-Only) The profile template of the PTP Profile.
-  * `sync_interval` - (Read-Only) The sync interval of the PTP Profile.
-  * `override_node_profile` - (Read-Only) The node profile override of the PTP Profile.
-  * `announce_timeout` - (Read-Only) The announce timeout of the PTP Profile.
-  * `announce_interval` - (Read-Only) The announce interval of the PTP Profile.

@@ -27,6 +27,7 @@ func TestAccMSOPtpPolicyDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "fabric_sync_interval", "-1"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "fabric_delay_interval", "1"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "fabric_announce_timeout", "3"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy.ptp_policy", "uuid"),
 				),
 			},
 		},

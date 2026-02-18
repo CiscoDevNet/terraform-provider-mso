@@ -64,46 +64,6 @@ func datasourceMSOPtpPolicy() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"ptp_profiles": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"profile_template": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"delay_interval": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"sync_interval": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"announce_timeout": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"announce_interval": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"override_node_profile": {
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
-					},
-				},
-			},
 		},
 	}
 }
