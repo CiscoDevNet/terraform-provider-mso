@@ -28,6 +28,11 @@ func resourceMSOPtpPolicyProfile() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
+			"ptp_policy_uuid": {
+				Type: schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"name": {
 				Type:         schema.TypeString,
 				ForceNew:     true,
@@ -106,6 +111,11 @@ func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, t
 		return err
 	}
 
+	ptp_policy_uuid, ok := response.S("fabricPolicyTemplate", "template", "ptpPolicy", "uuid").Data().(string)
+	if !ok {
+		return fmt.Errorf("PTP Policy not found")
+	}
+	
 	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "ptpPolicy", "profiles")
 	if err != nil {
 		return err
@@ -115,6 +125,7 @@ func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, t
 	d.SetId(fmt.Sprintf("templateId/%s/ptpPolicyProfile/%s", templateId, name))
 	d.Set("template_id", templateId)
 	d.Set("name", name)
+	d.Set("ptp_policy_uuid", ptp_policy_uuid)
 	d.Set("description", models.StripQuotes(policy.S("description").String()))
 	d.Set("uuid", models.StripQuotes(policy.S("uuid").String()))
 	d.Set("delay_interval", policy.S("delayIntvl").Data().(float64))
