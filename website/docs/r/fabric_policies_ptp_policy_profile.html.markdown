@@ -19,6 +19,7 @@ Manages (Precision Time Protocol) PTP Policy Profiles on Cisco Nexus Dashboard O
 ```hcl
 resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
   template_id         = mso_template.fabric_policy_template.id
+  ptp_policy_uuid       = mso_fabric_policies_ptp_policy.ptp_policy.uuid
   name                  = "ptp_policy_profile"
   description           = "Example description"
   delay_interval        = -2
@@ -33,6 +34,7 @@ resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 ## Argument Reference ##
 
 * `template_id` - (Required) The unique ID of the Fabric Policy template.
+* `ptp_policy_uuid` - (Required) The NDO UUID of the PTP Policy.
 * `name` - (Required) The name of the PTP Profile.
 * `description` - (Optional) The description of the PTP Profile.
 * `profile_template` - (Required) The profile template of the PTP Profile. Allowed values are `default`, `aes67`, `smpte` or `telecom`.
@@ -52,8 +54,8 @@ resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 
 ## Importing ##
 
-An existing MSO PTP Policy can be [imported][docs-import] into this resource via its ID/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
+An existing MSO PTP Profile can be [imported][docs-import] into this resource via its ID/path, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
 
 ```bash
-terraform import mso_fabric_policies_ptp_policy_profile.ptp_policy templateId/{template_id}/ptpPolicyProfile/{name}
+terraform import mso_fabric_policies_ptp_policy_profile.ptp_policy_profile templateId/{template_id}/ptpPolicyProfile/{name}
 ```

@@ -40,7 +40,8 @@ resource "mso_fabric_policies_ptp_policy" "ptp_policy" {
 # fabric policies ptp policy profile example
 
 resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
-  template_id         = mso_template.fabric_policy_template.id
+  template_id           = mso_template.fabric_policy_template.id
+  ptp_policy_uuid       = mso_fabric_policies_ptp_policy.ptp_policy.uuid
   name                  = "ptp_policy_profile"
   description           = "Example description"
   delay_interval        = -2

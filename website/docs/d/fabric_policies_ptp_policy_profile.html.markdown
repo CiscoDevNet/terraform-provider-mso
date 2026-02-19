@@ -31,6 +31,7 @@ data "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 ## Attribute Reference ##
 
 * `uuid` - (Read-Only) The NDO UUID of the PTP Profile.
+* `ptp_policy_uuid` - (Read-Only) The NDO UUID of the PTP Policy.
 * `id` - (Read-Only) The unique Terraform identifier of the PTP Profile.
 * `description` - (Read-Only) The description of the PTP Profile.
 * `delay_interval` - (Read-Only) The delay interval of the PTP Profile.

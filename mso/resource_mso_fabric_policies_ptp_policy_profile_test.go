@@ -24,6 +24,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "announce_timeout", "3"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "override_node_profile", "false"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "ptp_policy_uuid"),
 				),
 			},
 			{
@@ -39,6 +40,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "announce_timeout", "10"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "override_node_profile", "true"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "ptp_policy_uuid"),
 				),
 			},
 			{
@@ -57,6 +59,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "mismatched_mac_handling", "reply_with_config_mac"),
 					resource.TestCheckNoResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "override_node_profile"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "ptp_policy_uuid"),
 				),
 			},
 			{
@@ -75,6 +78,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "mismatched_mac_handling", "reply_with_received_mac"),
 					resource.TestCheckNoResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "override_node_profile"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "ptp_policy_uuid"),
 				),
 			},
 			{
@@ -92,6 +96,7 @@ func testAccMSOPtpPolicyProfileConfigCreate() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 		template_id           = mso_template.template_fabric_policy.id
+		ptp_policy_uuid       = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                  = "tf_ptp_profile"
 		description           = "Terraform test PTP Policy Profile"
 		profile_template      = "aes67"
@@ -112,6 +117,7 @@ func testAccMSOPtpPolicyProfileConfigUpdate() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 		template_id           = mso_template.template_fabric_policy.id
+		ptp_policy_uuid       = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                  = "tf_ptp_profile"
 		description           = "Terraform test PTP Policy Profile updated"
 		profile_template      = "smpte"
@@ -132,6 +138,7 @@ func testAccMSOPtpPolicyProfileConfigCreateTelecom() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile_2" {
 		template_id                = mso_template.template_fabric_policy.id
+		ptp_policy_uuid            = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                       = "tf_ptp_profile_2"
 		description                = "Terraform test PTP Policy Profile 2"
 		profile_template           = "telecom"
@@ -142,11 +149,6 @@ func testAccMSOPtpPolicyProfileConfigCreateTelecom() string {
 		local_priority             = 120
 		destination_mac_type       = "forwardable"
 		mismatched_mac_handling    = "reply_with_config_mac"
-
-		# Explicit dependency on PTP Policy
-		depends_on = [
-			mso_fabric_policies_ptp_policy.ptp_policy
-		]
 	}`, testAccMSOPtpPolicyProfileConfigUpdate())
 }
 
@@ -154,6 +156,7 @@ func testAccMSOPtpPolicyProfileConfigUpdateTelecom() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile_2" {
 		template_id                = mso_template.template_fabric_policy.id
+		ptp_policy_uuid            = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                       = "tf_ptp_profile_2"
 		description                = "Terraform test PTP Policy Profile 2"
 		profile_template           = "telecom"
@@ -165,9 +168,10 @@ func testAccMSOPtpPolicyProfileConfigUpdateTelecom() string {
 		destination_mac_type       = "non_forwardable"
 		mismatched_mac_handling    = "reply_with_received_mac"
 
-		# Explicit dependency on PTP Policy
+		# Explicit dependency on first PTP Profile
+		# This is to ensure the test deletes the profiles in order.
 		depends_on = [
-			mso_fabric_policies_ptp_policy.ptp_policy
+			mso_fabric_policies_ptp_policy_profile.ptp_policy_profile
 		]
 	}`, testAccMSOPtpPolicyProfileConfigUpdate())
 }
