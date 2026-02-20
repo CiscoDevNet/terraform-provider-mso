@@ -103,7 +103,7 @@ resource "mso_fabric_policies_interface_setting" "portchannel_interface" {
 	stp_bpdu_filter                 = "enabled"
 	stp_bpdu_guard                  = "enabled"
 	vlan_scope                      = "portlocal"
-	synce                           = mso_fabric_policies_synce_interface_policy.synce_policy.uuid
-	access_macsec_policy            = mso_fabric_policies_macsec_policy.macsec_policy.uuid
-	domains                         = [ mso_fabric_policies_l3_domain.l3_domain.uuid ]
+	synce_uuid                      = mso_fabric_policies_synce_interface_policy.synce_policy.uuid
+	access_macsec_policy_uuid       = mso_fabric_policies_macsec_policy.macsec_policy.uuid
+	domains_uuid                    = [ mso_fabric_policies_l3_domain.l3_domain.uuid ]
 }

@@ -45,9 +45,9 @@ resource "mso_fabric_policies_interface_setting" "test" {
     stp_bpdu_filter                 = "enabled"
     stp_bpdu_guard                  = "enabled"
     vlan_scope                      = "portlocal"
-    synce                           = mso_fabric_policies_synce_interface_policy.test.uuid
-    access_macsec_policy            = mso_fabric_policies_macsec_policy.test.uuid
-    domains                         = [ mso_fabric_policies_l3_domain.test.uuid ]
+    synce_uuid                      = mso_fabric_policies_synce_interface_policy.test.uuid
+    access_macsec_policy_uuid       = mso_fabric_policies_macsec_policy.test.uuid
+    domains_uuid                    = [ mso_fabric_policies_l3_domain.test.uuid ]
 }
 ```
 
@@ -85,9 +85,9 @@ resource "mso_fabric_policies_interface_setting" "test" {
 * `port_channel_min_links` - (Optional) The minimum number of active links for the port channel. This applies only when the Interface Setting has `type=portchannel`. Valid range: 1-16. Defaults to 1 when unset during creation.
 * `port_channel_max_links` - (Optional) The maximum number of links for the port channel. This applies only when the Interface Setting has `type=portchannel`. Valid range: 1-64. Defaults to 16 when unset during creation.
 * `load_balance_hashing` - (Optional) The load balancing hashing algorithm for the Interface Setting. This applies only when the Interface Setting has `type=portchannel`. Allowed values are `destination_ip`, `layer_4_destination_ip`, `layer_4_source_ip`, or `source_ip`.
-* `synce` - (Optional) The UUID of the SyncE Interface Policy to associate with this Interface Setting.
-* `domains` - (Optional) A list of UUIDs of the L3 Domains to associate with this Interface Setting.
-* `access_macsec_policy` - (Optional) The UUID of the access‑type MACsec policy to be associated with this Interface Setting.
+* `synce_uuid` - (Optional) The UUID of the SyncE Interface Policy to associate with this Interface Setting.
+* `domains_uuid` - (Optional) A list of UUIDs of the L3 Domains to associate with this Interface Setting.
+* `access_macsec_policy_uuid` - (Optional) The UUID of the access‑type MACsec policy to be associated with this Interface Setting.
 
 ## Attribute Reference ##
 

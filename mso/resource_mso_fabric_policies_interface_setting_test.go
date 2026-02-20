@@ -44,9 +44,9 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "type", "physical"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "template_id"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "domains.#", "1"),
-					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "synce"),
-					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "domains_uuid.#", "1"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "synce_uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy_uuid"),
 				),
 			},
 			{
@@ -87,8 +87,8 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "type", "physical"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "template_id"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "synce", ""),
-					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy", ""),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "synce_uuid", ""),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy_uuid", ""),
 				),
 			},
 		},
@@ -181,9 +181,9 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_min_links", "6"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_mode", "mac_pinning_physical_nic_load"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "controls.#", "2"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "domains.#", "1"),
-					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "synce"),
-					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "access_macsec_policy"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "domains_uuid.#", "1"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "synce_uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "access_macsec_policy_uuid"),
 				),
 			},
 		},
@@ -195,12 +195,12 @@ func testAccMSOFabricPoliciesInterfaceSettingPhysicalConfigCreate() string {
 %[1]s
 %[4]s
 resource "mso_fabric_policies_interface_setting" "%[2]s_physical" {
-	template_id          = mso_template.%[3]s.id
-	type                 = "physical"
-	name                 = "%[2]s_physical"
-	synce                = mso_fabric_policies_synce_interface_policy.%[5]s.uuid
-	access_macsec_policy = mso_fabric_policies_macsec_policy.%[6]s.uuid
-	domains              = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
+	template_id               = mso_template.%[3]s.id
+	type                      = "physical"
+	name                      = "%[2]s_physical"
+	synce_uuid                = mso_fabric_policies_synce_interface_policy.%[5]s.uuid
+	access_macsec_policy_uuid = mso_fabric_policies_macsec_policy.%[6]s.uuid
+	domains_uuid              = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
 }
 `, testFabricPolicyTemplateConfig(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName, testFabricPolicyTemplateL3DomainConfig()+testFabricPolicyTemplateSyncEInterfacePolicyConfig()+testFabricPolicyTemplateMacsecPolicyConfig(), msoFabricPolicyTemplateSyncEInterfacePolicyName, msoFabricPolicyTemplateMacsecPolicyName, msoFabricPolicyTemplateL3DomainName)
 }
@@ -237,9 +237,9 @@ resource "mso_fabric_policies_interface_setting" "%[2]s_physical" {
 	stp_bpdu_filter                 = "enabled"
 	stp_bpdu_guard                  = "enabled"
 	vlan_scope                      = "portlocal"
-	synce                           = ""
-	access_macsec_policy            = ""
-	domains                         = []
+	synce_uuid                      = ""
+	access_macsec_policy_uuid       = ""
+	domains_uuid                    = []
 }
 `, testFabricPolicyTemplateConfig(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName, testFabricPolicyTemplateL3DomainConfig()+testFabricPolicyTemplateSyncEInterfacePolicyConfig()+testFabricPolicyTemplateMacsecPolicyConfig())
 }
@@ -295,9 +295,9 @@ resource "mso_fabric_policies_interface_setting" "%[2]s_portchannel" {
 	stp_bpdu_filter                 = "enabled"
 	stp_bpdu_guard                  = "enabled"
 	vlan_scope                      = "portlocal"
-	synce                           = mso_fabric_policies_synce_interface_policy.%[5]s.uuid
-	access_macsec_policy            = mso_fabric_policies_macsec_policy.%[6]s.uuid
-	domains                         = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
+	synce_uuid                      = mso_fabric_policies_synce_interface_policy.%[5]s.uuid
+	access_macsec_policy_uuid       = mso_fabric_policies_macsec_policy.%[6]s.uuid
+	domains_uuid                    = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
 }
 `, testFabricPolicyTemplateConfig(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName, testFabricPolicyTemplateL3DomainConfig()+testFabricPolicyTemplateSyncEInterfacePolicyConfig()+testFabricPolicyTemplateMacsecPolicyConfig(), msoFabricPolicyTemplateSyncEInterfacePolicyName, msoFabricPolicyTemplateMacsecPolicyName, msoFabricPolicyTemplateL3DomainName)
 }

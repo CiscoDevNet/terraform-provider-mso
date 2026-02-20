@@ -148,18 +148,18 @@ func datasourceMSOInterfaceSetting() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"synce": {
+			"synce_uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"domains": {
+			"domains_uuid": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"access_macsec_policy": {
+			"access_macsec_policy_uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

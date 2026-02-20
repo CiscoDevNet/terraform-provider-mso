@@ -11,49 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-var (
-	portChannelModeMap = map[string]string{
-		"lacp_active":                   "active",
-		"lacp_passive":                  "passive",
-		"static_channel_mode_on":        "off",
-		"mac_pinning":                   "mac-pin",
-		"mac_pinning_physical_nic_load": "mac-pin-nicload",
-		"use_explicit_failover_order":   "explicit-failover",
-	}
-
-	controlMap = map[string]string{
-		"fast_sel_hot_stdby": "fast-sel-hot-stdby",
-		"graceful_conv":      "graceful-conv",
-		"susp_individual":    "susp-individual",
-		"load_defer":         "load-defer",
-		"symmetric_hash":     "symmetric-hash",
-	}
-
-	linkLevelFecMap = map[string]string{
-		"inherit":       "inherit",
-		"cl74_fc_fec":   "cl74-fc-fec",
-		"cl91_rs_fec":   "cl91-rs-fec",
-		"cons16_rs_fec": "cons16-rs-fec",
-		"ieee_rs_fec":   "ieee-rs-fec",
-		"kp_fec":        "kp-fec",
-		"disable_fec":   "disable-fec",
-	}
-
-	l2InterfaceQinqMap = map[string]string{
-		"double_q_tag_port": "doubleQtagPort",
-		"core_port":         "corePort",
-		"edge_port":         "edgePort",
-		"disabled":          "disabled",
-	}
-
-	loadBalanceHashingMap = map[string]string{
-		"destination_ip":         "dst-ip",
-		"layer_4_destination_ip": "l4-dst-port",
-		"layer_4_source_ip":      "l4-src-port",
-		"source_ip":              "src-ip",
-	}
-)
-
 func resourceMSOInterfaceSetting() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOInterfaceSettingCreate,
@@ -259,18 +216,18 @@ func resourceMSOInterfaceSetting() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(getMapKeys(loadBalanceHashingMap), false),
 			},
-			"synce": {
+			"synce_uuid": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"domains": {
+			"domains_uuid": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"access_macsec_policy": {
+			"access_macsec_policy_uuid": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -412,15 +369,15 @@ func setInterfaceSettingData(d *schema.ResourceData, response *container.Contain
 	}
 
 	if syncE := models.StripQuotes(response.S("syncEthPolicy").String()); syncE != "" && syncE != "{}" {
-		d.Set("synce", syncE)
+		d.Set("synce_uuid", syncE)
 	}
 
 	if response.S("domains").Data() != nil {
-		d.Set("domains", response.S("domains").Data())
+		d.Set("domains_uuid", response.S("domains").Data())
 	}
 
 	if macsecPolicy := models.StripQuotes(response.S("accessMACsecPolicy").String()); macsecPolicy != "" && macsecPolicy != "{}" {
-		d.Set("access_macsec_policy", macsecPolicy)
+		d.Set("access_macsec_policy_uuid", macsecPolicy)
 	}
 
 	log.Printf("[DEBUG] MSO Interface Setting Resource - setInterfaceSettingData Complete")
@@ -748,8 +705,8 @@ func resourceMSOInterfaceSettingUpdate(d *schema.ResourceData, m interface{}) er
 		}
 	}
 
-	if d.HasChange("synce") {
-		syncE, ok := d.GetOk("synce")
+	if d.HasChange("synce_uuid") {
+		syncE, ok := d.GetOk("synce_uuid")
 		if !ok {
 			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/syncEthPolicy", updatePath), nil)
 			if err != nil {
@@ -763,8 +720,8 @@ func resourceMSOInterfaceSettingUpdate(d *schema.ResourceData, m interface{}) er
 		}
 	}
 
-	if d.HasChange("domains") {
-		domains, ok := d.GetOk("domains")
+	if d.HasChange("domains_uuid") {
+		domains, ok := d.GetOk("domains_uuid")
 		if !ok {
 			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/domains", updatePath), nil)
 			if err != nil {
@@ -779,8 +736,8 @@ func resourceMSOInterfaceSettingUpdate(d *schema.ResourceData, m interface{}) er
 		}
 	}
 
-	if d.HasChange("access_macsec_policy") {
-		macsecPolicy, ok := d.GetOk("access_macsec_policy")
+	if d.HasChange("access_macsec_policy_uuid") {
+		macsecPolicy, ok := d.GetOk("access_macsec_policy_uuid")
 		if !ok {
 			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/accessMACsecPolicy", updatePath), nil)
 			if err != nil {
@@ -1047,12 +1004,12 @@ func buildInterfaceSettingPayload(d *schema.ResourceData) map[string]interface{}
 	}
 
 	// SyncE Policy
-	if syncE, ok := d.GetOk("synce"); ok {
+	if syncE, ok := d.GetOk("synce_uuid"); ok {
 		payload["syncEthPolicy"] = syncE.(string)
 	}
 
 	// Domains
-	if domains, ok := d.GetOk("domains"); ok {
+	if domains, ok := d.GetOk("domains_uuid"); ok {
 		domainsList := domains.(*schema.Set).List()
 		if len(domainsList) > 0 {
 			payload["domains"] = domainsList
@@ -1060,7 +1017,7 @@ func buildInterfaceSettingPayload(d *schema.ResourceData) map[string]interface{}
 	}
 
 	// Access MACsec Policy
-	if macsecPolicy, ok := d.GetOk("access_macsec_policy"); ok {
+	if macsecPolicy, ok := d.GetOk("access_macsec_policy_uuid"); ok {
 		payload["accessMACsecPolicy"] = macsecPolicy.(string)
 	}
 
