@@ -17,6 +17,8 @@ var msoSchemaTemplateAnpEpgName = acctest.RandStringFromCharSet(10, acctest.Char
 var msoSchemaTemplateVrfName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateExtEpgName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricPolicyTemplateMCPGlobalPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -116,4 +118,13 @@ resource "mso_schema_template_external_epg" "%[1]s" {
 	template_name     = "%[4]s"
 }
 `, msoSchemaTemplateExtEpgName, msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName)
+}
+
+func testFabricPolicyTemplateConfig() string {
+	return fmt.Sprintf(`
+resource "mso_template" "%[1]s" {
+	template_name = "%[1]s"
+	template_type = "fabric_policy"
+}
+`, msoFabricPolicyTemplateName)
 }

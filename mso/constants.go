@@ -47,3 +47,10 @@ var targetDscpMap = map[string]string{
 	"expeditedForwarding":  "expedited_forwarding",
 	"voiceAdmit":           "voice_admit",
 }
+
+var enabledDisabledMap = map[interface{}]interface{}{
+	"enabled":  true,
+	"disabled": false,
+	true:       "enabled",
+	false:      "disabled",
+}

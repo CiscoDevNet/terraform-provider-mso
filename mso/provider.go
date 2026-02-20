@@ -138,6 +138,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_custom_qos_policy":           resourceMSOCustomQoSPolicy(),
 			"mso_tenant_policies_dhcp_option_policy":          resourceMSODHCPOptionPolicy(),
 			"mso_tenant_policies_mld_snooping_policy":         resourceMSOMLDSnoopingPolicy(),
+			"mso_fabric_policies_mcp_global_policy":           resourceMSOMCPGlobalPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -209,6 +210,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_custom_qos_policy":           datasourceMSOCustomQoSPolicy(),
 			"mso_tenant_policies_dhcp_option_policy":          datasourceMSODHCPOptionPolicy(),
 			"mso_tenant_policies_mld_snooping_policy":         datasourceMSOMLDSnoopingPolicy(),
+			"mso_fabric_policies_mcp_global_policy":           datasourceMSOMCPGlobalPolicy(),
 		},
 
 		ConfigureFunc: configureClient,
