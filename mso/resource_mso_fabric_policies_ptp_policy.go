@@ -60,7 +60,7 @@ func resourceMSOPtpPolicy() *schema.Resource {
 			"global_priority1": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ValidateFunc: validation.IntBetween(0, 255),
+				ValidateFunc: validation.IntBetween(1, 255),
 			},
 			"global_priority2": {
 				Type:         schema.TypeInt,

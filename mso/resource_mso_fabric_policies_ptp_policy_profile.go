@@ -29,7 +29,7 @@ func resourceMSOPtpPolicyProfile() *schema.Resource {
 				Required: true,
 			},
 			"ptp_policy_uuid": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
@@ -115,7 +115,7 @@ func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, t
 	if !ok {
 		return fmt.Errorf("PTP Policy not found")
 	}
-	
+
 	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "ptpPolicy", "profiles")
 	if err != nil {
 		return err

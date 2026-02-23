@@ -40,7 +40,7 @@ resource "mso_fabric_policies_ptp_policy" "ptp_policy" {
 * `description` - (Optional) The description of the PTP Policy.
 * `admin_state` - (Required) The administrative state of the PTP Policy. Allowed values are `enabled` or `disabled`.
 * `global_priority1` - (Required) The global priority1 of the PTP Policy. Valid range: 1-255.
-* `global_priority2` - (Required) The global priority2 of the PTP Policy. Valid range: 1-255.
+* `global_priority2` - (Required) The global priority2 of the PTP Policy. Valid range: 0-255.
 * `global_domain` - (Required) The global domain of the PTP Policy. Valid range: 0-128.
 * `fabric_profile_template` - (Required) The fabric profile template of the PTP Policy. Allowed values are `default`, `aes67`, or `smpte`.
 * `fabric_announce_interval` - (Required) The fabric announce interval in log base 2 seconds of the PTP Policy. Valid range: -3 to 4.
