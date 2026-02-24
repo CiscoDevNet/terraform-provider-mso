@@ -45,7 +45,7 @@ func resourceMSONodeSettings() *schema.Resource {
 				Computed: true,
 			},
 			"synce": &schema.Schema{
-				Type:        schema.TypeMap,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -67,18 +67,18 @@ func resourceMSONodeSettings() *schema.Resource {
 				},
 			},
 			"ptp": &schema.Schema{
-				Type:        schema.TypeMap,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"node_domain": &schema.Schema{
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
 							ValidateFunc: validation.IntBetween(24, 43),
 						},
 						"priority_2": &schema.Schema{
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
 							ValidateFunc: validation.IntBetween(0, 255),
 						},
 					},
@@ -132,12 +132,12 @@ func setNodeSettingsData(d *schema.ResourceData, msoClient *client.Client, templ
 	d.Set("name", name)
 	d.Set("description", models.StripQuotes(policy.S("description").String()))
 	d.Set("uuid", models.StripQuotes(policy.S("uuid").String()))
-	
+
 	if policy.Exists("synce") {
 		synce := policy.S("synce")
 		synceMap := map[string]any{
-			"admin_state":        models.StripQuotes(synce.S("adminState").String()),
-			"quality_level":      convertValueWithMap(models.StripQuotes(synce.S("qlOption").String()), synceQualityLevelOptionsMap),
+			"admin_state":   models.StripQuotes(synce.S("adminState").String()),
+			"quality_level": convertValueWithMap(models.StripQuotes(synce.S("qlOption").String()), synceQualityLevelOptionsMap),
 		}
 		d.Set("synce", synceMap)
 	}
@@ -145,8 +145,8 @@ func setNodeSettingsData(d *schema.ResourceData, msoClient *client.Client, templ
 	if policy.Exists("ptp") {
 		ptp := policy.S("ptp")
 		ptpMap := map[string]any{
-			"node_domain":        ptp.S("domain").Data().(float64),
-			"priority_2":         ptp.S("prio1").Data().(float64),
+			"node_domain": ptp.S("domain").Data().(float64),
+			"priority_2":  ptp.S("prio1").Data().(float64),
 		}
 		d.Set("ptp", ptpMap)
 	}

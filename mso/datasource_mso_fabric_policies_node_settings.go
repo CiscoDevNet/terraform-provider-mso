@@ -17,8 +17,8 @@ func datasourceMSONodeSettings() *schema.Resource {
 				Required: true,
 			},
 			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -29,7 +29,7 @@ func datasourceMSONodeSettings() *schema.Resource {
 				Computed: true,
 			},
 			"synce": &schema.Schema{
-				Type:        schema.TypeMap,
+				Type:     schema.TypeMap,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -45,7 +45,7 @@ func datasourceMSONodeSettings() *schema.Resource {
 				},
 			},
 			"ptp": &schema.Schema{
-				Type:        schema.TypeMap,
+				Type:     schema.TypeMap,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
