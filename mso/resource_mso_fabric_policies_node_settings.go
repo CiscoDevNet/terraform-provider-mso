@@ -146,7 +146,7 @@ func setNodeSettingsData(d *schema.ResourceData, msoClient *client.Client, templ
 		ptp := policy.S("ptp")
 		ptpMap := map[string]any{
 			"node_domain": ptp.S("domain").Data().(float64),
-			"priority_2":  ptp.S("prio1").Data().(float64),
+			"priority_2":  ptp.S("prio2").Data().(float64),
 		}
 		d.Set("ptp", ptpMap)
 	}
@@ -168,7 +168,10 @@ func resourceMSONodeSettingsImport(d *schema.ResourceData, m any) ([]*schema.Res
 		return nil, err
 	}
 
-	setNodeSettingsData(d, msoClient, templateId, policyName)
+	err = setNodeSettingsData(d, msoClient, templateId, policyName)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO Node Settings Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -218,7 +221,10 @@ func resourceMSONodeSettingsRead(d *schema.ResourceData, m any) error {
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	setNodeSettingsData(d, msoClient, templateId, policyName)
+	err := setNodeSettingsData(d, msoClient, templateId, policyName)
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO Node Settings Resource - Read Complete : %v", d.Id())
 	return nil
 }
