@@ -37,10 +37,10 @@ resource "mso_fabric_policies_node_settings" "node_settings" {
 * `template_id` - (Required) The unique ID of the Fabric Policy template.
 * `name` - (Required) The name of the Node Settings.
 * `description` - (Optional) The description of the Node Settings.
-* `synce` - (Optional) The SyncE configuration map of the Node Settings.
+* `synce` - (Optional) The Synchronous Ethernet (SyncE) configuration map of the Node Settings.
   * `admin_state` - (Required) The SyncE administrative state of the Node Settings. Allowed values are `enabled` or `disabled`.
   * `quality_level` - (Required) The SyncE quality level of the Node Settings. Allowed values are `option_1`, `option_2_generation_1` or `option_2_generation_2`.
-* `ptp` - (Optional) The PTP configuration map of the Node Settings.
+* `ptp` - (Optional) The Precision Time Protocol (PTP) configuration map of the Node Settings.
   * `node_domain` - (Required) The PTP domain of the Node Settings. Valid range: 24-43.
   * `priority_2` - (Required) The PTP priority 2 of the Node Settings. Valid range: 0-255.
 

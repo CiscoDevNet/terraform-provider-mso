@@ -71,7 +71,10 @@ func dataSourceNodeSettingsRead(d *schema.ResourceData, m interface{}) error {
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	setNodeSettingsData(d, msoClient, templateId, policyName)
+	err := setNodeSettingsData(d, msoClient, templateId, policyName)
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO Node Settings Data Source - Read Complete : %v", d.Id())
 	return nil
 }
