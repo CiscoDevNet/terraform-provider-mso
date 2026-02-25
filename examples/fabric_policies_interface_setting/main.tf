@@ -105,5 +105,5 @@ resource "mso_fabric_policies_interface_setting" "portchannel_interface" {
 	vlan_scope                      = "portlocal"
 	synce_uuid                      = mso_fabric_policies_synce_interface_policy.synce_policy.uuid
 	access_macsec_policy_uuid       = mso_fabric_policies_macsec_policy.macsec_policy.uuid
-	domains_uuid                    = [ mso_fabric_policies_l3_domain.l3_domain.uuid ]
+	domain_uuids                    = [ mso_fabric_policies_l3_domain.l3_domain.uuid ]
 }

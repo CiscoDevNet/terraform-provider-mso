@@ -152,7 +152,7 @@ func datasourceMSOInterfaceSetting() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"domains_uuid": {
+			"domain_uuids": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Schema{

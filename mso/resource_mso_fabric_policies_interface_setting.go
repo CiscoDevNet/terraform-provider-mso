@@ -220,7 +220,7 @@ func resourceMSOInterfaceSetting() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"domains_uuid": {
+			"domain_uuids": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
@@ -373,7 +373,7 @@ func setInterfaceSettingData(d *schema.ResourceData, response *container.Contain
 	}
 
 	if response.S("domains").Data() != nil {
-		d.Set("domains_uuid", response.S("domains").Data())
+		d.Set("domain_uuids", response.S("domains").Data())
 	}
 
 	if macsecPolicy := models.StripQuotes(response.S("accessMACsecPolicy").String()); macsecPolicy != "" && macsecPolicy != "{}" {
@@ -720,8 +720,8 @@ func resourceMSOInterfaceSettingUpdate(d *schema.ResourceData, m interface{}) er
 		}
 	}
 
-	if d.HasChange("domains_uuid") {
-		domains, ok := d.GetOk("domains_uuid")
+	if d.HasChange("domain_uuids") {
+		domains, ok := d.GetOk("domain_uuids")
 		if !ok {
 			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/domains", updatePath), nil)
 			if err != nil {
@@ -1009,7 +1009,7 @@ func buildInterfaceSettingPayload(d *schema.ResourceData) map[string]interface{}
 	}
 
 	// Domains
-	if domains, ok := d.GetOk("domains_uuid"); ok {
+	if domains, ok := d.GetOk("domain_uuids"); ok {
 		domainsList := domains.(*schema.Set).List()
 		if len(domainsList) > 0 {
 			payload["domains"] = domainsList

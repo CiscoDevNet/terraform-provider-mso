@@ -63,5 +63,5 @@ data "mso_fabric_policies_interface_setting" "test" {
 * `port_channel_max_links` - (Read-Only) The maximum number of links for the port channel.
 * `load_balance_hashing` - (Read-Only) The load balancing hashing algorithm for the Interface Setting.
 * `synce_uuid` - (Read-Only) The UUID of the SyncE Interface Policy to associate with this Interface Setting.
-* `domains_uuid` - (Read-Only) A list of UUIDs of the L3 Domains to associate with this Interface Setting.
+* `domain_uuids` - (Read-Only) A list of UUIDs of the L3 Domains to associate with this Interface Setting.
 * `access_macsec_policy_uuid` - (Read-Only) The UUID of the access‑type MACsec policy to be associated with this Interface Setting.

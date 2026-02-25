@@ -44,7 +44,7 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "type", "physical"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "template_id"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "domains_uuid.#", "1"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "domain_uuids.#", "1"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "synce_uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy_uuid"),
 				),
@@ -181,7 +181,7 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_min_links", "6"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_mode", "mac_pinning_physical_nic_load"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "controls.#", "2"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "domains_uuid.#", "1"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "domain_uuids.#", "1"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "synce_uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "access_macsec_policy_uuid"),
 				),
@@ -200,7 +200,7 @@ resource "mso_fabric_policies_interface_setting" "%[2]s_physical" {
 	name                      = "%[2]s_physical"
 	synce_uuid                = mso_fabric_policies_synce_interface_policy.%[5]s.uuid
 	access_macsec_policy_uuid = mso_fabric_policies_macsec_policy.%[6]s.uuid
-	domains_uuid              = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
+	domain_uuids              = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
 }
 `, testFabricPolicyTemplateConfig(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName, testFabricPolicyTemplateL3DomainConfig()+testFabricPolicyTemplateSyncEInterfacePolicyConfig()+testFabricPolicyTemplateMacsecPolicyConfig(), msoFabricPolicyTemplateSyncEInterfacePolicyName, msoFabricPolicyTemplateMacsecPolicyName, msoFabricPolicyTemplateL3DomainName)
 }
@@ -239,7 +239,7 @@ resource "mso_fabric_policies_interface_setting" "%[2]s_physical" {
 	vlan_scope                      = "portlocal"
 	synce_uuid                      = ""
 	access_macsec_policy_uuid       = ""
-	domains_uuid                    = []
+	domain_uuids                    = []
 }
 `, testFabricPolicyTemplateConfig(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName, testFabricPolicyTemplateL3DomainConfig()+testFabricPolicyTemplateSyncEInterfacePolicyConfig()+testFabricPolicyTemplateMacsecPolicyConfig())
 }
@@ -297,7 +297,7 @@ resource "mso_fabric_policies_interface_setting" "%[2]s_portchannel" {
 	vlan_scope                      = "portlocal"
 	synce_uuid                      = mso_fabric_policies_synce_interface_policy.%[5]s.uuid
 	access_macsec_policy_uuid       = mso_fabric_policies_macsec_policy.%[6]s.uuid
-	domains_uuid                    = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
+	domain_uuids                    = [ mso_fabric_policies_l3_domain.%[7]s.uuid ]
 }
 `, testFabricPolicyTemplateConfig(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName, testFabricPolicyTemplateL3DomainConfig()+testFabricPolicyTemplateSyncEInterfacePolicyConfig()+testFabricPolicyTemplateMacsecPolicyConfig(), msoFabricPolicyTemplateSyncEInterfacePolicyName, msoFabricPolicyTemplateMacsecPolicyName, msoFabricPolicyTemplateL3DomainName)
 }
