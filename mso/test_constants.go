@@ -57,6 +57,9 @@ const msoSchemaTemplateExtEpgSubnetIp = "10.0.1.1/24"
 const msoSchemaTemplateExtEpgSubnetIp2 = "10.0.1.2/24"
 const msoSchemaTemplateBdSubnetIp = "10.1.0.1/24"
 
+var msoFabricResourceTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricResourcePortChannelInterfaceName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
 data "mso_site" "%[1]s" {
@@ -508,4 +511,13 @@ func testSchemaWithSingleSiteAssociationDeployedConfig() string {
 			"mso_schema_template_vrf." + msoSchemaTemplateVrfName,
 		}),
 	)
+}
+
+func testFabricResourceTemplateConfig() string {
+	return fmt.Sprintf(`
+	resource "mso_template" "%[1]s" {
+		template_name = "%[1]s"
+		template_type = "fabric_resource"
+	}
+	`, msoFabricResourceTemplateName)
 }

@@ -150,6 +150,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_netflow_record":                 resourceMSONetflowRecord(),
 			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
 			"mso_user": resourceMSOUser(),
+			"mso_fabric_resource_policies_port_channel_interface": resourceMSOPortChannelInterface(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -233,6 +234,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_netflow_record":                 datasourceMSONetflowRecord(),
 			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
 			"mso_user": datasourceMSOUser(),
+			"mso_fabric_resource_policies_port_channel_interface": datasourceMSOPortChannelInterface(),
 		},
 
 		ConfigureFunc: configureClient,
