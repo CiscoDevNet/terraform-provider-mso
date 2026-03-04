@@ -45,7 +45,7 @@ resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
 * `template_id` - (Required) The unique ID of the tenant policy template.
 * `name` - (Required) The name of the L3Out Node Routing Policy.
 * `description` - (Optional) The description of the L3Out Node Routing Policy. When unset during creation, no description is applied.
-* `as_path_multipath_relax` - (Optional) BGP Best Path Control - enables AS path multipath relaxation to allow load balancing across paths with different AS paths. When unset during creation, this setting is not configured.
+* `as_path_multipath_relax` - (Optional) BGP Best Path Control - enables AS path multipath relaxation to allow load balancing across paths with different AS paths. When unset during creation, this setting is not configured. Valid values: `true`, `false`.
 * `bfd_multi_hop_settings` - (Optional) BFD multi-hop configuration block. Omitting this block will remove BFD multi-hop settings if they exist.
   * `admin_state` - (Optional) Administrative state. Default: `enabled` when unset during creation. Valid values: `enabled`, `disabled`.
   * `detection_multiplier` - (Optional) The number of consecutive BFD packets that must be missed before the session is declared down. Default: 3 when unset during creation. Valid range: 1-50.
