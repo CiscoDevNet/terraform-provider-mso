@@ -8,7 +8,6 @@ import (
 )
 
 func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
-	print(testAccMSOTenantPoliciesIPSLATrackListConfigCreate())
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,

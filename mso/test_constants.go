@@ -62,6 +62,7 @@ const msoSchemaTemplateBdSubnetIp = "10.1.0.1/24"
 
 var msoFabricResourceTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricResourcePortChannelInterfaceName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoFabricResourcePhysicalInterfaceName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -531,6 +532,16 @@ resource "mso_fabric_policies_interface_setting" "%[1]s_portchannel" {
 	template_id = mso_template.%[2]s.id
 	type        = "portchannel"
 	name        = "%[1]s_portchannel"
+}
+`, msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName)
+}
+
+func testFabricPoliciesInterfaceSettingPhysicalConfig() string {
+	return fmt.Sprintf(`
+resource "mso_fabric_policies_interface_setting" "%[1]s_physical" {
+	template_id = mso_template.%[2]s.id
+	type        = "physical"
+	name        = "%[1]s_physical"
 }
 `, msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName)
 }
