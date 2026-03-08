@@ -43,9 +43,9 @@ resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 * `announce_interval` - (Required) The announce interval in log base 2 seconds of the PTP Profile. Valid range: -3 to 4.
 * `sync_interval` - (Required) The sync interval in log base 2 seconds of the PTP Profile.Valid range: -4 to 1.
 * `override_node_profile` - (Optional) The node profile override of the PTP Profile. This parameter is not applicable when `profile_template` is `telecom`. Allowed Values: `true` or `false`.
-* `local_priority` - (Read-Only) The local priority of the PTP Profile. This parameter is only applicable when `profile_template` is `telecom`. Valid range: 1 to 128.
-* `destination_mac_type` - (Read-Only) The destination MAC for PTP messages of the PTP Profile. This parameter is only applicable when `profile_template` is `telecom`. Allowed values are `forwardable` or `non_forwardable`.
-* `mismatched_mac_handling` - (Read-Only) The mismatched destination MAC handling of the PTP Profile. This parameter is only applicable when `profile_template` is `telecom`. Allowed values are `drop`, `reply_with_config_mac` or `reply_with_received_mac`.
+* `local_priority` - (Optional) The local priority of the PTP Profile. This parameter is only applicable when `profile_template` is `telecom`. Valid range: 1 to 128.
+* `destination_mac_type` - (Optional) The destination MAC for PTP messages of the PTP Profile. This parameter is only applicable when `profile_template` is `telecom`. Allowed values are `forwardable` or `non_forwardable`.
+* `mismatched_mac_handling` - (Optional) The mismatched destination MAC handling of the PTP Profile. This parameter is only applicable when `profile_template` is `telecom`. Allowed values are `drop`, `reply_with_config_mac` or `reply_with_received_mac`.
 
 ## Attribute Reference ##
 
