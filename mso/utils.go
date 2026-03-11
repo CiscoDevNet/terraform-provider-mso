@@ -574,6 +574,22 @@ func validateUint32Range(min, max uint32) schema.SchemaValidateFunc {
 	}
 }
 
+func splitCommaString(s string) []string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return []string{}
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
 func GetTemplateObjectByUUID(msoClient *client.Client, objectType, uuid string) (*container.Container, error) {
 	path := fmt.Sprintf("api/v1/templates/objects?type=%s&uuid=%s", objectType, uuid)
 	cont, err := msoClient.GetViaURL(path)
