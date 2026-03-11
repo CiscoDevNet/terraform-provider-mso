@@ -68,8 +68,7 @@ func resourceMSOVirtualPortChannelInterface() *schema.Resource {
 			},
 			"node_2_interfaces": {
 				Type:        schema.TypeList,
-				Computed:    true,
-				Optional:    true,
+				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of interface IDs (or ranges) for node 2.",
 			},
@@ -180,9 +179,26 @@ func resourceMSOVirtualPortChannelInterfaceCreate(d *schema.ResourceData, m any)
 	msoClient := m.(*client.Client)
 
 	templateId := d.Get("template_id").(string)
-	payload := buildFabricResourceVPCInterfacePayload(d)
 
+	interfaces1 := getListOfStringsFromSchemaList(d, "node_1_interfaces")
+	interfaces2 := getListOfStringsFromSchemaList(d, "node_2_interfaces")
+
+	payload := map[string]any{
+		"name":        d.Get("name").(string),
+		"description": d.Get("description").(string),
+		"node1Details": map[string]any{
+			"node":             d.Get("node_1").(string),
+			"memberInterfaces": strings.Join(interfaces1, ","),
+		},
+		"node2Details": map[string]any{
+			"node":             d.Get("node_2").(string),
+			"memberInterfaces": strings.Join(interfaces2, ","),
+		},
+		"policy":                d.Get("interface_policy_group_uuid").(string),
+		"interfaceDescriptions": buildInterfaceDescriptionsPayload(d),
+	}
 	payloadModel := models.GetPatchPayload("add", "/fabricResourceTemplate/template/virtualPortChannels/-", payload)
+
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateId), payloadModel)
 	if err != nil {
 		return err
@@ -311,29 +327,6 @@ func resourceMSOVirtualPortChannelInterfaceDelete(d *schema.ResourceData, m any)
 	return nil
 }
 
-// ---- payload + lookup helpers ----
-
-func buildFabricResourceVPCInterfacePayload(d *schema.ResourceData) map[string]any {
-	ifaces1 := getListOfStringsFromSchemaList(d, "node_1_interfaces")
-	ifaces2 := getListOfStringsFromSchemaList(d, "node_2_interfaces")
-
-	payload := map[string]any{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"node1Details": map[string]any{
-			"node":             d.Get("node_1").(string),
-			"memberInterfaces": strings.Join(ifaces1, ","),
-		},
-		"node2Details": map[string]any{
-			"node":             d.Get("node_2").(string),
-			"memberInterfaces": strings.Join(ifaces2, ","),
-		},
-		"policy":                d.Get("interface_policy_group_uuid").(string),
-		"interfaceDescriptions": buildInterfaceDescriptionsPayload(d),
-	}
-	return payload
-}
-
 func buildInterfaceDescriptionsPayload(d *schema.ResourceData) []map[string]any {
 	raw := d.Get("interface_descriptions").([]any)
 	out := make([]map[string]any, 0, len(raw))
@@ -344,22 +337,6 @@ func buildInterfaceDescriptionsPayload(d *schema.ResourceData) []map[string]any 
 			"interfaceID": m["interface"].(string),
 			"description": m["description"].(string),
 		})
-	}
-	return out
-}
-
-func splitCommaString(s string) []string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return []string{}
-	}
-	parts := strings.Split(s, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			out = append(out, p)
-		}
 	}
 	return out
 }

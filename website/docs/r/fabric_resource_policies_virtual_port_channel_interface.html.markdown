@@ -49,7 +49,7 @@ resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" 
 * `node_1` - (Required) The first node ID.
 * `node_2` - (Required) The second node ID.
 * `node_1_interfaces` - (Required) List of interface IDs (or ranges) for node 1.
-* `node_2_interfaces` - (Optional) List of interface IDs (or ranges) for node 2.
+* `node_2_interfaces` - (Required) List of interface IDs (or ranges) for node 2.
 * `interface_policy_group_uuid` - (Required) UUID of the Port Channel Interface Policy Group.
 * `interface_descriptions` - (Optional) List of interface description entries. The provided list replaces the existing list in NDO.
   * `node` - (Required) Node ID.
