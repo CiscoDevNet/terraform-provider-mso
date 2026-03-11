@@ -75,7 +75,7 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 						map[string]string{
 							"node":        "104",
 							"interface":   "1/3",
-							"description": "Terraform test interface description 104",
+							"description": "",
 						},
 					),
 				),
@@ -158,7 +158,7 @@ func testAccMSOVirtualPortChannelInterfaceConfigUpdate() string {
 		interface_descriptions {
 			node        = "104"
 			interface   = "1/3"
-			description = "Terraform test interface description 104"
+			// No description on purpose
 		}
 	}
 	`, testAccMSOTemplateResourceFabricResourceConfig())
