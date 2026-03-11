@@ -216,9 +216,12 @@ func resourceMSOVirtualPortChannelInterfaceRead(d *schema.ResourceData, m any) e
 	msoClient := m.(*client.Client)
 
 	templateId := d.Get("template_id").(string)
-	policyName := d.Get("name").(string)
+	name := d.Get("name").(string)
 
-	setVPCInterfaceData(d, msoClient, templateId, policyName)
+	err := setVPCInterfaceData(d, msoClient, templateId, name)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[DEBUG] MSO VPC Interface - Read Complete : %v", d.Id())
 	return nil
