@@ -155,6 +155,8 @@ func Provider() *schema.Provider {
 			"mso_tenant_policies_netflow_monitor":                resourceMSOTenantPoliciesNetflowMonitor(),
 			"mso_tenant_policies_netflow_record":                 resourceMSONetflowRecord(),
 			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
+			"mso_tenant_policies_route_map_policy_route_control":         resourceMSORouteMapPolicy(),
+			"mso_tenant_policies_route_map_policy_route_control_context": resourceMSORouteMapPolicyContext(),
 			"mso_user": resourceMSOUser(),
 		},
 
@@ -243,6 +245,8 @@ func Provider() *schema.Provider {
 			"mso_tenant_policies_netflow_monitor":                datasourceMSOTenantPoliciesNetflowMonitor(),
 			"mso_tenant_policies_netflow_record":                 datasourceMSONetflowRecord(),
 			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
+			"mso_tenant_policies_route_map_policy_route_control":         datasourceMSORouteMapPolicy(),
+			"mso_tenant_policies_route_map_policy_route_control_context": datasourceMSORouteMapPolicyContext(),
 			"mso_user": datasourceMSOUser(),
 		},
 
