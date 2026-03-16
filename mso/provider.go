@@ -145,6 +145,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_mld_snooping_policy":            resourceMSOMLDSnoopingPolicy(),
 			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
 			"mso_user": resourceMSOUser(),
+			"mso_tenant_policies_netflow_exporter":               resourceMSONetflowExporter(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -223,6 +224,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_mld_snooping_policy":            datasourceMSOMLDSnoopingPolicy(),
 			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
 			"mso_user": datasourceMSOUser(),
+			"mso_tenant_policies_netflow_exporter":               datasourceMSONetflowExporter(),
 		},
 
 		ConfigureFunc: configureClient,
