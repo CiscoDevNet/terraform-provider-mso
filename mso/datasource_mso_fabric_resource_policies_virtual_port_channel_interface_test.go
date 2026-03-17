@@ -27,6 +27,7 @@ func TestAccMSOVirtualPortChannelInterfaceDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_2_interfaces.0", "1/2"),
 					resource.TestCheckResourceAttr("data.mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_descriptions.#", "1"),
 					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "uuid"),
+					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_policy_group_uuid"),
 					customTestCheckResourceTypeSetAttr(
 						"data.mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 						"interface_descriptions",
