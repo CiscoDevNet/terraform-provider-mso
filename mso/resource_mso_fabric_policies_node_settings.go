@@ -47,6 +47,7 @@ func resourceMSONodeSettings() *schema.Resource {
 			"synce": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"admin_state": {
@@ -69,6 +70,7 @@ func resourceMSONodeSettings() *schema.Resource {
 			"ptp": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"node_domain": &schema.Schema{

@@ -97,5 +97,8 @@ func testAccMSONodeSettingsConfigUpdateRemove() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_node_settings"
 		description     = "Terraform test Node Settings Policy removed synce and ptp"
+
+		ptp = {}
+		synce = {}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
