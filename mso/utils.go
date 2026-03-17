@@ -566,3 +566,12 @@ func validateUint32Range(min, max uint32) schema.SchemaValidateFunc {
 		return nil, nil
 	}
 }
+
+func GetTemplateObjectByUUID(msoClient *client.Client, objectType, uuid string) (*container.Container, error) {
+	path := fmt.Sprintf("api/v1/templates/objects?type=%s&uuid=%s", objectType, uuid)
+	cont, err := msoClient.GetViaURL(path)
+	if err != nil {
+		return nil, err
+	}
+	return cont, nil
+}
