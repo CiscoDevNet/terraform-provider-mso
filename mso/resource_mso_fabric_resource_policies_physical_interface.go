@@ -38,7 +38,6 @@ func resourceMSOPhysicalInterface() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"nodes": {
 				Type:     schema.TypeSet,
@@ -81,7 +80,6 @@ func resourceMSOPhysicalInterface() *schema.Resource {
 						"description": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
 						},
 					},
 				},
@@ -140,7 +138,7 @@ func customizeDiffPhysicalInterface(d *schema.ResourceDiff, m interface{}) error
 
 func getInterfaceDescriptionsPayloadPhysical(interfaceDescriptions *schema.Set) []map[string]interface{} {
 	interfaceDescriptionsList := interfaceDescriptions.List()
-	payload := make([]map[string]interface{}, 0, len(interfaceDescriptionsList))
+	payload := make([]map[string]interface{}, 0)
 	for _, interfaceDescription := range interfaceDescriptionsList {
 		interfaceDescriptionMap := interfaceDescription.(map[string]interface{})
 		payload = append(payload, map[string]interface{}{
@@ -151,56 +149,19 @@ func getInterfaceDescriptionsPayloadPhysical(interfaceDescriptions *schema.Set) 
 	return payload
 }
 
-func nodeSetToStringList(nodeSet *schema.Set) []interface{} {
-	nodeList := make([]interface{}, 0)
-	if nodeSet != nil && nodeSet.Len() > 0 {
-		nodeList = make([]interface{}, 0, nodeSet.Len())
-		for _, node := range nodeSet.List() {
-			nodeList = append(nodeList, node.(string))
-		}
-	}
-	return nodeList
-}
-
-func physicalInterfaceSetToString(interfaceSet *schema.Set) string {
-	interfaceList := make([]string, 0)
-	if interfaceSet != nil && interfaceSet.Len() > 0 {
-		interfaceList = make([]string, 0, interfaceSet.Len())
-		for _, memberInterface := range interfaceSet.List() {
-			interfaceList = append(interfaceList, memberInterface.(string))
-		}
-	}
-	return strings.Join(interfaceList, ",")
-}
-
-func physicalInterfaceStringToSet(interfaceString string) []interface{} {
-	interfaceSet := make([]interface{}, 0)
-	if interfaceString != "" {
-		interfaceList := strings.Split(interfaceString, ",")
-		interfaceSet = make([]interface{}, 0, len(interfaceList))
-		for _, interfaceID := range interfaceList {
-			cleanedInterfaceID := strings.TrimSpace(interfaceID)
-			if cleanedInterfaceID != "" {
-				interfaceSet = append(interfaceSet, cleanedInterfaceID)
-			}
-		}
-	}
-	return interfaceSet
-}
-
 func setPhysicalInterfaceData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/PhysicalInterface/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
 	d.Set("description", models.StripQuotes(response.S("description").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
-	d.Set("interfaces", physicalInterfaceStringToSet(models.StripQuotes(response.S("interfaces").String())))
+	d.Set("interfaces", splitCommaString(models.StripQuotes(response.S("interfaces").String())))
 	d.Set("policy_group_type", models.StripQuotes(response.S("policyGroupType").String()))
 
 	if response.Exists("nodes") {
 		nodeCount, err := response.ArrayCount("nodes")
 		if err == nil {
-			nodeList := make([]interface{}, 0, nodeCount)
+			nodeList := make([]interface{}, 0)
 			for i := 0; i < nodeCount; i++ {
 				nodeElement, err := response.ArrayElement(i, "nodes")
 				if err == nil {
@@ -261,14 +222,8 @@ func resourceMSOPhysicalInterfaceCreate(d *schema.ResourceData, m interface{}) e
 		payload["description"] = description.(string)
 	}
 
-	if nodes, ok := d.GetOk("nodes"); ok {
-		payload["nodes"] = nodeSetToStringList(nodes.(*schema.Set))
-	}
-
-	if memberInterfaces, ok := d.GetOk("interfaces"); ok {
-		payload["interfaces"] = physicalInterfaceSetToString(memberInterfaces.(*schema.Set))
-	}
-
+	payload["nodes"] = getListOfStringsFromSchemaSet(d, "nodes")
+	payload["interfaces"] = strings.Join(getListOfStringsFromSchemaSet(d, "interfaces"), ",")
 	interfacePolicyUUID := d.Get("interface_policy_uuid").(string)
 	breakoutMode := d.Get("breakout_mode").(string)
 
@@ -372,30 +327,28 @@ func resourceMSOPhysicalInterfaceUpdate(d *schema.ResourceData, m interface{}) e
 	}
 
 	if d.HasChange("nodes") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/nodes", updatePath), nodeSetToStringList(d.Get("nodes").(*schema.Set)))
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/nodes", updatePath), getListOfStringsFromSchemaSet(d, "nodes"))
 		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("interfaces") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/interfaces", updatePath), physicalInterfaceSetToString(d.Get("interfaces").(*schema.Set)))
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/interfaces", updatePath), strings.Join(getListOfStringsFromSchemaSet(d, "interfaces"), ","))
 		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("interface_policy_uuid") {
-		interfacePolicyUUID := d.Get("interface_policy_uuid").(string)
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), interfacePolicyUUID)
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), d.Get("interface_policy_uuid").(string))
 		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("breakout_mode") {
-		breakoutMode := d.Get("breakout_mode").(string)
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/breakoutMode", updatePath), breakoutMode)
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/breakoutMode", updatePath), d.Get("breakout_mode").(string))
 		if err != nil {
 			return err
 		}

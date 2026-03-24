@@ -24,7 +24,7 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "name", msoFabricResourcePhysicalInterfaceName),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "policy_group_type", "physical"),
-					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "description", "Terraform test Physical Interface"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "description", ""),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "nodes.#", "1"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "uuid"),
@@ -77,14 +77,14 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 				Config:    testAccMSOFabricResourcePhysicalInterfaceConfigUpdateRemovingExtraInterfaceDescription(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "name", msoFabricResourcePhysicalInterfaceName+"_updated"),
-					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "description", "Terraform test Physical Interface updated"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "description", ""),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "nodes.#", "1"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_descriptions.#", "1"),
 					CustomTestCheckTypeSetElemAttrs("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_descriptions",
 						map[string]string{
 							"interface":   "1/2",
-							"description": "Interface Description 1/2",
+							"description": "",
 						},
 					),
 				),
@@ -198,7 +198,6 @@ func testAccMSOFabricResourcePhysicalInterfaceConfigCreate() string {
 	resource "mso_fabric_resource_policies_physical_interface" "%[2]s" {
         template_id           = mso_template.%[4]s.id
         name                  = "%[2]s"
-		description           = "Terraform test Physical Interface"
         nodes                 = ["101"]
         interfaces            = ["1/1","1/2"]
         interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
@@ -246,13 +245,11 @@ func testAccMSOFabricResourcePhysicalInterfaceConfigUpdateRemovingExtraInterface
 	resource "mso_fabric_resource_policies_physical_interface" "%[2]s" {
         template_id           = mso_template.%[4]s.id
         name                  = "%[2]s_updated"
-		description           = "Terraform test Physical Interface updated"
         nodes                 = ["101"]
         interfaces            = ["1/1","1/2"]
         interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
         interface_descriptions {
             interface   = "1/2"
-            description = "Interface Description 1/2"
         }
 	}`, fabricResourcePhysicalInterfacePreConfig, msoFabricResourcePhysicalInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }
