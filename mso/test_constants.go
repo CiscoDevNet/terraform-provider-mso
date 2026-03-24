@@ -515,9 +515,19 @@ func testSchemaWithSingleSiteAssociationDeployedConfig() string {
 
 func testFabricResourceTemplateConfig() string {
 	return fmt.Sprintf(`
-	resource "mso_template" "%[1]s" {
-		template_name = "%[1]s"
-		template_type = "fabric_resource"
-	}
+resource "mso_template" "%[1]s" {
+	template_name = "%[1]s"
+	template_type = "fabric_resource"
+}
 	`, msoFabricResourceTemplateName)
+}
+
+func testFabricPoliciesInterfaceSettingPortChannelConfig() string {
+	return fmt.Sprintf(`
+resource "mso_fabric_policies_interface_setting" "%[1]s_portchannel" {
+	template_id = mso_template.%[2]s.id
+	type        = "portchannel"
+	name        = "%[1]s_portchannel"
+}
+`, msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName)
 }

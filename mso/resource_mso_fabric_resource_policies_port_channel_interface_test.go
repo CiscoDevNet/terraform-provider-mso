@@ -7,8 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-var msoFabricResourcePortChannelInterfacePolicyUUID = "97c9e606-cfd6-4bb9-bcf9-10efae49dcfb"
-
 func TestAccMSOFabricResourcePortChannelInterfaceResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -19,7 +17,7 @@ func TestAccMSOFabricResourcePortChannelInterfaceResource(t *testing.T) {
 				Config:    testAccMSOFabricResourcePortChannelInterfaceConfigCreate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "name", msoFabricResourcePortChannelInterfaceName),
-					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "description", "Terraform test Port Channel Interface"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "description", ""),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "node", "101"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "uuid"),
@@ -72,14 +70,14 @@ func TestAccMSOFabricResourcePortChannelInterfaceResource(t *testing.T) {
 				Config:    testAccMSOFabricResourcePortChannelInterfaceConfigUpdateRemovingExtraInterfaceDescription(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "name", msoFabricResourcePortChannelInterfaceName),
-					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "description", "Terraform test Port Channel Interface updated"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "description", ""),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "node", "101"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_descriptions.#", "1"),
 					CustomTestCheckTypeSetElemAttrs("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_descriptions",
 						map[string]string{
 							"interface":   "1/2",
-							"description": "Interface Description 1/2",
+							"description": "",
 						},
 					),
 				),
@@ -95,18 +93,17 @@ func TestAccMSOFabricResourcePortChannelInterfaceResource(t *testing.T) {
 	})
 }
 
-var fabricResourcePortChannelInterfacePreConfig = testFabricResourceTemplateConfig()
+var fabricResourcePortChannelInterfacePreConfig = testFabricResourceTemplateConfig() + testFabricPolicyTemplateConfig() + testFabricPoliciesInterfaceSettingPortChannelConfig()
 
 func testAccMSOFabricResourcePortChannelInterfaceConfigCreate() string {
 	return fmt.Sprintf(`%[1]s
     resource "mso_fabric_resource_policies_port_channel_interface" "%[2]s" {
         template_id          = mso_template.%[4]s.id
         name                 = "%[2]s"
-        description          = "Terraform test Port Channel Interface"
         node                 = "101"
         interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = "%[3]s"
-    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricResourcePortChannelInterfacePolicyUUID, msoFabricResourceTemplateName)
+        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
+    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }
 
 func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingInterfaceDescriptions() string {
@@ -117,12 +114,12 @@ func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingInterfaceDesc
         description          = "Terraform test Port Channel Interface updated"
         node                 = "101"
         interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = "%[3]s"
+        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
         interface_descriptions {
             interface   = "1/1"
             description = "Interface Description 1/1"
         }
-    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricResourcePortChannelInterfacePolicyUUID, msoFabricResourceTemplateName)
+    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }
 
 func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingExtraInterfaceDescription() string {
@@ -133,7 +130,7 @@ func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingExtraInterfac
         description          = "Terraform test Port Channel Interface updated"
         node                 = "101"
         interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = "%[3]s"
+        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
         interface_descriptions {
             interface   = "1/1"
             description = "Interface Description 1/1"
@@ -142,7 +139,7 @@ func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingExtraInterfac
             interface   = "1/2"
             description = "Interface Description 1/2"
         }
-    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricResourcePortChannelInterfacePolicyUUID, msoFabricResourceTemplateName)
+    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }
 
 func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateRemovingExtraInterfaceDescription() string {
@@ -150,13 +147,11 @@ func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateRemovingExtraInterf
     resource "mso_fabric_resource_policies_port_channel_interface" "%[2]s" {
         template_id          = mso_template.%[4]s.id
         name                 = "%[2]s"
-        description          = "Terraform test Port Channel Interface updated"
         node                 = "101"
         interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = "%[3]s"
+        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
         interface_descriptions {
             interface   = "1/2"
-            description = "Interface Description 1/2"
         }
-    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricResourcePortChannelInterfacePolicyUUID, msoFabricResourceTemplateName)
+    }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }

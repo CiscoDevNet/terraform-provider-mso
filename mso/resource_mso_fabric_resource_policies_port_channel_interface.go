@@ -39,7 +39,6 @@ func resourceMSOPortChannelInterface() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"node": {
 				Type:     schema.TypeString,
@@ -68,7 +67,6 @@ func resourceMSOPortChannelInterface() *schema.Resource {
 						"description": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
 						},
 					},
 				},
@@ -121,7 +119,7 @@ func customizeDiffPortChannelInterface(d *schema.ResourceDiff, m interface{}) er
 
 func getInterfaceDescriptionsPayload(node string, interfaceDescriptions *schema.Set) []map[string]interface{} {
 	interfaceDescriptionsList := interfaceDescriptions.List()
-	payload := make([]map[string]interface{}, 0, len(interfaceDescriptionsList))
+	payload := make([]map[string]interface{}, 0)
 	for _, interfaceDescription := range interfaceDescriptionsList {
 		interfaceDescriptionMap := interfaceDescription.(map[string]interface{})
 		payload = append(payload, map[string]interface{}{
@@ -133,32 +131,6 @@ func getInterfaceDescriptionsPayload(node string, interfaceDescriptions *schema.
 	return payload
 }
 
-func interfaceSetToString(interfaceSet *schema.Set) string {
-	if interfaceSet == nil || interfaceSet.Len() == 0 {
-		return ""
-	}
-	interfaceList := make([]string, 0, interfaceSet.Len())
-	for _, memberInterface := range interfaceSet.List() {
-		interfaceList = append(interfaceList, memberInterface.(string))
-	}
-	return strings.Join(interfaceList, ",")
-}
-
-func interfaceStringToSet(interfaceString string) []interface{} {
-	if interfaceString == "" {
-		return []interface{}{}
-	}
-	interfaceList := strings.Split(interfaceString, ",")
-	interfaceSet := make([]interface{}, 0, len(interfaceList))
-	for _, interfaceID := range interfaceList {
-		cleanedInterfaceID := strings.TrimSpace(interfaceID)
-		if cleanedInterfaceID != "" {
-			interfaceSet = append(interfaceSet, cleanedInterfaceID)
-		}
-	}
-	return interfaceSet
-}
-
 func setPortChannelInterfaceData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/PortChannelInterface/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -166,7 +138,7 @@ func setPortChannelInterfaceData(d *schema.ResourceData, response *container.Con
 	d.Set("description", models.StripQuotes(response.S("description").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 	d.Set("node", models.StripQuotes(response.S("node").String()))
-	d.Set("interfaces", interfaceStringToSet(models.StripQuotes(response.S("memberInterfaces").String())))
+	d.Set("interfaces", splitCommaString(models.StripQuotes(response.S("memberInterfaces").String())))
 
 	if response.Exists("policy") {
 		d.Set("interface_policy_uuid", models.StripQuotes(response.S("policy").String()))
@@ -214,21 +186,12 @@ func resourceMSOPortChannelInterfaceCreate(d *schema.ResourceData, m interface{}
 		payload["description"] = description.(string)
 	}
 
-	node := d.Get("node").(string)
-	if node != "" {
-		payload["node"] = node
-	}
-
-	if memberInterfaces, ok := d.GetOk("interfaces"); ok {
-		payload["memberInterfaces"] = interfaceSetToString(memberInterfaces.(*schema.Set))
-	}
-
-	if interfacePolicyUUID, ok := d.GetOk("interface_policy_uuid"); ok {
-		payload["policy"] = interfacePolicyUUID.(string)
-	}
+	payload["node"] = d.Get("node").(string)
+	payload["memberInterfaces"] = strings.Join(getListOfStringsFromSchemaSet(d, "interfaces"), ",")
+	payload["policy"] = d.Get("interface_policy_uuid").(string)
 
 	if interfaceDescriptions, ok := d.GetOk("interface_descriptions"); ok {
-		payload["interfaceDescriptions"] = getInterfaceDescriptionsPayload(node, interfaceDescriptions.(*schema.Set))
+		payload["interfaceDescriptions"] = getInterfaceDescriptionsPayload(payload["node"].(string), interfaceDescriptions.(*schema.Set))
 	}
 
 	payloadModel := models.GetPatchPayload("add", "/fabricResourceTemplate/template/portChannels/-", payload)
@@ -319,7 +282,7 @@ func resourceMSOPortChannelInterfaceUpdate(d *schema.ResourceData, m interface{}
 	}
 
 	if d.HasChange("interfaces") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/memberInterfaces", updatePath), interfaceSetToString(d.Get("interfaces").(*schema.Set)))
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaSet(d, "interfaces"), ","))
 		if err != nil {
 			return err
 		}
