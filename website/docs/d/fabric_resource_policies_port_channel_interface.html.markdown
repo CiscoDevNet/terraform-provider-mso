@@ -28,16 +28,16 @@ data "mso_fabric_resource_policies_port_channel_interface" "example" {
 ## Argument Reference ##
 
 * `template_id` - (Required) The unique ID of the Fabric Resource template.
-* `name` - (Required) The name of the Port Channel Interface.
+* `name` - (Required) The name of the Port Channel Interface Policy.
 
 ## Attribute Reference ##
 
-* `id` - (Read-Only) The unique Terraform identifier of the Port Channel Interface.
-* `uuid` - (Read-Only) The NDO UUID of the Port Channel Interface.
-* `description` - (Read-Only) The description of the Port Channel Interface.
-* `node` - (Read-Only) The node ID of the Port Channel Interface.
-* `interfaces` - (Read-Only) The member interfaces of the Port Channel.
-* `interface_policy_uuid` - (Read-Only) The UUID of the Port Channel/Virtual Port Channel Interface Policy associated with the Port Channel Interface.
-* `interface_descriptions` - (Read-Only) A list of interface descriptions for the Port Channel member interfaces.
+* `id` - (Read-Only) The unique Terraform identifier of the Port Channel Interface Policy.
+* `uuid` - (Read-Only) The NDO UUID of the Port Channel Interface Policy.
+* `description` - (Read-Only) The description of the Port Channel Interface Policy.
+* `node` - (Read-Only) The node ID of the Port Channel Interface Policy.
+* `interfaces` - (Read-Only) A list of interfaces where this Port Channel Interface Policy will be applied.
+* `interface_policy_uuid` - (Read-Only) The UUID of the (Port Channel/Virtual Port Channel) interface settings policy to associate with the Port Channel Interface Policy.
+* `interface_descriptions` - (Read-Only) A list of interface descriptions of the Port Channel Interface Policy.
   * `interface` - (Read-Only) The interface ID of the member interface.
   * `description` - (Read-Only) The description of the member interface.

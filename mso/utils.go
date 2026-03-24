@@ -301,6 +301,13 @@ func getListOfStringsFromSchemaList(d *schema.ResourceData, key string) []string
 	return nil
 }
 
+func getListOfStringsFromSchemaSet(d *schema.ResourceData, key string) []string {
+	if values, ok := d.GetOk(key); ok {
+		return convertToListOfStrings(values.(*schema.Set).List())
+	}
+	return nil
+}
+
 func convertToListOfStrings(values []interface{}) []string {
 	result := []string{}
 	for _, item := range values {
@@ -574,4 +581,20 @@ func GetTemplateObjectByUUID(msoClient *client.Client, objectType, uuid string) 
 		return nil, err
 	}
 	return cont, nil
+}
+
+func splitCommaString(s string) []string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return []string{}
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }
