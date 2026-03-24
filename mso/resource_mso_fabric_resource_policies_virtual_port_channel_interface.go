@@ -120,7 +120,7 @@ func setVPCInterfaceData(d *schema.ResourceData, msoClient *client.Client, templ
 	d.SetId(fmt.Sprintf("templateId/%s/virtualPortChannelInterface/%s", templateId, name))
 	d.Set("template_id", templateId)
 
-	d.Set("name", models.StripQuotes(vpcCont.S("name").String()))
+	d.Set("name", name)
 	d.Set("description", models.StripQuotes(vpcCont.S("description").String()))
 	d.Set("uuid", models.StripQuotes(vpcCont.S("uuid").String()))
 
@@ -134,17 +134,17 @@ func setVPCInterfaceData(d *schema.ResourceData, msoClient *client.Client, templ
 
 	if vpcCont.Exists("interfaceDescriptions") {
 		count, _ := vpcCont.ArrayCount("interfaceDescriptions")
-		out := make([]any, 0, count)
+		out := make([]any, count)
 		for i := 0; i < count; i++ {
 			descCont, err := vpcCont.ArrayElement(i, "interfaceDescriptions")
 			if err != nil {
 				return err
 			}
-			entry := make(map[string]any)
-			entry["node"] = models.StripQuotes(descCont.S("nodeID").String())
-			entry["interface"] = models.StripQuotes(descCont.S("interfaceID").String())
-			entry["description"] = models.StripQuotes(descCont.S("description").String())
-			out = append(out, entry)
+			out[i] = map[string]any{
+				"node":        models.StripQuotes(descCont.S("nodeID").String()),
+				"interface":   models.StripQuotes(descCont.S("interfaceID").String()),
+				"description": models.StripQuotes(descCont.S("description").String()),
+			}
 		}
 		d.Set("interface_descriptions", out)
 	}
@@ -249,53 +249,62 @@ func resourceMSOVirtualPortChannelInterfaceUpdate(d *schema.ResourceData, m any)
 	payloadCont.Array()
 
 	if d.HasChange("name") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/name", updatePath), d.Get("name").(string)); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/name", updatePath), d.Get("name").(string))
+		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("description") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string)); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string))
+		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("node_1") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node1Details/node", updatePath), d.Get("node_1").(string)); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node1Details/node", updatePath), d.Get("node_1").(string))
+		if err != nil {
 			return err
 		}
 	}
 	if d.HasChange("node_1_interfaces") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node1Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaList(d, "node_1_interfaces"), ",")); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node1Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaList(d, "node_1_interfaces"), ","))
+		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("node_2") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node2Details/node", updatePath), d.Get("node_2").(string)); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node2Details/node", updatePath), d.Get("node_2").(string))
+		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("node_2_interfaces") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node2Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaList(d, "node_2_interfaces"), ",")); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node2Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaList(d, "node_2_interfaces"), ","))
+		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("interface_policy_group_uuid") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), d.Get("interface_policy_group_uuid").(string)); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), d.Get("interface_policy_group_uuid").(string))
+		if err != nil {
 			return err
 		}
 	}
 
 	if d.HasChange("interface_descriptions") {
-		if err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/interfaceDescriptions", updatePath), buildInterfaceDescriptionsPayload(d)); err != nil {
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/interfaceDescriptions", updatePath), buildInterfaceDescriptionsPayload(d))
+		if err != nil {
 			return err
 		}
 	}
 
-	if err := doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateId), payloadCont); err != nil {
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateId), payloadCont)
+	if err != nil {
 		return err
 	}
 
@@ -332,14 +341,14 @@ func resourceMSOVirtualPortChannelInterfaceDelete(d *schema.ResourceData, m any)
 
 func buildInterfaceDescriptionsPayload(d *schema.ResourceData) []map[string]any {
 	raw := d.Get("interface_descriptions").([]any)
-	out := make([]map[string]any, 0, len(raw))
-	for _, v := range raw {
+	out := make([]map[string]any, len(raw))
+	for i, v := range raw {
 		m := v.(map[string]any)
-		out = append(out, map[string]any{
+		out[i] = map[string]any{
 			"nodeID":      m["node"].(string),
 			"interfaceID": m["interface"].(string),
 			"description": m["description"].(string),
-		})
+		}
 	}
 	return out
 }
