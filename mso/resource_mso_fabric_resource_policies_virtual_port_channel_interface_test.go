@@ -43,6 +43,25 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
+					fmt.Println("Test: Virtual Port Channel Interface Resource - Update Unset Interface Description")
+				},
+				Config: testAccMSOVirtualPortChannelInterfaceConfigUpdateUnsetDescription(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "name", "tf_test_vpc_if"),
+					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_policy_group_uuid"),
+					customTestCheckResourceTypeSetAttr(
+						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
+						"interface_descriptions",
+						map[string]string{
+							"node":        "101",
+							"interface":   "1/1",
+							"description": "Terraform test interface description", // Remains unchanged
+						},
+					),
+				),
+			},
+			{
+				PreConfig: func() {
 					fmt.Println("Test: Virtual Port Channel Interface Resource - Update")
 				},
 				Config: testAccMSOVirtualPortChannelInterfaceConfigUpdate(),
@@ -132,6 +151,27 @@ func testAccMSOVirtualPortChannelInterfaceConfigCreate() string {
 	`, testAccMSOTemplateResourceFabricResourceConfig(), testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigCreate(), msoFabricPolicyTemplateInterfaceSettingName)
 }
 
+func testAccMSOVirtualPortChannelInterfaceConfigUpdateUnsetDescription() string {
+	return fmt.Sprintf(`%s%s
+	resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" {
+		template_id = mso_template.template_fabric_resource.id
+		interface_policy_group_uuid = mso_fabric_policies_interface_setting.%s_portchannel.uuid
+		name        = "tf_test_vpc_if"
+		description = "Terraform test VPC Interface"
+		node_1      = "101"
+		node_2      = "102"
+		node_1_interfaces = ["1/1", "1/10-11"]
+		node_2_interfaces = ["1/2"]
+
+		interface_descriptions {
+			node        = "101"
+			interface   = "1/1"
+			// No description, should keep existing state
+		}
+	}
+	`, testAccMSOTemplateResourceFabricResourceConfig(), testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigCreate(), msoFabricPolicyTemplateInterfaceSettingName)
+}
+
 func testAccMSOVirtualPortChannelInterfaceConfigUpdate() string {
 	return fmt.Sprintf(`%s%s
 	resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" {
@@ -153,7 +193,7 @@ func testAccMSOVirtualPortChannelInterfaceConfigUpdate() string {
 		interface_descriptions {
 			node        = "104"
 			interface   = "1/3"
-			// No description on purpose
+			// No description on new description should be ""
 		}
 	}
 	`, testAccMSOTemplateResourceFabricResourceConfig(), testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigCreate(), msoFabricPolicyTemplateInterfaceSettingName)
