@@ -97,6 +97,7 @@ func resourceMSOVirtualPortChannelInterface() *schema.Resource {
 						"description": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
@@ -344,11 +345,14 @@ func buildInterfaceDescriptionsPayload(d *schema.ResourceData) []map[string]any 
 	out := make([]map[string]any, len(raw))
 	for i, v := range raw {
 		m := v.(map[string]any)
-		out[i] = map[string]any{
+		entry := map[string]any{
 			"nodeID":      m["node"].(string),
 			"interfaceID": m["interface"].(string),
-			"description": m["description"].(string),
 		}
+		if desc := m["description"].(string); desc != "" {
+			entry["description"] = desc
+		}
+		out[i] = entry
 	}
 	return out
 }
