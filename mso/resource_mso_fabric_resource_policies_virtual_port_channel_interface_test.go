@@ -48,14 +48,14 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 				Config: testAccMSOVirtualPortChannelInterfaceConfigUpdateUnsetDescription(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "name", "tf_test_vpc_if"),
-					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_policy_group_uuid"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "description", ""),
 					customTestCheckResourceTypeSetAttr(
 						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 						"interface_descriptions",
 						map[string]string{
 							"node":        "101",
 							"interface":   "1/1",
-							"description": "Terraform test interface description", // Remains unchanged
+							"description": "",
 						},
 					),
 				),
@@ -157,7 +157,7 @@ func testAccMSOVirtualPortChannelInterfaceConfigUpdateUnsetDescription() string 
 		template_id = mso_template.template_fabric_resource.id
 		interface_policy_group_uuid = mso_fabric_policies_interface_setting.%s_portchannel.uuid
 		name        = "tf_test_vpc_if"
-		description = "Terraform test VPC Interface"
+		description = ""
 		node_1      = "101"
 		node_2      = "102"
 		node_1_interfaces = ["1/1", "1/10-11"]
