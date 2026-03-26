@@ -35,14 +35,8 @@ func resourceMSOPtpPolicyProfile() *schema.Resource {
 			},
 			"name": {
 				Type:         schema.TypeString,
-				ForceNew:     true,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 16),
-			},
-			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
 			},
 			"uuid": {
 				Type:     schema.TypeString,
@@ -126,7 +120,6 @@ func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, t
 	d.Set("template_id", templateId)
 	d.Set("name", name)
 	d.Set("ptp_policy_uuid", ptp_policy_uuid)
-	d.Set("description", models.StripQuotes(policy.S("description").String()))
 	d.Set("uuid", models.StripQuotes(policy.S("uuid").String()))
 	d.Set("delay_interval", policy.S("delayIntvl").Data().(float64))
 	d.Set("sync_interval", policy.S("syncIntvl").Data().(float64))
@@ -175,10 +168,6 @@ func resourceMSOPtpPolicyProfileCreate(d *schema.ResourceData, m any) error {
 	payload := map[string]any{}
 
 	payload["name"] = d.Get("name").(string)
-
-	if description, ok := d.GetOk("description"); ok {
-		payload["description"] = description.(string)
-	}
 
 	if profile_template, ok := d.GetOk("profile_template"); ok {
 		payload["profileTemplate"] = convertValueWithMap(profile_template.(string), ptpProfileTemplateMap)
@@ -264,13 +253,6 @@ func resourceMSOPtpPolicyProfileUpdate(d *schema.ResourceData, m any) error {
 	payloadCont.Array()
 	if d.HasChange("name") {
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/name", updatePath), d.Get("name").(string))
-		if err != nil {
-			return err
-		}
-	}
-
-	if d.HasChange("description") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string))
 		if err != nil {
 			return err
 		}

@@ -33,8 +33,8 @@ func TestAccMSOPtpPolicyResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update PTP Policy disabled state") },
 				Config:    testAccMSOPtpPolicyConfigUpdateDisable(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "name", "tf_test_ptp_policy"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "description", "Terraform test PTP Policy disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "name", "tf_test_ptp_policy_new"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "description", ""),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "admin_state", "disabled"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "fabric_profile_template", "default"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "global_priority1", "255"),
@@ -51,7 +51,7 @@ func TestAccMSOPtpPolicyResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update PTP Policy changing the profile template") },
 				Config:    testAccMSOPtpPolicyConfigUpdateChangingTemplate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "name", "tf_test_ptp_policy"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "name", "tf_test_ptp_policy_new"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "description", "Terraform test PTP Policy"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "admin_state", "enabled"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy.ptp_policy", "fabric_profile_template", "smpte"),
@@ -98,8 +98,8 @@ func testAccMSOPtpPolicyConfigUpdateDisable() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy" "ptp_policy" {
 		template_id                     = mso_template.template_fabric_policy.id
-		name                            = "tf_test_ptp_policy"
-		description                     = "Terraform test PTP Policy disabled"
+		name                            = "tf_test_ptp_policy_new"
+		description                     = ""
 		admin_state                     = "disabled"
 		fabric_profile_template         = "default"
 		global_priority1                = 255
@@ -116,7 +116,7 @@ func testAccMSOPtpPolicyConfigUpdateChangingTemplate() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_ptp_policy" "ptp_policy" {
 		template_id                     = mso_template.template_fabric_policy.id
-		name                            = "tf_test_ptp_policy"
+		name                            = "tf_test_ptp_policy_new"
 		description                     = "Terraform test PTP Policy"
 		admin_state                     = "enabled"
 		fabric_profile_template         = "smpte"
