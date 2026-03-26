@@ -31,14 +31,12 @@ func resourceMSONodeSettings() *schema.Resource {
 			},
 			"name": {
 				Type:         schema.TypeString,
-				ForceNew:     true,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 64),
 			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"uuid": {
 				Type:     schema.TypeString,

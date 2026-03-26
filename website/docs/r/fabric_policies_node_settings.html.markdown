@@ -36,7 +36,7 @@ resource "mso_fabric_policies_node_settings" "node_settings" {
 
 * `template_id` - (Required) The unique ID of the Fabric Policy template.
 * `name` - (Required) The name of the Node Settings.
-* `description` - (Optional) The description of the Node Settings.
+* `description` - (Optional) The description of the Node Settings. If this argument is omitted, the value defaults to an empty string (`""`).
 * `synce` - (Optional) The Synchronous Ethernet (SyncE) configuration map of the Node Settings. Providing an empty map `{}` will remove the SyncE configuration from the Node Settings.
   * `admin_state` - (Required) The SyncE administrative state of the Node Settings. Allowed values are `enabled` or `disabled`.
   * `quality_level` - (Required) The SyncE quality level of the Node Settings. Allowed values are `option_1`, `option_2_generation_1` or `option_2_generation_2`.
