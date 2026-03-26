@@ -28,7 +28,7 @@ func TestAccMSONodeSettingsResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update Node Settings Policy") },
 				Config:    testAccMSONodeSettingsConfigUpdate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings_new"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", "Terraform test Node Settings Policy updated"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.admin_state", "disabled"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.quality_level", "option_1"),
@@ -40,8 +40,8 @@ func TestAccMSONodeSettingsResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update Node Settings Policy Remove SyncE and PTP") },
 				Config:    testAccMSONodeSettingsConfigUpdateRemove(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", "Terraform test Node Settings Policy removed synce and ptp"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings_new"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", ""),
 					resource.TestCheckNoResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce"),
 					resource.TestCheckNoResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp"),
 				),
@@ -78,7 +78,7 @@ func testAccMSONodeSettingsConfigUpdate() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_node_settings" "node_settings" {
 		template_id     = mso_template.template_fabric_policy.id
-		name            = "tf_test_node_settings"
+		name            = "tf_test_node_settings_new"
 		description     = "Terraform test Node Settings Policy updated"
 		synce = {
 			admin_state = "disabled"
@@ -95,8 +95,8 @@ func testAccMSONodeSettingsConfigUpdateRemove() string {
 	return fmt.Sprintf(`%s
 	resource "mso_fabric_policies_node_settings" "node_settings" {
 		template_id     = mso_template.template_fabric_policy.id
-		name            = "tf_test_node_settings"
-		description     = "Terraform test Node Settings Policy removed synce and ptp"
+		name            = "tf_test_node_settings_new"
+		description     = ""
 
 		ptp = {}
 		synce = {}
