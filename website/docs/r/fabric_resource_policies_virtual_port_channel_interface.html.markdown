@@ -45,7 +45,7 @@ resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" 
 
 * `template_id` - (Required) The unique ID of the Fabric Resource template.
 * `name` - (Required) The name of the Virtual Port Channel Interface.
-* `description` - (Optional) The description of the Virtual Port Channel Interface.
+* `description` - (Optional) The description of the Virtual Port Channel Interface. If this argument is omitted, the value defaults to an empty string (`""`).
 * `node_1` - (Required) The first node ID.
 * `node_2` - (Required) The second node ID.
 * `node_1_interfaces` - (Required) List of interface IDs (or ranges) for node 1.
@@ -54,7 +54,7 @@ resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" 
 * `interface_descriptions` - (Optional) List of interface description entries. The provided list replaces the existing list in NDO.
   * `node` - (Required) Node ID.
   * `interface` - (Required) Interface ID.
-  * `description` - (Optional) Interface description.
+  * `description` - (Optional) Interface description. If this argument is omitted, the value defaults to an empty string (`""`).
 
 ## Attribute Reference ##
 
