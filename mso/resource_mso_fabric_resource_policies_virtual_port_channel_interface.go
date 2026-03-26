@@ -34,7 +34,6 @@ func resourceMSOVirtualPortChannelInterface() *schema.Resource {
 			},
 			"name": {
 				Type:         schema.TypeString,
-				ForceNew:     true,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 128),
 				Description:  "Virtual Port Channel Interface name.",

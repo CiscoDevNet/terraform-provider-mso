@@ -66,7 +66,7 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 				},
 				Config: testAccMSOVirtualPortChannelInterfaceConfigUpdate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "name", "tf_test_vpc_if"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "name", "tf_test_vpc_if_new"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "description", "Terraform test VPC Interface (updated)"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_1", "103"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_2", "104"),
@@ -166,7 +166,7 @@ func testAccMSOVirtualPortChannelInterfaceConfigUpdateUnsetDescription() string 
 		interface_descriptions {
 			node        = "101"
 			interface   = "1/1"
-			// No description, should keep existing state
+			description = ""
 		}
 	}
 	`, testAccMSOTemplateResourceFabricResourceConfig(), testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigCreate(), msoFabricPolicyTemplateInterfaceSettingName)
@@ -177,7 +177,7 @@ func testAccMSOVirtualPortChannelInterfaceConfigUpdate() string {
 	resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" {
 		template_id = mso_template.template_fabric_resource.id
 		interface_policy_group_uuid = mso_fabric_policies_interface_setting.%s_portchannel.uuid
-		name        = "tf_test_vpc_if"
+		name        = "tf_test_vpc_if_new"
 		description = "Terraform test VPC Interface (updated)"
 		node_1      = "103"
 		node_2      = "104"
@@ -204,7 +204,7 @@ func testAccMSOVirtualPortChannelInterfaceConfigRemoveDescriptions() string {
 	resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" {
 		template_id = mso_template.template_fabric_resource.id
 		interface_policy_group_uuid = mso_fabric_policies_interface_setting.%s_portchannel.uuid
-		name        = "tf_test_vpc_if"
+		name        = "tf_test_vpc_if_new"
 		description = "Terraform test VPC Interface (removed descriptions)"
 		node_1      = "103"
 		node_2      = "104"
