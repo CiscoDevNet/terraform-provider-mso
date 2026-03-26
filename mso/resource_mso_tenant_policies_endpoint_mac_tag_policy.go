@@ -30,7 +30,6 @@ func resourceMSOEndpointMACTagPolicy() *schema.Resource {
 			"mac": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"bd_uuid": {
 				Type:          schema.TypeString,
