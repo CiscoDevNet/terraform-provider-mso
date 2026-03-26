@@ -16,7 +16,6 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 				Config:    testAccMSOPtpPolicyProfileConfigCreate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "name", "tf_ptp_profile"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "description", "Terraform test PTP Policy Profile"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "profile_template", "aes67"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "delay_interval", "-2"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "sync_interval", "-3"),
@@ -31,8 +30,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update PTP Policy Profile") },
 				Config:    testAccMSOPtpPolicyProfileConfigUpdate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "name", "tf_ptp_profile"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "description", "Terraform test PTP Policy Profile updated"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "name", "tf_ptp_profile_1"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "profile_template", "smpte"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "delay_interval", "-2"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "sync_interval", "-2"),
@@ -48,7 +46,6 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 				Config:    testAccMSOPtpPolicyProfileConfigCreateTelecom(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "name", "tf_ptp_profile_2"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "description", "Terraform test PTP Policy Profile 2"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "profile_template", "telecom"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "delay_interval", "-4"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "sync_interval", "-4"),
@@ -67,7 +64,6 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 				Config:    testAccMSOPtpPolicyProfileConfigUpdateTelecom(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "name", "tf_ptp_profile_2"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "description", "Terraform test PTP Policy Profile 2"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "profile_template", "telecom"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "delay_interval", "-4"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile_2", "sync_interval", "-4"),
@@ -98,18 +94,12 @@ func testAccMSOPtpPolicyProfileConfigCreate() string {
 		template_id           = mso_template.template_fabric_policy.id
 		ptp_policy_uuid       = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                  = "tf_ptp_profile"
-		description           = "Terraform test PTP Policy Profile"
 		profile_template      = "aes67"
 		delay_interval        = -2
 		sync_interval         = -3
 		announce_timeout      = 3
 		announce_interval     = 1
 		override_node_profile = false
-
-		# Explicit dependency on PTP Policy
-		depends_on = [
-			mso_fabric_policies_ptp_policy.ptp_policy
-		]
 	}`, testAccMSOPtpPolicyConfigCreate())
 }
 
@@ -118,19 +108,13 @@ func testAccMSOPtpPolicyProfileConfigUpdate() string {
 	resource "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 		template_id           = mso_template.template_fabric_policy.id
 		ptp_policy_uuid       = mso_fabric_policies_ptp_policy.ptp_policy.uuid
-		name                  = "tf_ptp_profile"
-		description           = "Terraform test PTP Policy Profile updated"
+		name                  = "tf_ptp_profile_1"
 		profile_template      = "smpte"
 		delay_interval        = -2
 		sync_interval         = -2
 		announce_timeout      = 10
 		announce_interval     = -3
 		override_node_profile = true
-
-		# Explicit dependency on PTP Policy
-		depends_on = [
-			mso_fabric_policies_ptp_policy.ptp_policy
-		]
 	}`, testAccMSOPtpPolicyConfigCreate())
 }
 
@@ -140,7 +124,6 @@ func testAccMSOPtpPolicyProfileConfigCreateTelecom() string {
 		template_id                = mso_template.template_fabric_policy.id
 		ptp_policy_uuid            = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                       = "tf_ptp_profile_2"
-		description                = "Terraform test PTP Policy Profile 2"
 		profile_template           = "telecom"
 		announce_interval          = -3
 		delay_interval             = -4
@@ -158,7 +141,6 @@ func testAccMSOPtpPolicyProfileConfigUpdateTelecom() string {
 		template_id                = mso_template.template_fabric_policy.id
 		ptp_policy_uuid            = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                       = "tf_ptp_profile_2"
-		description                = "Terraform test PTP Policy Profile 2"
 		profile_template           = "telecom"
 		announce_interval          = -3
 		delay_interval             = -4

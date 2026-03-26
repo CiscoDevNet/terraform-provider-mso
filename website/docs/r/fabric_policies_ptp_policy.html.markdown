@@ -37,7 +37,7 @@ resource "mso_fabric_policies_ptp_policy" "ptp_policy" {
 
 * `template_id` - (Required) The unique ID of the Fabric Policy template.
 * `name` - (Required) The name of the PTP Policy.
-* `description` - (Optional) The description of the PTP Policy.
+* `description` - (Optional) The description of the PTP Policy. If this argument is omitted, the value defaults to an empty string (`""`).
 * `admin_state` - (Required) The administrative state of the PTP Policy. Allowed values are `enabled` or `disabled`.
 * `global_priority1` - (Required) The global priority1 of the PTP Policy. Valid range: 1-255.
 * `global_priority2` - (Required) The global priority2 of the PTP Policy. Valid range: 0-255.

@@ -17,7 +17,6 @@ func TestAccMSOPtpPolicyProfileDataSource(t *testing.T) {
 				Config:    testAccMSOPtpPolicyProfileDataSource(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "name", "tf_ptp_profile"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "description", "Terraform test PTP Policy Profile"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "profile_template", "telecom"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "delay_interval", "-4"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "sync_interval", "-4"),
@@ -41,7 +40,6 @@ func testAccMSOPtpPolicyProfileConfig() string {
 		template_id                = mso_template.template_fabric_policy.id
 		ptp_policy_uuid            = mso_fabric_policies_ptp_policy.ptp_policy.uuid
 		name                       = "tf_ptp_profile"
-		description                = "Terraform test PTP Policy Profile"
 		profile_template           = "telecom"
 		announce_interval          = -3
 		delay_interval             = -4
