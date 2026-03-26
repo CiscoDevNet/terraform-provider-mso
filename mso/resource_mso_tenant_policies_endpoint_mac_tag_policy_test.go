@@ -123,6 +123,11 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Create Endpoint MAC Tag Policy with duplicate object") },
+				Config:      testAccMSOTenantPoliciesEndpointMACTagPolicyConfigWithDuplicateObject(),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf("Multiple endpointMacTag policies are using the name: AA:BB:A1:B2:C3:D4-[%s]", msoSchemaTemplateBdName))),
+			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_endpoint_mac_tag_policy", "tenantPolicyTemplate", "template", "endpointMacTagPolicies"),
 	})
@@ -273,6 +278,19 @@ func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigUpdateRemoveOneTagAndAnno
 func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigUpdateRemoveAllTagsAndAnnotations() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_tenant_policies_endpoint_mac_tag_policy" "endpoint_mac_bd" {
+		template_id = mso_template.%[2]s.id
+		bd_uuid     = mso_schema_template_bd.%[3]s.uuid
+		mac         = "AA:BB:A1:B2:C3:D4"
+	}`,
+		endpointMACTagPolicyPreConfig,
+		msoTenantPolicyTemplateName,
+		msoSchemaTemplateBdName,
+	)
+}
+
+func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigWithDuplicateObject() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_tenant_policies_endpoint_mac_tag_policy" "endpoint_mac_bd_duplicate" {
 		template_id = mso_template.%[2]s.id
 		bd_uuid     = mso_schema_template_bd.%[3]s.uuid
 		mac         = "AA:BB:A1:B2:C3:D4"
