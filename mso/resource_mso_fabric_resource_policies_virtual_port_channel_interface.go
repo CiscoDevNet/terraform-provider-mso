@@ -77,7 +77,7 @@ func resourceMSOVirtualPortChannelInterface() *schema.Resource {
 				Description:  "UUID of the Port Channel Interface Policy Group.",
 			},
 			"interface_descriptions": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "List of interface descriptions; provided list replaces the existing list in NDO.",
 				Elem: &schema.Resource{
@@ -338,9 +338,10 @@ func resourceMSOVirtualPortChannelInterfaceDelete(d *schema.ResourceData, m any)
 }
 
 func buildInterfaceDescriptionsPayload(d *schema.ResourceData) []map[string]any {
-	raw := d.Get("interface_descriptions").([]any)
-	out := make([]map[string]any, len(raw))
-	for i, v := range raw {
+	interfaceDescriptions := d.Get("interface_descriptions").(*schema.Set)
+	interfaceDescriptionsList := interfaceDescriptions.List()
+	out := make([]map[string]any, len(interfaceDescriptionsList))
+	for i, v := range interfaceDescriptionsList {
 		m := v.(map[string]any)
 		out[i] = map[string]any{
 			"nodeID":      m["node"].(string),
