@@ -22,8 +22,6 @@ func resourceMSOPhysicalInterface() *schema.Resource {
 			State: resourceMSOPhysicalInterfaceImport,
 		},
 
-		CustomizeDiff: customizeDiffPhysicalInterface,
-
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
 			"template_id": {
@@ -94,46 +92,6 @@ func resourceMSOPhysicalInterface() *schema.Resource {
 			},
 		},
 	}
-}
-
-func customizeDiffPhysicalInterface(d *schema.ResourceDiff, m interface{}) error {
-	interfacesRaw := d.Get("interfaces")
-	if interfacesRaw == nil {
-		return nil
-	}
-
-	interfaces := interfacesRaw.(*schema.Set)
-	if interfaces.Len() == 0 {
-		return nil
-	}
-
-	// Create a map for quick lookup
-	interfaceMap := make(map[string]bool)
-	for _, memberInterface := range interfaces.List() {
-		interfaceMap[memberInterface.(string)] = true
-	}
-
-	interfaceDescriptionsRaw := d.Get("interface_descriptions")
-	if interfaceDescriptionsRaw == nil {
-		return nil
-	}
-
-	interfaceDescriptions := interfaceDescriptionsRaw.(*schema.Set)
-	if interfaceDescriptions.Len() == 0 {
-		return nil
-	}
-
-	// Validate each interface_description
-	for _, interfaceDescriptionRaw := range interfaceDescriptions.List() {
-		interfaceDescription := interfaceDescriptionRaw.(map[string]interface{})
-		interfaceID := interfaceDescription["interface"].(string)
-
-		if !interfaceMap[interfaceID] {
-			return fmt.Errorf("Interface '%s' specified in 'interface_descriptions' must be defined in the 'interfaces' list", interfaceID)
-		}
-	}
-
-	return nil
 }
 
 func getInterfaceDescriptionsPayloadPhysical(interfaceDescriptions *schema.Set) []map[string]interface{} {
