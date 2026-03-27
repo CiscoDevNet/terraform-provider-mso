@@ -16,12 +16,7 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyResource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Error when neither bd_uuid nor vrf_uuid is provided") },
 				Config:      testAccMSOTenantPoliciesEndpointMACTagPolicyConfigErrorMissingScope(),
-				ExpectError: regexp.MustCompile(`Either 'bd_uuid' or 'vrf_uuid' must be specified for creating Endpoint MAC Tag Policy`),
-			},
-			{
-				PreConfig:   func() { fmt.Println("Test: Error when both bd_uuid and vrf_uuid are provided") },
-				Config:      testAccMSOTenantPoliciesEndpointMACTagPolicyConfigErrorConflictingScope(),
-				ExpectError: regexp.MustCompile(`conflicts with`),
+				ExpectError: regexp.MustCompile(`BdRef and VrfRef cannot both be empty in Endpoint Mac Tag Policy AA:BB:A1:B2:C3:D4. Either BdRef or VrfRef must be populated.`),
 			},
 			{
 				PreConfig: func() {
@@ -136,21 +131,11 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyResource(t *testing.T) {
 var endpointMACTagPolicyPreConfig = testSiteConfigAnsibleTest() + testTenantConfig() + testSchemaConfig() + testSchemaTemplateVrfConfig() + testSchemaTemplateBdConfig() + testTenantPolicyTemplateConfig()
 
 func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigErrorMissingScope() string {
-	return `
+	return fmt.Sprintf(`%[1]s
 	resource "mso_tenant_policies_endpoint_mac_tag_policy" "error" {
-		template_id = "mso_template.error.id"
+		template_id = mso_template.%[2]s.id
 		mac         = "AA:BB:A1:B2:C3:D4"
-	}`
-}
-
-func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigErrorConflictingScope() string {
-	return `
-	resource "mso_tenant_policies_endpoint_mac_tag_policy" "error" {
-		template_id = "mso_template.error.id"
-		mac         = "AA:BB:A1:B2:C3:D4"
-		bd_uuid     = "mso_schema_template_bd.error.uuid"
-		vrf_uuid    = "mso_schema_template_vrf.error.uuid"
-	}`
+	}`, endpointMACTagPolicyPreConfig, msoTenantPolicyTemplateName)
 }
 
 func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTags() string {

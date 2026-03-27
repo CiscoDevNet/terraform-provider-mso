@@ -78,7 +78,7 @@ resource "mso_tenant_policies_endpoint_mac_tag_policy" "endpoint_mac_tag_bd" {
 resource "mso_tenant_policies_endpoint_mac_tag_policy" "endpoint_mac_tag_vrf" {
   template_id = mso_template.tf_tenant_template.id
   mac         = "AA:BB:A1:B2:C3:D4"
-  vrf_uuid    = mso_schema_template_bd.tf_vrf.uuid
+  vrf_uuid    = mso_schema_template_vrf.tf_vrf.uuid
 
   tag_annotations {
     key   = "annotation_key_1"

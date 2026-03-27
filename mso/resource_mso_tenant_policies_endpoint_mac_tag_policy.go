@@ -34,13 +34,11 @@ func resourceMSOEndpointMACTagPolicy() *schema.Resource {
 			"bd_uuid": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Computed:      true,
 				ConflictsWith: []string{"vrf_uuid"},
 			},
 			"vrf_uuid": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Computed:      true,
 				ConflictsWith: []string{"bd_uuid"},
 			},
 			"tag_annotations": {
@@ -183,7 +181,10 @@ func setEndpointMACTagPolicyData(d *schema.ResourceData, response *container.Con
 
 func resourceMSOEndpointMACTagPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Endpoint MAC Tag Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOEndpointMACTagPolicyRead(d, m)
+	err := resourceMSOEndpointMACTagPolicyRead(d, m)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO Endpoint MAC Tag Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -196,9 +197,6 @@ func resourceMSOEndpointMACTagPolicyCreate(d *schema.ResourceData, m interface{}
 
 	bdUUID := d.Get("bd_uuid").(string)
 	vrfUUID := d.Get("vrf_uuid").(string)
-	if bdUUID == "" && vrfUUID == "" {
-		return fmt.Errorf("Either 'bd_uuid' or 'vrf_uuid' must be specified for creating Endpoint MAC Tag Policy")
-	}
 
 	payload := map[string]interface{}{
 		"mac":        d.Get("mac").(string),
