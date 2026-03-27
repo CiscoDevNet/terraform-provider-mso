@@ -14,7 +14,7 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				PreConfig:   func() { fmt.Println("Test: Missing interface_policy_uuid and breakout_mode (error)") },
+				PreConfig:   func() { fmt.Println("Test: Create Without interface_policy_uuid and breakout_mode (error)") },
 				Config:      testAccMSOFabricResourcePhysicalInterfaceConfigErrorMissingInterfacePolicyAndBreakoutMode(),
 				ExpectError: regexp.MustCompile(`Either 'interface_policy_uuid' or 'breakout_mode' must be specified for creating a Physical Interface`),
 			},
@@ -175,6 +175,16 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Duplicate interface descriptions (error)") },
+				Config:      testAccMSOFabricResourcePhysicalInterfaceBreakoutModeConfigUpdateRemovingDuplicateInterfaceDescription(),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf("interface profile %s_breakout_updated have more than one description for interface 1/2", msoFabricResourcePhysicalInterfaceName))),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Invalid interface in interface descriptions (error)") },
+				Config:      testAccMSOFabricResourcePhysicalInterfaceBreakoutModeConfigUpdateRemovingInvalidInterfaceDescription(),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf("interface profile %s_breakout_updated doesn't have interface 1/3 which is used in description", msoFabricResourcePhysicalInterfaceName))),
+			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_fabric_resource_policies_physical_interface", "fabricResourceTemplate", "template", "physicalInterfaces"),
 	})
@@ -314,6 +324,46 @@ func testAccMSOFabricResourcePhysicalInterfaceBreakoutModeConfigUpdateRemovingEx
         interface_descriptions {
             interface   = "1/2"
             description = "Interface Description 1/2"
+        }
+	}`, fabricResourcePhysicalInterfacePreConfig, msoFabricResourcePhysicalInterfaceName, msoFabricResourceTemplateName)
+}
+
+func testAccMSOFabricResourcePhysicalInterfaceBreakoutModeConfigUpdateRemovingDuplicateInterfaceDescription() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_fabric_resource_policies_physical_interface" "%[2]s_breakout" {
+        template_id   = mso_template.%[3]s.id
+        name          = "%[2]s_breakout_updated"
+		description   = "Terraform test Physical Interface updated"
+        nodes         = ["101"]
+        interfaces    = ["1/1","1/2"]
+        breakout_mode = "4x100G"
+        interface_descriptions {
+            interface   = "1/2"
+            description = "Interface Description 1/2"
+        }
+        interface_descriptions {
+            interface   = "1/2"
+            description = "Interface Description 1/2 duplicate"
+        }
+	}`, fabricResourcePhysicalInterfacePreConfig, msoFabricResourcePhysicalInterfaceName, msoFabricResourceTemplateName)
+}
+
+func testAccMSOFabricResourcePhysicalInterfaceBreakoutModeConfigUpdateRemovingInvalidInterfaceDescription() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_fabric_resource_policies_physical_interface" "%[2]s_breakout" {
+        template_id   = mso_template.%[3]s.id
+        name          = "%[2]s_breakout_updated"
+		description   = "Terraform test Physical Interface updated"
+        nodes         = ["101"]
+        interfaces    = ["1/1","1/2"]
+        breakout_mode = "4x100G"
+        interface_descriptions {
+            interface   = "1/2"
+            description = "Interface Description 1/2"
+        }
+        interface_descriptions {
+            interface   = "1/3"
+            description = "Interface Description 1/2 duplicate"
         }
 	}`, fabricResourcePhysicalInterfacePreConfig, msoFabricResourcePhysicalInterfaceName, msoFabricResourceTemplateName)
 }
