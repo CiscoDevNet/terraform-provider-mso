@@ -59,13 +59,13 @@ func resourceMSOVirtualPortChannelInterface() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"node_1_interfaces": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of interface IDs (or ranges) for node 1.",
 			},
 			"node_2_interfaces": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of interface IDs (or ranges) for node 2.",
@@ -178,8 +178,8 @@ func resourceMSOVirtualPortChannelInterfaceCreate(d *schema.ResourceData, m any)
 
 	templateId := d.Get("template_id").(string)
 
-	interfaces1 := getListOfStringsFromSchemaList(d, "node_1_interfaces")
-	interfaces2 := getListOfStringsFromSchemaList(d, "node_2_interfaces")
+	interfaces1 := getListOfStringsFromSchemaSet(d, "node_1_interfaces")
+	interfaces2 := getListOfStringsFromSchemaSet(d, "node_2_interfaces")
 
 	payload := map[string]any{
 		"name":        d.Get("name").(string),
@@ -267,7 +267,7 @@ func resourceMSOVirtualPortChannelInterfaceUpdate(d *schema.ResourceData, m any)
 		}
 	}
 	if d.HasChange("node_1_interfaces") {
-		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node1Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaList(d, "node_1_interfaces"), ","))
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node1Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaSet(d, "node_1_interfaces"), ","))
 		if err != nil {
 			return err
 		}
@@ -281,7 +281,7 @@ func resourceMSOVirtualPortChannelInterfaceUpdate(d *schema.ResourceData, m any)
 	}
 
 	if d.HasChange("node_2_interfaces") {
-		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node2Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaList(d, "node_2_interfaces"), ","))
+		err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/node2Details/memberInterfaces", updatePath), strings.Join(getListOfStringsFromSchemaSet(d, "node_2_interfaces"), ","))
 		if err != nil {
 			return err
 		}
