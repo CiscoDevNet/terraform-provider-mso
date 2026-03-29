@@ -8,8 +8,8 @@ import (
 )
 
 func TestAccMSORouteMapPolicyDataSource(t *testing.T) {
-	resourceName := "mso_route_map_policy.test_policy"
-	dataSourceName := "data.mso_route_map_policy.test_ds"
+	resourceName := "mso_tenant_policies_route_map_policy_route_control.test_policy"
+	dataSourceName := "data.mso_tenant_policies_route_map_policy_route_control.test_ds"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -33,15 +33,15 @@ func TestAccMSORouteMapPolicyDataSource(t *testing.T) {
 
 func testAccMSORouteMapPolicyDataSourceConfig() string {
 	return fmt.Sprintf(`%s
-resource "mso_route_map_policy" "test_policy" {
+resource "mso_tenant_policies_route_map_policy_route_control" "test_policy" {
   template_id = mso_template.template_tenant.id
   name        = "test_ds_policy"
   description = "Data source test description"
 }
 
-data "mso_route_map_policy" "test_ds" {
-  template_id = mso_route_map_policy.test_policy.template_id
-  name        = mso_route_map_policy.test_policy.name
+data "mso_tenant_policies_route_map_policy_route_control" "test_ds" {
+  template_id = mso_tenant_policies_route_map_policy_route_control.test_policy.template_id
+  name        = mso_tenant_policies_route_map_policy_route_control.test_policy.name
 }
 `, testAccMSOTemplateResourceTenantConfig())
 }
