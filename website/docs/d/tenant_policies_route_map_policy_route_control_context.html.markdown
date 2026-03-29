@@ -35,5 +35,4 @@ data "mso_tenant_policies_route_map_policy_route_control_context" "context" {
 * `action` - (Read-Only) The action of the Route Control Context.
 * `order` - (Read-Only) The order of the Route Control Context.
 * `set_rule_uuid` - (Read-Only) The UUID of the Set Rule Policy associated with this context.
-* `match_rules` - (Read-Only) A set of Match Rule Policy UUIDs associated with this context.
-  * `uuid` - (Read-Only) The UUID of the Match Rule Policy.
+* `match_rules_uuids` - (Read-Only) A set of Match Rule Policy UUIDs associated with this context.

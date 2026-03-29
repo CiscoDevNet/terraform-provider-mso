@@ -60,38 +60,28 @@ func resourceMSORouteMapPolicyContext() *schema.Resource {
 				Optional:    true,
 				Description: "The UUID of the Set Rule Policy (max one).",
 			},
-			"match_rules": {
+			"match_rule_uuids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "A set of Match Rule Policy UUIDs.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 			},
 		},
 	}
 }
 
-func buildMatchRulesPayload(matchRulesRaw interface{}) []string {
+func buildMatchRuleUUIDsPayload(matchRulesRaw interface{}) []string {
 	if matchRulesRaw == nil {
 		return nil
 	}
-
 	set := matchRulesRaw.(*schema.Set).List()
 	uuids := make([]string, len(set))
-
 	for i, item := range set {
-		m := item.(map[string]interface{})
-		if uuid, ok := m["uuid"].(string); ok {
-			uuids[i] = uuid
-		}
+		uuids[i] = item.(string)
 	}
-
 	return uuids
 }
 
@@ -104,7 +94,10 @@ func resourceMSORouteMapPolicyContextImport(d *schema.ResourceData, m interface{
 	d.Set("parent_id", parentId)
 	d.Set("name", contextName)
 
-	resourceMSORouteMapPolicyContextRead(d, m)
+	err = resourceMSORouteMapPolicyContextRead(d, m)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -144,8 +137,8 @@ func resourceMSORouteMapPolicyContextCreate(d *schema.ResourceData, m interface{
 		payload["setRuleRef"] = v.(string)
 	}
 
-	if v, ok := d.GetOk("match_rules"); ok {
-		payload["matchRules"] = buildMatchRulesPayload(v)
+	if v, ok := d.GetOk("match_rule_uuids"); ok {
+		payload["matchRules"] = buildMatchRuleUUIDsPayload(v)
 	}
 
 	path := fmt.Sprintf("/tenantPolicyTemplate/template/routeMapPolicies/%d/contexts/-", policyIndex)
@@ -236,18 +229,13 @@ func resourceMSORouteMapPolicyContextRead(d *schema.ResourceData, m interface{})
 
 	if match.Exists("matchRules") {
 		apiList, _ := match.S("matchRules").Data().([]interface{})
-		stateList := make([]interface{}, len(apiList))
-
+		uuids := make([]string, len(apiList))
 		for i, uuid := range apiList {
-			stateList[i] = map[string]interface{}{
-				"uuid": models.StripQuotes(fmt.Sprintf("%v", uuid)),
-			}
+			uuids[i] = models.StripQuotes(fmt.Sprintf("%v", uuid))
 		}
-		if err := d.Set("match_rules", stateList); err != nil {
-			return fmt.Errorf("error setting match_rules: %s", err)
-		}
+		d.Set("match_rule_uuids", uuids)
 	} else {
-		d.Set("match_rules", []interface{}{})
+		d.Set("match_rule_uuids", []string{})
 	}
 
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Read Complete: %v", d.Id())
@@ -300,9 +288,9 @@ func resourceMSORouteMapPolicyContextUpdate(d *schema.ResourceData, m interface{
 	if d.HasChange("set_rule_uuid") {
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/setRuleRef", updatePath), d.Get("set_rule_uuid").(string))
 	}
-	if d.HasChange("match_rules") {
-		_, newVal := d.GetChange("match_rules")
-		uuids := buildMatchRulesPayload(newVal)
+	if d.HasChange("match_rule_uuids") {
+		_, newVal := d.GetChange("match_rule_uuids")
+		uuids := buildMatchRuleUUIDsPayload(newVal)
 
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/matchRules", updatePath), uuids)
 		if err != nil {
