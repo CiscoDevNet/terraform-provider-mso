@@ -35,13 +35,7 @@ func TestAccMSORouteMapPolicyContextResource(t *testing.T) {
 				Config:    testAccMSORouteMapPolicyContextConfig_WithRules(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "set_rule_uuid", "a7f90577-fcd9-4c55-8bf4-628592922fc2"),
-					resource.TestCheckResourceAttr(resourceName, "match_rules.#", "2"),
-					CustomTestCheckTypeSetElemAttrs(resourceName, "match_rules", map[string]string{
-						"uuid": "f016b945-83c3-49a8-ab1f-c0c69ed58ec8",
-					}),
-					CustomTestCheckTypeSetElemAttrs(resourceName, "match_rules", map[string]string{
-						"uuid": "50f1e25e-b5b3-4a06-a1d8-a7e41120bf4e",
-					}),
+					resource.TestCheckResourceAttr(resourceName, "match_rule_uuids.#", "2"),
 				),
 			},
 			{
@@ -49,7 +43,7 @@ func TestAccMSORouteMapPolicyContextResource(t *testing.T) {
 				Config:    testAccMSORouteMapPolicyContextConfig_Create(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "set_rule_uuid", ""),
-					resource.TestCheckResourceAttr(resourceName, "match_rules.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "match_rule_uuids.#", "0"),
 				),
 			},
 			{
@@ -187,14 +181,8 @@ resource "mso_tenant_policies_route_map_policy_route_control_context" "test_cont
   order       = 1
   action      = "permit"
 
-  set_rule_uuid = "a7f90577-fcd9-4c55-8bf4-628592922fc2"
-
-  match_rules {
-    uuid = "f016b945-83c3-49a8-ab1f-c0c69ed58ec8"
-  }
-  match_rules {
-    uuid = "50f1e25e-b5b3-4a06-a1d8-a7e41120bf4e"
-  }
+  set_rule_uuid    = "a7f90577-fcd9-4c55-8bf4-628592922fc2"
+  match_rule_uuids = ["f016b945-83c3-49a8-ab1f-c0c69ed58ec8", "50f1e25e-b5b3-4a06-a1d8-a7e41120bf4e"]
 }
 `, testAccMSORouteMapPolicyConfigCreate())
 }

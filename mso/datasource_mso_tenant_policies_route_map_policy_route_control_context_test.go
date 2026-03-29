@@ -13,35 +13,36 @@ func TestAccMSORouteMapPolicyContextDataSource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMSORouteMapPolicyContextDataSourceConfig(),
+				PreConfig: func() { fmt.Println("Task: Create Resource and Query via Data Source") },
+				Config:    testAccMSORouteMapPolicyContextDataSourceConfig(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "parent_id",
-						"mso_route_map_policy_context.test", "parent_id",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "parent_id",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "parent_id",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "name",
-						"mso_route_map_policy_context.test", "name",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "name",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "name",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "description",
-						"mso_route_map_policy_context.test", "description",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "description",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "description",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "action",
-						"mso_route_map_policy_context.test", "action",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "action",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "action",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "order",
-						"mso_route_map_policy_context.test", "order",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "order",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "order",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "set_rule_uuid",
-						"mso_route_map_policy_context.test", "set_rule_uuid",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "set_rule_uuid",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "set_rule_uuid",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.mso_route_map_policy_context.test", "match_rules.#",
-						"mso_route_map_policy_context.test", "match_rules.#",
+						"data.mso_tenant_policies_route_map_policy_route_control_context.test", "match_rules.#",
+						"mso_tenant_policies_route_map_policy_route_control_context.test", "match_rules.#",
 					),
 				),
 			},
@@ -51,25 +52,23 @@ func TestAccMSORouteMapPolicyContextDataSource(t *testing.T) {
 
 func testAccMSORouteMapPolicyContextDataSourceConfig() string {
 	return fmt.Sprintf(`%s
-resource "mso_route_map_policy" "test" {
-  template_id = mso_template.tenant.id
+resource "mso_tenant_policies_route_map_policy_route_control" "test" {
+  template_id = mso_template.template_tenant.id
   name        = "test_route_map_ds"
   description = "Route Map for data source test"
 }
 
-resource "mso_route_map_policy_context" "test" {
-  parent_id   = mso_route_map_policy.test.id
+resource "mso_tenant_policies_route_map_policy_route_control_context" "test" {
+  parent_id   = mso_tenant_policies_route_map_policy_route_control.test.id
   name        = "ctx_ds_1"
   description = "Context for data source test"
   action      = "permit"
   order       = 1
 }
 
-data "mso_route_map_policy_context" "test" {
-  parent_id = mso_route_map_policy.test.id
+data "mso_tenant_policies_route_map_policy_route_control_context" "test" {
+  parent_id = mso_tenant_policies_route_map_policy_route_control_context.test.parent_id
   name      = "ctx_ds_1"
-
-  depends_on = [mso_route_map_policy_context.test]
 }
 `, testAccMSOTemplateResourceTenantConfig())
 }
