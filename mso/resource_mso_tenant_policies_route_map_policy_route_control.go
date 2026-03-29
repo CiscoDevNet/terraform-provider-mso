@@ -62,7 +62,10 @@ func setRouteMapPolicyData(d *schema.ResourceData, response *container.Container
 
 func resourceMSORouteMapPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Route Map Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSORouteMapPolicyRead(d, m)
+	err := resourceMSORouteMapPolicyRead(d, m)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO Route Map Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }

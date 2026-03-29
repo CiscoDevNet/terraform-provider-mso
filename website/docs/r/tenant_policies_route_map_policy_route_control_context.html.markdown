@@ -34,8 +34,7 @@ resource "mso_tenant_policies_route_map_policy_route_control_context" "context" 
 * `order` - (Optional) The order of the Route Control Context. Valid range: 0-9. Default: `0`.
 * `action` - (Optional) The action of the Route Control Context. Allowed values: `permit`, `deny`. Default: `permit`.
 * `set_rule_uuid` - (Optional) The UUID of the Set Rule Policy to associate with this context.
-* `match_rules` - (Optional) A set of Match Rule Policy UUIDs to associate with this context.
-  * `uuid` - (Required) The UUID of the Match Rule Policy.
+* `match_rules_uuids` - (Optional) A set of Match Rule Policy UUIDs to associate with this context.
 
 ## Attribute Reference ##
 
