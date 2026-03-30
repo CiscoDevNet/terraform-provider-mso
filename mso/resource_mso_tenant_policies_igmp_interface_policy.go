@@ -37,7 +37,6 @@ func resourceMSOIGMPInterfacePolicy() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				Description: "The description of the IGMP Interface Policy.",
 			},
 			"uuid": {
