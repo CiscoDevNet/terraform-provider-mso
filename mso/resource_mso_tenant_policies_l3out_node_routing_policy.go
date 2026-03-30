@@ -37,7 +37,6 @@ func resourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				Description: "The description of the L3Out Node Routing Policy.",
 			},
 			"uuid": {
