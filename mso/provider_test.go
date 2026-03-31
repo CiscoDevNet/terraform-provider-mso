@@ -158,6 +158,22 @@ func testAccVerifyKeyValue(resourceAttrsMap *map[string]string, resourceAttrRoot
 	}
 }
 
+func testCheckTypeSetStringElemAttr(resourceName, setKey, value string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+		prefix := setKey + "."
+		for k, v := range rs.Primary.Attributes {
+			if strings.HasPrefix(k, prefix) && !strings.HasSuffix(k, ".#") && v == value {
+				return nil
+			}
+		}
+		return fmt.Errorf("no element with value %q found in set %q", value, setKey)
+	}
+}
+
 func customTestCheckResourceTypeSetAttr(resourceName, resourceAttrRootkey string, resourceAttrsMap map[string]string) resource.TestCheckFunc {
 	return func(is *terraform.State) error {
 		rootModule, err := is.RootModule().Resources[resourceName]
