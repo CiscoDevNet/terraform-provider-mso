@@ -39,6 +39,8 @@ func resourceMSORouteMapPolicyContext() *schema.Resource {
 				Optional:    true,
 				Description: "The description of the context.",
 			},
+			// Default is explicitly set because the API requires 'order' in the payload
+			// but does not assign a default value if omitted.
 			"order": {
 				Type:         schema.TypeInt,
 				Optional:     true,
@@ -46,6 +48,8 @@ func resourceMSORouteMapPolicyContext() *schema.Resource {
 				ValidateFunc: validation.IntBetween(0, 9),
 				Description:  "The order of the context. Range: 0-9.",
 			},
+			// Default is explicitly set because the API requires 'action' in the payload
+			// but does not assign a default value if omitted.
 			"action": {
 				Type:     schema.TypeString,
 				Optional: true,
