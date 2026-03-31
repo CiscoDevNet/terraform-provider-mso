@@ -545,6 +545,7 @@ func GetDeployedSiteIdsForApplicationTemplate(msoClient *client.Client, schemaId
 // is within the specified uint32 range. This approach avoids compile-time overflow
 // errors on 32-bit systems by storing boundaries as uint32 and performing runtime
 // validation using int64 comparisons.
+// This validation is done in CI.
 func validateUint32Range(min, max uint32) schema.SchemaValidateFunc {
 	minInt64 := int64(min)
 	maxInt64 := int64(max)
