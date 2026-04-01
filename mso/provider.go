@@ -146,6 +146,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
 			"mso_user": resourceMSOUser(),
 			"mso_tenant_policies_netflow_exporter":               resourceMSONetflowExporter(),
+			"mso_tenant_policies_netflow_monitor":                resourceMSOTenantPoliciesNetflowMonitor(),
 			"mso_tenant_policies_netflow_record":                 resourceMSONetflowRecord(),
 		},
 
@@ -226,6 +227,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
 			"mso_user": datasourceMSOUser(),
 			"mso_tenant_policies_netflow_exporter":               datasourceMSONetflowExporter(),
+			"mso_tenant_policies_netflow_monitor":                datasourceMSOTenantPoliciesNetflowMonitor(),
 			"mso_tenant_policies_netflow_record":                 datasourceMSONetflowRecord(),
 		},
 
