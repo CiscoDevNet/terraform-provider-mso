@@ -54,7 +54,10 @@ func setNetflowExporterData(d *schema.ResourceData, response *container.Containe
 
 func resourceMSONetflowExporterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Beginning Import: %v", d.Id())
-	resourceMSONetflowExporterRead(d, m)
+	err := resourceMSONetflowExporterRead(d, m)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }

@@ -88,7 +88,9 @@ func setNetflowRecordData(d *schema.ResourceData, response *container.Container,
 	d.Set("template_id", templateId)
 	d.Set("name", name)
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
-	d.Set("description", models.StripQuotes(response.S("description").String()))
+	if response.Exists("description") {
+		d.Set("description", models.StripQuotes(response.S("description").String()))
+	}
 
 	if response.Exists("match") {
 		matchCount, _ := response.ArrayCount("match")
