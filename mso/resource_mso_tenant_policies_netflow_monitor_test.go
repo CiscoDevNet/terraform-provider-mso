@@ -34,7 +34,7 @@ func TestAccMSOTenantPoliciesNetflowMonitorResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_netflow_monitor.netflow_monitor", "netflow_exporter_uuids.#", "2"),
 				),
 			},
-            {
+			{
 				PreConfig: func() { fmt.Println("Test: Update NetFlow Remove Description and Record UUID") },
 				Config:    testAccMSOTenantPoliciesNetflowMonitorConfigRemoveOptionals(),
 				Check: resource.ComposeTestCheckFunc(
@@ -57,7 +57,7 @@ func TestAccMSOTenantPoliciesNetflowMonitorResource(t *testing.T) {
 }
 
 func testAccNeflowMonitorBaseConfig(extra_exporter bool) string {
-    base := fmt.Sprintf(`%s
+	base := fmt.Sprintf(`%s
     resource "mso_tenant_policies_netflow_exporter" "netflow_exporter" {
         template_id = mso_template.template_tenant.id
         name        = "test_netflow_exporter"
@@ -67,17 +67,17 @@ func testAccNeflowMonitorBaseConfig(extra_exporter bool) string {
         name        = "test_netflow_record"
     }`, testAccMSOTemplateResourceTenantConfig())
 
-    if extra_exporter {
-        return fmt.Sprintf(`%s
+	if extra_exporter {
+		return fmt.Sprintf(`%s
         resource "mso_tenant_policies_netflow_exporter" "netflow_exporter_2" {
             template_id = mso_template.template_tenant.id
             name        = "test_netflow_exporter_2"
             // This is to ensure the exporters are deleted in order.
             depends_on = [mso_tenant_policies_netflow_exporter.netflow_exporter]
         }`, base)
-    }
+	}
 
-    return base
+	return base
 }
 
 func testAccMSOTenantPoliciesNetflowMonitorConfigCreate() string {

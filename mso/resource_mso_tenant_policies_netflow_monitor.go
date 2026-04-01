@@ -73,7 +73,9 @@ func setNetflowMonitorData(d *schema.ResourceData, response *container.Container
 	d.SetId(fmt.Sprintf("templateId/%s/NetflowMonitor/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
-	d.Set("description", models.StripQuotes(response.S("description").String()))
+	if response.Exists("description") {
+		d.Set("description", models.StripQuotes(response.S("description").String()))
+	}
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 	if response.Exists("recordRef") {
 		d.Set("netflow_record_uuid", models.StripQuotes(response.S("recordRef").String()))
