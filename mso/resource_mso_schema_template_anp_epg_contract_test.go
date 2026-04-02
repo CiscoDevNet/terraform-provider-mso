@@ -11,217 +11,187 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccMSOSchemaTemplateAnpEpgContract_Basic(t *testing.T) {
-	var ss TemplateAnpEpgContract
+// msoSchemaTemplateAnpEpgContractSchemaId is set during the first test step's Check to capture the dynamic schema ID for use in the manual deletion PreConfig step.
+var msoSchemaTemplateAnpEpgContractSchemaId string
+
+func TestAccMSOSchemaTemplateAnpEpgContractResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgContractDestroy,
+		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMSOTemplateAnpEpgContractConfig_basic("provider"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateAnpEpgContractExists("mso_schema_template_anp_epg_contract.contract", &ss),
-					testAccCheckMSOSchemaTemplateAnpEpgContractAttributes("provider", &ss),
+				PreConfig: func() { fmt.Println("Test: Create EPG Contract as provider") },
+				Config:    testAccMSOSchemaTemplateAnpEpgContractConfigProvider(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "template_name", msoSchemaTemplateName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "anp_name", msoSchemaTemplateAnpName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "epg_name", msoSchemaTemplateAnpEpgName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "relationship_type", "provider"),
+					resource.TestCheckResourceAttrSet("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "contract_schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "contract_template_name", msoSchemaTemplateName),
+					// Capture the dynamic schema ID from state for use in the manual deletion PreConfig step.
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources["mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider"]
+						if !ok {
+							return fmt.Errorf("EPG Contract resource not found in state")
+						}
+						msoSchemaTemplateAnpEpgContractSchemaId = rs.Primary.Attributes["schema_id"]
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update EPG Contract relationship_type to consumer") },
+				Config:    testAccMSOSchemaTemplateAnpEpgContractConfigConsumer(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "relationship_type", "consumer"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Reset EPG Contract relationship_type to provider") },
+				Config:    testAccMSOSchemaTemplateAnpEpgContractConfigProvider(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "relationship_type", "provider"),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import EPG Contract") },
+				ResourceName: "mso_schema_template_anp_epg_contract." + msoSchemaTemplateContractName + "_provider",
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider"]
+					if !ok {
+						return "", fmt.Errorf("EPG Contract resource not found in state")
+					}
+					return fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/contracts/%s/relationship_type/%s",
+						rs.Primary.Attributes["schema_id"],
+						rs.Primary.Attributes["template_name"],
+						rs.Primary.Attributes["anp_name"],
+						rs.Primary.Attributes["epg_name"],
+						rs.Primary.Attributes["contract_name"],
+						rs.Primary.Attributes["relationship_type"],
+					), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate EPG Contract after manual deletion from NDO")
+					msoClient := testAccProvider.Meta().(*client.Client)
+					cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgContractSchemaId))
+					if err != nil {
+						t.Fatalf("Failed to get schema: %v", err)
+					}
+					index, err := fetchindex(cont, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateContractName, "provider")
+					if err != nil {
+						t.Fatalf("Failed to fetch contract index: %v", err)
+					}
+					if index == -1 {
+						t.Fatalf("Contract not found for manual deletion")
+					}
+					contractRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/%d", msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, index))
+					_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgContractSchemaId), contractRemovePatchPayload)
+					if err != nil {
+						t.Fatalf("Failed to manually delete contract: %v", err)
+					}
+				},
+				Config: testAccMSOSchemaTemplateAnpEpgContractConfigProvider(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_contract."+msoSchemaTemplateContractName+"_provider", "relationship_type", "provider"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccMSOSchemaTemplateAnpEpgContract_Update(t *testing.T) {
-	var ss TemplateAnpEpgContract
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgContractDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckMSOTemplateAnpEpgContractConfig_basic("provider"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateAnpEpgContractExists("mso_schema_template_anp_epg_contract.contract", &ss),
-					testAccCheckMSOSchemaTemplateAnpEpgContractAttributes("provider", &ss),
-				),
-			},
-			{
-				Config: testAccCheckMSOTemplateAnpEpgContractConfig_basic("consumer"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateAnpEpgContractExists("mso_schema_template_anp_epg_contract.contract", &ss),
-					testAccCheckMSOSchemaTemplateAnpEpgContractAttributes("consumer", &ss),
-				),
-			},
-		},
-	})
+func testAccMSOSchemaTemplateAnpEpgContractPrerequisiteConfig() string {
+	return fmt.Sprintf(`%s%s%s%s%s%s`, testSiteConfigAnsibleTest(), testTenantConfig(), testSchemaConfig(), testSchemaTemplateAnpConfig(), testSchemaTemplateAnpEpgConfig(), testSchemaTemplateFilterEntryConfig()) + testSchemaTemplateContractConfig()
 }
 
-func testAccCheckMSOTemplateAnpEpgContractConfig_basic(relationshiptype string) string {
-	return fmt.Sprintf(`
-	resource "mso_schema_template_anp_epg_contract" "contract" {
-  schema_id = "5c6c16d7270000c710f8094d"
-  template_name = "Template1"
-  anp_name = "WoS-Cloud-Only-2"
-  epg_name = "DB"
-  contract_name = "Internet-access"
-  relationship_type = "%v"
-  
+func testAccMSOSchemaTemplateAnpEpgContractConfigProvider() string {
+	return fmt.Sprintf(`%[1]s
+resource "mso_schema_template_anp_epg_contract" "%[2]s_provider" {
+	schema_id         = mso_schema.%[3]s.id
+	template_name     = "%[4]s"
+	anp_name          = "%[5]s"
+	epg_name          = mso_schema_template_anp_epg.%[6]s.name
+	contract_name     = mso_schema_template_contract.%[2]s.contract_name
+	relationship_type = "provider"
 }
-`, relationshiptype)
+`, testAccMSOSchemaTemplateAnpEpgContractPrerequisiteConfig(), msoSchemaTemplateContractName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName)
 }
 
-func testAccCheckMSOSchemaTemplateAnpEpgContractExists(contractName string, ss *TemplateAnpEpgContract) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*client.Client)
-		rs1, err1 := s.RootModule().Resources[contractName]
+func testAccMSOSchemaTemplateAnpEpgContractConfigConsumer() string {
+	return fmt.Sprintf(`%[1]s
+resource "mso_schema_template_anp_epg_contract" "%[2]s_provider" {
+	schema_id         = mso_schema.%[3]s.id
+	template_name     = "%[4]s"
+	anp_name          = "%[5]s"
+	epg_name          = mso_schema_template_anp_epg.%[6]s.name
+	contract_name     = mso_schema_template_contract.%[2]s.contract_name
+	relationship_type = "consumer"
+}
+`, testAccMSOSchemaTemplateAnpEpgContractPrerequisiteConfig(), msoSchemaTemplateContractName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName)
+}
 
-		if !err1 {
-			return fmt.Errorf("Contract %s not found", contractName)
-		}
-		if rs1.Primary.ID == "" {
-			return fmt.Errorf("No Contract id was set")
-		}
+// testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy verifies the contract relationship is removed after test.
+func testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy(s *terraform.State) error {
+	client := testAccProvider.Meta().(*client.Client)
 
-		cont, err := client.GetViaURL("api/v1/schemas/5c6c16d7270000c710f8094d")
-		if err != nil {
-			return err
-		}
-		count, err := cont.ArrayCount("templates")
-		if err != nil {
-			return fmt.Errorf("No Template found")
-		}
-		tp := TemplateAnpEpgContract{}
-		found := false
-		for i := 0; i < count; i++ {
-			tempCont, err := cont.ArrayElement(i, "templates")
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type == "mso_schema_template_anp_epg_contract" {
+			schemaID := rs.Primary.Attributes["schema_id"]
+			cont, err := client.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 			if err != nil {
-				return err
+				return nil
 			}
-			apiTemplateName := models.StripQuotes(tempCont.S("name").String())
-			if apiTemplateName == "Template1" {
+			count, err := cont.ArrayCount("templates")
+			if err != nil {
+				return fmt.Errorf("No Template found")
+			}
+			for i := 0; i < count; i++ {
+				tempCont, err := cont.ArrayElement(i, "templates")
+				if err != nil {
+					return fmt.Errorf("No template exists")
+				}
 				anpCount, err := tempCont.ArrayCount("anps")
 				if err != nil {
-					return fmt.Errorf("Unable to get ANP list")
+					return fmt.Errorf("No Anp found")
 				}
 				for j := 0; j < anpCount; j++ {
 					anpCont, err := tempCont.ArrayElement(j, "anps")
 					if err != nil {
 						return err
 					}
-					apiANP := models.StripQuotes(anpCont.S("name").String())
-					if apiANP == "WoS-Cloud-Only-2" {
-						epgCount, err := anpCont.ArrayCount("epgs")
-						if err != nil {
-							return fmt.Errorf("Unable to get EPG list")
-						}
-						for k := 0; k < epgCount; k++ {
-							epgCont, err := anpCont.ArrayElement(k, "epgs")
-							if err != nil {
-								return err
-							}
-							apiEPG := models.StripQuotes(epgCont.S("name").String())
-							if apiEPG == "DB" {
-								crefCount, err := epgCont.ArrayCount("contractRelationships")
-								if err != nil {
-									return fmt.Errorf("Unable to get the contract relationships list")
-								}
-								for l := 0; l < crefCount; l++ {
-									crefCont, err := epgCont.ArrayElement(l, "contractRelationships")
-									if err != nil {
-										return err
-									}
-									contractRef := models.StripQuotes(crefCont.S("contractRef").String())
-									re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-									match := re.FindStringSubmatch(contractRef)
-									apiContract := match[3]
-									if apiContract == "Internet-access" {
-										tp.relationship_type = models.StripQuotes(crefCont.S("relationshipType").String())
-										tp.contract_name = apiContract
-										found = true
-										break
-									}
-								}
-							}
-
-						}
-					}
-				}
-			}
-		}
-
-		if !found {
-			return fmt.Errorf("Contract not found from API")
-		}
-
-		tp1 := &tp
-
-		*ss = *tp1
-		return nil
-	}
-}
-
-func testAccCheckMSOSchemaTemplateAnpEpgContractDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
-
-	for _, rs := range s.RootModule().Resources {
-
-		if rs.Type == "mso_schema_template_anp_epg_contract" {
-			cont, err := client.GetViaURL("api/v1/schemas/5ea809672c00003bc40a2799")
-			if err != nil {
-				return nil
-			} else {
-				count, err := cont.ArrayCount("templates")
-				if err != nil {
-					return fmt.Errorf("No Template found")
-				}
-				for i := 0; i < count; i++ {
-					tempCont, err := cont.ArrayElement(i, "templates")
+					epgCount, err := anpCont.ArrayCount("epgs")
 					if err != nil {
-						return fmt.Errorf("No Template exists")
+						return fmt.Errorf("Unable to get EPG list")
 					}
-					apiTemplateName := models.StripQuotes(tempCont.S("name").String())
-					if apiTemplateName == "Template1" {
-						anpCount, err := tempCont.ArrayCount("anps")
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
-							return fmt.Errorf("Unable to get ANP list")
+							return err
 						}
-						for j := 0; j < anpCount; j++ {
-							anpCont, err := tempCont.ArrayElement(j, "anps")
+						crefCount, err := epgCont.ArrayCount("contractRelationships")
+						if err != nil {
+							return fmt.Errorf("Unable to get contract relationships list")
+						}
+						for l := 0; l < crefCount; l++ {
+							crefCont, err := epgCont.ArrayElement(l, "contractRelationships")
 							if err != nil {
 								return err
 							}
-							apiANP := models.StripQuotes(anpCont.S("name").String())
-							if apiANP == "WoS-Cloud-Only-2" {
-								epgCount, err := anpCont.ArrayCount("epgs")
-								if err != nil {
-									return fmt.Errorf("Unable to get EPG list")
-								}
-								for k := 0; k < epgCount; k++ {
-									epgCont, err := anpCont.ArrayElement(k, "epgs")
-									if err != nil {
-										return err
-									}
-									apiEPG := models.StripQuotes(epgCont.S("name").String())
-									if apiEPG == "DB" {
-										crefCount, err := epgCont.ArrayCount("contractRelationships")
-										if err != nil {
-											return fmt.Errorf("Unable to get the contract relationships list")
-										}
-										for l := 0; l < crefCount; l++ {
-											crefCont, err := epgCont.ArrayElement(l, "contractRelationships")
-											if err != nil {
-												return err
-											}
-											contractRef := models.StripQuotes(crefCont.S("contractRef").String())
-											re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-											match := re.FindStringSubmatch(contractRef)
-											apiContract := match[3]
-											if apiContract == "Internet-access" {
-												return fmt.Errorf("Contract still exists.")
-											}
-										}
-									}
-								}
-
+							contractRef := models.StripQuotes(crefCont.S("contractRef").String())
+							re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+							match := re.FindStringSubmatch(contractRef)
+							if len(match) > 3 && match[3] == rs.Primary.Attributes["contract_name"] {
+								return fmt.Errorf("Schema Template ANP EPG Contract still exists")
 							}
 						}
 					}
@@ -230,17 +200,4 @@ func testAccCheckMSOSchemaTemplateAnpEpgContractDestroy(s *terraform.State) erro
 		}
 	}
 	return nil
-}
-func testAccCheckMSOSchemaTemplateAnpEpgContractAttributes(relationship_type string, ss *TemplateAnpEpgContract) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if relationship_type != ss.relationship_type {
-			return fmt.Errorf("Bad Contract Relationship Type %s", ss.relationship_type)
-		}
-		return nil
-	}
-}
-
-type TemplateAnpEpgContract struct {
-	contract_name     string
-	relationship_type string
 }
