@@ -30,7 +30,7 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_descriptions.#", "1"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_policy_group_uuid"),
-					customTestCheckResourceTypeSetAttr(
+					CustomTestCheckTypeSetElemAttrs(
 						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 						"interface_descriptions",
 						map[string]string{
@@ -49,7 +49,7 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "name", "tf_test_vpc_if"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "description", ""),
-					customTestCheckResourceTypeSetAttr(
+					CustomTestCheckTypeSetElemAttrs(
 						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 						"interface_descriptions",
 						map[string]string{
@@ -81,7 +81,7 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_descriptions.#", "2"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_policy_group_uuid"),
-					customTestCheckResourceTypeSetAttr(
+					CustomTestCheckTypeSetElemAttrs(
 						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 						"interface_descriptions",
 						map[string]string{
@@ -90,7 +90,7 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 							"description": "Terraform test interface description 103",
 						},
 					),
-					customTestCheckResourceTypeSetAttr(
+					CustomTestCheckTypeSetElemAttrs(
 						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 						"interface_descriptions",
 						map[string]string{

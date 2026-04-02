@@ -174,6 +174,8 @@ func testCheckTypeSetStringElemAttr(resourceName, setKey, value string) resource
 	}
 }
 
+// Deprecated: This check has a bug because it matches key value pairs across different set elements instead of verifying all attributes
+// belong to the same set element, leading to false positives. Use CustomTestCheckTypeSetElemAttrs instead.
 func customTestCheckResourceTypeSetAttr(resourceName, resourceAttrRootkey string, resourceAttrsMap map[string]string) resource.TestCheckFunc {
 	return func(is *terraform.State) error {
 		rootModule, err := is.RootModule().Resources[resourceName]
