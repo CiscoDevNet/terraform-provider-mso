@@ -69,22 +69,28 @@ func resourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			// When set to true the attribute will error on NDO 4.1
+			// Error: "EPG: epg in Schema: schema, Template: template, 'Querier' is only supported for Bridge Domain subnets"{}
+			// This attribute is applicable to BD subnets only and investigation should be done regarding deprecation
 			"querier": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
 			"description": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				// Computed:     true,
+				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"no_default_gateway": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 			},
+			// When set to true the attribute will error on NDO 4.1
+			// Error: "EPG: epg in Schema: schema, Template: template, EPG Subnet 10.0.0.1/24 cannot be marked as primary"{}
+			// This attribute is applicable to BD subnets only and investigation should be done regarding deprecation
 			"primary": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -293,88 +299,90 @@ func resourceMSOSchemaTemplateAnpEpgSubnetUpdate(d *schema.ResourceData, m inter
 	log.Printf("[DEBUG] Schema Template Anp Epg Subnet: Beginning Updating")
 	msoClient := m.(*client.Client)
 
-	ips := d.Id()
-
-	var schemaId string
-	if schema_id, ok := d.GetOk("schema_id"); ok {
-		schemaId = schema_id.(string)
-	}
-
-	var templateName string
-	if template, ok := d.GetOk("template"); ok {
-		templateName = template.(string)
-	}
-
-	var anpName string
-	if name, ok := d.GetOk("anp_name"); ok {
-		anpName = name.(string)
-	}
-
-	var epgName string
-	if name, ok := d.GetOk("epg_name"); ok {
-		epgName = name.(string)
-	}
-
-	var ip string
-	if tempVar, ok := d.GetOk("ip"); ok {
-		ip = tempVar.(string)
-	}
-
-	var description string
-	if tempVar, ok := d.GetOk("description"); ok {
-		description = tempVar.(string)
-	}
-
-	scope := "private"
-	if tempVar, ok := d.GetOk("scope"); ok {
-		scope = tempVar.(string)
-	}
-
-	shared := false
-	if tempVar, ok := d.GetOk("shared"); ok {
-		shared = tempVar.(bool)
-	}
-
-	primary := false
-	if tempVar, ok := d.GetOk("primary"); ok {
-		primary = tempVar.(bool)
-	}
-
-	querier := false
-	if tempVar, ok := d.GetOk("querier"); ok {
-		querier = tempVar.(bool)
-	}
-
-	noDefaultGateway := false
-	if tempVar, ok := d.GetOk("no_default_gateway"); ok {
-		noDefaultGateway = tempVar.(bool)
-	}
+	schemaId := d.Get("schema_id").(string)
+	templateName := d.Get("template").(string)
+	anpName := d.Get("anp_name").(string)
+	epgName := d.Get("epg_name").(string)
 
 	conts, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return err
 	}
 
-	index, err := fetchIndex(conts, templateName, anpName, epgName, ips)
+	index, err := fetchIndex(conts, templateName, anpName, epgName, d.Id())
 	if err != nil {
 		return err
 	}
 
+	// We are keeping this conditional as a defensive check since this should not be triggered
+	// This conditional is here in case a subnet is manually deleted between the read and update operation
 	if index == -1 {
-		fmt.Errorf("The given subnet ip is not found")
+		return fmt.Errorf("The given subnet ip is not found")
 	}
 
-	indexs := strconv.Itoa(index)
+	updatePath := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/%d", templateName, anpName, epgName, index)
+	payloadCont := container.New()
+	payloadCont.Array()
 
-	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("replace", fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/%s", templateName, anpName, epgName, indexs), ip, description, scope, shared, noDefaultGateway, querier, primary)
+	if d.HasChange("ip") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/ip", updatePath), d.Get("ip").(string))
+		if err != nil {
+			return err
+		}
+	}
 
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
+	if d.HasChange("description") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("scope") {
+		scope := d.Get("scope").(string)
+		if scope == "" {
+			scope = "private"
+		}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/scope", updatePath), scope)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("shared") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/shared", updatePath), d.Get("shared").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("querier") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/querier", updatePath), d.Get("querier").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("no_default_gateway") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/noDefaultGateway", updatePath), d.Get("no_default_gateway").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("primary") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/primary", updatePath), d.Get("primary").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCont)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%v", ip))
+	d.SetId(fmt.Sprintf("%v", d.Get("ip").(string)))
 	log.Printf("[DEBUG] %s: Updating finished successfully", d.Id())
 
 	return resourceMSOSchemaTemplateAnpEpgSubnetRead(d, m)
