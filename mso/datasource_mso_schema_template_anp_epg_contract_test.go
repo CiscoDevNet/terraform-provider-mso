@@ -45,6 +45,7 @@ data "mso_schema_template_anp_epg_contract" "contract" {
 	anp_name      = "%[4]s"
 	epg_name      = "%[5]s"
 	contract_name = mso_schema_template_anp_epg_contract.%[6]s_provider.contract_name
+	relationship_type = "provider"
 }
 `, testAccMSOSchemaTemplateAnpEpgContractConfigProvider(), msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateContractName)
 }
@@ -57,6 +58,7 @@ data "mso_schema_template_anp_epg_contract" "contract" {
 	anp_name      = "%[4]s"
 	epg_name      = "%[5]s"
 	contract_name = "non_existent_contract"
+	relationship_type = "provider"
 }
 `, testAccMSOSchemaTemplateAnpEpgContractConfigProvider(), msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName)
 }
