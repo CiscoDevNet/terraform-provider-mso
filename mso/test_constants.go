@@ -33,6 +33,7 @@ var msoSchemaTemplateBdL3MulticastName = acctest.RandStringFromCharSet(10, accte
 var msoSchemaTemplateVrfL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
+const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -101,12 +102,9 @@ func testSchemaTemplateAnpEpgConfig() string {
 resource "mso_schema_template_anp_epg" "%[1]s" {
 	name          = "%[1]s"
 	display_name  = "%[1]s"
-	anp_name      = "%[2]s"
+	anp_name      = mso_schema_template_anp.%[2]s.name
 	schema_id     = mso_schema.%[3]s.id
 	template_name = "%[4]s"
-	depends_on = [
-		mso_schema_template_anp.%[2]s,
-	]
 }
 `, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpName, msoSchemaName, msoSchemaTemplateName)
 }
@@ -285,7 +283,7 @@ resource "mso_schema_template_anp_epg_subnet" "%[1]s_subnet" {
 	schema_id = mso_schema.%[2]s.id
 	template  = "%[3]s"
 	anp_name  = "%[4]s"
-	epg_name  = "%[5]s"
+	epg_name  = mso_schema_template_anp_epg.%[5]s.name
 	ip        = "%[6]s"
 	scope     = "private"
 	shared    = false

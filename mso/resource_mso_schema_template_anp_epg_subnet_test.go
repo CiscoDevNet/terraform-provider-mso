@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -11,176 +10,291 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccMSOSchemaTemplateAnpEpgSubnet_Basic(t *testing.T) {
-	var ss SubnetTest
+// Note: The `querier` and `primary` attributes are not tested because they are BD (Bridge Domain) specific attributes.
+// - querier: API returns "EPG: <name> in Schema: <schema>, Template: <template>, 'Querier' is only supported for Bridge Domain subnets"
+// - primary: API returns "EPG: <name> in Schema: <schema>, Template: <template>, EPG Subnet <ip> cannot be marked as primary"
+// See https://www.cisco.com/c/en/us/td/docs/dcn/ndo/4x/articles-441/nexus-dashboard-orchestrator-aci-schemas-and-application-templates-441.html#_configuring_bridge_domains for more details
+// msoSchemaTemplateAnpEpgSubnetSchemaId is set during the first test step's Check to capture the dynamic schema ID for use in the manual deletion PreConfig step.
+var msoSchemaTemplateAnpEpgSubnetSchemaId string
+
+func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMSOTemplateAnpEpgSubnetConfig_basic(true),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateAnpEpgSubnetExists("mso_schema_template_anp_epg_subnet.subnet1", &ss),
-					testAccCheckMSOSchemaTemplateAnpEpgSubnetAttributes(true, &ss),
+				PreConfig: func() { fmt.Println("Test: Create EPG Subnet with required attributes only") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "template", msoSchemaTemplateName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "anp_name", msoSchemaTemplateAnpName),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "epg_name", msoSchemaTemplateAnpEpgName),
+					// Capture the dynamic schema ID from state for use in the manual deletion PreConfig step
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources["mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet"]
+						if !ok {
+							return fmt.Errorf("EPG Subnet resource not found in state")
+						}
+						msoSchemaTemplateAnpEpgSubnetSchemaId = rs.Primary.Attributes["schema_id"]
+						return nil
+					},
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "querier", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "primary", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "description", ""),
 				),
 			},
-		},
-	})
-}
-
-func TestAccMSOSchemaTemplateAnpEpgSubnet_Update(t *testing.T) {
-	var ss SubnetTest
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
-		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMSOTemplateAnpEpgSubnetConfig_basic(true),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateAnpEpgSubnetExists("mso_schema_template_anp_epg_subnet.subnet1", &ss),
-					testAccCheckMSOSchemaTemplateAnpEpgSubnetAttributes(true, &ss),
+				PreConfig: func() { fmt.Println("Test: Update EPG Subnet scope to public") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateScope(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "public"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "querier", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "primary", "false"),
 				),
 			},
 			{
-				Config: testAccCheckMSOTemplateAnpEpgSubnetConfig_basic(false),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMSOSchemaTemplateAnpEpgSubnetExists("mso_schema_template_anp_epg_subnet.subnet1", &ss),
-					testAccCheckMSOSchemaTemplateAnpEpgSubnetAttributes(false, &ss),
+				PreConfig: func() { fmt.Println("Test: Update EPG Subnet shared and description") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateSharedAndDescription(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "public"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "description", "test subnet"),
 				),
 			},
-		},
-	})
-}
-
-func testAccCheckMSOTemplateAnpEpgSubnetConfig_basic(shared bool) string {
-	return fmt.Sprintf(`
-	resource "mso_schema_template_anp_epg_subnet" "subnet1" {
-		schema_id = "5c6c16d7270000c710f8094d"
-		anp_name = "WoS-Cloud-Only-2"
-		epg_name ="DB"
-		template = "Template1"
-		ip = "99.101.102.0/8"
-		scope = "private"
-		shared = "%v"
-		}
-`, shared)
-}
-
-func testAccCheckMSOSchemaTemplateAnpEpgSubnetExists(subnetName string, ss *SubnetTest) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*client.Client)
-		rs1, err1 := s.RootModule().Resources[subnetName]
-
-		if !err1 {
-			return fmt.Errorf("Subnet %s not found", subnetName)
-		}
-		if rs1.Primary.ID == "" {
-			return fmt.Errorf("No Subnet id was set")
-		}
-
-		cont, err := client.GetViaURL("api/v1/schemas/5c6c16d7270000c710f8094d")
-		if err != nil {
-			return err
-		}
-		count, err := cont.ArrayCount("templates")
-		if err != nil {
-			return fmt.Errorf("No Template found")
-		}
-		tp := SubnetTest{}
-		found := false
-
-		for i := 0; i < count; i++ {
-			tempCont, err := cont.ArrayElement(i, "templates")
-			if err != nil {
-				return fmt.Errorf("No Template found")
-			}
-
-			apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
-			if apiTemplate == "Template1" {
-				tp.Template = apiTemplate
-				anpCount, err := tempCont.ArrayCount("anps")
-				if err != nil {
-					return fmt.Errorf("Unable to get ANP list")
-				}
-				for j := 0; j < anpCount; j++ {
-					anpCont, err := tempCont.ArrayElement(j, "anps")
+			{
+				PreConfig: func() { fmt.Println("Test: Update EPG Subnet no_default_gateway") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateAllAttributes(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "public"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "description", "test subnet"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "true"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Reset EPG Subnet optional attributes") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigResetAttributes(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "description", ""),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "querier", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "primary", "false"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update EPG Subnet IP") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateIp(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp2),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "querier", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "primary", "false"),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import EPG Subnet") },
+				ResourceName: "mso_schema_template_anp_epg_subnet." + msoSchemaTemplateAnpEpgName + "_subnet",
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet"]
+					if !ok {
+						return "", fmt.Errorf("EPG Subnet resource not found in state")
+					}
+					return fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/ip/%s", rs.Primary.Attributes["schema_id"], rs.Primary.Attributes["template"], rs.Primary.Attributes["anp_name"], rs.Primary.Attributes["epg_name"], rs.Primary.Attributes["ip"]), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate EPG Subnet after manual deletion from NDO")
+					msoClient := testAccProvider.Meta().(*client.Client)
+					cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgSubnetSchemaId))
 					if err != nil {
-						return err
+						t.Fatalf("Failed to get schema: %v", err)
 					}
-					apiANP := models.StripQuotes(anpCont.S("name").String())
-					if apiANP == "WoS-Cloud-Only-2" {
-						tp.AnpName = apiANP
-						epgCount, err := anpCont.ArrayCount("epgs")
-						if err != nil {
-							return fmt.Errorf("Unable to get EPG list")
-						}
-						for k := 0; k < epgCount; k++ {
-							epgCont, err := anpCont.ArrayElement(k, "epgs")
-							if err != nil {
-								return err
-							}
-							apiEPG := models.StripQuotes(epgCont.S("name").String())
-							if apiEPG == "DB" {
-								tp.EpgName = apiEPG
-
-								subnetCount, err := epgCont.ArrayCount("subnets")
-								if err != nil {
-									return fmt.Errorf("Unable to get subnetlist")
-								}
-
-								for s := 0; s < subnetCount; s++ {
-									subnetCont, err := epgCont.ArrayElement(s, "subnets")
-									if err != nil {
-										return err
-									}
-
-									apiIp := models.StripQuotes(subnetCont.S("ip").String())
-
-									if apiIp == "99.101.102.0/8" {
-										tp.Ip = apiIp
-										if subnetCont.Exists("scope") {
-											tp.Scope = models.StripQuotes(subnetCont.S("scope").String())
-										}
-										if subnetCont.Exists("shared") {
-											shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))
-											tp.Shared = shared
-										}
-
-										found = true
-										break
-									}
-								}
-							}
-						}
+					index, err := fetchIndex(cont, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp2)
+					if err != nil {
+						t.Fatalf("Failed to fetch subnet index: %v", err)
 					}
-				}
-			}
-		}
+					if index == -1 {
+						t.Fatalf("Subnet not found for manual deletion")
+					}
+					subnetRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/%d", msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, index))
+					_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgSubnetSchemaId), subnetRemovePatchPayload)
+					if err != nil {
+						t.Fatalf("Failed to manually delete subnet: %v", err)
+					}
+				},
+				Config: testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateIp(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp2),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update parent EPG description with subnet present") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateParentEpg(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp2),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg."+msoSchemaTemplateAnpEpgName, "description", "Updated EPG description with subnet"),
+				),
+			},
+		},
+	})
+}
 
-		if !found {
-			return fmt.Errorf("Subnet not found from API")
-		}
-		tp1 := &tp
-		*ss = *tp1
-		return nil
+func testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig() string {
+	return fmt.Sprintf(`%s%s%s%s%s%s`, testSiteConfigAnsibleTest(), testTenantConfig(), testSchemaConfig(), testSchemaTemplateVrfConfig(), testSchemaTemplateBdConfig(), testSchemaTemplateAnpConfig()) + fmt.Sprintf(`
+resource "mso_schema_template_anp_epg" "%[1]s" {
+	name          = "%[1]s"
+	display_name  = "%[1]s"
+	anp_name      = mso_schema_template_anp.%[2]s.name
+	schema_id     = mso_schema.%[3]s.id
+	template_name = "%[4]s"
+	bd_name       = mso_schema_template_bd.%[5]s.name
+}
+`, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdName)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigCreate() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id  = mso_schema_template_anp_epg.%[6]s.schema_id
+		template   = "%[4]s"
+		anp_name   = "%[5]s"
+		epg_name   = mso_schema_template_anp_epg.%[6]s.name
+		ip         = "%[7]s"
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateScope() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id  = mso_schema_template_anp_epg.%[6]s.schema_id
+		template   = "%[4]s"
+		anp_name   = "%[5]s"
+		epg_name   = mso_schema_template_anp_epg.%[6]s.name
+		ip         = "%[7]s"
+		scope      = "public"
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateSharedAndDescription() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id   = mso_schema_template_anp_epg.%[6]s.schema_id
+		template    = "%[4]s"
+		anp_name    = "%[5]s"
+		epg_name    = mso_schema_template_anp_epg.%[6]s.name
+		ip          = "%[7]s"
+		scope       = "public"
+		shared      = true
+		description = "test subnet"
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateAllAttributes() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id          = mso_schema_template_anp_epg.%[6]s.schema_id
+		template           = "%[4]s"
+		anp_name           = "%[5]s"
+		epg_name           = mso_schema_template_anp_epg.%[6]s.name
+		ip                 = "%[7]s"
+		scope              = "public"
+		shared             = true
+		description        = "test subnet"
+		no_default_gateway = true
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigResetAttributes() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id          = mso_schema_template_anp_epg.%[6]s.schema_id
+		template           = "%[4]s"
+		anp_name           = "%[5]s"
+		epg_name           = mso_schema_template_anp_epg.%[6]s.name
+		ip                 = "%[7]s"
+		scope              = "private"
+		shared             = false
+		description        = ""
+		querier            = false
+		no_default_gateway = false
+		primary            = false
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateIp() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id          = mso_schema_template_anp_epg.%[6]s.schema_id
+		template           = "%[4]s"
+		anp_name           = "%[5]s"
+		epg_name           = mso_schema_template_anp_epg.%[6]s.name
+		ip                 = "%[7]s"
+		scope              = "private"
+		shared             = false
+		querier            = false
+		no_default_gateway = false
+		primary            = false
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp2)
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateParentEpg() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg" "%[2]s" {
+		schema_id     = mso_schema.%[3]s.id
+		template_name = "%[4]s"
+		anp_name      = mso_schema_template_anp.%[5]s.name
+		name          = "%[2]s"
+		display_name  = "%[2]s"
+		description   = "Updated EPG description with subnet"
+		bd_name       = mso_schema_template_bd.%[6]s.name
 	}
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id          = mso_schema_template_anp_epg.%[2]s.schema_id
+		template           = "%[4]s"
+		anp_name           = "%[5]s"
+		epg_name           = mso_schema_template_anp_epg.%[2]s.name
+		ip                 = "%[7]s"
+		scope              = "private"
+		shared             = false
+		querier            = false
+		no_default_gateway = false
+		primary            = false
+	}`, testSiteConfigAnsibleTest()+testTenantConfig()+testSchemaConfig()+testSchemaTemplateVrfConfig()+testSchemaTemplateBdConfig()+testSchemaTemplateAnpConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateBdName, msoSchemaTemplateAnpEpgSubnetIp2)
 }
 
 func testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*client.Client)
 
 	for _, rs := range s.RootModule().Resources {
-		cont, err := client.GetViaURL("api/v1/schemas/5c4d5bb72700000401f80948")
 		if rs.Type == "mso_schema_template_anp_epg_subnet" {
-
+			schemaID := rs.Primary.Attributes["schema_id"]
+			cont, err := client.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 			if err != nil {
-				return err
+				return nil
 			}
-		} else {
 			count, err := cont.ArrayCount("templates")
 			if err != nil {
 				return fmt.Errorf("No Template found")
@@ -188,77 +302,44 @@ func testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy(s *terraform.State) error 
 			for i := 0; i < count; i++ {
 				tempCont, err := cont.ArrayElement(i, "templates")
 				if err != nil {
-					return fmt.Errorf("No Template exists")
+					return fmt.Errorf("No template exists")
 				}
-				apiTemplate := models.StripQuotes(tempCont.S("name").String())
-				if apiTemplate == "Template1" {
-
-					anpCount, err := tempCont.ArrayCount("anps")
+				anpCount, err := tempCont.ArrayCount("anps")
+				if err != nil {
+					return fmt.Errorf("No Anp found")
+				}
+				for j := 0; j < anpCount; j++ {
+					anpCont, err := tempCont.ArrayElement(j, "anps")
 					if err != nil {
-						return fmt.Errorf("Unable to get ANP list")
+						return err
 					}
-					for j := 0; j < anpCount; j++ {
-						anpCont, err := tempCont.ArrayElement(j, "anps")
+					epgCount, err := anpCont.ArrayCount("epgs")
+					if err != nil {
+						return fmt.Errorf("Unable to get EPG list")
+					}
+					for k := 0; k < epgCount; k++ {
+						epgCont, err := anpCont.ArrayElement(k, "epgs")
 						if err != nil {
 							return err
 						}
-						apiANP := models.StripQuotes(anpCont.S("name").String())
-						if apiANP == "WoS-Cloud-Only-2" {
-							epgCount, err := anpCont.ArrayCount("epgs")
+						subnetCount, err := epgCont.ArrayCount("subnets")
+						if err != nil {
+							return fmt.Errorf("Unable to get Subnet list")
+						}
+						for l := 0; l < subnetCount; l++ {
+							subnetCont, err := epgCont.ArrayElement(l, "subnets")
 							if err != nil {
-								return fmt.Errorf("Unable to get Anp Epg list")
+								return err
 							}
-							for k := 0; k < epgCount; k++ {
-								epgCont, err := anpCont.ArrayElement(k, "epgs")
-								if err != nil {
-									return err
-								}
-								apiEPG := models.StripQuotes(epgCont.S("name").String())
-								if apiEPG == "DB" {
-									subnetCount, err := epgCont.ArrayCount("subnets")
-									if err != nil {
-										return err
-									}
-
-									for s := 0; s < subnetCount; s++ {
-										subnetCont, err := epgCont.ArrayElement(s, "subnets")
-										if err != nil {
-											return fmt.Errorf("Unable to find a subnets")
-										}
-										currentIp := models.StripQuotes(subnetCont.S("ip").String())
-
-										if currentIp == "99.101.102.0/8" {
-											return fmt.Errorf("Schema Template Anp Epg Ip still exists")
-										}
-									}
-								}
+							ip := models.StripQuotes(subnetCont.S("ip").String())
+							if rs.Primary.Attributes["ip"] == ip {
+								return fmt.Errorf("Schema Template Anp Epg Subnet record still exists")
 							}
 						}
 					}
 				}
 			}
 		}
-
 	}
 	return nil
-}
-
-func testAccCheckMSOSchemaTemplateAnpEpgSubnetAttributes(shared bool, ss *SubnetTest) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if shared != ss.Shared {
-			return fmt.Errorf("Bad Template Subnet shared value %v", ss.Shared)
-		}
-		return nil
-	}
-}
-
-type SubnetTest struct {
-	Id       string `json:",omitempty"`
-	SchemaId string `json:",omitempty"`
-	Template string `json:",omitempty"`
-	AnpName  string `json:",omitempty"`
-	EpgName  string `json:",omitempty"`
-	Ip       string `json:",omitempty"`
-	Scope    string `json:",omitempty"`
-	Shared   bool   `json:",omitempty"`
 }
