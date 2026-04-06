@@ -22,7 +22,7 @@ func TestAccMSOFabricResourcePortChannelInterfaceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "template_id"),
-					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_policy_uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_policy_group_uuid"),
 				),
 			},
 			{
@@ -98,23 +98,23 @@ var fabricResourcePortChannelInterfacePreConfig = testFabricResourceTemplateConf
 func testAccMSOFabricResourcePortChannelInterfaceConfigCreate() string {
 	return fmt.Sprintf(`%[1]s
     resource "mso_fabric_resource_policies_port_channel_interface" "%[2]s" {
-        template_id          = mso_template.%[4]s.id
-        name                 = "%[2]s"
-        node                 = "101"
-        interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+        node                        = "101"
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
     }`, fabricResourcePortChannelInterfacePreConfig, msoFabricResourcePortChannelInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }
 
 func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingInterfaceDescriptions() string {
 	return fmt.Sprintf(`%[1]s
     resource "mso_fabric_resource_policies_port_channel_interface" "%[2]s" {
-        template_id          = mso_template.%[4]s.id
-        name                 = "%[2]s"
-        description          = "Terraform test Port Channel Interface updated"
-        node                 = "101"
-        interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+        description                 = "Terraform test Port Channel Interface updated"
+        node                        = "101"
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
         interface_descriptions {
             interface   = "1/1"
             description = "Interface Description 1/1"
@@ -125,12 +125,12 @@ func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingInterfaceDesc
 func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingExtraInterfaceDescription() string {
 	return fmt.Sprintf(`%[1]s
     resource "mso_fabric_resource_policies_port_channel_interface" "%[2]s" {
-        template_id          = mso_template.%[4]s.id
-        name                 = "%[2]s"
-        description          = "Terraform test Port Channel Interface updated"
-        node                 = "101"
-        interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+        description                 = "Terraform test Port Channel Interface updated"
+        node                        = "101"
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
         interface_descriptions {
             interface   = "1/1"
             description = "Interface Description 1/1"
@@ -145,11 +145,11 @@ func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingExtraInterfac
 func testAccMSOFabricResourcePortChannelInterfaceConfigUpdateRemovingExtraInterfaceDescription() string {
 	return fmt.Sprintf(`%[1]s
     resource "mso_fabric_resource_policies_port_channel_interface" "%[2]s" {
-        template_id          = mso_template.%[4]s.id
-        name                 = "%[2]s"
-        node                 = "101"
-        interfaces           = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+        node                        = "101"
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_portchannel.uuid
         interface_descriptions {
             interface   = "1/2"
         }

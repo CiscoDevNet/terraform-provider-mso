@@ -37,7 +37,7 @@ data "mso_fabric_resource_policies_port_channel_interface" "example" {
 * `description` - (Read-Only) The description of the Port Channel Interface Policy.
 * `node` - (Read-Only) The node ID of the Port Channel Interface Policy.
 * `interfaces` - (Read-Only) A list of interfaces where this Port Channel Interface Policy will be applied.
-* `interface_policy_uuid` - (Read-Only) The UUID of the (Port Channel/Virtual Port Channel) interface settings policy to associate with the Port Channel Interface Policy.
+* `interface_policy_group_uuid` - (Read-Only) The UUID of the (Port Channel/Virtual Port Channel) interface settings policy to associate with the Port Channel Interface Policy.
 * `interface_descriptions` - (Read-Only) A list of interface descriptions of the Port Channel Interface Policy.
   * `interface` - (Read-Only) The interface ID of the member interface.
   * `description` - (Read-Only) The description of the member interface.

@@ -51,7 +51,7 @@ func resourceMSOPortChannelInterface() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"interface_policy_uuid": {
+			"interface_policy_group_uuid": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -141,7 +141,7 @@ func setPortChannelInterfaceData(d *schema.ResourceData, response *container.Con
 	d.Set("interfaces", splitCommaString(models.StripQuotes(response.S("memberInterfaces").String())))
 
 	if response.Exists("policy") {
-		d.Set("interface_policy_uuid", models.StripQuotes(response.S("policy").String()))
+		d.Set("interface_policy_group_uuid", models.StripQuotes(response.S("policy").String()))
 	}
 
 	interfaceDescriptionsList := make([]map[string]interface{}, 0)
@@ -166,7 +166,10 @@ func setPortChannelInterfaceData(d *schema.ResourceData, response *container.Con
 
 func resourceMSOPortChannelInterfaceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Port Channel Interface Resource - Beginning Import: %v", d.Id())
-	resourceMSOPortChannelInterfaceRead(d, m)
+	err := resourceMSOPortChannelInterfaceRead(d, m)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO Port Channel Interface Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -182,13 +185,11 @@ func resourceMSOPortChannelInterfaceCreate(d *schema.ResourceData, m interface{}
 		"templateId": templateId,
 	}
 
-	if description, ok := d.GetOk("description"); ok {
-		payload["description"] = description.(string)
-	}
+	payload["description"] = d.Get("description").(string)
 
 	payload["node"] = d.Get("node").(string)
 	payload["memberInterfaces"] = strings.Join(getListOfStringsFromSchemaSet(d, "interfaces"), ",")
-	payload["policy"] = d.Get("interface_policy_uuid").(string)
+	payload["policy"] = d.Get("interface_policy_group_uuid").(string)
 
 	if interfaceDescriptions, ok := d.GetOk("interface_descriptions"); ok {
 		payload["interfaceDescriptions"] = getInterfaceDescriptionsPayload(payload["node"].(string), interfaceDescriptions.(*schema.Set))
@@ -288,8 +289,8 @@ func resourceMSOPortChannelInterfaceUpdate(d *schema.ResourceData, m interface{}
 		}
 	}
 
-	if d.HasChange("interface_policy_uuid") {
-		interfacePolicyUUID := d.Get("interface_policy_uuid").(string)
+	if d.HasChange("interface_policy_group_uuid") {
+		interfacePolicyUUID := d.Get("interface_policy_group_uuid").(string)
 		if interfacePolicyUUID != "" {
 			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), interfacePolicyUUID)
 			if err != nil {

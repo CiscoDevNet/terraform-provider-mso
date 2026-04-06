@@ -30,12 +30,12 @@ resource "mso_template" "fabric_resource_template" {
 }
 
 resource "mso_fabric_resource_policies_port_channel_interface" "example" {
-  template_id           = mso_template.fabric_resource_template.id
-  name                  = "example"
-  description           = "example description"
-  node                  = "101"
-  interfaces            = ["1/1", "1/2"]
-  interface_policy_uuid = mso_fabric_policies_interface_setting.port_channel_interface.id
+  template_id                 = mso_template.fabric_resource_template.id
+  name                        = "example"
+  description                 = "example description"
+  node                        = "101"
+  interfaces                  = ["1/1", "1/2"]
+  interface_policy_group_uuid = mso_fabric_policies_interface_setting.port_channel_interface.id
   interface_descriptions {
     interface   = "1/1"
     description = "1/1 description"
