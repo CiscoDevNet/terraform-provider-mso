@@ -18,12 +18,12 @@ Manages Fabric Resource Policies Port Channel Interface on Cisco Nexus Dashboard
 
 ```hcl
 resource "mso_fabric_resource_policies_port_channel_interface" "example" {
-  template_id           = mso_template.fabric_resource_template.id
-  name                  = "example"
-  description           = "example description"
-  node                  = "101"
-  interfaces            = ["1/1", "1/2"]
-  interface_policy_uuid = mso_fabric_policies_interface_setting.port_channel_interface.id
+  template_id                 = mso_template.fabric_resource_template.id
+  name                        = "example"
+  description                 = "example description"
+  node                        = "101"
+  interfaces                  = ["1/1", "1/2"]
+  interface_policy_group_uuid = mso_fabric_policies_interface_setting.port_channel_interface.id
   interface_descriptions {
     interface   = "1/1"
     description = "1/1 description"
@@ -42,7 +42,7 @@ resource "mso_fabric_resource_policies_port_channel_interface" "example" {
 * `description` - (Optional) The description of the Port Channel Interface Policy.
 * `node` - (Required) The node ID of the Port Channel Interface Policy. This is required when creating or updating a Port Channel Interface Policy.
 * `interfaces` - (Required) A list of interfaces where this Port Channel Interface Policy will be applied. This is required when creating or updating a Port Channel Interface Policy.
-* `interface_policy_uuid` - (Required) The UUID of the (Port Channel/Virtual Port Channel) interface settings policy to associate with the Port Channel Interface Policy. This is required when creating a Port Channel Interface Policy.
+* `interface_policy_group_uuid` - (Required) The UUID of the (Port Channel/Virtual Port Channel) interface settings policy to associate with the Port Channel Interface Policy. This is required when creating a Port Channel Interface Policy.
 * `interface_descriptions` - (Optional) A list of interface descriptions of the Port Channel Interface Policy.
   * `interface` - (Required) The interface ID of the member interface. Must match an interface defined in the `interfaces` attribute.
   * `description` - (Optional) The description of the member interface.

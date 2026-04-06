@@ -36,7 +36,7 @@ func datasourceMSOPortChannelInterface() *schema.Resource {
 				},
 				Computed: true,
 			},
-			"interface_policy_uuid": {
+			"interface_policy_group_uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -81,7 +81,11 @@ func dataSourceMSOPortChannelInterfaceRead(d *schema.ResourceData, m interface{}
 		return err
 	}
 
-	setPortChannelInterfaceData(d, policy, templateId)
+	err = setPortChannelInterfaceData(d, policy, templateId)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[DEBUG] MSO Port Channel Interface Data Source - Read Complete: %v", d.Id())
 	return nil
 }

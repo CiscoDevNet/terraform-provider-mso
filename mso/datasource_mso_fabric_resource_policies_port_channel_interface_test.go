@@ -22,7 +22,7 @@ func TestAccMSOFabricResourcePortChannelInterfaceDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "uuid"),
 					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "template_id"),
-					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_policy_uuid"),
+					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_policy_group_uuid"),
 					resource.TestCheckResourceAttr("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_descriptions.#", "2"),
 					CustomTestCheckTypeSetElemAttrs("data.mso_fabric_resource_policies_port_channel_interface."+msoFabricResourcePortChannelInterfaceName, "interface_descriptions",
 						map[string]string{
