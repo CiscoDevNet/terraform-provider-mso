@@ -195,6 +195,7 @@ func resourceMSOEndpointMACTagPolicyCreate(d *schema.ResourceData, m interface{}
 
 	templateId := d.Get("template_id").(string)
 
+	// Ignoring the input validation since the API returns a clear error when bd_uuid and vrf_uuid are not provided.
 	bdUUID := d.Get("bd_uuid").(string)
 	vrfUUID := d.Get("vrf_uuid").(string)
 
@@ -296,6 +297,7 @@ func resourceMSOEndpointMACTagPolicyUpdate(d *schema.ResourceData, m interface{}
 
 	if d.HasChange("bd_uuid") {
 		if bdUUID, ok := d.GetOk("bd_uuid"); ok && bdUUID.(string) != "" {
+			// Remove vrfRef if bd_uuid is being set, since both cannot coexist and NDO does not remove it automatically when bdRef is added
 			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/vrfRef", updatePath), nil)
 			if err != nil {
 				return err
@@ -311,6 +313,7 @@ func resourceMSOEndpointMACTagPolicyUpdate(d *schema.ResourceData, m interface{}
 
 	if d.HasChange("vrf_uuid") {
 		if vrfUUID, ok := d.GetOk("vrf_uuid"); ok && vrfUUID.(string) != "" {
+			// Remove bdRef if vrf_uuid is being set, since both cannot coexist and NDO does not remove it automatically when vrfRef is added
 			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/bdRef", updatePath), nil)
 			if err != nil {
 				return err

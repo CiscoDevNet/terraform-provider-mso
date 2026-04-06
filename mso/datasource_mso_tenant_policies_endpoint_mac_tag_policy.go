@@ -84,6 +84,7 @@ func dataSourceMSOEndpointMACTagPolicyRead(d *schema.ResourceData, m interface{}
 	bdUUID := d.Get("bd_uuid").(string)
 	vrfUUID := d.Get("vrf_uuid").(string)
 
+	// Either 'bd_uuid' or 'vrf_uuid' must be specified to format the data source ID.
 	if bdUUID == "" && vrfUUID == "" {
 		return fmt.Errorf("Either 'bd_uuid' or 'vrf_uuid' must be specified to use Endpoint MAC Tag Policy Data Source")
 	}
