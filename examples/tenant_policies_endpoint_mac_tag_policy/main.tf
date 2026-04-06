@@ -31,12 +31,12 @@ resource "mso_schema_template_vrf" "tf_vrf" {
   name         = "tf_vrf"
   display_name = "tf_vrf"
   schema_id    = mso_schema.tf_schema.id
-  template     = "tf_template"
+  template     = one(mso_schema.tf_schema.template).name
 }
 
 resource "mso_schema_template_bd" "tf_bd" {
   schema_id              = mso_schema.tf_schema.id
-  template_name          = "tf_template"
+  template_name          = one(mso_schema.tf_schema.template).name
   name                   = "tf_bd"
   display_name           = "tf_bd"
   layer2_unknown_unicast = "proxy"
