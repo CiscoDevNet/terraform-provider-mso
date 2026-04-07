@@ -18,13 +18,13 @@ Manages Virtual Port Channel (VPC) Interfaces on Cisco Nexus Dashboard Orchestra
 
 ```hcl
 resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_if" {
-  template_id = mso_template.fabric_resource_template.id
-  name        = "tf_vpc_if"
-  description = "Example VPC Interface"
-  node_1 = "101"
-  node_2 = "102"
-  node_1_interfaces = ["1/1", "1/10-11"]
-  node_2_interfaces = ["1/2"]
+  template_id                 = mso_template.fabric_resource_template.id
+  name                        = "tf_vpc_if"
+  description                 = "Example VPC Interface"
+  node_1                      = "101"
+  node_2                      = "102"
+  node_1_interfaces           = ["1/1", "1/10-11"]
+  node_2_interfaces           = ["1/2"]
   interface_policy_group_uuid = mso_fabric_policies_interface_setting.port_channel_interface.uuid
 
   interface_descriptions {
