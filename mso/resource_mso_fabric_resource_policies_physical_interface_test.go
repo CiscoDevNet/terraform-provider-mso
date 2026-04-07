@@ -14,9 +14,9 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				PreConfig:   func() { fmt.Println("Test: Create Without interface_policy_uuid and breakout_mode (error)") },
+				PreConfig:   func() { fmt.Println("Test: Create Without interface_policy_group_uuid and breakout_mode (error)") },
 				Config:      testAccMSOFabricResourcePhysicalInterfaceConfigErrorMissingInterfacePolicyAndBreakoutMode(),
-				ExpectError: regexp.MustCompile(`Either 'interface_policy_uuid' or 'breakout_mode' must be specified for creating a Physical Interface`),
+				ExpectError: regexp.MustCompile(`Either 'interface_policy_group_uuid' or 'breakout_mode' must be specified for creating a Physical Interface`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Physical Interface") },
@@ -29,7 +29,7 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "template_id"),
-					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_policy_uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_policy_group_uuid"),
 				),
 			},
 			{
@@ -206,23 +206,23 @@ func testAccMSOFabricResourcePhysicalInterfaceConfigErrorMissingInterfacePolicyA
 func testAccMSOFabricResourcePhysicalInterfaceConfigCreate() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_fabric_resource_policies_physical_interface" "%[2]s" {
-        template_id           = mso_template.%[4]s.id
-        name                  = "%[2]s"
-        nodes                 = ["101"]
-        interfaces            = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+        nodes                       = ["101"]
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
 	}`, fabricResourcePhysicalInterfacePreConfig, msoFabricResourcePhysicalInterfaceName, msoFabricPolicyTemplateInterfaceSettingName, msoFabricResourceTemplateName)
 }
 
 func testAccMSOFabricResourcePhysicalInterfaceConfigUpdateAddingInterfaceDescriptions() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_fabric_resource_policies_physical_interface" "%[2]s" {
-        template_id           = mso_template.%[4]s.id
-        name                  = "%[2]s"
-		description           = "Terraform test Physical Interface updated"
-        nodes                 = ["101", "102"]
-        interfaces            = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+		description                 = "Terraform test Physical Interface updated"
+        nodes                       = ["101", "102"]
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
         interface_descriptions {
             interface   = "1/1"
             description = "Interface Description 1/1"
@@ -233,12 +233,12 @@ func testAccMSOFabricResourcePhysicalInterfaceConfigUpdateAddingInterfaceDescrip
 func testAccMSOFabricResourcePhysicalInterfaceConfigUpdateAddingExtraInterfaceDescription() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_fabric_resource_policies_physical_interface" "%[2]s" {
-        template_id           = mso_template.%[4]s.id
-        name                  = "%[2]s"
-		description           = "Terraform test Physical Interface updated"
-        nodes                 = ["101", "102"]
-        interfaces            = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s"
+		description                 = "Terraform test Physical Interface updated"
+        nodes                       = ["101", "102"]
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
         interface_descriptions {
             interface   = "1/1"
             description = "Interface Description 1/1"
@@ -253,11 +253,11 @@ func testAccMSOFabricResourcePhysicalInterfaceConfigUpdateAddingExtraInterfaceDe
 func testAccMSOFabricResourcePhysicalInterfaceConfigUpdateRemovingExtraInterfaceDescription() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_fabric_resource_policies_physical_interface" "%[2]s" {
-        template_id           = mso_template.%[4]s.id
-        name                  = "%[2]s_updated"
-        nodes                 = ["101"]
-        interfaces            = ["1/1","1/2"]
-        interface_policy_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
+        template_id                 = mso_template.%[4]s.id
+        name                        = "%[2]s_updated"
+        nodes                       = ["101"]
+        interfaces                  = ["1/1","1/2"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.%[3]s_physical.uuid
         interface_descriptions {
             interface   = "1/2"
         }

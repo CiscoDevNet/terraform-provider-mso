@@ -20,12 +20,12 @@ Manages Fabric Resource Policies Physical Interface on Cisco Nexus Dashboard Orc
 
 ```hcl
 resource "mso_fabric_resource_policies_physical_interface" "physical" {
-  template_id           = mso_template.fabric_resource_template.id
-  name                  = "physical_interface"
-  description           = "Terraform test Physical Interface"
-  nodes                 = ["101", "102"]
-  interfaces            = ["1/1", "1/2"]
-  interface_policy_uuid = mso_fabric_policies_interface_setting.physical_interface.id
+  template_id                 = mso_template.fabric_resource_template.id
+  name                        = "physical_interface"
+  description                 = "Terraform test Physical Interface"
+  nodes                       = ["101", "102"]
+  interfaces                  = ["1/1", "1/2"]
+  interface_policy_group_uuid = mso_fabric_policies_interface_setting.physical_interface.id
   interface_descriptions {
     interface   = "1/1"
     description = "Interface Description 1/1"
@@ -65,8 +65,8 @@ resource "mso_fabric_resource_policies_physical_interface" "breakout" {
 * `description` - (Optional) The description of the Physical Interface Policy.
 * `nodes` - (Required) A list of node IDs where this Physical Interface Policy will be applied. This is required when creating or updating a Physical Interface Policy.
 * `interfaces` - (Required) A list of interfaces where this Physical Interface Policy will be applied. This is required when creating or updating a Physical Interface Policy.
-* `interface_policy_uuid` - (Optional) The UUID of the (physical) interface settings policy to associate with the Physical Interface Policy. This policy will be applied to every interface listed in the `interfaces` attribute. Either `interface_policy_uuid` or `breakout_mode` must be specified when creating or updating a Physical Interface Policy.
-* `breakout_mode` - (Optional) The breakout mode of the Physical Interface Policy. Valid values are `4x100G`, `4x25G`, and `4x10G`. Either `interface_policy_uuid` or `breakout_mode` must be specified when creating or updating a Physical Interface Policy.
+* `interface_policy_group_uuid` - (Optional) The UUID of the (physical) interface settings policy to associate with the Physical Interface Policy. This policy will be applied to every interface listed in the `interfaces` attribute. Either `interface_policy_group_uuid` or `breakout_mode` must be specified when creating or updating a Physical Interface Policy.
+* `breakout_mode` - (Optional) The breakout mode of the Physical Interface Policy. Valid values are `4x100G`, `4x25G`, and `4x10G`. Either `interface_policy_group_uuid` or `breakout_mode` must be specified when creating or updating a Physical Interface Policy.
 * `interface_descriptions` - (Optional) A list of interface descriptions of the Physical Interface Policy.
   * `interface` - (Required) The interface ID of the member interface. Must match an interface defined in the `interfaces` attribute.
   * `description` - (Optional) The description of the member interface.

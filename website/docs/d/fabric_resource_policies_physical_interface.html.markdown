@@ -35,7 +35,7 @@ data "mso_fabric_resource_policies_physical_interface" "example" {
 * `description` - (Read-Only) The description of the Physical Interface Policy.
 * `nodes` - (Read-Only) A list of node IDs where this Physical Interface Policy will be applied.
 * `interfaces` - (Read-Only) A list of interfaces where this Physical Interface Policy will be applied.
-* `interface_policy_uuid` - (Read-Only) The UUID of the (physical) interface settings policy to associate with the Physical Interface Policy. This policy will be applied to every interface listed in the `interfaces` attribute.
+* `interface_policy_group_uuid` - (Read-Only) The UUID of the (physical) interface settings policy to associate with the Physical Interface Policy. This policy will be applied to every interface listed in the `interfaces` attribute.
 * `breakout_mode` - (Read-Only) The breakout mode of the Physical Interface Policy.
 * `interface_descriptions` - (Read-Only) A list of interface descriptions of the Physical Interface Policy.
   * `interface` - (Read-Only) The interface ID of the member interface.

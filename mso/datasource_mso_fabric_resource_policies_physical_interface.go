@@ -39,7 +39,7 @@ func datasourceMSOPhysicalInterface() *schema.Resource {
 				},
 				Computed: true,
 			},
-			"interface_policy_uuid": {
+			"interface_policy_group_uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -92,7 +92,11 @@ func dataSourceMSOPhysicalInterfaceRead(d *schema.ResourceData, m interface{}) e
 		return err
 	}
 
-	setPhysicalInterfaceData(d, policy, templateId)
+	err = setPhysicalInterfaceData(d, policy, templateId)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[DEBUG] MSO Physical Interface Data Source - Read Complete: %v", d.Id())
 	return nil
 }

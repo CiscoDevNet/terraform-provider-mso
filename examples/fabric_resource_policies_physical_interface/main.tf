@@ -30,12 +30,12 @@ resource "mso_template" "fabric_resource_template" {
 }
 
 resource "mso_fabric_resource_policies_physical_interface" "physical" {
-  template_id           = mso_template.fabric_resource_template.id
-  name                  = "physical_interface"
-  description           = "Terraform test Physical Interface"
-  nodes                 = ["101", "102"]
-  interfaces            = ["1/1", "1/2"]
-  interface_policy_uuid = mso_fabric_policies_interface_setting.physical_interface.id
+  template_id                 = mso_template.fabric_resource_template.id
+  name                        = "physical_interface"
+  description                 = "Terraform test Physical Interface"
+  nodes                       = ["101", "102"]
+  interfaces                  = ["1/1", "1/2"]
+  interface_policy_group_uuid = mso_fabric_policies_interface_setting.physical_interface.id
   interface_descriptions {
     interface   = "1/1"
     description = "Interface Description 1/1"
