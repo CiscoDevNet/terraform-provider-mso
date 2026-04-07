@@ -72,7 +72,7 @@ func testAccNeflowMonitorBaseConfig(extra_exporter bool) string {
         resource "mso_tenant_policies_netflow_exporter" "netflow_exporter_2" {
             template_id = mso_template.template_tenant.id
             name        = "test_netflow_exporter_2"
-            // This is to ensure the exporters are deleted in order.
+            // depends_on ensures exporters are deleted sequentially to avoid index conflicts.
             depends_on = [mso_tenant_policies_netflow_exporter.netflow_exporter]
         }`, base)
 	}
