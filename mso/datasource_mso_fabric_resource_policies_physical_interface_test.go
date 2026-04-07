@@ -23,7 +23,7 @@ func TestAccMSOFabricResourcePhysicalInterfaceDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "uuid"),
 					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "template_id"),
-					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_policy_uuid"),
+					resource.TestCheckResourceAttrSet("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_policy_group_uuid"),
 					resource.TestCheckResourceAttr("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_descriptions.#", "2"),
 					CustomTestCheckTypeSetElemAttrs("data.mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName, "interface_descriptions",
 						map[string]string{

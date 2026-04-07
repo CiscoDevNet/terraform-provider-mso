@@ -51,7 +51,7 @@ func resourceMSOPhysicalInterface() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"interface_policy_uuid": {
+			"interface_policy_group_uuid": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"breakout_mode"},
@@ -64,7 +64,7 @@ func resourceMSOPhysicalInterface() *schema.Resource {
 					"4x25G",
 					"4x10G",
 				}, false),
-				ConflictsWith: []string{"interface_policy_uuid"},
+				ConflictsWith: []string{"interface_policy_group_uuid"},
 			},
 			"interface_descriptions": {
 				Type:     schema.TypeSet,
@@ -131,7 +131,7 @@ func setPhysicalInterfaceData(d *schema.ResourceData, response *container.Contai
 	}
 
 	if response.Exists("policy") {
-		d.Set("interface_policy_uuid", models.StripQuotes(response.S("policy").String()))
+		d.Set("interface_policy_group_uuid", models.StripQuotes(response.S("policy").String()))
 	}
 
 	if response.Exists("breakoutMode") {
@@ -160,7 +160,10 @@ func setPhysicalInterfaceData(d *schema.ResourceData, response *container.Contai
 
 func resourceMSOPhysicalInterfaceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Physical Interface Resource - Beginning Import: %v", d.Id())
-	resourceMSOPhysicalInterfaceRead(d, m)
+	err := resourceMSOPhysicalInterfaceRead(d, m)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] MSO Physical Interface Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -182,16 +185,16 @@ func resourceMSOPhysicalInterfaceCreate(d *schema.ResourceData, m interface{}) e
 
 	payload["nodes"] = getListOfStringsFromSchemaSet(d, "nodes")
 	payload["interfaces"] = strings.Join(getListOfStringsFromSchemaSet(d, "interfaces"), ",")
-	interfacePolicyUUID := d.Get("interface_policy_uuid").(string)
+	interfacePolicyUUID := d.Get("interface_policy_group_uuid").(string)
 	breakoutMode := d.Get("breakout_mode").(string)
 
+	// API error message is not clear when both fields are empty, so adding an explicit check here to return a clearer error message
 	if interfacePolicyUUID == "" && breakoutMode == "" {
-		return fmt.Errorf("Either 'interface_policy_uuid' or 'breakout_mode' must be specified for creating a Physical Interface")
+		return fmt.Errorf("Either 'interface_policy_group_uuid' or 'breakout_mode' must be specified for creating a Physical Interface")
 	}
 
 	if interfacePolicyUUID != "" {
 		payload["policy"] = interfacePolicyUUID
-		payload["policyGroupType"] = "physical"
 	} else {
 		payload["breakoutMode"] = breakoutMode
 		payload["policyGroupType"] = "breakout"
@@ -251,8 +254,9 @@ func resourceMSOPhysicalInterfaceUpdate(d *schema.ResourceData, m interface{}) e
 	msoClient := m.(*client.Client)
 	templateId := d.Get("template_id").(string)
 
-	if d.Get("interface_policy_uuid").(string) == "" && d.Get("breakout_mode").(string) == "" {
-		return fmt.Errorf("Either 'interface_policy_uuid' or 'breakout_mode' must be specified for creating a Physical Interface")
+	// API error message is not clear when both fields are empty, so adding an explicit check here to return a clearer error message
+	if d.Get("interface_policy_group_uuid").(string) == "" && d.Get("breakout_mode").(string) == "" {
+		return fmt.Errorf("Either 'interface_policy_group_uuid' or 'breakout_mode' must be specified for creating a Physical Interface")
 	}
 
 	templateContainer, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
@@ -298,8 +302,8 @@ func resourceMSOPhysicalInterfaceUpdate(d *schema.ResourceData, m interface{}) e
 		}
 	}
 
-	if d.HasChange("interface_policy_uuid") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), d.Get("interface_policy_uuid").(string))
+	if d.HasChange("interface_policy_group_uuid") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/policy", updatePath), d.Get("interface_policy_group_uuid").(string))
 		if err != nil {
 			return err
 		}
