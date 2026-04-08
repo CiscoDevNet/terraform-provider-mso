@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.0.0 (April 17, 2026)
+
+This release introduces breaking attribute behavior changes. The provider is moving towards allowing users to configure attributes
+based on UI functionality. Some attributes will behave differently when unset, which enables the removal of certain optional attributes.
+Specific changes are listed in the sections below. In subsequent releases, attribute behavior changes
+of this type will result in minor or patch version updates instead.
+
+BREAKING CHANGES:
+
+- Add warning in [provider documentation](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs) when upgrading NDO to version 4.2.2, which may break Terraform state.
+
+IMPROVEMENTS:
+
+- Add mso_fabric_policies_interface_setting resource and datasource.
+- Add mso_fabric_policies_mcp_global_policy resource and datasource.
+- Add mso_tenant_policies_ipsla_track_list resource and datasource.
+- Add mso_tenant_policies_l3out_interface_routing_policy resource and datasource.
+- Add mso_fabric_policies_l3_domain resource and datasource.
+- Add mso_tenant_policies_mld_snooping_policy resource and datasource.
+- Add mso_tenant_policies_dhcp_option_policy resource and datasource.
+- Add mso_tenant_policies_custom_qos_policy resource and datasource.
+- Add undeploy, undeploy_on_destroy, and site_ids attributes to mso_schema_template_deploy_ndo to enable un-deploying templates.
+- Add mso-go-client improvement to increase connection pool size and enable TLS session ticket caching.
+
+BUG FIXES:
+
+- Fix mso_schema_template_anp_epg to use targeted PATCH operations per changed attribute, preventing untracked site configuration (e.g. privateLinkLabel) from being cleared on update.
+- Fix mso_schema_template_anp_epg to allow bd_name and vrf_name to be updated in-place instead of forcing resource recreation.
+- Fix mso_schema_template_anp_epg to allow vrf_name and bd_name to be set to an empty string, enabling removal of the VRF and BD references.
+- Fix mso_schema_template_anp_epg to allow description to be set to an empty string.
+- Fix mso_schema_template_anp_epg to remove resource from state instead of returning an error when the EPG no longer exists in NDO.
+- Fix mso_schema_template_anp to use targeted PATCH operations per changed attribute, preventing EPG child resources from being cleared on update.
+- Fix mso_schema_template_anp to allow description to be cleared by omitting or setting description to an empty string.
+- Fix mso_schema_template to allow description to be cleared by omitting or setting description to an empty string.
+- Fix mso_schema_template_vrf to use targeted PATCH operations per changed attribute.
+- Fix mso_schema_template_vrf to allow description to be cleared by omitting or setting description to an empty string.
+- Fix mso_schema_template_vrf to allow all rendezvous_points to be removed by omitting the attribute or providing an empty set.
+- Fix mso_schema to allow description on the schema and template blocks to be set to an empty string or cleared.
+- Fix mso_schema_template_external_epg to allow display_name to be updated in-place instead of forcing resource recreation.
+- Fix mso_schema_template_external_epg to allow l3out_name and anp_name to be removed by omitting the attribute.
+- Fix mso_schema_template_external_epg to use targeted PATCH operations per changed attribute for on-premise EPGs.
+- Fix mso_tenant to allow description to be cleared by omitting or setting description to an empty string.
+
 ## 1.7.0 (December 08, 2025)
 
 IMPROVEMENTS:
