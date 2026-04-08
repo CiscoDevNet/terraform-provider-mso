@@ -91,7 +91,7 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 	}
 	relationshipType := d.Get("relationship_type").(string)
 
-	index, crefCont, err := findEpgContractRelationship(cont, template, anp, epg, contract, contractSchemaId, contractTemplateName, relationshipType)
+	index, crefCont, err := getSchemaTemplateEPGContract(cont, template, anp, epg, contract, contractSchemaId, contractTemplateName, relationshipType)
 	if err != nil {
 		return err
 	}

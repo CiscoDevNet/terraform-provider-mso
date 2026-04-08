@@ -87,7 +87,7 @@ func TestAccMSOSchemaTemplateAnpEpgContractResource(t *testing.T) {
 					if err != nil {
 						t.Fatalf("Failed to get schema: %v", err)
 					}
-					index, _, err := findEpgContractRelationship(cont, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateContractName, msoSchemaTemplateAnpEpgContractSchemaId, msoSchemaTemplateName, "provider")
+					index, _, err := getSchemaTemplateEPGContract(cont, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateContractName, msoSchemaTemplateAnpEpgContractSchemaId, msoSchemaTemplateName, "provider")
 					if err != nil {
 						t.Fatalf("Failed to fetch contract index: %v", err)
 					}

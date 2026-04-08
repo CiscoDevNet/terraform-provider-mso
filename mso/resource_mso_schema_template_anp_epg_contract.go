@@ -96,7 +96,7 @@ func resourceMSOTemplateAnpEpgContractImport(d *schema.ResourceData, m interface
 	stateContract := get_attribute[8]
 	stateRelationshipType := get_attribute[10]
 
-	index, crefCont, err := findEpgContractRelationship(cont, stateTemplate, stateANP, stateEPG, stateContract, schemaId, stateTemplate, stateRelationshipType)
+	index, crefCont, err := getSchemaTemplateEPGContract(cont, stateTemplate, stateANP, stateEPG, stateContract, schemaId, stateTemplate, stateRelationshipType)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func resourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface{}
 	}
 	relationshipType := d.Get("relationship_type").(string)
 
-	index, crefCont, err := findEpgContractRelationship(cont, templateName, anpName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType)
+	index, crefCont, err := getSchemaTemplateEPGContract(cont, templateName, anpName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType)
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func resourceMSOTemplateAnpEpgContractDelete(d *schema.ResourceData, m interface
 	if err != nil {
 		return err
 	}
-	index, _, err := findEpgContractRelationship(cont, templateName, anpName, epgName, contractName, contract_schemaid, contract_templatename, relationship_type)
+	index, _, err := getSchemaTemplateEPGContract(cont, templateName, anpName, epgName, contractName, contract_schemaid, contract_templatename, relationship_type)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,7 @@ func resourceMSOTemplateAnpEpgContractDelete(d *schema.ResourceData, m interface
 	return resourceMSOTemplateAnpEpgContractRead(d, m)
 }
 
-func findEpgContractRelationship(cont *container.Container, templateName, anpName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType string) (int, *container.Container, error) {
+func getSchemaTemplateEPGContract(cont *container.Container, templateName, anpName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType string) (int, *container.Container, error) {
 	found := false
 	index := -1
 	count, err := cont.ArrayCount("templates")
