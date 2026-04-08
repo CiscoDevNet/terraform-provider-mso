@@ -15,6 +15,11 @@ func TestAccMSOSchemaTemplateAnpEpgDatasource(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgDestroy,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Read EPG datasource not found error") },
+				Config:      testAccMSOSchemaTemplateAnpEpgDatasourceNotFound(),
+				ExpectError: regexp.MustCompile("Unable to find the ANP EPG"),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Read EPG datasource") },
 				Config:    testAccMSOSchemaTemplateAnpEpgDatasource(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -24,11 +29,6 @@ func TestAccMSOSchemaTemplateAnpEpgDatasource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg.epg", "name", msoSchemaTemplateAnpEpgName),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg.epg", "display_name", msoSchemaTemplateAnpEpgName),
 				),
-			},
-			{
-				PreConfig:   func() { fmt.Println("Test: Read EPG datasource not found error") },
-				Config:      testAccMSOSchemaTemplateAnpEpgDatasourceNotFound(),
-				ExpectError: regexp.MustCompile("Unable to find the ANP EPG"),
 			},
 		},
 	})
