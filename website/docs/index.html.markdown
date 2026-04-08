@@ -16,11 +16,19 @@ Cisco ACI Multi-Site Orchestrator (MSO) / Nexus Dashboard Orchestrator (NDO) is 
 Limitations
 --------------
 
-When destroying multiple instances of the same resource type within the same template, use `-parallelism=1` to avoid index conflicts in the MSO API:
+When creating, updating, or destroying multiple instances of the same resource type within the same template, use [`-parallelism=1`](https://developer.hashicorp.com/terraform/cli/commands/apply#parallelism-n) to avoid index conflicts in the MSO API:
+
+```sh
+terraform apply -parallelism=1
+```
+
+or
 
 ```sh
 terraform destroy -parallelism=1
 ```
+
+To avoid setting this flag on every command, you can configure it persistently using the [`TF_CLI_ARGS` or `TF_CLI_ARGS_name` environment variables](https://developer.hashicorp.com/terraform/cli/config/environment-variables#tf_cli_args-and-tf_cli_args_name).
 
 Authentication
 --------------
