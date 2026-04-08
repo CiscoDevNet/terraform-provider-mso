@@ -178,6 +178,7 @@ func datasourceMSOSchemaTemplateVrfRead(d *schema.ResourceData, m interface{}) e
 
 	if !found {
 		d.SetId("")
+		return fmt.Errorf("Unable to find the VRF %s in Template %s of Schema Id %s ", vrfName, templateName, schemaId)
 	}
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
