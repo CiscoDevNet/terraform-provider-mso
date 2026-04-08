@@ -56,7 +56,10 @@ func dataSourceMSOTemplateAnpEpgContract() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"relationship_type": &schema.Schema{
-				Type:         schema.TypeString,
+				Type: schema.TypeString,
+				// Computed: true,
+				// Changed to required because relationship_type is an identifier value
+				// A contract could be added with the same reference but different relationship_type
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
