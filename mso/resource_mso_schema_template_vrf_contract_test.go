@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"testing"
 
@@ -12,135 +11,143 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-func TestAccSchemaTemplateVrfContract_Basic(t *testing.T) {
-	var s SchemaTemplateVrfContractTest
+// msoSchemaTemplateVrfContractSchemaId is set during the first test step's Check to capture the dynamic schema ID for use in the manual deletion PreConfig step.
+var msoSchemaTemplateVrfContractSchemaId string
+
+func TestAccMSOSchemaTemplateVrfContractResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMsoSchemaTemplateVrfContractDestroy,
+		CheckDestroy: testAccCheckMSOSchemaTemplateVrfContractDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMsoSchemaTemplateVrfContractConfig_basic(),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMsoSchemaTemplateVrfContractExists("mso_schema_template_vrf_contract.acc_vrf", &s),
-					testAccCheckMsoSchemaTemplateVrfContractAttributes(&s),
+				PreConfig: func() { fmt.Println("Test: Create VRF contract as provider") },
+				Config:    testAccMSOSchemaTemplateVrfContractConfigProvider(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_vrf_contract.vrf_contract", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "template_name", msoSchemaTemplateName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "vrf_name", msoSchemaTemplateVrfName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "relationship_type", "provider"),
+					resource.TestCheckResourceAttrSet("mso_schema_template_vrf_contract.vrf_contract", "contract_schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "contract_template_name", msoSchemaTemplateName),
+					// Capture the dynamic schema ID from state for use in the manual deletion PreConfig step
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources["mso_schema_template_vrf_contract.vrf_contract"]
+						if !ok {
+							return fmt.Errorf("VRF contract resource not found in state")
+						}
+						msoSchemaTemplateVrfContractSchemaId = rs.Primary.Attributes["schema_id"]
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: ForceNew replacement - change relationship_type to consumer") },
+				Config:    testAccMSOSchemaTemplateVrfContractConfigConsumer(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_vrf_contract.vrf_contract", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "template_name", msoSchemaTemplateName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "vrf_name", msoSchemaTemplateVrfName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "relationship_type", "consumer"),
+					resource.TestCheckResourceAttrSet("mso_schema_template_vrf_contract.vrf_contract", "contract_schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "contract_template_name", msoSchemaTemplateName),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import VRF contract") },
+				ResourceName: "mso_schema_template_vrf_contract.vrf_contract",
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["mso_schema_template_vrf_contract.vrf_contract"]
+					if !ok {
+						return "", fmt.Errorf("VRF contract resource not found in state")
+					}
+					return fmt.Sprintf("%s/templates/%s/vrfs/%s/contracts/%s/relationship_type/%s",
+						rs.Primary.Attributes["schema_id"],
+						rs.Primary.Attributes["template_name"],
+						rs.Primary.Attributes["vrf_name"],
+						rs.Primary.Attributes["contract_name"],
+						rs.Primary.Attributes["relationship_type"],
+					), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate VRF contract after manual deletion from NDO")
+					msoClient := testAccProvider.Meta().(*client.Client)
+					vrfContractRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/vrfs/%s/%s/0", msoSchemaTemplateName, msoSchemaTemplateVrfName, humanToApiType["consumer"]))
+					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateVrfContractSchemaId), vrfContractRemovePatchPayload)
+					if err != nil {
+						t.Fatalf("Failed to manually delete VRF contract: %v", err)
+					}
+				},
+				Config: testAccMSOSchemaTemplateVrfContractConfigConsumer(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_vrf_contract.vrf_contract", "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "template_name", msoSchemaTemplateName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "vrf_name", msoSchemaTemplateVrfName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract.vrf_contract", "relationship_type", "consumer"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckMsoSchemaTemplateVrfContractConfig_basic() string {
-	return fmt.Sprintf(`
-
-	resource "mso_schema_template_vrf_contract" "acc_vrf" {
-		schema_id              = "5eff091b0e00008318cff859"
-		template_name          = "Template1"
-		vrf_name               = "myVrf"
-		relationship_type      = "provider"
-		contract_name          = "hello"
-	  }
-	`)
+func testAccMSOSchemaTemplateVrfContractPrerequisiteConfig() string {
+	return fmt.Sprintf(`%s%s%s%s%s%s`, testSiteConfigAnsibleTest(), testTenantConfig(), testSchemaConfig(), testSchemaTemplateVrfConfig(), testSchemaTemplateFilterEntryConfig(), testSchemaTemplateContractConfig())
 }
 
-func testAccCheckMsoSchemaTemplateVrfContractExists(schemaTemplateVrfName string, stvc *SchemaTemplateVrfContractTest) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs1, err1 := s.RootModule().Resources[schemaTemplateVrfName]
-
-		if !err1 {
-			return fmt.Errorf("Schema Template Vrf Contract record %s not found", schemaTemplateVrfName)
-		}
-
-		if rs1.Primary.ID == "" {
-			return fmt.Errorf("No Schema Template Vrf Contract id was set")
-		}
-
-		client := testAccProvider.Meta().(*client.Client)
-		con, err := client.GetViaURL("api/v1/schemas/5eff091b0e00008318cff859")
-
-		if err != nil {
-			return err
-		}
-
-		stvt := SchemaTemplateVrfContractTest{}
-		stvt.SchemaId = rs1.Primary.ID
-
-		count, err := con.ArrayCount("templates")
-		if err != nil {
-			return err
-		}
-		found := false
-		for i := 0; i < count; i++ {
-			tempCont, err := con.ArrayElement(i, "templates")
-			stvt.Template = models.StripQuotes(tempCont.S("name").String())
-			vrfCount, err := tempCont.ArrayCount("vrfs")
-			if err != nil {
-				return fmt.Errorf("No Vrf found")
-			}
-			for j := 0; j < vrfCount; j++ {
-				vrfCont, err := tempCont.ArrayElement(j, "vrfs")
-				if err != nil {
-					return err
-				}
-				apiVRF := models.StripQuotes(vrfCont.S("name").String())
-				if apiVRF == "myVrf" {
-					stvt.VrfName = "myVrf"
-					contractCount, err := vrfCont.ArrayCount(humanToApiType["provider"])
-					if err != nil {
-						return fmt.Errorf("Unable to get contract Relationships list")
-					}
-					for k := 0; k < contractCount; k++ {
-						contractCont, err := vrfCont.ArrayElement(k, humanToApiType["provider"])
-						if err != nil {
-							return err
-						}
-						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-						split := re.FindStringSubmatch(contractRef)
-						if contractRef != "{}" && contractRef != "" {
-							if "hello" == fmt.Sprintf("%s", split[3]) {
-								stvt.ContractName = "hello"
-								stvt.RelationType = "provider"
-								found = true
-								break
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if !found {
-			return fmt.Errorf("Unable to get contract list")
-		}
-
-		log.Printf("hiiiiii %v", stvt)
-		stv := &stvt
-		*stvc = *stv
-
-		return nil
-	}
+func testAccMSOSchemaTemplateVrfContractConfigProvider() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_vrf_contract" "vrf_contract" {
+		schema_id         = mso_schema.%[2]s.id
+		template_name     = "%[3]s"
+		vrf_name          = mso_schema_template_vrf.%[4]s.name
+		contract_name     = mso_schema_template_contract.%[5]s.contract_name
+		relationship_type = "provider"
+	}`, testAccMSOSchemaTemplateVrfContractPrerequisiteConfig(), msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName, msoSchemaTemplateContractName)
 }
 
-func testAccCheckMsoSchemaTemplateVrfContractDestroy(s *terraform.State) error {
+func testAccMSOSchemaTemplateVrfContractConfigConsumer() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_vrf_contract" "vrf_contract" {
+		schema_id         = mso_schema.%[2]s.id
+		template_name     = "%[3]s"
+		vrf_name          = mso_schema_template_vrf.%[4]s.name
+		contract_name     = mso_schema_template_contract.%[5]s.contract_name
+		relationship_type = "consumer"
+	}`, testAccMSOSchemaTemplateVrfContractPrerequisiteConfig(), msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName, msoSchemaTemplateContractName)
+}
+
+func testAccCheckMSOSchemaTemplateVrfContractDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*client.Client)
 
 	for _, rs := range s.RootModule().Resources {
-
-		if rs.Type == "mso_schema_template_vrf" {
-			con, err := client.GetViaURL("api/v1/schemas/5eff091b0e00008318cff859")
+		if rs.Type == "mso_schema_template_vrf_contract" {
+			schemaID := rs.Primary.Attributes["schema_id"]
+			con, err := client.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 			if err != nil {
 				return nil
-			} else {
-				count, err := con.ArrayCount("templates")
+			}
+			count, err := con.ArrayCount("templates")
+			if err != nil {
+				return fmt.Errorf("No Template found")
+			}
+			templateName := rs.Primary.Attributes["template_name"]
+			vrfName := rs.Primary.Attributes["vrf_name"]
+			contractName := rs.Primary.Attributes["contract_name"]
+			relationshipType := rs.Primary.Attributes["relationship_type"]
+			for i := 0; i < count; i++ {
+				tempCont, err := con.ArrayElement(i, "templates")
 				if err != nil {
-					return fmt.Errorf("No Template found")
+					return fmt.Errorf("No template exists")
 				}
-				for i := 0; i < count; i++ {
-					tempCont, err := con.ArrayElement(i, "templates")
-					if err != nil {
-						return fmt.Errorf("No template exists")
-					}
+				apiTemplate := models.StripQuotes(tempCont.S("name").String())
+				if apiTemplate == templateName {
 					vrfCount, err := tempCont.ArrayCount("vrfs")
 					if err != nil {
 						return fmt.Errorf("No Vrf found")
@@ -151,13 +158,13 @@ func testAccCheckMsoSchemaTemplateVrfContractDestroy(s *terraform.State) error {
 							return err
 						}
 						apiVRF := models.StripQuotes(vrfCont.S("name").String())
-						if apiVRF == "myVrf" {
-							contractCount, err := vrfCont.ArrayCount(humanToApiType["provider"])
+						if apiVRF == vrfName {
+							contractCount, err := vrfCont.ArrayCount(humanToApiType[relationshipType])
 							if err != nil {
 								return fmt.Errorf("Unable to get contract Relationships list")
 							}
 							for k := 0; k < contractCount; k++ {
-								contractCont, err := vrfCont.ArrayElement(k, humanToApiType["provider"])
+								contractCont, err := vrfCont.ArrayElement(k, humanToApiType[relationshipType])
 								if err != nil {
 									return err
 								}
@@ -165,36 +172,16 @@ func testAccCheckMsoSchemaTemplateVrfContractDestroy(s *terraform.State) error {
 								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 								split := re.FindStringSubmatch(contractRef)
 								if contractRef != "{}" && contractRef != "" {
-									if "hello" == fmt.Sprintf("%s", split[3]) {
-										return fmt.Errorf("VRF contract still exist.")
+									if split[3] == contractName {
+										return fmt.Errorf("VRF contract still exists")
 									}
 								}
 							}
 						}
-
 					}
 				}
 			}
 		}
 	}
 	return nil
-}
-
-func testAccCheckMsoSchemaTemplateVrfContractAttributes(stvc *SchemaTemplateVrfContractTest) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if "hello" != stvc.ContractName {
-			log.Printf("hjjjjj %v", stvc)
-			return fmt.Errorf("Bad Schema Template Vrf Contract Name %s", stvc.ContractName)
-		}
-		return nil
-	}
-}
-
-type SchemaTemplateVrfContractTest struct {
-	Id           string `json:",omitempty"`
-	SchemaId     string `json:",omitempty"`
-	Template     string `json:",omitempty"`
-	VrfName      string `json:",omitempty"`
-	ContractName string `json:",omitempty"`
-	RelationType string `json:",omitempty"`
 }
