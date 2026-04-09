@@ -18,6 +18,7 @@ func resourceMSOTemplateAnpEpgContract() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOTemplateAnpEpgContractCreate,
 		Read:   resourceMSOTemplateAnpEpgContractRead,
+		Update: resourceMSOTemplateAnpEpgContractUpdate,
 		Delete: resourceMSOTemplateAnpEpgContractDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -72,7 +73,6 @@ func resourceMSOTemplateAnpEpgContract() *schema.Resource {
 			"relationship_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
@@ -121,6 +121,59 @@ func resourceMSOTemplateAnpEpgContractImport(d *schema.ResourceData, m interface
 
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceMSOTemplateAnpEpgContractUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[DEBUG] Template ANP EPG Contract: Beginning Update")
+	msoClient := m.(*client.Client)
+
+	schemaID := d.Get("schema_id").(string)
+	templateName := d.Get("template_name").(string)
+	anpName := d.Get("anp_name").(string)
+	epgName := d.Get("epg_name").(string)
+	contractName := d.Get("contract_name").(string)
+
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaID
+	}
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = templateName
+	}
+
+	// Use the old relationship_type value to find the existing contract
+	oldRelationshipType, newRelationshipType := d.GetChange("relationship_type")
+
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
+	if err != nil {
+		return err
+	}
+
+	index, _, err := getSchemaTemplateEPGContract(cont, templateName, anpName, epgName, contractName, contractSchemaId, contractTemplateName, oldRelationshipType.(string))
+	if err != nil {
+		return err
+	}
+	if index == -1 {
+		return fmt.Errorf("Unable to find the Contract %s with relationship type %s", contractName, oldRelationshipType.(string))
+	}
+
+	updatePath := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/contractRelationships/%d", templateName, anpName, epgName, index)
+	payloadCon := container.New()
+	payloadCon.Array()
+
+	if d.HasChange("relationship_type") {
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/relationshipType", updatePath), newRelationshipType.(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaID), payloadCon)
+	if err != nil {
+		return err
+	}
+	return resourceMSOTemplateAnpEpgContractRead(d, m)
 }
 
 func resourceMSOTemplateAnpEpgContractCreate(d *schema.ResourceData, m interface{}) error {
