@@ -15,6 +15,11 @@ func TestAccMSOSchemaTemplateAnpEpgContractDatasource(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Read EPG Contract datasource not found error") },
+				Config:      testAccMSOSchemaTemplateAnpEpgContractDatasourceNotFoundConfig(),
+				ExpectError: regexp.MustCompile("Unable to find the ANP EPG Contract"),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Read EPG Contract datasource") },
 				Config:    testAccMSOSchemaTemplateAnpEpgContractDatasourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -27,11 +32,6 @@ func TestAccMSOSchemaTemplateAnpEpgContractDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.mso_schema_template_anp_epg_contract.contract", "contract_schema_id"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_contract.contract", "contract_template_name", msoSchemaTemplateName),
 				),
-			},
-			{
-				PreConfig:   func() { fmt.Println("Test: Read EPG Contract datasource not found error") },
-				Config:      testAccMSOSchemaTemplateAnpEpgContractDatasourceNotFoundConfig(),
-				ExpectError: regexp.MustCompile("Unable to find the ANP EPG Contract"),
 			},
 		},
 	})

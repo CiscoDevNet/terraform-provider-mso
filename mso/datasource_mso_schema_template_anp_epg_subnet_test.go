@@ -15,6 +15,11 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetDatasource(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Read EPG Subnet datasource not found error") },
+				Config:      testAccMSOSchemaTemplateAnpEpgSubnetDatasourceNotFound(),
+				ExpectError: regexp.MustCompile("Unable to find the ANP EPG Subnet"),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Read EPG Subnet datasource") },
 				Config:    testAccMSOSchemaTemplateAnpEpgSubnetDatasource(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -29,11 +34,6 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetDatasource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "no_default_gateway", "false"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "primary", "false"),
 				),
-			},
-			{
-				PreConfig:   func() { fmt.Println("Test: Read EPG Subnet datasource not found error") },
-				Config:      testAccMSOSchemaTemplateAnpEpgSubnetDatasourceNotFound(),
-				ExpectError: regexp.MustCompile("Unable to find the ANP EPG Subnet"),
 			},
 		},
 	})
