@@ -264,6 +264,18 @@ resource "mso_schema_template_contract" "%[1]s" {
 `, msoSchemaTemplateContractName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateFilterName)
 }
 
+func testSchemaTemplateVrfContractConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_vrf_contract" "%[1]s_provider" {
+	schema_id         = mso_schema.%[2]s.id
+	template_name     = "%[3]s"
+	vrf_name          = mso_schema_template_vrf.%[4]s.name
+	relationship_type = "provider"
+	contract_name     = mso_schema_template_contract.%[1]s.contract_name
+}
+`, msoSchemaTemplateContractName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
+}
+
 func testSchemaTemplateAnpEpgContractConfig() string {
 	return fmt.Sprintf(`
 resource "mso_schema_template_anp_epg_contract" "%[1]s_provider" {

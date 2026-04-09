@@ -182,26 +182,40 @@ func TestAccMSOSchemaTemplateVrfResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Add BD child to VRF") },
-				Config:    testAccMSOSchemaTemplateVrfConfigWithBdChild(),
+				PreConfig: func() { fmt.Println("Test: Add BD and contract children to VRF") },
+				Config:    testAccMSOSchemaTemplateVrfConfigWithChildren(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "schema_id"),
 					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "name", msoSchemaTemplateVrfName),
 					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "display_name", msoSchemaTemplateVrfName+" updated"),
 					resource.TestCheckResourceAttr("mso_schema_template_bd."+msoSchemaTemplateBdName, "name", msoSchemaTemplateBdName),
 					resource.TestCheckResourceAttr("mso_schema_template_bd."+msoSchemaTemplateBdName, "display_name", msoSchemaTemplateBdName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract."+msoSchemaTemplateContractName+"_provider", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract."+msoSchemaTemplateContractName+"_provider", "relationship_type", "provider"),
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Update VRF description with BD child present") },
-				Config:    testAccMSOSchemaTemplateVrfConfigWithBdChildUpdateDescription(),
+				PreConfig: func() { fmt.Println("Test: Update VRF description with children present") },
+				Config:    testAccMSOSchemaTemplateVrfConfigWithChildrenUpdateDescription(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "schema_id"),
 					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "name", msoSchemaTemplateVrfName),
 					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "display_name", msoSchemaTemplateVrfName+" updated"),
-					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "description", "Terraform test VRF with BD"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "description", "Terraform test VRF with children"),
 					resource.TestCheckResourceAttr("mso_schema_template_bd."+msoSchemaTemplateBdName, "name", msoSchemaTemplateBdName),
 					resource.TestCheckResourceAttr("mso_schema_template_bd."+msoSchemaTemplateBdName, "display_name", msoSchemaTemplateBdName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract."+msoSchemaTemplateContractName+"_provider", "contract_name", msoSchemaTemplateContractName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf_contract."+msoSchemaTemplateContractName+"_provider", "relationship_type", "provider"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove children from VRF") },
+				Config:    testAccMSOSchemaTemplateVrfConfigRemoveChildren(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "schema_id"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "name", msoSchemaTemplateVrfName),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "display_name", msoSchemaTemplateVrfName+" updated"),
+					resource.TestCheckResourceAttr("mso_schema_template_vrf."+msoSchemaTemplateVrfName, "description", "Terraform test VRF with children"),
 				),
 			},
 		},
@@ -337,19 +351,34 @@ func testAccMSOSchemaTemplateVrfConfigRemoveAllRps() string {
 	}`, testAccMSOSchemaTemplateVrfPrerequisiteConfig(), msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName)
 }
 
-func testAccMSOSchemaTemplateVrfConfigWithBdChild() string {
-	return testAccMSOSchemaTemplateVrfConfigUpdateDisplayName() + testSchemaTemplateBdConfig()
+func testAccMSOSchemaTemplateVrfChildrenConfig() string {
+	return testSchemaTemplateBdConfig() + testSchemaTemplateFilterEntryConfig() + testSchemaTemplateContractConfig() + testSchemaTemplateVrfContractConfig()
 }
 
-func testAccMSOSchemaTemplateVrfConfigWithBdChildUpdateDescription() string {
+func testAccMSOSchemaTemplateVrfConfigWithChildren() string {
+	return testAccMSOSchemaTemplateVrfConfigUpdateDisplayName() + testAccMSOSchemaTemplateVrfChildrenConfig()
+}
+
+func testAccMSOSchemaTemplateVrfConfigWithChildrenUpdateDescription() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_schema_template_vrf" "%[2]s" {
 		schema_id    = mso_schema.%[3]s.id
 		template     = "%[4]s"
 		name         = "%[2]s"
 		display_name = "%[2]s updated"
-		description  = "Terraform test VRF with BD"
-	}`, testAccMSOSchemaTemplateVrfPrerequisiteConfig(), msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName) + testSchemaTemplateBdConfig()
+		description  = "Terraform test VRF with children"
+	}`, testAccMSOSchemaTemplateVrfPrerequisiteConfig(), msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName) + testAccMSOSchemaTemplateVrfChildrenConfig()
+}
+
+func testAccMSOSchemaTemplateVrfConfigRemoveChildren() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_vrf" "%[2]s" {
+		schema_id    = mso_schema.%[3]s.id
+		template     = "%[4]s"
+		name         = "%[2]s"
+		display_name = "%[2]s updated"
+		description  = "Terraform test VRF with children"
+	}`, testAccMSOSchemaTemplateVrfPrerequisiteConfig(), msoSchemaTemplateVrfName, msoSchemaName, msoSchemaTemplateName)
 }
 
 func testAccCheckMSOSchemaTemplateVrfDestroy(s *terraform.State) error {
