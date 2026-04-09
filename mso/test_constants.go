@@ -36,9 +36,14 @@ var msoSchemaTemplateBdL3MulticastName = acctest.RandStringFromCharSet(10, accte
 var msoSchemaTemplateVrfL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateL3outName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
+var msoTenantPoliciesDhcpRelayPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantPoliciesDhcpRelayPolicyName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
 const msoSchemaTemplateExtEpgSubnetIp = "10.0.1.1/24"
+const msoSchemaTemplateBdSubnetIp = "10.1.0.1/24"
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -252,6 +257,19 @@ resource "mso_schema_template_bd" "%[1]s" {
 	layer3_multicast		= true
 }
 `, msoSchemaTemplateBdL3MulticastName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfL3MulticastName)
+}
+
+func testSchemaTemplateBdSubnetConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_bd_subnet" "%[1]s_subnet" {
+	schema_id     = mso_schema.%[2]s.id
+	template_name = "%[3]s"
+	bd_name       = mso_schema_template_bd.%[1]s.name
+	ip            = "%[4]s"
+	scope         = "private"
+	shared        = false
+}
+`, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIp)
 }
 
 func testSchemaTemplateFilterEntryConfig() string {
