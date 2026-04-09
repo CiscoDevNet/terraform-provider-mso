@@ -53,9 +53,10 @@ func resourceMSOTemplateBD() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 128),
+				Type:     schema.TypeString,
+				Optional: true,
+				// Set minimal length to 0 to allow removal of description
+				ValidateFunc: validation.StringLenBetween(0, 128),
 			},
 			"intersite_bum_traffic": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -81,6 +82,10 @@ func resourceMSOTemplateBD() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"flood",
+					"proxy",
+				}, false),
 			},
 			"unknown_multicast_flooding": &schema.Schema{
 				Type:     schema.TypeString,
@@ -118,7 +123,8 @@ func resourceMSOTemplateBD() *schema.Resource {
 			"virtual_mac_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				// Commented out computed to allow setting vmac to empty string
+				// Computed: true,
 			},
 			"unicast_routing": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -140,6 +146,7 @@ func resourceMSOTemplateBD() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			// We should deprecate dhcp_policy since it is no longer supported on product
 			"dhcp_policy": &schema.Schema{
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -182,6 +189,7 @@ func resourceMSOTemplateBD() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
+						// We should investigate the need for this and else deprecate because in ND 4.1 this is not UI
 						"version": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
@@ -759,244 +767,222 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	name := d.Get("name").(string)
-	displayName := d.Get("display_name").(string)
-	description := d.Get("description").(string)
 	templateName := d.Get("template_name").(string)
-	vrfName := d.Get("vrf_name").(string)
+	name := d.Get("name").(string)
 
 	versionInt, err := msoClient.CompareVersion("4.0.0.0")
 	if err != nil {
 		return err
 	}
-	var intersite_bum_traffic, optimize_wan_bandwidth, layer2_stretch, layer3_multicast, unicast_routing, arp_flooding bool
-	var layer2_unknown_unicast, vrf_schema_id, vrf_template_name, virtual_mac_address, ep_move_detection_mode, ipv6_unknown_multicast_flooding, multi_destination_flooding, unknown_multicast_flooding string
-
-	if tempVar, ok := d.GetOk("intersite_bum_traffic"); ok {
-		intersite_bum_traffic = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("optimize_wan_bandwidth"); ok {
-		optimize_wan_bandwidth = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("layer2_stretch"); ok {
-		layer2_stretch = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("layer3_multicast"); ok {
-		layer3_multicast = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("layer2_unknown_unicast"); ok {
-		layer2_unknown_unicast = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("unknown_multicast_flooding"); ok {
-		unknown_multicast_flooding = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("multi_destination_flooding"); ok {
-		multi_destination_flooding = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("ipv6_unknown_multicast_flooding"); ok {
-		ipv6_unknown_multicast_flooding = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("unicast_routing"); ok {
-		unicast_routing = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("virtual_mac_address"); ok {
-		virtual_mac_address = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("ep_move_detection_mode"); ok {
-		ep_move_detection_mode = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("arp_flooding"); ok {
-		arp_flooding = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
-		vrf_schema_id = tempVar.(string)
-	} else {
-		vrf_schema_id = schemaID
-	}
-	if tempVar, ok := d.GetOk("vrf_template_name"); ok {
-		vrf_template_name = tempVar.(string)
-	} else {
-		vrf_template_name = templateName
-	}
-	var dhcpPolMap map[string]interface{}
-	if tempVar, ok := d.GetOk("dhcp_policy"); ok {
-		dhcp_policy := tempVar.(map[string]interface{})
-		dhcpPolMap = make(map[string]interface{})
-		dhcpPolMap["name"] = dhcp_policy["name"]
-		version, err := strconv.Atoi(dhcp_policy["version"].(string))
-		if err != nil {
-			return err
-		}
-		dhcpPolMap["version"] = version
-
-		optionName := dhcp_policy["dhcp_option_policy_name"]
-		optionVersion := dhcp_policy["dhcp_option_policy_version"]
-		if optionName != nil {
-			if optionVersion != nil {
-				dhcpOptionMap := make(map[string]interface{})
-				dhcpOptionMap["name"] = optionName
-				ver, err := strconv.Atoi(optionVersion.(string))
-				if err != nil {
-					return err
-				}
-				dhcpOptionMap["version"] = ver
-				dhcpPolMap["dhcpOptionLabel"] = dhcpOptionMap
-			} else {
-				return fmt.Errorf("dhcp_option_policy_version is required with dhcp_option_policy_name")
-			}
-		}
-	} else {
-		dhcpPolMap = nil
-	}
-
-	dhcpPolList := make([]interface{}, 0)
-	if dhcpPolicies, ok := d.GetOk("dhcp_policies"); ok {
-		if versionInt == -1 {
-			dhcpRefList, err := mapDHCPPoliciesRefByName(schemaID, templateName, dhcpPolicies, msoClient)
-			if err != nil {
-				return err
-			}
-			dhcpPolList = dhcpRefList
-		} else {
-			for _, dhcpPolicy := range dhcpPolicies.(*schema.Set).List() {
-				policy := dhcpPolicy.(map[string]interface{})
-				dhcpPolicyMap := make(map[string]interface{})
-				dhcpPolicyMap["name"] = policy["name"]
-				dhcpPolicyMap["version"] = policy["version"]
-				if policy["dhcp_option_policy_name"] != "" {
-					dhcpOptionMap := make(map[string]interface{})
-					dhcpOptionMap["name"] = policy["dhcp_option_policy_name"]
-					if policy["version"] != 0 {
-						dhcpOptionMap["version"] = policy["dhcp_option_policy_version"]
-					} else {
-						dhcpOptionMap["version"] = policy["version"]
-					}
-					dhcpPolicyMap["dhcpOptionLabel"] = dhcpOptionMap
-				}
-				dhcpPolList = append(dhcpPolList, dhcpPolicyMap)
-			}
-		}
-	} else {
-		dhcpPolList = nil
-	}
-
-	vrfRefMap := make(map[string]interface{})
-	vrfRefMap["schemaId"] = vrf_schema_id
-	vrfRefMap["templateName"] = vrf_template_name
-	vrfRefMap["vrfName"] = vrfName
 
 	basePath := fmt.Sprintf("/templates/%s/bds/%s", templateName, name)
 	payloadCon := container.New()
 	payloadCon.Array()
 
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/displayName", basePath), displayName)
-	if err != nil {
-		return err
-	}
-
-	if layer2_unknown_unicast != "" {
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2UnknownUnicast", basePath), layer2_unknown_unicast)
+	if d.HasChange("display_name") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/displayName", basePath), d.Get("display_name").(string))
 		if err != nil {
 			return err
 		}
 	}
 
-	if unknown_multicast_flooding != "" {
-		if unknown_multicast_flooding == "optimized_flooding" {
-			unknown_multicast_flooding = "opt-flood"
-		}
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unkMcastAct", basePath), unknown_multicast_flooding)
+	if d.HasChange("description") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/description", basePath), d.Get("description").(string))
 		if err != nil {
 			return err
 		}
 	}
 
-	if multi_destination_flooding != "" {
-		if multi_destination_flooding == "flood_in_encap" {
-			multi_destination_flooding = "encap-flood"
-		} else if multi_destination_flooding == "flood_in_bd" {
-			multi_destination_flooding = "bd-flood"
-		}
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/multiDstPktAct", basePath), multi_destination_flooding)
+	if d.HasChange("layer2_unknown_unicast") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2UnknownUnicast", basePath), d.Get("layer2_unknown_unicast").(string))
 		if err != nil {
 			return err
 		}
 	}
 
-	if ipv6_unknown_multicast_flooding != "" {
-		if ipv6_unknown_multicast_flooding == "optimized_flooding" {
-			ipv6_unknown_multicast_flooding = "opt-flood"
+	if d.HasChange("unknown_multicast_flooding") {
+		unknownMulticastFlooding := d.Get("unknown_multicast_flooding").(string)
+		if unknownMulticastFlooding == "optimized_flooding" {
+			unknownMulticastFlooding = "opt-flood"
 		}
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/v6unkMcastAct", basePath), ipv6_unknown_multicast_flooding)
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unkMcastAct", basePath), unknownMulticastFlooding)
 		if err != nil {
 			return err
 		}
 	}
 
-	if virtual_mac_address != "" {
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), virtual_mac_address)
+	if d.HasChange("multi_destination_flooding") {
+		multiDestinationFlooding := d.Get("multi_destination_flooding").(string)
+		if multiDestinationFlooding == "flood_in_encap" {
+			multiDestinationFlooding = "encap-flood"
+		} else if multiDestinationFlooding == "flood_in_bd" {
+			multiDestinationFlooding = "bd-flood"
+		}
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/multiDstPktAct", basePath), multiDestinationFlooding)
 		if err != nil {
 			return err
 		}
 	}
 
-	if ep_move_detection_mode != "" {
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/epMoveDetectMode", basePath), ep_move_detection_mode)
+	if d.HasChange("ipv6_unknown_multicast_flooding") {
+		ipv6UnknownMulticastFlooding := d.Get("ipv6_unknown_multicast_flooding").(string)
+		if ipv6UnknownMulticastFlooding == "optimized_flooding" {
+			ipv6UnknownMulticastFlooding = "opt-flood"
+		}
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/v6unkMcastAct", basePath), ipv6UnknownMulticastFlooding)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/description", basePath), description)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/intersiteBumTrafficAllow", basePath), intersite_bum_traffic)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/optimizeWanBandwidth", basePath), optimize_wan_bandwidth)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2Stretch", basePath), layer2_stretch)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l3MCast", basePath), layer3_multicast)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/arpFlood", basePath), arp_flooding)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unicastRouting", basePath), unicast_routing)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vrfRef", basePath), vrfRefMap)
-	if err != nil {
-		return err
-	}
-
-	if len(dhcpPolMap) != 0 {
-		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabel", basePath), dhcpPolMap)
+	if d.HasChange("virtual_mac_address") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), d.Get("virtual_mac_address").(string))
 		if err != nil {
 			return err
 		}
 	}
 
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabels", basePath), dhcpPolList)
-	if err != nil {
-		return err
+	if d.HasChange("ep_move_detection_mode") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/epMoveDetectMode", basePath), d.Get("ep_move_detection_mode").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("intersite_bum_traffic") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/intersiteBumTrafficAllow", basePath), d.Get("intersite_bum_traffic").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("optimize_wan_bandwidth") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/optimizeWanBandwidth", basePath), d.Get("optimize_wan_bandwidth").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("layer2_stretch") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l2Stretch", basePath), d.Get("layer2_stretch").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("layer3_multicast") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/l3MCast", basePath), d.Get("layer3_multicast").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("arp_flooding") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/arpFlood", basePath), d.Get("arp_flooding").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("unicast_routing") {
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/unicastRouting", basePath), d.Get("unicast_routing").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("vrf_name") || d.HasChange("vrf_schema_id") || d.HasChange("vrf_template_name") {
+		vrfSchemaId := d.Get("vrf_schema_id").(string)
+		if vrfSchemaId == "" {
+			vrfSchemaId = schemaID
+		}
+		vrfTemplateName := d.Get("vrf_template_name").(string)
+		if vrfTemplateName == "" {
+			vrfTemplateName = templateName
+		}
+		vrfRefMap := map[string]interface{}{
+			"schemaId":     vrfSchemaId,
+			"templateName": vrfTemplateName,
+			"vrfName":      d.Get("vrf_name").(string),
+		}
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vrfRef", basePath), vrfRefMap)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("dhcp_policy") {
+		var dhcpPolMap map[string]interface{}
+		if tempVar, ok := d.GetOk("dhcp_policy"); ok {
+			dhcp_policy := tempVar.(map[string]interface{})
+			dhcpPolMap = make(map[string]interface{})
+			dhcpPolMap["name"] = dhcp_policy["name"]
+			version, err := strconv.Atoi(dhcp_policy["version"].(string))
+			if err != nil {
+				return err
+			}
+			dhcpPolMap["version"] = version
+
+			optionName := dhcp_policy["dhcp_option_policy_name"]
+			optionVersion := dhcp_policy["dhcp_option_policy_version"]
+			if optionName != nil {
+				if optionVersion != nil {
+					dhcpOptionMap := make(map[string]interface{})
+					dhcpOptionMap["name"] = optionName
+					ver, err := strconv.Atoi(optionVersion.(string))
+					if err != nil {
+						return err
+					}
+					dhcpOptionMap["version"] = ver
+					dhcpPolMap["dhcpOptionLabel"] = dhcpOptionMap
+				} else {
+					return fmt.Errorf("dhcp_option_policy_version is required with dhcp_option_policy_name")
+				}
+			}
+		}
+		if len(dhcpPolMap) != 0 {
+			err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabel", basePath), dhcpPolMap)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if d.HasChange("dhcp_policies") {
+		dhcpPolList := make([]interface{}, 0)
+		if dhcpPolicies, ok := d.GetOk("dhcp_policies"); ok {
+			if versionInt == -1 {
+				dhcpRefList, err := mapDHCPPoliciesRefByName(schemaID, templateName, dhcpPolicies, msoClient)
+				if err != nil {
+					return err
+				}
+				dhcpPolList = dhcpRefList
+			} else {
+				for _, dhcpPolicy := range dhcpPolicies.(*schema.Set).List() {
+					policy := dhcpPolicy.(map[string]interface{})
+					dhcpPolicyMap := make(map[string]interface{})
+					dhcpPolicyMap["name"] = policy["name"]
+					dhcpPolicyMap["version"] = policy["version"]
+					if policy["dhcp_option_policy_name"] != "" {
+						dhcpOptionMap := make(map[string]interface{})
+						dhcpOptionMap["name"] = policy["dhcp_option_policy_name"]
+						if policy["version"] != 0 {
+							dhcpOptionMap["version"] = policy["dhcp_option_policy_version"]
+						} else {
+							dhcpOptionMap["version"] = policy["version"]
+						}
+						dhcpPolicyMap["dhcpOptionLabel"] = dhcpOptionMap
+					}
+					dhcpPolList = append(dhcpPolList, dhcpPolicyMap)
+				}
+			}
+		} else {
+			dhcpPolList = nil
+		}
+		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/dhcpLabels", basePath), dhcpPolList)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaID), payloadCon)
