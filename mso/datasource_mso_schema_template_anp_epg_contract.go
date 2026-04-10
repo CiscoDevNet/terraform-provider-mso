@@ -3,10 +3,8 @@ package mso
 import (
 	"fmt"
 	"log"
-	"regexp"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -94,7 +92,7 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 	}
 	relationshipType := d.Get("relationship_type").(string)
 
-	index, crefCont, err := getSchemaTemplateEPGContract(cont, template, anp, epg, contract, contractSchemaId, contractTemplateName, relationshipType)
+	index, _, err := getSchemaTemplateEPGContract(cont, template, anp, epg, contract, contractSchemaId, contractTemplateName, relationshipType)
 	if err != nil {
 		return err
 	}
@@ -104,15 +102,11 @@ func dataSourceMSOTemplateAnpEpgContractRead(d *schema.ResourceData, m interface
 		return fmt.Errorf("Unable to find the ANP EPG Contract %s in Template %s of Schema Id %s ", contract, contractTemplateName, contractSchemaId)
 	}
 
-	contractRef := models.StripQuotes(crefCont.S("contractRef").String())
-	re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-	match := re.FindStringSubmatch(contractRef)
-
-	d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/contracts/%s-%s-%s", schemaId, template, anp, epg, match[1], match[2], match[3]))
-	d.Set("contract_name", match[3])
-	d.Set("contract_schema_id", match[1])
-	d.Set("contract_template_name", match[2])
-	d.Set("relationship_type", models.StripQuotes(crefCont.S("relationshipType").String()))
+	d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/contracts/%s-%s-%s", schemaId, template, anp, epg, contractSchemaId, contractTemplateName, contract))
+	d.Set("contract_name", contract)
+	d.Set("contract_schema_id", contractSchemaId)
+	d.Set("contract_template_name", contractTemplateName)
+	d.Set("relationship_type", relationshipType)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
