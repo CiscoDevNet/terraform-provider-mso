@@ -49,7 +49,10 @@ func dataSourceMSONetflowExporterRead(d *schema.ResourceData, m interface{}) err
 		return err
 	}
 
-	setNetflowExporterData(d, policy, templateId)
+	err = setNetflowExporterData(d, policy, templateId)
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Data Source - Read Complete: %v", d.Id())
 	return nil
 }

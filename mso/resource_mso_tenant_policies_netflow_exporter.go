@@ -107,7 +107,10 @@ func resourceMSONetflowExporterRead(d *schema.ResourceData, m interface{}) error
 		return err
 	}
 
-	setNetflowExporterData(d, policy, templateId)
+	err = setNetflowExporterData(d, policy, templateId)
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Read Complete: %v", d.Id())
 	return nil
 }
