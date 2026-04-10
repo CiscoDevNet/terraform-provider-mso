@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+// Skipped updating tests, see resource comments
+
 func TestAccMSOSchemaTemplateContractFilter_Basic(t *testing.T) {
 	var tc TemplateContractFilter
 	resource.Test(t, resource.TestCase{

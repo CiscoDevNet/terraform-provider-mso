@@ -13,6 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// This resource could be deprecated because a contract must always be associated with at least one filter.
+// Since mso_schema_template_contract cannot be created without a filter_relationship, this resource cannot be used
+// independently without conflicting with the inline filter_relationship attribute of mso_schema_template_contract.
+// Currently keeping the resource because there is a warning in the resource documentation
+
 func resourceMSOTemplateContractFilter() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOTemplateContractFilterCreate,
