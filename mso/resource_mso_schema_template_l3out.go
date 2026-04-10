@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -68,7 +69,8 @@ func resourceMSOTemplateL3out() *schema.Resource {
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				// Commented computed to allow description to be set to empty string
+				// Computed: true,
 			},
 		}),
 	}
@@ -256,41 +258,44 @@ func resourceMSOTemplateL3outUpdate(d *schema.ResourceData, m interface{}) error
 
 	schemaID := d.Get("schema_id").(string)
 	l3outName := d.Get("l3out_name").(string)
-	displayName := d.Get("display_name").(string)
 	templateName := d.Get("template_name").(string)
-	vrfName := d.Get("vrf_name").(string)
 
-	var vrf_schema_id, vrf_template_name string
+	updatePath := fmt.Sprintf("/templates/%s/intersiteL3outs/%s", templateName, l3outName)
+	payloadCont := container.New()
+	payloadCont.Array()
 
-	if tempVar, ok := d.GetOk("vrf_schema_id"); ok {
-		vrf_schema_id = tempVar.(string)
-	} else {
-		vrf_schema_id = schemaID
-	}
-	if tempVar, ok := d.GetOk("vrf_template_name"); ok {
-		vrf_template_name = tempVar.(string)
-	} else {
-		vrf_template_name = templateName
+	if d.HasChange("description") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string))
+		if err != nil {
+			return err
+		}
 	}
 
-	var description string
-	if tempVar, ok := d.GetOk("description"); ok {
-		description = tempVar.(string)
+	if d.HasChange("vrf_schema_id") || d.HasChange("vrf_template_name") || d.HasChange("vrf_name") {
+		vrfSchemaId := d.Get("vrf_schema_id").(string)
+		if vrfSchemaId == "" {
+			vrfSchemaId = schemaID
+		}
+		vrfTemplateName := d.Get("vrf_template_name").(string)
+		if vrfTemplateName == "" {
+			vrfTemplateName = templateName
+		}
+		vrfRef := map[string]interface{}{
+			"schemaId":     vrfSchemaId,
+			"templateName": vrfTemplateName,
+			"vrfName":      d.Get("vrf_name").(string),
+		}
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/vrfRef", updatePath), vrfRef)
+		if err != nil {
+			return err
+		}
 	}
 
-	vrfRefMap := make(map[string]interface{})
-	vrfRefMap["schemaId"] = vrf_schema_id
-	vrfRefMap["templateName"] = vrf_template_name
-	vrfRefMap["vrfName"] = vrfName
-
-	path := fmt.Sprintf("/templates/%s/intersiteL3outs/%s", templateName, l3outName)
-	l3outStruct := models.NewTemplateL3out("replace", path, l3outName, displayName, description, vrfRefMap)
-
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), l3outStruct)
-
+	err := doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaID), payloadCont)
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOTemplateL3outRead(d, m)
 }
 
