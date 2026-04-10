@@ -28,8 +28,10 @@ var msoFabricPolicyTemplateL3DomainName = acctest.RandStringFromCharSet(10, acct
 var msoFabricPolicyTemplateSyncEInterfacePolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateMacsecPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateFilterName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateFilterName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateFilterEntryName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateContractName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateContractOneWayName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateBdL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateVrfL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateL3outName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -318,4 +320,17 @@ resource "mso_schema_template_anp_epg_subnet" "%[1]s_subnet" {
 	shared    = false
 }
 `, msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
+}
+
+func testSchemaTemplateFilterEntryConfig2() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_filter_entry" "%[1]s" {
+	schema_id          = mso_schema.%[2]s.id
+	template_name      = "%[3]s"
+	name               = "%[1]s"
+	display_name       = "%[1]s"
+	entry_name         = "%[1]s_entry"
+	entry_display_name = "%[1]s_entry"
+}
+`, msoSchemaTemplateFilterName2, msoSchemaName, msoSchemaTemplateName)
 }
