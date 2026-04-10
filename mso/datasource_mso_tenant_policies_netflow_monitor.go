@@ -65,7 +65,10 @@ func dataSourceMSOTenantPoliciesNetflowMonitorRead(d *schema.ResourceData, m int
 		return err
 	}
 
-	setNetflowMonitorData(d, monitor, templateId)
+	err = setNetflowMonitorData(d, monitor, templateId)
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO NetFlow Monitor Data Source - Read Complete: %v", d.Id())
 	return nil
 }

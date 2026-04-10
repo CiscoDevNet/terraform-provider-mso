@@ -164,7 +164,10 @@ func resourceMSONetflowRecordRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	setNetflowRecordData(d, policy, templateId)
+	err = setNetflowRecordData(d, policy, templateId)
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO NetFlow Record Resource - Read Complete: %v", d.Id())
 	return nil
 }

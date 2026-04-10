@@ -36,8 +36,8 @@ resource "mso_tenant_policies_netflow_monitor" "netflow_monitor" {
 
 ## Attribute Reference ##
 
-* `uuid` - The NDO UUID of the NetFlow Monitor.
-* `id` - The unique terraform identifier of the NetFlow Monitor in the template.
+* `uuid` - (Read-Only) The NDO UUID of the NetFlow Monitor.
+* `id` - (Read-Only) The unique terraform identifier of the NetFlow Monitor in the template.
 
 ## Importing ##
 

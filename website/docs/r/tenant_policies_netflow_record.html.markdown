@@ -34,8 +34,8 @@ resource "mso_tenant_policies_netflow_record" "netflow_record" {
 
 ## Attribute Reference ##
 
-* `uuid` - The NDO UUID of the NetFlow Record.
-* `id` - The unique terraform identifier of the NetFlow Record in the template.
+* `uuid` - (Read-Only) The NDO UUID of the NetFlow Record.
+* `id` - (Read-Only) The unique terraform identifier of the NetFlow Record in the template.
 
 ## Importing ##
 

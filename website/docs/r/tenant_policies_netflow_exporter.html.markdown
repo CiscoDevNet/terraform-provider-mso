@@ -30,8 +30,8 @@ resource "mso_tenant_policies_netflow_exporter" "netflow_exporter" {
 
 ## Attribute Reference ##
 
-* `uuid` - The NDO UUID of the NetFlow Exporter.
-* `id` - The unique terraform identifier of the NetFlow Exporter in the template.
+* `uuid` - (Read-Only) The NDO UUID of the NetFlow Exporter.
+* `id` - (Read-Only) The unique terraform identifier of the NetFlow Exporter in the template.
 
 ## Importing ##
 
