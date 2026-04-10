@@ -372,6 +372,9 @@ func getSchemaTemplateEPGContract(cont *container.Container, templateName, anpNa
 								apiRelationshipType := models.StripQuotes(contractCont.S("relationshipType").String())
 								re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
 								match := re.FindStringSubmatch(contractRef)
+								if match == nil {
+									return index, nil, fmt.Errorf("unexpected contractRef format: %s", contractRef)
+								}
 								apiContractSchemaId := match[1]
 								apiContractTemplateName := match[2]
 								apiContract := match[3]
