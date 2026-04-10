@@ -582,7 +582,7 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	if d.HasChange("target_dscp") {
 		targetDscp := d.Get("target_dscp").(string)
 		if targetDscp != "" {
-			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/prio", updatePath), targetDscp)
+			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/targetDscp", updatePath), targetDscp)
 			if err != nil {
 				return err
 			}
