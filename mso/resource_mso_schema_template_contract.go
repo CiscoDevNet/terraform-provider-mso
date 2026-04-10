@@ -219,7 +219,8 @@ func resourceMSOTemplateContract() *schema.Resource {
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				// Removed computed to allow description to be set to an empty string
+				// Computed: true,
 			},
 		}),
 		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
@@ -630,11 +631,7 @@ func resourceMSOTemplateContractUpdate(d *schema.ResourceData, m interface{}) er
 	// filterRelationships, filterRelationshipsProviderToConsumer, filterRelationshipsConsumerToProvider := getFilterRelationshipsFromConfig(schemaId, templateName, filterRelationship)
 
 	if d.HasChange("description") {
-		var description string
-		if descr, ok := d.GetOk("description"); ok {
-			description = descr.(string)
-		}
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), description)
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description"))
 		if err != nil {
 			return err
 		}
