@@ -31,6 +31,7 @@ var msoSchemaTemplateFilterName = acctest.RandStringFromCharSet(10, acctest.Char
 var msoSchemaTemplateContractName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateBdL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateVrfL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateL3outName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
