@@ -405,6 +405,7 @@ resource "mso_tenant_policies_dhcp_relay_policy" "%[1]s" {
 	}
 }
 resource "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
+	depends_on  = [mso_tenant_policies_dhcp_relay_policy.%[1]s]
 	name        = "%[2]s"
 	template_id = mso_template.%[3]s.id
 	dhcp_relay_providers {
