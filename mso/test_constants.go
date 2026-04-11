@@ -35,7 +35,6 @@ var msoSchemaTemplateContractOneWayName = acctest.RandStringFromCharSet(10, acct
 var msoSchemaTemplateBdL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateVrfL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateL3outName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-
 var msoTenantPoliciesDhcpRelayPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPoliciesDhcpRelayPolicyName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
