@@ -28,6 +28,7 @@ var msoFabricPolicyTemplateL3DomainName = acctest.RandStringFromCharSet(10, acct
 var msoFabricPolicyTemplateSyncEInterfacePolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateMacsecPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateFilterName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateFilterEntryName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateContractName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateBdL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateVrfL3MulticastName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
