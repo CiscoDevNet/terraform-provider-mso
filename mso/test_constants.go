@@ -38,6 +38,7 @@ var msoSchemaTemplateL3outName = acctest.RandStringFromCharSet(10, acctest.CharS
 
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
+const msoSchemaTemplateExtEpgSubnetIp = "10.0.1.1/24"
 
 func testSiteConfigAnsibleTest() string {
 	return fmt.Sprintf(`
@@ -333,4 +334,39 @@ resource "mso_schema_template_filter_entry" "%[1]s" {
 	entry_display_name = "%[1]s_entry"
 }
 `, msoSchemaTemplateFilterName2, msoSchemaName, msoSchemaTemplateName)
+}
+
+func testSchemaTemplateL3outConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_l3out" "%[1]s" {
+	schema_id     = mso_schema.%[2]s.id
+	template_name = "%[3]s"
+	l3out_name    = "%[1]s"
+	display_name  = "%[1]s"
+	vrf_name      = mso_schema_template_vrf.%[4]s.name
+}
+`, msoSchemaTemplateL3outName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
+}
+
+func testSchemaTemplateExtEpgContractConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_external_epg_contract" "%[1]s_provider" {
+	schema_id         = mso_schema.%[2]s.id
+	template_name     = "%[3]s"
+	external_epg_name = "%[4]s"
+	contract_name     = mso_schema_template_contract.%[1]s.contract_name
+	relationship_type = "provider"
+}
+`, msoSchemaTemplateContractName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateExtEpgName)
+}
+
+func testSchemaTemplateExtEpgSubnetConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_external_epg_subnet" "%[1]s_subnet" {
+	schema_id         = mso_schema.%[2]s.id
+	template_name     = "%[3]s"
+	external_epg_name = "%[4]s"
+	ip                = "%[5]s"
+}
+`, msoSchemaTemplateExtEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateExtEpgName, msoSchemaTemplateExtEpgSubnetIp)
 }
