@@ -88,6 +88,21 @@ resource "mso_schema" "%[1]s" {
 `, msoSchemaName, msoSchemaTemplateName, msoTenantName)
 }
 
+// testSchemaConfigIgnoreTemplates creates a schema without templates and ignores external template changes.
+// This is used when testing mso_schema_template separately, because mso_schema.Read() reads all templates
+// from the API and writes them to state. Without ignore_changes, templates added by mso_schema_template
+// would cause perpetual drift on the mso_schema resource.
+func testSchemaConfigIgnoreTemplates() string {
+	return fmt.Sprintf(`
+resource "mso_schema" "%[1]s" {
+	name = "%[1]s"
+	lifecycle {
+		ignore_changes = [template]
+	}
+}
+`, msoSchemaName)
+}
+
 func testSchemaTemplateAnpConfig() string {
 	return fmt.Sprintf(`
 resource "mso_schema_template_anp" "%[1]s" {
