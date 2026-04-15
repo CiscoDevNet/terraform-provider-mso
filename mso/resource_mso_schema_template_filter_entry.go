@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -62,22 +63,36 @@ func resourceMSOSchemaTemplateFilterEntry() *schema.Resource {
 			"entry_description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				// Computed is not set to allow setting the value to an empty string
+				// Computed: true,
 			},
 			"ether_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				// TODO validation funcs should be evaluated in time, currently not doing to avoid any change in behaviour
+				// ValidateFunc: validation.StringInSlice([]string{
+				// 	"arp", "fcoe", "ip", "ipv4", "ipv6", "mac-security", "mpls-unicast", "trill", "unspecified",
+				// }, false),
 			},
 			"arp_flag": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				// TODO validation funcs should be evaluated in time, currently not doing to avoid any change in behaviour
+				// request is not the valid api value, it should be req
+				// ValidateFunc: validation.StringInSlice([]string{
+				// 	"reply", "request", "unspecified",
+				// }, false),
 			},
 			"ip_protocol": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				// TODO validation funcs should be evaluated in time, currently not doing to avoid any change in behaviour
+				// ValidateFunc: validation.StringInSlice([]string{
+				// 	"eigrp", "egp", "icmp", "icmpv6", "igmp", "igp", "l2tp", "ospfigp", "pim", "tcp", "udp", "unspecified",
+				// }, false),
 			},
 			"match_only_fragments": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -113,7 +128,16 @@ func resourceMSOSchemaTemplateFilterEntry() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+					// In NDO 4.1 the input value is still a list but a max items of 1
+					// Not changing this behaviour to avoid breaking current setups
+					// acknowledgement currently sets [null] in NDO which causes a drift detection
+					// TODO validation funcs should be evaluated in time, currently not doing to avoid any change in behaviour
+					// ValidateFunc: validation.StringInSlice([]string{
+					// 	"acknowledgement", "established", "finish", "synchronize", "reset", "unspecified",
+					// }, false),
+				},
 			},
 		}),
 	}
@@ -477,61 +501,100 @@ func resourceMSOSchemaTemplateFilterEntryRead(d *schema.ResourceData, m interfac
 }
 
 func resourceMSOSchemaTemplateFilterEntryUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Filter Entry: Beginning Creation")
+	log.Printf("[DEBUG] Filter Entry: Beginning Update")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
 	stateTemplate := d.Get("template_name").(string)
 	filterName := d.Get("name").(string)
 	entryName := d.Get("entry_name").(string)
-	entryDisplayName := d.Get("entry_display_name").(string)
 
-	var entryDescription, etherType, arpFlag, ipProtocol, sourceFrom, sourceTo, destinationFrom, destinationTo string
-	var matchOnlyFragments, stateful bool
-	var tcpSessionRules []interface{}
+	updatePath := fmt.Sprintf("/templates/%s/filters/%s/entries/%s", stateTemplate, filterName, entryName)
+	payloadCont := container.New()
+	payloadCont.Array()
 
-	if tempVar, ok := d.GetOk("entry_description"); ok {
-		entryDescription = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("ether_type"); ok {
-		etherType = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("arp_flag"); ok {
-		arpFlag = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("ip_protocol"); ok {
-		ipProtocol = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("source_from"); ok {
-		sourceFrom = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("source_to"); ok {
-		sourceTo = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("destination_from"); ok {
-		destinationFrom = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("destination_to"); ok {
-		destinationTo = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("match_only_fragments"); ok {
-		matchOnlyFragments = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("stateful"); ok {
-		stateful = tempVar.(bool)
-	}
-	if tempVar, ok := d.GetOk("tcp_session_rules"); ok {
-		tcpSessionRules = tempVar.([]interface{})
-	} else {
-		tcpSessionRules = append(make([]interface{}, 0), "unspecified")
+	if d.HasChange("entry_description") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("entry_description").(string))
+		if err != nil {
+			return err
+		}
 	}
 
-	pathf := fmt.Sprintf("/templates/%s/filters/%s/entries/%s", stateTemplate, filterName, entryName)
-	filterStruct := models.NewTemplateFilterEntry("replace", pathf, entryName, entryDisplayName, entryDescription, etherType, arpFlag, ipProtocol, sourceFrom, sourceTo, destinationFrom, destinationTo, matchOnlyFragments, stateful, tcpSessionRules)
-	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), filterStruct)
+	if d.HasChange("ether_type") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/etherType", updatePath), d.Get("ether_type").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("arp_flag") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/arpFlag", updatePath), d.Get("arp_flag").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("ip_protocol") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/ipProtocol", updatePath), d.Get("ip_protocol").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("match_only_fragments") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/matchOnlyFragments", updatePath), d.Get("match_only_fragments").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("stateful") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/stateful", updatePath), d.Get("stateful").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("source_from") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/sourceFrom", updatePath), d.Get("source_from").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("source_to") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/sourceTo", updatePath), d.Get("source_to").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("destination_from") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/destinationFrom", updatePath), d.Get("destination_from").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("destination_to") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/destinationTo", updatePath), d.Get("destination_to").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("tcp_session_rules") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/tcpSessionRules", updatePath), d.Get("tcp_session_rules").([]interface{}))
+		if err != nil {
+			return err
+		}
+	}
+
+	err := doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCont)
 	if err != nil {
 		return err
 	}
+
 	return resourceMSOSchemaTemplateFilterEntryRead(d, m)
 }
 
