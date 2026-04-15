@@ -141,7 +141,8 @@ func resourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) error 
 
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
-		return fmt.Errorf("No Template found")
+		d.SetId("")
+		return nil
 	}
 	stateTenantId := d.Get("tenant_id").(string)
 	stateTemplateName := d.Get("name").(string)
