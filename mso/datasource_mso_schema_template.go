@@ -59,7 +59,11 @@ func datasourceMSOSchemaTemplateRead(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	data := cont.S("templates").Data().([]interface{})
+	templateData := cont.S("templates").Data()
+	if templateData == nil {
+		return fmt.Errorf("Template of specified name not found")
+	}
+	data := templateData.([]interface{})
 	var flag bool
 	var count int
 	for _, info := range data {
