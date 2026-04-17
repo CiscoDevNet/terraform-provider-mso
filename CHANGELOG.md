@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 
 ## 2.0.0 (April 17, 2026)
 
+BREAKING CHANGES:
+- Add warning for upgrading ndo to version 4.2.2 which breaks terraform state (dcne-731) (#469)
+
+* [major_change] add warning for upgrading ndo to version 4.2.2 which breaks terraform state
+
+* update index.html.markdown
+
+---------
+
+co-authored-by: matt tarkington <mtarking@cisco.com>
+
+IMPROVEMENTS:
+- Addition of resource and data source for mso_fabric_policies_l3_domain
+- Addition of resource and data source for custom qos policy under tenant policies
+- Addition of resource and data source for mso_tenant_policies_dhcp_option_policy
+- Added ability to un-deploy non-application template types in resource_ndo_schema_template_deploy
+- Addition of resource and data source for mso_tenant_policies_mld_snooping_policy
+- Add mso_fabric_policies_mcp_global_policy resource and datasource.
+- Added mso_tenant_policies_ipsla_track_list resource
+- Addition of new resource and data source for mso_tenant_policies_l3out_interface_routing_policy
+- Add mso_fabric_policies_interface_setting resource and datasource.
+- [minor] upgrade mso-go-client to increase connection pool and enable tls session ticket caching
+
+BUG FIXES:
+- Changed terraform resource id format from just schema_id to {schema_id}/template/{template_name} to distinguish deploy resources using the same schema_id
+- Fix to update epg attributes which should not delete child objects for resource_mso_schema_template_anp_epg
+- Fix to update vrf and bd without destruction of epg resource with resource_mso_schema_template_anp_epg to avoid removal of child objects
+- Fix to update epg site attributes which should not delete child objects for resource_mso_schema_site_anp_epg
+- Fix to update template attributes which should not delete child objects for resource_mso_schema_template
+- Fix to update anp attributes which should not delete child objects for resource_mso_schema_template_anp
+- Fix to update external epg attributes which should not delete child objects for resource_mso_schema_template_external_epg (dcne-719) (#462)
+
+* [bugfix] fix to update external epg attributes which should not delete child objects for resource_mso_schema_template_external_epg
+
+* [ignore] fix small errors in inline documentation sentences
+- Fix to update vrf attributes which should not delete child objects for resource_mso_schema_template_vrf (dcne-717) (#464)
+
+* [bugfix] fix to update vrf attributes which should not delete child objects for resource_mso_schema_template_vrf
+
+* [ignore] fix small errors in inline documentation sentences
+
+* [ignore] simplify logic of rendezvous_points and add tests
+
+OTHER:
+- Merge pull request #465 from akinross/epg_site_update_bug_fix
+
+[bugfix] fix to update epg site attributes which should not delete child objects for resource_mso_schema_site_anp_epg (dcne-721)
+- Merge pull request #463 from akinross/template_update_bug_fix
+
+[bugfix] fix to update template attributes which should not delete child objects for resource_mso_schema_template (dcne-720)
+- Merge pull request #461 from akinross/anp_update_bug_fix
+
+[bugfix] fix to update anp attributes which should not delete child objects for resource_mso_schema_template_anp (dcne-718)
+
+## 2.0.0 (April 17, 2026)
+
 This release introduces breaking attribute behavior changes. The provider is moving towards allowing users to configure attributes
 based on UI functionality. Some attributes will behave differently when unset, which enables the removal of certain optional attributes.
 Specific changes are listed in the sections below. In subsequent releases, attribute behavior changes
