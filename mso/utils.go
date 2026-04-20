@@ -540,3 +540,11 @@ func GetDeployedSiteIdsForApplicationTemplate(msoClient *client.Client, schemaId
 	}
 	return siteIds, nil
 }
+
+func ParseChildResourceId(importId, separator string) (parentId string, childName string, err error) {
+	parts := strings.SplitN(importId, separator, 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid import ID format '%s', expected format: <parent_id>%s<child_name>", importId, separator)
+	}
+	return parts[0], parts[1], nil
+}

@@ -107,6 +107,51 @@ func testCheckResourceDestroyPolicy(s *terraform.State, resource, policyType str
 	return nil
 }
 
+func testCheckResourceDestroyPolicyChildWithArguments(resource, parentPolicyType, childKey string) func(s *terraform.State) error {
+	return func(s *terraform.State) error {
+		return testCheckResourceDestroyPolicyChild(s, resource, parentPolicyType, childKey)
+	}
+}
+
+func testCheckResourceDestroyPolicyChild(s *terraform.State, resource, parentPolicyType, childKey string) error {
+	msoClient := testAccPreCheck(nil)
+	for name, rs := range s.RootModule().Resources {
+		if rs.Type == resource {
+			parentID := rs.Primary.Attributes["parent_id"]
+			childName := rs.Primary.Attributes["name"]
+
+			parentParts := strings.Split(parentID, "/")
+			if len(parentParts) < 4 {
+				return fmt.Errorf("error parsing parent_id '%s' for resource '%s'", parentID, name)
+			}
+			parentUUID := parentParts[1]
+
+			response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/objects?type=%s&uuid=%s", parentPolicyType, parentUUID))
+			if err != nil {
+				if response != nil && response.S("code").Data().(float64) == 404 {
+					continue
+				}
+				return fmt.Errorf("error fetching parent policy for resource '%s' with ID '%s': %s", name, rs.Primary.ID, err)
+			}
+
+			children, childErr := response.S(childKey).Children()
+			if childErr != nil {
+				continue
+			}
+
+			for _, child := range children {
+				if child.S("name").Data().(string) == childName {
+					return fmt.Errorf(
+						"terraform destroy was unsuccessful. The child resource '%s' with name '%s' still exists under parent '%s'",
+						name, childName, parentID,
+					)
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func testCheckResourceDestroyPolicyWithPathAttributesAndArguments(resource string, objectPath ...string) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
 		return testCheckResourceDestroyPolicyWithPathAttributes(s, resource, objectPath...)
