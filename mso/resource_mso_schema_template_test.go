@@ -86,7 +86,7 @@ func TestAccMSOSchemaTemplateResource(t *testing.T) {
 					path := fmt.Sprintf("/templates/%s", msoSchemaTemplateName)
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateSchemaId), models.GetRemovePatchPayload(path))
 					if err != nil {
-						panic(fmt.Sprintf("Failed to delete template %s via API: %s", msoSchemaTemplateName, err))
+						t.Fatalf("Failed to delete template %s via API: %s", msoSchemaTemplateName, err)
 					}
 				},
 				Config: testAccMSOSchemaTemplateConfigRemoveDescription(),
