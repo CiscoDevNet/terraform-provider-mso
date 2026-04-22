@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [develop, main]
   pull_request:
 
 permissions:
@@ -14,8 +14,8 @@ jobs:
     name: Check & Build Provider
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
       - run: chmod +x ./scripts/gofmtcheck.sh
@@ -33,12 +33,12 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Unshallow
         run: git fetch --prune --unshallow
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           install-only: true
           version: latest
@@ -65,11 +65,11 @@ jobs:
   #         - name: v4.3
   #           url: 'https://173.36.219.35/'
   #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-go@v5
+  #     - uses: actions/checkout@v6
+  #     - uses: actions/setup-go@v6
   #       with:
   #         go-version-file: 'go.mod'
-  #     - uses: hashicorp/setup-terraform@v3
+  #     - uses: hashicorp/setup-terraform@v4
   #       with:
   #         terraform_version: '1.7.*'
   #         terraform_wrapper: false
@@ -82,6 +82,6 @@ jobs:
   #     - name: Upload coverage to Codecov
   #       # Upload Coverage on latest only
   #       if: ${{ matrix.ndo_host.name == 'v4.3'}}
-  #       uses: codecov/codecov-action@v4
+  #       uses: codecov/codecov-action@v6
   #       with:
   #         token: ${{ secrets.CODECOV_TOKEN }}
