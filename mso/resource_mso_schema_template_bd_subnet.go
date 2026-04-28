@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -59,10 +60,10 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 				}, false),
 			},
 			"description": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				// Set minimal length to 0 to allow removal of description
+				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -93,91 +94,94 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 	}
 }
 
+func setBDSubnetResourceData(d *schema.ResourceData, schemaId, templateName, bdName string, subnetCont *container.Container) {
+	d.Set("schema_id", schemaId)
+	d.Set("template_name", templateName)
+	d.Set("bd_name", bdName)
+	ip := models.StripQuotes(subnetCont.S("ip").String())
+	idSubnet := strings.Split(ip, "/")
+	d.SetId(idSubnet[0])
+	d.Set("ip", ip)
+	d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+	if subnetCont.Exists("description") {
+		d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
+	} else {
+		d.Set("description", "")
+	}
+	if subnetCont.Exists("shared") {
+		d.Set("shared", subnetCont.S("shared").Data().(bool))
+	}
+	if subnetCont.Exists("noDefaultGateway") {
+		d.Set("no_default_gateway", subnetCont.S("noDefaultGateway").Data().(bool))
+	}
+	if subnetCont.Exists("querier") {
+		d.Set("querier", subnetCont.S("querier").Data().(bool))
+	}
+	if subnetCont.Exists("primary") {
+		d.Set("primary", subnetCont.S("primary").Data().(bool))
+	}
+	if subnetCont.Exists("virtual") {
+		d.Set("virtual", subnetCont.S("virtual").Data().(bool))
+	}
+}
+
 func resourceMSOTemplateBDSubnetImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 
 	msoClient := m.(*client.Client)
-	get_attribute := strings.Split(d.Id(), "/")
-	import_attribute := regexp.MustCompile("(.*)/ip/(.*)")
-	import_split := import_attribute.FindStringSubmatch(d.Id())
-	schemaId := get_attribute[0]
+	getAttribute := strings.Split(d.Id(), "/")
+	importAttribute := regexp.MustCompile("(.*)/ip/(.*)")
+	importSplit := importAttribute.FindStringSubmatch(d.Id())
+	schemaId := getAttribute[0]
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return nil, err
 	}
 	count, err := cont.ArrayCount("templates")
 	if err != nil {
-		return nil, fmt.Errorf("No TemplateSubnet found")
+		return nil, fmt.Errorf("No Template found")
 	}
-	stateTemplateSubnet := get_attribute[2]
+	stateTemplate := getAttribute[2]
+	stateBD := getAttribute[4]
+	stateIP := importSplit[2]
 	found := false
-	stateBD := get_attribute[4]
-	stateIP := import_split[2]
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return nil, err
 		}
-		apiTemplateSubnet := models.StripQuotes(tempCont.S("name").String())
+		apiTemplate := models.StripQuotes(tempCont.S("name").String())
 
-		if apiTemplateSubnet == stateTemplateSubnet {
+		if apiTemplate == stateTemplate {
 			bdCount, err := tempCont.ArrayCount("bds")
 			if err != nil {
 				return nil, fmt.Errorf("Unable to get BD list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return nil, err
 				}
-
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
-					count1, err := bdCont.ArrayCount("subnets")
+					subnetCount, err := bdCont.ArrayCount("subnets")
 					if err != nil {
 						return nil, fmt.Errorf("Unable to get Subnet List")
 					}
-					for k := 0; k < count1; k++ {
-						dataCon, err := bdCont.ArrayElement(k, "subnets")
+					for k := 0; k < subnetCount && !found; k++ {
+						subnetCont, err := bdCont.ArrayElement(k, "subnets")
 						if err != nil {
 							return nil, fmt.Errorf("Unable to parse the subnets list")
 						}
-
-						apiIP := models.StripQuotes(dataCon.S("ip").String())
+						apiIP := models.StripQuotes(subnetCont.S("ip").String())
 						if apiIP == stateIP {
-							log.Println(dataCon)
-							d.Set("schema_id", schemaId)
-							d.Set("template_name", apiTemplateSubnet)
-							d.Set("bd_name", apiBD)
-							ip := models.StripQuotes(dataCon.S("ip").String())
-							idSubnet := strings.Split(ip, "/")
-							d.SetId(idSubnet[0])
-							d.Set("ip", models.StripQuotes(dataCon.S("ip").String()))
-							d.Set("scope", models.StripQuotes(dataCon.S("scope").String()))
-							d.Set("description", models.StripQuotes(dataCon.S("description").String()))
-							d.Set("shared", dataCon.S("shared").Data().(bool))
-							if dataCon.Exists("noDefaultGateway") {
-								d.Set("no_default_gateway", dataCon.S("noDefaultGateway").Data().(bool))
-							}
-							if dataCon.Exists("querier") {
-								d.Set("querier", dataCon.S("querier").Data().(bool))
-							}
-							if dataCon.Exists("primary") {
-								d.Set("primary", dataCon.S("primary").Data().(bool))
-							}
-							if dataCon.Exists("virtual") {
-								d.Set("virtual", dataCon.S("virtual").Data().(bool))
-							}
+							setBDSubnetResourceData(d, schemaId, apiTemplate, apiBD, subnetCont)
 							found = true
-							break
 						}
-
 					}
 				}
-
 			}
 		}
-
 	}
 
 	if !found {
@@ -190,45 +194,21 @@ func resourceMSOTemplateBDSubnetImport(d *schema.ResourceData, m interface{}) ([
 }
 
 func resourceMSOTemplateBDSubnetCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template BD: Beginning Creation")
+	log.Printf("[DEBUG] Template BD Subnet: Beginning Creation")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
 	bdName := d.Get("bd_name").(string)
 
-	var IP string
-	if ip, ok := d.GetOk("ip"); ok {
-		IP = ip.(string)
-	}
-	var Scope string
-	if scope, ok := d.GetOk("scope"); ok {
-		Scope = scope.(string)
-	}
-	var Shared bool
-	if shared, ok := d.GetOk("shared"); ok {
-		Shared = shared.(bool)
-	}
-	var NoDefaultGateway bool
-	if ndg, ok := d.GetOk("no_default_gateway"); ok {
-		NoDefaultGateway = ndg.(bool)
-	}
-	var Querier bool
-	if qr, ok := d.GetOk("querier"); ok {
-		Querier = qr.(bool)
-	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
-	}
-	var Primary bool
-	if d, ok := d.GetOk("primary"); ok {
-		Primary = d.(bool)
-	}
-	var Virtual bool
-	if d, ok := d.GetOk("virtual"); ok {
-		Virtual = d.(bool)
-	}
+	IP := d.Get("ip").(string)
+	Scope := d.Get("scope").(string)
+	Shared := d.Get("shared").(bool)
+	NoDefaultGateway := d.Get("no_default_gateway").(bool)
+	Querier := d.Get("querier").(bool)
+	Desc := d.Get("description").(string)
+	Primary := d.Get("primary").(bool)
+	Virtual := d.Get("virtual").(bool)
 
 	path := fmt.Sprintf("/templates/%s/bds/%s/subnets/-", templateName, bdName)
 	bdSubnetStruct := models.NewTemplateBDSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
@@ -259,9 +239,9 @@ func resourceMSOTemplateBDSubnetRead(d *schema.ResourceData, m interface{}) erro
 	}
 	stateTemplate := d.Get("template_name").(string)
 	found := false
-	stateBD := d.Get("bd_name")
-	stateIP := d.Get("ip")
-	for i := 0; i < count; i++ {
+	stateBD := d.Get("bd_name").(string)
+	stateIP := d.Get("ip").(string)
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -274,7 +254,7 @@ func resourceMSOTemplateBDSubnetRead(d *schema.ResourceData, m interface{}) erro
 			if err != nil {
 				return fmt.Errorf("Unable to get BD list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err
@@ -282,49 +262,24 @@ func resourceMSOTemplateBDSubnetRead(d *schema.ResourceData, m interface{}) erro
 				apiBD := models.StripQuotes(bdCont.S("name").String())
 				if apiBD == stateBD {
 
-					count1, err := bdCont.ArrayCount("subnets")
+					subnetCount, err := bdCont.ArrayCount("subnets")
 					if err != nil {
 						return fmt.Errorf("Unable to get Subnet List")
 					}
-					for k := 0; k < count1; k++ {
-						subnetsCont, err := bdCont.ArrayElement(k, "subnets")
+					for k := 0; k < subnetCount && !found; k++ {
+						subnetCont, err := bdCont.ArrayElement(k, "subnets")
 						if err != nil {
-							return fmt.Errorf("Unable to parse the subntes list")
+							return fmt.Errorf("Unable to parse the subnets list")
 						}
-						apiIP := models.StripQuotes(subnetsCont.S("ip").String())
+						apiIP := models.StripQuotes(subnetCont.S("ip").String())
 						if apiIP == stateIP {
-							d.Set("schema_id", schemaId)
-							d.Set("template_name", apiTemplate)
-							d.Set("bd_name", apiBD)
-							ip := models.StripQuotes(subnetsCont.S("ip").String())
-							idSubnet := strings.Split(ip, "/")
-							d.SetId(idSubnet[0])
-							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
-							d.Set("scope", models.StripQuotes(subnetsCont.S("scope").String()))
-							d.Set("description", models.StripQuotes(subnetsCont.S("description").String()))
-							d.Set("shared", subnetsCont.S("shared").Data().(bool))
-							if subnetsCont.Exists("noDefaultGateway") {
-								d.Set("no_default_gateway", subnetsCont.S("noDefaultGateway").Data().(bool))
-							}
-							if subnetsCont.Exists("querier") {
-								d.Set("querier", subnetsCont.S("querier").Data().(bool))
-							}
-							if subnetsCont.Exists("primary") {
-								d.Set("primary", subnetsCont.S("primary").Data().(bool))
-							}
-							if subnetsCont.Exists("virtual") {
-								d.Set("virtual", subnetsCont.S("virtual").Data().(bool))
-							}
+							setBDSubnetResourceData(d, schemaId, apiTemplate, apiBD, subnetCont)
 							found = true
 						}
-
 					}
-
 				}
-
 			}
 		}
-
 	}
 
 	if !found {
@@ -337,37 +292,9 @@ func resourceMSOTemplateBDSubnetRead(d *schema.ResourceData, m interface{}) erro
 }
 
 func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template BD: Beginning Update")
+	log.Printf("[DEBUG] Template BD Subnet: Beginning Update")
 	msoClient := m.(*client.Client)
 
-	var Scope string
-	if scope, ok := d.GetOk("scope"); ok {
-		Scope = scope.(string)
-	}
-	var Shared bool
-	if shared, ok := d.GetOk("shared"); ok {
-		Shared = shared.(bool)
-	}
-	var NoDefaultGateway bool
-	if ndg, ok := d.GetOk("no_default_gateway"); ok {
-		NoDefaultGateway = ndg.(bool)
-	}
-	var Querier bool
-	if qr, ok := d.GetOk("querier"); ok {
-		Querier = qr.(bool)
-	}
-	var Primary bool
-	if pr, ok := d.GetOk("primary"); ok {
-		Primary = pr.(bool)
-	}
-	var Virtual bool
-	if d, ok := d.GetOk("virtual"); ok {
-		Virtual = d.(bool)
-	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
-	}
 	schemaId := d.Get("schema_id").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -383,7 +310,7 @@ func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) er
 	found := false
 	stateBD := d.Get("bd_name")
 	stateIP := d.Get("ip")
-	for i := 0; i < count; i++ {
+	for i := 0; i < count && !found; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
 			return err
@@ -396,7 +323,7 @@ func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) er
 			if err != nil {
 				return fmt.Errorf("Unable to get BD list")
 			}
-			for j := 0; j < bdCount; j++ {
+			for j := 0; j < bdCount && !found; j++ {
 				bdCont, err := tempCont.ArrayElement(j, "bds")
 				if err != nil {
 					return err
@@ -408,22 +335,71 @@ func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) er
 					if err != nil {
 						return fmt.Errorf("Unable to get Subnet List")
 					}
-					for k := 0; k < count1; k++ {
+					for k := 0; k < count1 && !found; k++ {
 						subnetsCont, err := bdCont.ArrayElement(k, "subnets")
 						if err != nil {
-							return fmt.Errorf("Unable to parse the subntes list")
+							return fmt.Errorf("Unable to parse the subnets list")
 						}
 						apiIP := models.StripQuotes(subnetsCont.S("ip").String())
 						if apiIP == stateIP {
-							index := k
-							path := fmt.Sprintf("/templates/%s/bds/%s/subnets/%v", apiTemplate, apiBD, index)
-							bdSubnetStruct := models.NewTemplateBDSubnet("replace", path, apiIP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
-							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdSubnetStruct)
+							updatePath := fmt.Sprintf("/templates/%s/bds/%s/subnets/%d", apiTemplate, apiBD, k)
+							payloadCont := container.New()
+							payloadCont.Array()
+
+							if d.HasChange("scope") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/scope", updatePath), d.Get("scope").(string))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("description") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("shared") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/shared", updatePath), d.Get("shared").(bool))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("no_default_gateway") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/noDefaultGateway", updatePath), d.Get("no_default_gateway").(bool))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("querier") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/querier", updatePath), d.Get("querier").(bool))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("primary") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/primary", updatePath), d.Get("primary").(bool))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("virtual") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/virtual", updatePath), d.Get("virtual").(bool))
+								if err != nil {
+									return err
+								}
+							}
+
+							err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCont)
 							if err != nil {
 								return err
 							}
 							found = true
-							break
 						}
 					}
 				}
@@ -437,7 +413,7 @@ func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) er
 }
 
 func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template BD: Beginning Update")
+	log.Printf("[DEBUG] Template BD Subnet: Beginning Delete")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 
@@ -451,8 +427,8 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 		return fmt.Errorf("No Template found")
 	}
 	stateTemplate := d.Get("template_name").(string)
-	stateBD := d.Get("bd_name")
-	stateIP := d.Get("ip")
+	stateBD := d.Get("bd_name").(string)
+	stateIP := d.Get("ip").(string)
 	for i := 0; i < count; i++ {
 		tempCont, err := cont.ArrayElement(i, "templates")
 		if err != nil {
@@ -481,12 +457,11 @@ func resourceMSOTemplateBDSubnetDelete(d *schema.ResourceData, m interface{}) er
 					for k := 0; k < count1; k++ {
 						subnetsCont, err := bdCont.ArrayElement(k, "subnets")
 						if err != nil {
-							return fmt.Errorf("Unable to parse the subntes list")
+							return fmt.Errorf("Unable to parse the subnets list")
 						}
 						apiIP := models.StripQuotes(subnetsCont.S("ip").String())
 						if apiIP == stateIP {
-							index := k
-							path := fmt.Sprintf("/templates/%s/bds/%s/subnets/%v", apiTemplate, apiBD, index)
+							path := fmt.Sprintf("/templates/%s/bds/%s/subnets/%v", apiTemplate, apiBD, k)
 							response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), models.GetRemovePatchPayload(path))
 
 							// Ignoring Error with code 141: Resource Not Found when deleting

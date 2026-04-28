@@ -181,6 +181,33 @@ resource "mso_schema_template_bd" "%[1]s" {
 `, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
 }
 
+func testSchemaTemplateBdStretchedConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_bd" "%[1]s" {
+	schema_id				= mso_schema.%[2]s.id
+	template_name			= "%[3]s"
+	name					= "%[1]s"
+	display_name			= "%[1]s"
+	layer2_unknown_unicast 	= "proxy"
+	layer2_stretch			= true
+	vrf_name				= mso_schema_template_vrf.%[4]s.name
+}
+`, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
+}
+
+func testSchemaTemplateBdSubnetConfig() string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_bd_subnet" "%[1]s_subnet" {
+	schema_id     = mso_schema.%[2]s.id
+	template_name = "%[3]s"
+	bd_name       = mso_schema_template_bd.%[1]s.name
+	ip            = "%[4]s"
+	scope         = "private"
+	shared        = false
+}
+`, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIp)
+}
+
 func testTenantPolicyTemplateIPSLAMonitoringPolicyConfig() string {
 	return fmt.Sprintf(`
 resource "mso_tenant_policies_ipsla_monitoring_policy" "%[1]s" {
@@ -259,19 +286,6 @@ resource "mso_schema_template_bd" "%[1]s" {
 	layer3_multicast		= true
 }
 `, msoSchemaTemplateBdL3MulticastName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfL3MulticastName)
-}
-
-func testSchemaTemplateBdSubnetConfig() string {
-	return fmt.Sprintf(`
-resource "mso_schema_template_bd_subnet" "%[1]s_subnet" {
-	schema_id     = mso_schema.%[2]s.id
-	template_name = "%[3]s"
-	bd_name       = mso_schema_template_bd.%[1]s.name
-	ip            = "%[4]s"
-	scope         = "private"
-	shared        = false
-}
-`, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIp)
 }
 
 func testSchemaTemplateFilterEntryConfig() string {
