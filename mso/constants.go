@@ -1,5 +1,75 @@
 package mso
 
+var controlMap = map[string]string{
+	"fast_sel_hot_stdby": "fast-sel-hot-stdby",
+	"graceful_conv":      "graceful-conv",
+	"susp_individual":    "susp-individual",
+	"load_defer":         "load-defer",
+	"symmetric_hash":     "symmetric-hash",
+}
+
+var enabledDisabledMap = map[interface{}]interface{}{
+	"enabled":  true,
+	"disabled": false,
+	true:       "enabled",
+	false:      "disabled",
+}
+
+var l2InterfaceQinqMap = map[string]string{
+	"double_q_tag_port": "doubleQtagPort",
+	"core_port":         "corePort",
+	"edge_port":         "edgePort",
+	"disabled":          "disabled",
+}
+
+var linkLevelFecMap = map[string]string{
+	"inherit":       "inherit",
+	"cl74_fc_fec":   "cl74-fc-fec",
+	"cl91_rs_fec":   "cl91-rs-fec",
+	"cons16_rs_fec": "cons16-rs-fec",
+	"ieee_rs_fec":   "ieee-rs-fec",
+	"kp_fec":        "kp-fec",
+	"disable_fec":   "disable-fec",
+}
+
+var loadBalanceHashingMap = map[string]string{
+	"destination_ip":         "dst-ip",
+	"layer_4_destination_ip": "l4-dst-port",
+	"layer_4_source_ip":      "l4-src-port",
+	"source_ip":              "src-ip",
+}
+
+var portChannelModeMap = map[string]string{
+	"lacp_active":                   "active",
+	"lacp_passive":                  "passive",
+	"static_channel_mode_on":        "off",
+	"mac_pinning":                   "mac-pin",
+	"mac_pinning_physical_nic_load": "mac-pin-nicload",
+	"use_explicit_failover_order":   "explicit-failover",
+}
+
+var ptpDestinationMacMap = map[string]string{
+	"forwardable":     "forwardable",
+	"non_forwardable": "nonForwardable",
+	"nonForwardable":  "non_forwardable",
+}
+
+var ptpMismatchedMacHandlingMap = map[string]string{
+	"drop":                    "drop",
+	"reply_with_config_mac":   "replyWithCfgMac",
+	"replyWithCfgMac":         "reply_with_config_mac",
+	"reply_with_received_mac": "replyWithRxMac",
+	"replyWithRxMac":          "reply_with_received_mac",
+}
+
+var ptpProfileTemplateMap = map[string]string{
+	"aes67":           "aes67",
+	"default":         "default",
+	"smpte":           "smpte",
+	"telecom":         "telecomFullPath",
+	"telecomFullPath": "telecom",
+}
+
 var targetCosMap = map[string]string{
 	"background":            "cos0",
 	"best_effort":           "cos1",
@@ -46,74 +116,4 @@ var targetDscpMap = map[string]string{
 	"unspecified":          "unspecified",
 	"expeditedForwarding":  "expedited_forwarding",
 	"voiceAdmit":           "voice_admit",
-}
-
-var enabledDisabledMap = map[interface{}]interface{}{
-	"enabled":  true,
-	"disabled": false,
-	true:       "enabled",
-	false:      "disabled",
-}
-
-var portChannelModeMap = map[string]string{
-	"lacp_active":                   "active",
-	"lacp_passive":                  "passive",
-	"static_channel_mode_on":        "off",
-	"mac_pinning":                   "mac-pin",
-	"mac_pinning_physical_nic_load": "mac-pin-nicload",
-	"use_explicit_failover_order":   "explicit-failover",
-}
-
-var controlMap = map[string]string{
-	"fast_sel_hot_stdby": "fast-sel-hot-stdby",
-	"graceful_conv":      "graceful-conv",
-	"susp_individual":    "susp-individual",
-	"load_defer":         "load-defer",
-	"symmetric_hash":     "symmetric-hash",
-}
-
-var linkLevelFecMap = map[string]string{
-	"inherit":       "inherit",
-	"cl74_fc_fec":   "cl74-fc-fec",
-	"cl91_rs_fec":   "cl91-rs-fec",
-	"cons16_rs_fec": "cons16-rs-fec",
-	"ieee_rs_fec":   "ieee-rs-fec",
-	"kp_fec":        "kp-fec",
-	"disable_fec":   "disable-fec",
-}
-
-var l2InterfaceQinqMap = map[string]string{
-	"double_q_tag_port": "doubleQtagPort",
-	"core_port":         "corePort",
-	"edge_port":         "edgePort",
-	"disabled":          "disabled",
-}
-
-var loadBalanceHashingMap = map[string]string{
-	"destination_ip":         "dst-ip",
-	"layer_4_destination_ip": "l4-dst-port",
-	"layer_4_source_ip":      "l4-src-port",
-	"source_ip":              "src-ip",
-}
-
-var ptpProfileTemplateMap = map[string]string{
-	"aes67":           "aes67",
-	"default":         "default",
-	"smpte":           "smpte",
-	"telecom":         "telecomFullPath",
-	"telecomFullPath": "telecom",
-}
-
-var ptpDestinationMacMap = map[string]string{
-	"forwardable":     "forwardable",
-	"non_forwardable": "nonForwardable",
-	"nonForwardable":  "non_forwardable",
-}
-
-var ptpMismatchedMacHandlingMap = map[string]string{
-	"drop":                    "drop",
-	"reply_with_config_mac":   "replyWithCfgMac",
-	"replyWithCfgMac":         "reply_with_config_mac",
-	"reply_with_received_mac": "replyWithRxMac",
-	"replyWithRxMac":          "reply_with_received_mac",
 }
