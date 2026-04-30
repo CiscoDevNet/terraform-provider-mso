@@ -138,6 +138,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_custom_qos_policy":              resourceMSOCustomQoSPolicy(),
 			"mso_tenant_policies_dhcp_option_policy":             resourceMSODHCPOptionPolicy(),
 			"mso_tenant_policies_dhcp_relay_policy":              resourceMSOTenantPoliciesDHCPRelayPolicy(),
+			"mso_tenant_policies_endpoint_mac_tag_policy":        resourceMSOEndpointMACTagPolicy(),
 			"mso_tenant_policies_igmp_interface_policy":          resourceMSOIGMPInterfacePolicy(),
 			"mso_tenant_policies_ipsla_monitoring_policy":        resourceMSOIPSLAMonitoringPolicy(),
 			"mso_tenant_policies_ipsla_track_list":               resourceMSOIPSLATrackList(),
@@ -145,7 +146,6 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_mld_snooping_policy":            resourceMSOMLDSnoopingPolicy(),
 			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
 			"mso_user": resourceMSOUser(),
-			"mso_tenant_policies_endpoint_mac_tag_policy": resourceMSOEndpointMACTagPolicy(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -217,6 +217,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_custom_qos_policy":              datasourceMSOCustomQoSPolicy(),
 			"mso_tenant_policies_dhcp_option_policy":             datasourceMSODHCPOptionPolicy(),
 			"mso_tenant_policies_dhcp_relay_policy":              datasourceMSOTenantPoliciesDHCPRelayPolicy(),
+			"mso_tenant_policies_endpoint_mac_tag_policy":        datasourceMSOEndpointMACTagPolicy(),
 			"mso_tenant_policies_igmp_interface_policy":          datasourceMSOIGMPInterfacePolicy(),
 			"mso_tenant_policies_ipsla_monitoring_policy":        datasourceMSOIPSLAMonitoringPolicy(),
 			"mso_tenant_policies_ipsla_track_list":               datasourceMSOIPSLATrackList(),
@@ -224,7 +225,6 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_mld_snooping_policy":            datasourceMSOMLDSnoopingPolicy(),
 			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
 			"mso_user": datasourceMSOUser(),
-			"mso_tenant_policies_endpoint_mac_tag_policy": datasourceMSOEndpointMACTagPolicy(),
 		},
 
 		ConfigureFunc: configureClient,
