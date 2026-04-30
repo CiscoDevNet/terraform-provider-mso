@@ -305,6 +305,18 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 
 }
 
+// NOTE: This Update sends the whole subnet object on every change because the MSO/NDO
+// External EPG subnet endpoint does not support per-field JSON Patch paths.
+//
+// Unlike sibling resources (e.g. the ANP EPG subnet) this Update function does not
+// build a per-attribute JSON Patch payload using `d.HasChange(...)` and
+// `addPatchPayloadToContainer` against paths such as `<subnetPath>/name`,
+// `<subnetPath>/scope`, `<subnetPath>/aggregate`. The MSO/NDO External EPG subnet endpoint
+// does not accept sub-field paths under `/templates/<tmpl>/externalEpgs/<epg>/subnets/<index>`
+// (verified manually: such requests return HTTP 400 with code 141 "Resource Not Found:
+// ExternalEpgSubnet with name or index <idx>/<field> not found"). Only a `replace` op
+// against the whole subnet path is accepted, so the entire subnet payload (ip, name,
+// scope, aggregate) is sent on every update, even when only one attribute changed.
 func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Template Externalepg Subnet: Beginning Update")
 	msoClient := m.(*client.Client)
