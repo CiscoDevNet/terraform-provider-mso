@@ -78,6 +78,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_ptp_policy_profile":                      resourceMSOPtpPolicyProfile(),
 			"mso_fabric_policies_synce_interface_policy":                  resourceMSOSyncEInterfacePolicy(),
 			"mso_fabric_policies_vlan_pool":                               resourceMSOVlanPool(),
+			"mso_fabric_resource_policies_physical_interface":             resourceMSOPhysicalInterface(),
 			"mso_fabric_resource_policies_port_channel_interface":         resourceMSOPortChannelInterface(),
 			"mso_fabric_resource_policies_virtual_port_channel_interface": resourceMSOVirtualPortChannelInterface(),
 			"mso_label":               resourceMSOLabel(),
@@ -152,7 +153,6 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_netflow_record":                 resourceMSONetflowRecord(),
 			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
 			"mso_user": resourceMSOUser(),
-			"mso_fabric_resource_policies_physical_interface": resourceMSOPhysicalInterface(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -166,6 +166,7 @@ func Provider() terraform.ResourceProvider {
 			"mso_fabric_policies_ptp_policy_profile":                      datasourceMSOPtpPolicyProfile(),
 			"mso_fabric_policies_synce_interface_policy":                  datasourceMSOSyncEInterfacePolicy(),
 			"mso_fabric_policies_vlan_pool":                               datasourceMSOVlanPool(),
+			"mso_fabric_resource_policies_physical_interface":             datasourceMSOPhysicalInterface(),
 			"mso_fabric_resource_policies_port_channel_interface":         datasourceMSOPortChannelInterface(),
 			"mso_fabric_resource_policies_virtual_port_channel_interface": dataSourceMSOVirtualPortChannelInterface(),
 			"mso_label":               datasourceMSOLabel(),
@@ -238,7 +239,6 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_netflow_record":                 datasourceMSONetflowRecord(),
 			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
 			"mso_user": datasourceMSOUser(),
-			"mso_fabric_resource_policies_physical_interface": datasourceMSOPhysicalInterface(),
 		},
 
 		ConfigureFunc: configureClient,
