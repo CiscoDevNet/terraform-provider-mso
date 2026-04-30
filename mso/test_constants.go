@@ -17,6 +17,8 @@ var msoSchemaTemplateAnpName = acctest.RandStringFromCharSet(10, acctest.CharSet
 var msoSchemaTemplateAnpEpgName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateVrfName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateExtEpgName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateExtEpgSubnetName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateExtEpgSubnetName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateMCPGlobalPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -42,6 +44,7 @@ var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, ac
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
 const msoSchemaTemplateExtEpgSubnetIp = "10.0.1.1/24"
+const msoSchemaTemplateExtEpgSubnetIp2 = "10.0.1.2/24"
 const msoSchemaTemplateBdSubnetIp = "10.1.0.1/24"
 
 func testSiteConfigAnsibleTest() string {
