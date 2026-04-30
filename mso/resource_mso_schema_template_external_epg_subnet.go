@@ -57,17 +57,31 @@ func resourceMSOTemplateExtenalepgSubnet() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			// NOTE: `scope` values are intentionally not validated to avoid introducing a breaking
+			// change for existing configurations. The MSO/NDO API accepts the documented values
+			// (`import-rtctrl`, `export-rtctrl`, `shared-rtctrl`, `import-security`, `shared-security`)
+			// but additional/legacy values may be accepted server-side.
+			// NOTE: although the API accepts an empty `scope` list, the NDO 4.1(1g) UI does not allow
+			// saving an External EPG Subnet without at least one scope value selected. Configurations
+			// that omit `scope` (or set it to `[]`) will apply via Terraform but may be rejected when
+			// the same template is later edited through the UI.
 			"scope": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
+			// NOTE: `aggregate` values are intentionally not validated to avoid introducing a breaking
+			// change for existing configurations. The NDO UI only exposes `shared-rtctrl`
+			// ("Aggregate Shared Routes"), but the API also accepts `import-rtctrl`, `export-rtctrl`
+			// and `shared-security`. An aggregate value generally requires the matching scope value to
+			// also be set; this constraint is enforced by the API rather than the provider.
 			"aggregate": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Computed: true,
+				// Commented computed to allow aggregate to be set to empty list
+				// Computed: true,
 			},
 		}),
 	}
@@ -131,8 +145,16 @@ func resourceMSOTemplateExtenalepgSubnetImport(d *schema.ResourceData, m interfa
 							d.SetId(idSubnet[0])
 							d.Set("ip", models.StripQuotes(subnetsCont.S("ip").String()))
 							d.Set("name", models.StripQuotes(subnetsCont.S("name").String()))
-							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
-							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+							if scope := subnetsCont.S("scope").Data(); scope != nil {
+								d.Set("scope", scope.([]interface{}))
+							} else {
+								d.Set("scope", []interface{}{})
+							}
+							if aggregate := subnetsCont.S("aggregate").Data(); aggregate != nil {
+								d.Set("aggregate", aggregate.([]interface{}))
+							} else {
+								d.Set("aggregate", []interface{}{})
+							}
 
 							found = true
 							break
@@ -168,8 +190,6 @@ func resourceMSOTemplateExtenalepgSubnetCreate(d *schema.ResourceData, m interfa
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string
-	Aggregate := make([]interface{}, 0)
-	Scope := make([]interface{}, 0)
 
 	if tempVar, ok := d.GetOk("ip"); ok {
 		IP = tempVar.(string)
@@ -177,12 +197,8 @@ func resourceMSOTemplateExtenalepgSubnetCreate(d *schema.ResourceData, m interfa
 	if tempVar, ok := d.GetOk("name"); ok {
 		Name = tempVar.(string)
 	}
-	if tempVar, ok := d.GetOk("scope"); ok {
-		Scope = tempVar.([]interface{})
-	}
-	if tempVar, ok := d.GetOk("aggregate"); ok {
-		Aggregate = tempVar.([]interface{})
-	}
+	Scope := d.Get("scope").([]interface{})
+	Aggregate := d.Get("aggregate").([]interface{})
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/subnets/-", templateName, extenalepgName)
 	externalepgStruct := models.NewTemplateExternalEpgSubnet("add", path, IP, Name, Scope, Aggregate)
@@ -255,8 +271,16 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 							} else {
 								d.Set("name", name)
 							}
-							d.Set("scope", subnetsCont.S("scope").Data().([]interface{}))
-							d.Set("aggregate", subnetsCont.S("aggregate").Data().([]interface{}))
+							if scope := subnetsCont.S("scope").Data(); scope != nil {
+								d.Set("scope", scope.([]interface{}))
+							} else {
+								d.Set("scope", []interface{}{})
+							}
+							if aggregate := subnetsCont.S("aggregate").Data(); aggregate != nil {
+								d.Set("aggregate", aggregate.([]interface{}))
+							} else {
+								d.Set("aggregate", []interface{}{})
+							}
 							found = true
 							break
 						}
@@ -274,8 +298,6 @@ func resourceMSOTemplateExtenalepgSubnetRead(d *schema.ResourceData, m interface
 
 	if !found {
 		d.SetId("")
-		d.Set("ip", "")
-		d.Set("scope", "")
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
@@ -292,8 +314,6 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	templateName := d.Get("template_name").(string)
 
 	var IP, Name string
-	Aggregate := make([]interface{}, 0)
-	Scope := make([]interface{}, 0)
 
 	if tempVar, ok := d.GetOk("ip"); ok {
 		IP = tempVar.(string)
@@ -301,12 +321,8 @@ func resourceMSOTemplateExtenalepgSubnetUpdate(d *schema.ResourceData, m interfa
 	if tempVar, ok := d.GetOk("name"); ok {
 		Name = tempVar.(string)
 	}
-	if tempVar, ok := d.GetOk("scope"); ok {
-		Scope = tempVar.([]interface{})
-	}
-	if tempVar, ok := d.GetOk("aggregate"); ok {
-		Aggregate = tempVar.([]interface{})
-	}
+	Scope := d.Get("scope").([]interface{})
+	Aggregate := d.Get("aggregate").([]interface{})
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {

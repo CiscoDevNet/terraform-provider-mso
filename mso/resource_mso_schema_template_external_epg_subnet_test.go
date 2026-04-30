@@ -29,6 +29,11 @@ func TestAccMSOSchemaTemplateExternalEpgSubnetResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "external_epg_name", msoSchemaTemplateExtEpgName),
 					resource.TestCheckResourceAttr(resourceName, "ip", msoSchemaTemplateExtEpgSubnetIp),
 					resource.TestCheckResourceAttr(resourceName, "name", ""),
+					// Verify defaults when scope and aggregate are not set in config:
+					// scope is Computed so it reflects the server-side default (empty list);
+					// aggregate is not Computed so it defaults to an empty list.
+					resource.TestCheckResourceAttr(resourceName, "scope.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "aggregate.#", "0"),
 					// Capture the dynamic schema ID from state for use in the manual deletion PreConfig step
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources[resourceName]
@@ -89,6 +94,17 @@ func TestAccMSOSchemaTemplateExternalEpgSubnetResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "aggregate.#", "2"),
 					resource.TestCheckResourceAttr(resourceName, "aggregate.0", "shared-rtctrl"),
 					resource.TestCheckResourceAttr(resourceName, "aggregate.1", "export-rtctrl"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Clear External EPG Subnet aggregate with empty list") },
+				Config:    testAccMSOSchemaTemplateExtEpgSubnetConfigWithAggregateEmpty(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "ip", msoSchemaTemplateExtEpgSubnetIp),
+					resource.TestCheckResourceAttr(resourceName, "scope.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "scope.0", "shared-rtctrl"),
+					resource.TestCheckResourceAttr(resourceName, "scope.1", "export-rtctrl"),
+					resource.TestCheckResourceAttr(resourceName, "aggregate.#", "0"),
 				),
 			},
 			{
@@ -199,6 +215,18 @@ func testAccMSOSchemaTemplateExtEpgSubnetConfigWithScopeAndAggregateUpdated() st
 		ip                = "%[5]s"
 		scope             = ["shared-rtctrl", "export-rtctrl"]
 		aggregate         = ["shared-rtctrl", "export-rtctrl"]
+	}`, testAccMSOSchemaTemplateExtEpgSubnetPrerequisiteConfig(), msoSchemaTemplateExtEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateExtEpgSubnetIp)
+}
+
+func testAccMSOSchemaTemplateExtEpgSubnetConfigWithAggregateEmpty() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_external_epg_subnet" "%[2]s_subnet" {
+		schema_id         = mso_schema.%[3]s.id
+		template_name     = "%[4]s"
+		external_epg_name = mso_schema_template_external_epg.%[2]s.external_epg_name
+		ip                = "%[5]s"
+		scope             = ["shared-rtctrl", "export-rtctrl"]
+		aggregate         = []
 	}`, testAccMSOSchemaTemplateExtEpgSubnetPrerequisiteConfig(), msoSchemaTemplateExtEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateExtEpgSubnetIp)
 }
 
