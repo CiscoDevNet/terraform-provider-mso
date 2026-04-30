@@ -73,81 +73,106 @@ func resourceMSOTemplateExternalEpgContract() *schema.Resource {
 	}
 }
 
+// getSchemaTemplateExtEpgContract finds the contractRelationships entry on an external EPG that matches
+// contract name + ref schema/template + relationship_type. Returns (index, container, error).
+// index == -1 means not found.
+func getSchemaTemplateExtEpgContract(cont *container.Container, templateName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType string) (int, *container.Container, error) {
+	index := -1
+	count, err := cont.ArrayCount("templates")
+	if err != nil {
+		return index, nil, fmt.Errorf("No Template found")
+	}
+	for i := 0; i < count; i++ {
+		tempCont, err := cont.ArrayElement(i, "templates")
+		if err != nil {
+			return index, nil, err
+		}
+		if models.StripQuotes(tempCont.S("name").String()) != templateName {
+			continue
+		}
+		epgCount, err := tempCont.ArrayCount("externalEpgs")
+		if err != nil {
+			return index, nil, fmt.Errorf("Unable to get External Epg list")
+		}
+		for j := 0; j < epgCount; j++ {
+			epgCont, err := tempCont.ArrayElement(j, "externalEpgs")
+			if err != nil {
+				return index, nil, err
+			}
+			if models.StripQuotes(epgCont.S("name").String()) != epgName {
+				continue
+			}
+			contractCount, err := epgCont.ArrayCount("contractRelationships")
+			if err != nil {
+				return index, nil, fmt.Errorf("Unable to get contract Relationships list")
+			}
+			for k := 0; k < contractCount; k++ {
+				contractCont, err := epgCont.ArrayElement(k, "contractRelationships")
+				if err != nil {
+					return index, nil, err
+				}
+				contractRef := models.StripQuotes(contractCont.S("contractRef").String())
+				re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+				match := re.FindStringSubmatch(contractRef)
+				if match == nil {
+					continue
+				}
+				apiRelationshipType := models.StripQuotes(contractCont.S("relationshipType").String())
+				if match[3] == contractName &&
+					match[1] == contractSchemaId &&
+					match[2] == contractTemplateName &&
+					apiRelationshipType == relationshipType {
+					return k, contractCont, nil
+				}
+			}
+		}
+	}
+	return index, nil, nil
+}
+
 func resourceMSOTemplateExternalEpgContractImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	msoClient := m.(*client.Client)
 	get_attribute := strings.Split(d.Id(), "/")
+	if len(get_attribute) < 8 {
+		return nil, fmt.Errorf("Invalid import id format, expected <schema_id>/templates/<template>/externalEpgs/<epg>/contractRelationships/<contract>/<relationship_type>")
+	}
 	schemaId := get_attribute[0]
+	stateTemplate := get_attribute[2]
+	stateEPG := get_attribute[4]
+	stateContract := get_attribute[6]
+	stateType := get_attribute[7]
+
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return nil, err
 	}
-	d.Set("schema_id", schemaId)
-	count, err := cont.ArrayCount("templates")
+
+	// Without explicit contract_schema_id / contract_template_name, default to the same schema/template.
+	index, crefCont, err := getSchemaTemplateExtEpgContract(cont, stateTemplate, stateEPG, stateContract, schemaId, stateTemplate, stateType)
 	if err != nil {
-		return nil, fmt.Errorf("No Template found")
+		return nil, err
 	}
-	stateTemplate := get_attribute[2]
-	found := false
-	stateEPG := get_attribute[4]
-	stateContract := get_attribute[6]
-	stateType := get_attribute[7]
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return nil, err
-		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
-		if apiTemplate == stateTemplate {
-			d.Set("template_name", apiTemplate)
-			epgCount, err := tempCont.ArrayCount("externalEpgs")
-			if err != nil {
-				return nil, fmt.Errorf("Unable to get External Epg list")
-			}
-			for j := 0; j < epgCount; j++ {
-				epgCont, err := tempCont.ArrayElement(j, "externalEpgs")
-				if err != nil {
-					return nil, err
-				}
-				apiEpg := models.StripQuotes(epgCont.S("name").String())
-				if apiEpg == stateEPG {
-					d.Set("external_epg_name", apiEpg)
-					contractCount, err := epgCont.ArrayCount("contractRelationships")
-					if err != nil {
-						return nil, fmt.Errorf("Unable to get contract Relationships list")
-					}
-					for k := 0; k < contractCount; k++ {
-						contractCont, err := epgCont.ArrayElement(k, "contractRelationships")
-						if err != nil {
-							return nil, err
-						}
-						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-						split := re.FindStringSubmatch(contractRef)
-						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
-						if stateContract == (fmt.Sprintf("%s", split[3])) && stateType == relationType {
-							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaId, stateTemplate, stateEPG, stateContract, stateType))
-							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
-							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
-							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
-							d.Set("relationship_type", models.StripQuotes(contractCont.S("relationshipType").String()))
-							found = true
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if !found {
+	if index == -1 {
 		d.SetId("")
 		return nil, fmt.Errorf("External Epg Contract Not Found")
 	}
+
+	contractRef := models.StripQuotes(crefCont.S("contractRef").String())
+	re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+	match := re.FindStringSubmatch(contractRef)
+
+	d.Set("schema_id", schemaId)
+	d.Set("template_name", stateTemplate)
+	d.Set("external_epg_name", stateEPG)
+	d.Set("contract_name", match[3])
+	d.Set("contract_schema_id", match[1])
+	d.Set("contract_template_name", match[2])
+	d.Set("relationship_type", models.StripQuotes(crefCont.S("relationshipType").String()))
+	d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaId, stateTemplate, stateEPG, stateContract, stateType))
+
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
-
 }
 
 func resourceMSOTemplateExternalEpgContractCreate(d *schema.ResourceData, m interface{}) error {
@@ -160,32 +185,30 @@ func resourceMSOTemplateExternalEpgContractCreate(d *schema.ResourceData, m inte
 	epgName := d.Get("external_epg_name").(string)
 	relationshipType := d.Get("relationship_type").(string)
 
-	var contract_schema_id, contract_template_name string
-
-	if tempVar, ok := d.GetOk("contract_schema_id"); ok {
-		contract_schema_id = tempVar.(string)
-	} else {
-		contract_schema_id = schemaID
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaID
 	}
-	if tempVar, ok := d.GetOk("contract_template_name"); ok {
-		contract_template_name = tempVar.(string)
-	} else {
-		contract_template_name = templateName
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = templateName
 	}
 
-	contractRefMap := make(map[string]interface{})
-	contractRefMap["schemaId"] = contract_schema_id
-	contractRefMap["templateName"] = contract_template_name
-	contractRefMap["contractName"] = contractName
+	contractRefMap := map[string]interface{}{
+		"schemaId":     contractSchemaId,
+		"templateName": contractTemplateName,
+		"contractName": contractName,
+	}
 
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/-", templateName, epgName)
 	contractStruct := models.NewTemplateExternalEpgContract("add", path, relationshipType, contractRefMap)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
-
 	if err != nil {
 		return err
 	}
+
+	d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaID, templateName, epgName, contractName, relationshipType))
 	return resourceMSOTemplateExternalEpgContractRead(d, m)
 }
 
@@ -193,130 +216,101 @@ func resourceMSOTemplateExternalEpgContractRead(d *schema.ResourceData, m interf
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 
 	msoClient := m.(*client.Client)
-
 	schemaId := d.Get("schema_id").(string)
 
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 	if err != nil {
 		return errorForObjectNotFound(err, d.Id(), cont, d)
 	}
-	count, err := cont.ArrayCount("templates")
+
+	templateName := d.Get("template_name").(string)
+	epgName := d.Get("external_epg_name").(string)
+	contractName := d.Get("contract_name").(string)
+	relationshipType := d.Get("relationship_type").(string)
+
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaId
+	}
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = templateName
+	}
+
+	index, crefCont, err := getSchemaTemplateExtEpgContract(cont, templateName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType)
 	if err != nil {
-		return fmt.Errorf("No Template found")
-	}
-	stateTemplate := d.Get("template_name").(string)
-	found := false
-	stateEPG := d.Get("external_epg_name").(string)
-	stateContract := d.Get("contract_name").(string)
-	stateType := d.Get("relationship_type").(string)
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return err
-		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
-		if apiTemplate == stateTemplate {
-			d.Set("template_name", apiTemplate)
-			epgCount, err := tempCont.ArrayCount("externalEpgs")
-			if err != nil {
-				return fmt.Errorf("Unable to get External Epg list")
-			}
-			for j := 0; j < epgCount; j++ {
-				epgCont, err := tempCont.ArrayElement(j, "externalEpgs")
-				if err != nil {
-					return err
-				}
-				apiEpg := models.StripQuotes(epgCont.S("name").String())
-				if apiEpg == stateEPG {
-					d.Set("external_epg_name", apiEpg)
-					contractCount, err := epgCont.ArrayCount("contractRelationships")
-					if err != nil {
-						return fmt.Errorf("Unable to get contract Relationships list")
-					}
-					for k := 0; k < contractCount; k++ {
-						contractCont, err := epgCont.ArrayElement(k, "contractRelationships")
-						if err != nil {
-							return err
-						}
-						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-						split := re.FindStringSubmatch(contractRef)
-						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
-						if stateContract == fmt.Sprintf("%s", split[3]) && stateType == relationType {
-							d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaId, stateTemplate, stateEPG, stateContract, stateType))
-							d.Set("contract_name", fmt.Sprintf("%s", split[3]))
-							d.Set("contract_schema_id", fmt.Sprintf("%s", split[1]))
-							d.Set("contract_template_name", fmt.Sprintf("%s", split[2]))
-							d.Set("relationship_type", relationType)
-							found = true
-							break
-						}
-					}
-				}
-			}
-		}
+		return err
 	}
 
-	if !found {
+	if index == -1 {
 		d.SetId("")
+	} else {
+		contractRef := models.StripQuotes(crefCont.S("contractRef").String())
+		re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
+		match := re.FindStringSubmatch(contractRef)
+		apiRelationshipType := models.StripQuotes(crefCont.S("relationshipType").String())
+		d.Set("contract_name", match[3])
+		d.Set("contract_schema_id", match[1])
+		d.Set("contract_template_name", match[2])
+		d.Set("relationship_type", apiRelationshipType)
+		d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaId, templateName, epgName, match[3], apiRelationshipType))
 	}
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil
-
 }
 
 func resourceMSOTemplateExternalEpgContractUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Template External Epg Contract: Beginning Creation")
+	log.Printf("[DEBUG] Template External Epg Contract: Beginning Update")
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
 	templateName := d.Get("template_name").(string)
-	contractName := d.Get("contract_name").(string)
 	epgName := d.Get("external_epg_name").(string)
-	relationshipType := d.Get("relationship_type").(string)
+	contractName := d.Get("contract_name").(string)
 
-	var contract_schema_id, contract_template_name string
-
-	if tempVar, ok := d.GetOk("contract_schema_id"); ok {
-		contract_schema_id = tempVar.(string)
-	} else {
-		contract_schema_id = schemaID
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaID
 	}
-	if tempVar, ok := d.GetOk("contract_template_name"); ok {
-		contract_template_name = tempVar.(string)
-	} else {
-		contract_template_name = templateName
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = templateName
 	}
 
-	contractRefMap := make(map[string]interface{})
-	contractRefMap["schemaId"] = contract_schema_id
-	contractRefMap["templateName"] = contract_template_name
-	contractRefMap["contractName"] = contractName
-	id := d.Id()
+	// Use the old relationship_type to locate the existing contract; relationship_type is the only updatable field.
+	oldRelationshipType, newRelationshipType := d.GetChange("relationship_type")
+
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
 	}
-	index, err := fetchIndexs(cont, templateName, epgName, id)
+
+	index, _, err := getSchemaTemplateExtEpgContract(cont, templateName, epgName, contractName, contractSchemaId, contractTemplateName, oldRelationshipType.(string))
 	if err != nil {
 		return err
 	}
 	if index == -1 {
-		return fmt.Errorf("The given External Epg Contract is not found")
+		return fmt.Errorf("Unable to find the External Epg Contract %s with relationship type %s", contractName, oldRelationshipType.(string))
 	}
 
-	indexs := strconv.Itoa(index)
+	updatePath := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%d", templateName, epgName, index)
+	payloadCon := container.New()
+	payloadCon.Array()
 
-	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%s", templateName, epgName, indexs)
-	contractStruct := models.NewTemplateExternalEpgContract("replace", path, relationshipType, contractRefMap)
-
-	_, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaID), contractStruct)
-
-	if errs != nil {
-		return errs
+	if d.HasChange("relationship_type") {
+		err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/relationshipType", updatePath), newRelationshipType.(string))
+		if err != nil {
+			return err
+		}
 	}
+
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaID), payloadCon)
+	if err != nil {
+		return err
+	}
+
+	d.SetId(fmt.Sprintf("%s/templates/%s/externalEpgs/%s/contractRelationships/%s/%s", schemaID, templateName, epgName, contractName, newRelationshipType.(string)))
 	return resourceMSOTemplateExternalEpgContractRead(d, m)
 }
 
@@ -325,26 +319,35 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 	msoClient := m.(*client.Client)
 
 	schemaID := d.Get("schema_id").(string)
-	//contractName := d.Get("contract_name").(string)
 	templateName := d.Get("template_name").(string)
 	epgName := d.Get("external_epg_name").(string)
-	id := d.Id()
+	contractName := d.Get("contract_name").(string)
+	relationshipType := d.Get("relationship_type").(string)
+
+	contractSchemaId := d.Get("contract_schema_id").(string)
+	if contractSchemaId == "" {
+		contractSchemaId = schemaID
+	}
+	contractTemplateName := d.Get("contract_template_name").(string)
+	if contractTemplateName == "" {
+		contractTemplateName = templateName
+	}
+
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaID))
 	if err != nil {
 		return err
 	}
-	index, err := fetchIndexs(cont, templateName, epgName, id)
+
+	index, _, err := getSchemaTemplateExtEpgContract(cont, templateName, epgName, contractName, contractSchemaId, contractTemplateName, relationshipType)
 	if err != nil {
 		return err
 	}
-
 	if index == -1 {
 		d.SetId("")
 		return nil
 	}
 
 	indexs := strconv.Itoa(index)
-
 	path := fmt.Sprintf("/templates/%s/externalEpgs/%s/contractRelationships/%s", templateName, epgName, indexs)
 	contractStruct := models.NewTemplateExternalEpgContract("remove", path, "", nil)
 
@@ -356,59 +359,4 @@ func resourceMSOTemplateExternalEpgContractDelete(d *schema.ResourceData, m inte
 	}
 	d.SetId("")
 	return nil
-}
-func fetchIndexs(cont *container.Container, templateName, epgName, contractId string) (int, error) {
-	index := -1
-	re := regexp.MustCompile("(.*)/templates/(.*)/externalEpgs/(.*)/contractRelationships/(.*)/(.*)")
-	split := re.FindStringSubmatch(contractId)
-	contractType := split[5]
-	contractName := split[4]
-	count, err := cont.ArrayCount("templates")
-	if err != nil {
-		return index, fmt.Errorf("No Template found")
-	}
-
-	for i := 0; i < count; i++ {
-		tempCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return index, err
-		}
-		apiTemplate := models.StripQuotes(tempCont.S("name").String())
-
-		if apiTemplate == templateName {
-			epgCount, err := tempCont.ArrayCount("externalEpgs")
-			if err != nil {
-				return index, fmt.Errorf("Unable to get External Epg list")
-			}
-			for j := 0; j < epgCount; j++ {
-				epgCont, err := tempCont.ArrayElement(j, "externalEpgs")
-				if err != nil {
-					return index, err
-				}
-				apiEpg := models.StripQuotes(epgCont.S("name").String())
-				if apiEpg == epgName {
-					contractCount, err := epgCont.ArrayCount("contractRelationships")
-					if err != nil {
-						return index, fmt.Errorf("Unable to get contract Relationships list")
-					}
-					for k := 0; k < contractCount; k++ {
-						contractCont, err := epgCont.ArrayElement(k, "contractRelationships")
-						if err != nil {
-							return index, err
-						}
-						contractRef := models.StripQuotes(contractCont.S("contractRef").String())
-						re := regexp.MustCompile("/schemas/(.*)/templates/(.*)/contracts/(.*)")
-						split := re.FindStringSubmatch(contractRef)
-						relationType := models.StripQuotes(contractCont.S("relationshipType").String())
-						if contractName == fmt.Sprintf("%s", split[3]) && contractType == relationType {
-							index = k
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return index, nil
 }
