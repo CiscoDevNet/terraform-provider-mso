@@ -3,10 +3,8 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -73,107 +71,30 @@ func dataSourceMSOSchemaTemplateAnpEpgUsegAttrRead(d *schema.ResourceData, m int
 	log.Printf("[DEBUG] %s: Beginning Read", d.Id())
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
-	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
-	if err != nil {
-		return err
-	}
-
-	count, err := cont.ArrayCount("templates")
-	if err != nil {
-		return fmt.Errorf("No Template found")
-	}
-
 	templateName := d.Get("template_name").(string)
 	anpName := d.Get("anp_name").(string)
 	epgName := d.Get("epg_name").(string)
 	name := d.Get("name").(string)
 
-	found := false
-	for i := 0; i < count && !found; i++ {
-		tempCont, err := cont.ArrayElement(i, "templates")
-		if err != nil {
-			return err
-		}
-		currentTemplateName := models.StripQuotes(tempCont.S("name").String())
-		if currentTemplateName == templateName {
-			anpCount, err := tempCont.ArrayCount("anps")
-
-			if err != nil {
-				return fmt.Errorf("No Anp found")
-			}
-			for j := 0; j < anpCount && !found; j++ {
-				anpCont, err := tempCont.ArrayElement(j, "anps")
-
-				if err != nil {
-					return err
-				}
-				currentAnpName := models.StripQuotes(anpCont.S("name").String())
-				if currentAnpName == anpName {
-					epgCount, err := anpCont.ArrayCount("epgs")
-					if err != nil {
-						return fmt.Errorf("No Epg found")
-					}
-					for k := 0; k < epgCount && !found; k++ {
-						epgCont, err := anpCont.ArrayElement(k, "epgs")
-						if err != nil {
-							return err
-						}
-						currentEpgName := models.StripQuotes(epgCont.S("name").String())
-						if currentEpgName == epgName {
-							usegCount, err := epgCont.ArrayCount("uSegAttrs")
-							if err != nil {
-								return fmt.Errorf("No usegAttrs found")
-							}
-							for s := 0; s < usegCount; s++ {
-								usegCont, err := epgCont.ArrayElement(s, "uSegAttrs")
-								if err != nil {
-									return err
-								}
-								currentName := models.StripQuotes(usegCont.S("name").String())
-								if currentName == name {
-									d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/uSegAttrs/%s", schemaId, templateName, anpName, epgName, name))
-									d.Set("template_name", currentTemplateName)
-									d.Set("name", currentName)
-									d.Set("anp_name", currentAnpName)
-									d.Set("epg_name", currentEpgName)
-									d.Set("useg_type", models.StripQuotes(usegCont.S("type").String()))
-									d.Set("value", models.StripQuotes(usegCont.S("value").String()))
-
-									if usegCont.Exists("operator") {
-										d.Set("operator", models.StripQuotes(usegCont.S("operator").String()))
-									} else {
-										d.Set("operator", "")
-									}
-									if usegCont.Exists("category") {
-										d.Set("category", models.StripQuotes(usegCont.S("category").String()))
-									} else {
-										d.Set("category", "")
-									}
-									if usegCont.Exists("description") {
-										d.Set("description", models.StripQuotes(usegCont.S("description").String()))
-									} else {
-										d.Set("description", "")
-									}
-									if usegCont.Exists("fvSubnet") {
-										usegSubnet, _ := strconv.ParseBool(models.StripQuotes(usegCont.S("fvSubnet").String()))
-										d.Set("useg_subnet", usegSubnet)
-									}
-
-									found = true
-									break
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
+	if err != nil {
+		return err
 	}
 
-	if !found {
+	usegCont, err := findUsegAttrContainer(cont, templateName, anpName, epgName, name)
+	if err != nil {
+		return err
+	}
+	if usegCont == nil {
 		d.SetId("")
 		return fmt.Errorf("Unable to find the ANP EPG uSeg Attribute %s in Template %s of Schema Id %s ", name, templateName, schemaId)
 	}
+
+	d.Set("template_name", templateName)
+	d.Set("anp_name", anpName)
+	d.Set("epg_name", epgName)
+	setUsegAttrAttributes(d, usegCont)
+	d.SetId(fmt.Sprintf("%s/templates/%s/anps/%s/epgs/%s/uSegAttrs/%s", schemaId, templateName, anpName, epgName, name))
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

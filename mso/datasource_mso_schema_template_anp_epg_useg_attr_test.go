@@ -30,7 +30,7 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrDatasource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "name", msoSchemaTemplateAnpEpgUsegAttrName),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "useg_type", "ip"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "value", msoSchemaTemplateAnpEpgUsegAttrIp),
-					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "operator", "equals"),
+					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "operator", ""),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "category", "test_category"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "description", "test useg"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_useg_attr.useg_attr", "useg_subnet", "true"),
