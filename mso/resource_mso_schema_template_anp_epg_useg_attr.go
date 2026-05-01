@@ -79,10 +79,11 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttr() *schema.Resource {
 			},
 
 			"description": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				// Commented out computed to allow setting operator to empty string
+				// Computed:     true,
+				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 
 			"operator": &schema.Schema{
@@ -108,6 +109,10 @@ func resourceMSOSchemaTemplateAnpEpgUsegAttr() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				// Note: NDO normalizes the `value` for some `useg_type`s (observed for `vm-name`,
+				// where the value is uppercased server-side). Supplying a non-normalized value will
+				// result in a perpetual plan diff. Provide the value in the form NDO will store
+				// (e.g. uppercase for `vm-name`) to avoid drift.
 			},
 
 			"useg_subnet": &schema.Schema{
