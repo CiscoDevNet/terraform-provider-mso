@@ -38,7 +38,10 @@ var msoSchemaTemplateL3outName = acctest.RandStringFromCharSet(10, acctest.CharS
 var msoTenantPoliciesDhcpRelayPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPoliciesDhcpRelayPolicyName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateAnpEpgUsegAttrName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateAnpEpgUsegAttrName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
+const msoSchemaTemplateAnpEpgUsegAttrIp = "10.0.0.10/24"
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
 const msoSchemaTemplateExtEpgSubnetIp = "10.0.1.1/24"

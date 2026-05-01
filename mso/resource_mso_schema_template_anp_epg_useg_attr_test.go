@@ -10,15 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-// Constants for useg_attr tests. Names are static (rather than randomly generated) because
-// `name` is the path key for replace/delete operations on uSegAttrs.
-const msoSchemaTemplateAnpEpgUsegAttrName = "useg_attr_test"
-const msoSchemaTemplateAnpEpgUsegAttrName2 = "useg_attr_test_2"
-const msoSchemaTemplateAnpEpgUsegAttrIp = "10.0.0.10/24"
-
-// Note: NDO uppercases the `value` server-side for `vm-name` useg_type, so the test uses
-// "TEST-VM" rather than "test-vm" to avoid a perpetual plan diff between the configured
-// value and the value read back from the API.
+// Note: NDO uppercases the `value` server-side for several useg_types (`vm-name`, `dns`,
+// `hv`, `guest-os`, `vnic`), so the tests use uppercase values (e.g. "TEST-VM") to avoid
+// a perpetual plan diff between the configured value and the value read back from the API.
 
 // msoSchemaTemplateAnpEpgUsegAttrSchemaId is set during the first test step's Check to capture
 // the dynamic schema ID for use in the manual deletion PreConfig step.
@@ -41,10 +35,10 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "name", msoSchemaTemplateAnpEpgUsegAttrName),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "useg_type", "ip"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "value", msoSchemaTemplateAnpEpgUsegAttrIp),
-					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", "equals"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", ""),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "category", ""),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "description", ""),
-					resource.TestCheckNoResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "useg_subnet"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "useg_subnet", "false"),
 					// Capture the dynamic schema ID for use in the manual deletion PreConfig step
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName]
@@ -57,16 +51,12 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Operator is forced to equals for ip useg_type") },
+				PreConfig: func() { fmt.Println("Test: Operator round-trips when explicitly set on ip useg_type") },
 				Config:    testAccMSOSchemaTemplateAnpEpgUsegAttrConfigOperatorOverride(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "useg_type", "ip"),
-					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", "equals"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", "startsWith"),
 				),
-				// The resource overrides operator to "equals" server-side for ip/mac/dns useg_type values,
-				// so the post-apply state ("equals") does not match the config ("startsWith"). Allow the
-				// resulting plan diff for this step.
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Update UsegAttr all attributes (ip type)") },
@@ -77,7 +67,7 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "description", "test useg"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "category", "test_category"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "useg_subnet", "true"),
-					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", "equals"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", ""),
 				),
 			},
 			{
@@ -97,9 +87,7 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "value", "TEST-VM"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "operator", "equals"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "description", ""),
-					// `category` is Computed in the resource schema, so omitting it from config
-					// preserves the previously-set value rather than resetting it.
-					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "category", "test_category"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr."+msoSchemaTemplateAnpEpgUsegAttrName, "category", ""),
 				),
 			},
 			{
@@ -157,8 +145,201 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg."+msoSchemaTemplateAnpEpgName, "description", "Updated EPG description with useg_attr"),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create assorted UsegAttr type combinations") },
+				Config:    testAccMSOSchemaTemplateAnpEpgUsegAttrConfigTypes(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// ip + description only (no operator stored on NDO 4.x)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_with_description", "useg_type", "ip"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_with_description", "value", "10.20.20.1"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_with_description", "description", "fooo"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_with_description", "operator", ""),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_with_description", "category", ""),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_with_description", "useg_subnet", "false"),
+
+					// ip + useg_subnet=true
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_subnet", "useg_type", "ip"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_subnet", "value", "0.0.0.0"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_subnet", "useg_subnet", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.ip_subnet", "operator", ""),
+
+					// mac (no operator stored on NDO 4.x)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.mac_basic", "useg_type", "mac"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.mac_basic", "value", "AA:BB:CC:DD:EE:FF"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.mac_basic", "operator", ""),
+
+					// dns (no operator stored on NDO 4.x; value uppercased server-side)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.dns_basic", "useg_type", "dns"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.dns_basic", "value", "*.EXAMPLE.COM"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.dns_basic", "operator", ""),
+
+					// vm-name + operator=equals (NDO uppercases value server-side)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vm_name_equals", "useg_type", "vm-name"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vm_name_equals", "value", "TYPES-VM"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vm_name_equals", "operator", "equals"),
+
+					// rootContName (VM data center) + operator=equals
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.root_cont_name_equals", "useg_type", "rootContName"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.root_cont_name_equals", "value", "DC1"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.root_cont_name_equals", "operator", "equals"),
+
+					// hv (Hypervisor) + operator=contains (value uppercased server-side)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.hypervisor_contains", "useg_type", "hv"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.hypervisor_contains", "value", "HOST-1"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.hypervisor_contains", "operator", "contains"),
+
+					// guest-os (Operating System) + operator=startsWith (value uppercased server-side)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.guest_os_starts_with", "useg_type", "guest-os"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.guest_os_starts_with", "value", "UBUNTU"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.guest_os_starts_with", "operator", "startsWith"),
+
+					// tag + operator=contains + category
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.tag_with_category", "useg_type", "tag"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.tag_with_category", "value", "SOMETHIGN"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.tag_with_category", "operator", "contains"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.tag_with_category", "category", "foo"),
+
+					// vm (Identifier) + operator=equals
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vm_id_equals", "useg_type", "vm"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vm_id_equals", "value", "SPECIAL_VM"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vm_id_equals", "operator", "equals"),
+
+					// domain (VMM domain) + operator=contains
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.domain_contains", "useg_type", "domain"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.domain_contains", "value", "SPECIAL_VM"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.domain_contains", "operator", "contains"),
+
+					// vnic (Vnic DN) + operator=endsWith (value uppercased server-side)
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vnic_ends_with", "useg_type", "vnic"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vnic_ends_with", "value", "NETWORK ADAPTER 1"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_useg_attr.vnic_ends_with", "operator", "endsWith"),
+				),
+			},
 		},
 	})
+}
+
+func testAccMSOSchemaTemplateAnpEpgUsegAttrConfigTypes() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_useg_attr" "ip_with_description" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "ip_with_description"
+		useg_type     = "ip"
+		value         = "10.20.20.1"
+		description   = "fooo"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "ip_subnet" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "ip_subnet"
+		useg_type     = "ip"
+		value         = "0.0.0.0"
+		useg_subnet   = true
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "mac_basic" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "mac_basic"
+		useg_type     = "mac"
+		value         = "AA:BB:CC:DD:EE:FF"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "dns_basic" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "dns_basic"
+		useg_type     = "dns"
+		value         = "*.EXAMPLE.COM"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "vm_name_equals" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "vm_name_equals"
+		useg_type     = "vm-name"
+		operator      = "equals"
+		value         = "TYPES-VM"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "root_cont_name_equals" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "root_cont_name_equals"
+		useg_type     = "rootContName"
+		operator      = "equals"
+		value         = "DC1"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "hypervisor_contains" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "hypervisor_contains"
+		useg_type     = "hv"
+		operator      = "contains"
+		value         = "HOST-1"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "guest_os_starts_with" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "guest_os_starts_with"
+		useg_type     = "guest-os"
+		operator      = "startsWith"
+		value         = "UBUNTU"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "tag_with_category" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "tag_with_category"
+		useg_type     = "tag"
+		operator      = "contains"
+		category      = "foo"
+		value         = "SOMETHIGN"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "vm_id_equals" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "vm_id_equals"
+		useg_type     = "vm"
+		operator      = "equals"
+		value         = "SPECIAL_VM"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "domain_contains" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "domain_contains"
+		useg_type     = "domain"
+		operator      = "contains"
+		value         = "SPECIAL_VM"
+	}
+	resource "mso_schema_template_anp_epg_useg_attr" "vnic_ends_with" {
+		schema_id     = mso_schema_template_anp_epg.%[2]s.schema_id
+		template_name = "%[3]s"
+		anp_name      = "%[4]s"
+		epg_name      = mso_schema_template_anp_epg.%[2]s.name
+		name          = "vnic_ends_with"
+		useg_type     = "vnic"
+		operator      = "endsWith"
+		value         = "NETWORK ADAPTER 1"
+	}`, testAccMSOSchemaTemplateAnpEpgUsegAttrConfigUpdateParentEpg(), msoSchemaTemplateAnpEpgName, msoSchemaTemplateName, msoSchemaTemplateAnpName)
 }
 
 func testAccMSOSchemaTemplateAnpEpgUsegAttrPrerequisiteConfig() string {
