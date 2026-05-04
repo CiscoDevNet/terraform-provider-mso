@@ -2,12 +2,22 @@ package mso
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 )
 
 const msoTemplateSiteName1 = "ansible_test"
 const msoTemplateSiteName2 = "ansible_test_2"
+
+// msoSchemaSiteResourceLabel1/2 are the Terraform resource block labels used
+// for the two mso_schema_site resources in shared schema_site test
+// configurations (see testSchemaSiteConfig and the
+// testSchemaWithSingleSiteAssociation* helpers). Reusing these constants in
+// nested schema_site_* tests keeps `depends_on` references and
+// TestCheckResourceAttr addresses in sync with the emitted HCL.
+const msoSchemaSiteResourceLabel1 = "site_1"
+const msoSchemaSiteResourceLabel2 = "site_2"
 
 var msoTenantName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -403,4 +413,99 @@ resource "mso_schema_template_external_epg_subnet" "%[1]s_subnet" {
 	ip                = "%[5]s"
 }
 `, msoSchemaTemplateExtEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateExtEpgName, msoSchemaTemplateExtEpgSubnetIp)
+}
+
+// testTenantConfigTwoSites creates a tenant associated with both ansible_test
+// and ansible_test_2 sites, used by the schema_site acceptance tests.
+func testTenantConfigTwoSites() string {
+	return fmt.Sprintf(`
+resource "mso_tenant" "%[1]s" {
+	name         = "%[1]s"
+	display_name = "%[1]s"
+	site_associations {
+		site_id = data.mso_site.%[2]s.id
+	}
+	site_associations {
+		site_id = data.mso_site.%[3]s.id
+	}
+}
+`, msoTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
+}
+
+// testSchemaSiteConfig emits a single mso_schema_site block referencing the
+// shared schema/template. resourceLabel is used as the Terraform resource
+// label (e.g. "site_1") and siteDataSource is the name of the existing
+// data.mso_site source (e.g. msoTemplateSiteName1).
+func testSchemaSiteConfig(resourceLabel, siteDataSource string, undeployOnDestroy bool) string {
+	return fmt.Sprintf(`
+resource "mso_schema_site" "%[1]s" {
+	schema_id           = mso_schema.%[2]s.id
+	site_id             = data.mso_site.%[3]s.id
+	template_name       = tolist(mso_schema.%[2]s.template)[0].name
+	undeploy_on_destroy = %[4]t
+}
+`, resourceLabel, msoSchemaName, siteDataSource, undeployOnDestroy)
+}
+
+// testSchemaTemplateDeployNdoConfig emits a mso_schema_template_deploy_ndo
+// resource depending on the supplied list of resource references (e.g.
+// "mso_schema_site.site_1", "mso_schema_template_vrf."+msoSchemaTemplateVrfName).
+//
+// Note: `force_apply = ""` is set explicitly to suppress a perpetual diff.
+// The schema declares a default of "always-deploy", but
+// resourceNDOSchemaTemplateDeployRead writes "" back to state on every
+// refresh, so an unset config attribute would produce a non-empty plan after
+// each apply ("" => "always-deploy"). Pinning the config to "" matches the
+// post-Read state and keeps the test plan clean.
+func testSchemaTemplateDeployNdoConfig(dependsOn []string) string {
+	return fmt.Sprintf(`
+resource "mso_schema_template_deploy_ndo" "deploy" {
+	schema_id     = mso_schema.%[1]s.id
+	template_name = tolist(mso_schema.%[1]s.template)[0].name
+	force_apply   = ""
+	depends_on    = [%[2]s]
+}
+`, msoSchemaName, strings.Join(dependsOn, ", "))
+}
+
+// testSchemaWithBothSitesPrerequisiteConfig emits both `data.mso_site` blocks
+// (ansible_test and ansible_test_2), the shared tenant associated with both
+// sites, and the schema with one template. This is the foundation used by
+// schema_site and any nested schema_site_* acceptance tests.
+func testSchemaWithBothSitesPrerequisiteConfig() string {
+	return fmt.Sprintf(`%s%s%s%s`,
+		testSiteConfigAnsibleTest(),
+		testSiteConfigAnsibleTest2(),
+		testTenantConfigTwoSites(),
+		testSchemaConfig(),
+	)
+}
+
+// testSchemaWithSingleSiteAssociationConfig extends the prerequisite config
+// with a single mso_schema_site association (resource label `site_1`,
+// `undeploy_on_destroy=false`). Use this as the minimum scaffolding for tests
+// that exercise nested site-scoped children which do not require the template
+// to be deployed.
+func testSchemaWithSingleSiteAssociationConfig() string {
+	return fmt.Sprintf(`%s%s`,
+		testSchemaWithBothSitesPrerequisiteConfig(),
+		testSchemaSiteConfig(msoSchemaSiteResourceLabel1, msoTemplateSiteName1, false),
+	)
+}
+
+// testSchemaWithSingleSiteAssociationDeployedConfig adds a VRF and a
+// mso_schema_template_deploy_ndo on top of testSchemaWithSingleSiteAssociationConfig
+// so callers start from a deployed-template state. The site association uses
+// `undeploy_on_destroy=true` so the test framework's destroy phase can undeploy
+// before removing the association.
+func testSchemaWithSingleSiteAssociationDeployedConfig() string {
+	return fmt.Sprintf(`%s%s%s%s`,
+		testSchemaWithBothSitesPrerequisiteConfig(),
+		testSchemaSiteConfig(msoSchemaSiteResourceLabel1, msoTemplateSiteName1, true),
+		testSchemaTemplateVrfConfig(),
+		testSchemaTemplateDeployNdoConfig([]string{
+			"mso_schema_site." + msoSchemaSiteResourceLabel1,
+			"mso_schema_template_vrf." + msoSchemaTemplateVrfName,
+		}),
+	)
 }
