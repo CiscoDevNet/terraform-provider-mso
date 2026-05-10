@@ -39,6 +39,32 @@ var loadBalanceHashingMap = map[string]string{
 	"source_ip":              "src-ip",
 }
 
+var matchParameterMap = map[string]string{
+	"destination_ip":   "dstIP",
+	"destination_ipv4": "dstIPv4",
+	"destination_ipv6": "dstIPv6",
+	"destination_mac":  "dstMac",
+	"destination_port": "dstPort",
+	"ethertype":        "ethertype",
+	"ip_protocol":      "proto",
+	"source_ip":        "srcIP",
+	"source_ipv4":      "srcIPv4",
+	"source_ipv6":      "srcIPv6",
+	"source_mac":       "srcMac",
+	"source_port":      "srcPort",
+	"dstIP":            "destination_ip",
+	"dstIPv4":          "destination_ipv4",
+	"dstIPv6":          "destination_ipv6",
+	"dstMac":           "destination_mac",
+	"dstPort":          "destination_port",
+	"proto":            "ip_protocol",
+	"srcIP":            "source_ip",
+	"srcIPv4":          "source_ipv4",
+	"srcIPv6":          "source_ipv6",
+	"srcMac":           "source_mac",
+	"srcPort":          "source_port",
+}
+
 var portChannelModeMap = map[string]string{
 	"lacp_active":                   "active",
 	"lacp_passive":                  "passive",
@@ -125,30 +151,4 @@ var targetDscpMap = map[string]string{
 	"unspecified":          "unspecified",
 	"expeditedForwarding":  "expedited_forwarding",
 	"voiceAdmit":           "voice_admit",
-}
-
-var matchParameterMap = map[string]string{
-	"destination_ip":   "dstIP",
-	"destination_ipv4": "dstIPv4",
-	"destination_ipv6": "dstIPv6",
-	"destination_mac":  "dstMac",
-	"destination_port": "dstPort",
-	"ethertype":        "ethertype",
-	"ip_protocol":      "proto",
-	"source_ip":        "srcIP",
-	"source_ipv4":      "srcIPv4",
-	"source_ipv6":      "srcIPv6",
-	"source_mac":       "srcMac",
-	"source_port":      "srcPort",
-	"dstIP":            "destination_ip",
-	"dstIPv4":          "destination_ipv4",
-	"dstIPv6":          "destination_ipv6",
-	"dstMac":           "destination_mac",
-	"dstPort":          "destination_port",
-	"proto":            "ip_protocol",
-	"srcIP":            "source_ip",
-	"srcIPv4":          "source_ipv4",
-	"srcIPv6":          "source_ipv6",
-	"srcMac":           "source_mac",
-	"srcPort":          "source_port",
 }

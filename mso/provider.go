@@ -145,11 +145,11 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_ipsla_track_list":               resourceMSOIPSLATrackList(),
 			"mso_tenant_policies_l3out_interface_routing_policy": resourceMSOL3OutInterfaceRoutingPolicy(),
 			"mso_tenant_policies_mld_snooping_policy":            resourceMSOMLDSnoopingPolicy(),
-			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
-			"mso_user": resourceMSOUser(),
 			"mso_tenant_policies_netflow_exporter":               resourceMSONetflowExporter(),
 			"mso_tenant_policies_netflow_monitor":                resourceMSOTenantPoliciesNetflowMonitor(),
 			"mso_tenant_policies_netflow_record":                 resourceMSONetflowRecord(),
+			"mso_tenant_policies_route_map_policy_multicast":     resourceMSOMcastRouteMapPolicy(),
+			"mso_user": resourceMSOUser(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -228,11 +228,11 @@ func Provider() terraform.ResourceProvider {
 			"mso_tenant_policies_ipsla_track_list":               datasourceMSOIPSLATrackList(),
 			"mso_tenant_policies_l3out_interface_routing_policy": datasourceMSOL3OutInterfaceRoutingPolicy(),
 			"mso_tenant_policies_mld_snooping_policy":            datasourceMSOMLDSnoopingPolicy(),
-			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
-			"mso_user": datasourceMSOUser(),
 			"mso_tenant_policies_netflow_exporter":               datasourceMSONetflowExporter(),
 			"mso_tenant_policies_netflow_monitor":                datasourceMSOTenantPoliciesNetflowMonitor(),
 			"mso_tenant_policies_netflow_record":                 datasourceMSONetflowRecord(),
+			"mso_tenant_policies_route_map_policy_multicast":     datasourceMSOMcastRouteMapPolicy(),
+			"mso_user": datasourceMSOUser(),
 		},
 
 		ConfigureFunc: configureClient,
