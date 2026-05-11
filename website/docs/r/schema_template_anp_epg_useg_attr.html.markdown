@@ -40,7 +40,7 @@ resource "mso_schema_template_anp_epg_useg_attr" "useg_attrs" {
 * `description` - (Optional) String which describes this Useg Attribute.
 * `operator` - (Optional) Comparison Operator used in the Useg Attribute. Allowed values are `equals`, `startsWith`, `endsWith`, and `contains`. Default to `equals`. With `useg_type` in [ip, mac, dns] only `equals` operator will be used. Operator passed in the terraform file will be ignored.
 * `category` - (Optional) Classifier Category. It's used with useg_type `tag`.
-* `value` - (Required) Value of Useg-Attribute.
+* `value` - (Required) Value of Useg-Attribute. NDO normalizes this value by uppercasing it for `useg_type` values `vm-name`, `dns`, `hv`, `guest-os`, and `vnic`; supply the value in uppercase for those types to avoid a perpetual plan diff.
 * `useg_subnet` - (Optional) Whether the Useg Subnet is enabled or not. This field only works with the `useg_type` Ip.
 
 ## Attribute Reference ##
