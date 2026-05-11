@@ -46,8 +46,19 @@ func resourceMSOSchemaSiteBd() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
+				Type:     schema.TypeString,
+				Required: true,
+				// ForceNew is required: the site BD entry is keyed in the
+				// schema document by its position under
+				// /sites/{siteId}-{template}/bds/{bd_name}, while the entry
+				// itself carries a bdRef pointing at the template BD. An
+				// in-place rename would therefore have to keep the path key
+				// and the bdRef in lock-step. NDO rejects any PATCH that
+				// leaves the path's bd_name out of sync with bdRef (the
+				// validator reports "Multiple BDDelta entries found for bd:
+				// <name> on fabric: <site> for template: <template>, but it
+				// must be unique"), so renames must go through
+				// destroy+recreate.
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
@@ -260,48 +271,32 @@ func resourceMSOSchemaSiteBdUpdate(d *schema.ResourceData, m interface{}) error 
 	templateName := d.Get("template_name").(string)
 	bdName := d.Get("bd_name").(string)
 
-	var host bool
-	var mac string
-
-	if tempvar, ok := d.GetOk("host_route"); ok {
-		host = tempvar.(bool)
-	}
-
-	if tempvar, ok := d.GetOk("svi_mac"); ok {
-		mac = tempvar.(string)
-	}
-
-	var bd_schema_id, bd_template_name string
-	bd_schema_id = schemaId
-	bd_template_name = templateName
-
-	bdRefMap := make(map[string]interface{})
-	bdRefMap["schemaId"] = bd_schema_id
-	bdRefMap["templateName"] = bd_template_name
-	bdRefMap["bdName"] = bdName
+	basePath := fmt.Sprintf("/sites/%s-%s/bds/%s", siteId, templateName, bdName)
 
 	payloadCon := container.New()
 	payloadCon.Array()
 
-	err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/bdRef", siteId, templateName, bdName), bdRefMap)
-	if err != nil {
-		return err
-	}
-
-	err = addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/hostBasedRouting", siteId, templateName, bdName), host)
-	if err != nil {
-		return err
-	}
-
-	if mac != "" {
-		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("/sites/%s-%s/bds/%s/mac", siteId, templateName, bdName), mac)
-		if err != nil {
+	// schema_id, template_name, site_id and bd_name are all ForceNew, so the
+	// only fields that can change in-place are host_route and svi_mac. Each
+	// PATCH op is gated on d.HasChange so we only send what actually changed.
+	// An attempt was made to support in-place bd_name renames by patching
+	// bdRef, but NDO rejects the resulting payload with:
+	//   "Multiple BDDelta entries found for bd: <name> on fabric: <site>
+	//    for template: <template>, but it must be unique"
+	// so bd_name is kept as ForceNew and renames go through destroy+recreate.
+	if d.HasChange("host_route") {
+		if err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/hostBasedRouting", basePath), d.Get("host_route").(bool)); err != nil {
 			return err
 		}
 	}
 
-	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCon)
-	if err != nil {
+	if d.HasChange("svi_mac") {
+		if err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/mac", basePath), d.Get("svi_mac").(string)); err != nil {
+			return err
+		}
+	}
+
+	if err := doPatchRequest(msoClient, fmt.Sprintf("api/v1/schemas/%s", schemaId), payloadCon); err != nil {
 		return err
 	}
 
