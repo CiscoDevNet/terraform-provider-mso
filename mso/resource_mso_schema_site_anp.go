@@ -12,6 +12,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteAnp manages an mso_schema_site_anp association
+// (a template ANP surfaced under a specific site on the schema).
+//
+// Deprecation candidate: In newer NDO releases the schema validation engine
+// is always-on (the validation flag is no longer a configurable option).
+// Once a template ANP exists and the template is associated with a site,
+// NDO automatically materializes the corresponding sites[].anps[] entry on
+// every schema update, so this resource provides no incremental value on
+// those releases. Older releases allowed the validator to be bypassed and
+// the entry to be injected via a direct PATCH, which is the only behaviour
+// this resource still adds.
+//
+// Create-error behaviour (intentionally not changed): if the user applies
+// this resource against a template that has no mso_schema_site association,
+// older NDO returns "Resource Not Found" and newer NDO silently drops the
+// PATCH (the follow-up Read finds nothing and the Terraform SDK reports
+// "Provider produced inconsistent result after apply"). Either surfaces the
+// misconfiguration to the user; we deliberately leave the current
+// replace-then-add Create flow alone to preserve backward compatibility on
+// pre-validator NDO releases that still rely on the inject-via-PATCH path.
 func resourceMSOSchemaSiteAnp() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpCreate,
