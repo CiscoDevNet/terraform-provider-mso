@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Create MACsec Policy without interface_type") },
+				Config:      testAccMSOMacsecPolicyConfigCreateWithoutType(),
+				ExpectError: regexp.MustCompile("interface_type is required when creating a MACsec Policy"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create MACsec Policy") },
 				Config:    testAccMSOMacsecPolicyConfigCreate(),
@@ -97,14 +103,12 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Update MACsec Policy changing the interface type") },
 				Config:    testAccMSOMacsecPolicyConfigUpdateChangingType(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "admin_state", "disabled"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "interface_type", "fabric"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "cipher_suite", "256GcmAesXpn"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "window_size", "256"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "security_policy", "mustSecure"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "120"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "1"),
 					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
 						map[string]string{
@@ -117,14 +121,24 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig:         func() { fmt.Println("Test: Import MACsec Policy") },
-				ResourceName:      "mso_fabric_policies_macsec_policy.macsec_policy",
-				ImportState:       true,
-				ImportStateVerify: true,
+				PreConfig:               func() { fmt.Println("Test: Import MACsec Policy") },
+				ResourceName:            "mso_fabric_policies_macsec_policy.macsec_policy",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"macsec_keys"},
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_fabric_policies_macsec_policy", "fabricPolicyTemplate", "template", "macsecPolicies"),
 	})
+}
+
+func testAccMSOMacsecPolicyConfigCreateWithoutType() string {
+	return fmt.Sprintf(`%s
+	resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
+		template_id  = mso_template.template_fabric_policy.id
+		name         = "tf_test_macsec_policy"
+		description  = "Terraform test MACsec Policy without interface type"
+	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
 
 func testAccMSOMacsecPolicyConfigCreate() string {
@@ -157,7 +171,6 @@ func testAccMSOMacsecPolicyConfigUpdateAddingExtraMacSecKey() string {
 		name                   = "tf_test_macsec_policy"
 		description            = "Terraform test MACsec Policy adding extra MACsec Key"
 		admin_state            = "enabled"
-		interface_type         = "access"
 		cipher_suite           = "256GcmAes"
 		window_size            = 128
 		security_policy        = "shouldSecure"
@@ -191,8 +204,6 @@ func testAccMSOMacsecPolicyConfigUpdateRemovingExtraMacSecKey() string {
 		window_size            = 128
 		security_policy        = "shouldSecure"
 		sak_expire_time        = 60
-		confidentiality_offset = "offset30"
-		key_server_priority    = 8
 		macsec_keys {
 			key_name           = "abc123"
 			psk                = "AA111111111111111111111111111111111111111111111111111111111111aa"

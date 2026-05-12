@@ -53,6 +53,7 @@ func resourceMSOMacsecPolicy() *schema.Resource {
 			},
 			"interface_type": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Optional: true,
 				Computed: true,
 				ValidateFunc: validation.StringInSlice([]string{
@@ -109,8 +110,9 @@ func resourceMSOMacsecPolicy() *schema.Resource {
 							Required: true,
 						},
 						"psk": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"start_time": {
 							Type:     schema.TypeString,
@@ -167,11 +169,31 @@ func setMacsecPolicyData(d *schema.ResourceData, msoClient *client.Client, templ
 	d.Set("admin_state", models.StripQuotes(policy.S("adminState").String()))
 	d.Set("interface_type", models.StripQuotes(policy.S("type").String()))
 	d.Set("cipher_suite", models.StripQuotes(policy.S("macsecParams", "cipherSuite").String()))
-	d.Set("window_size", policy.S("macsecParams", "windowSize").Data().(float64))
+	if v, ok := policy.S("macsecParams", "windowSize").Data().(float64); ok {
+		d.Set("window_size", v)
+	}
 	d.Set("security_policy", models.StripQuotes(policy.S("macsecParams", "securityPol").String()))
-	d.Set("sak_expire_time", policy.S("macsecParams", "sakExpiryTime").Data().(float64))
-	d.Set("confidentiality_offset", models.StripQuotes(policy.S("macsecParams", "confOffSet").String()))
-	d.Set("key_server_priority", policy.S("macsecParams", "keyServerPrio").Data().(float64))
+	if v, ok := policy.S("macsecParams", "sakExpiryTime").Data().(float64); ok {
+		d.Set("sak_expire_time", v)
+	}
+	if policy.S("macsecParams", "confOffSet").Data() != nil {
+		d.Set("confidentiality_offset", models.StripQuotes(policy.S("macsecParams", "confOffSet").String()))
+	}
+	if v, ok := policy.S("macsecParams", "keyServerPrio").Data().(float64); ok {
+		d.Set("key_server_priority", v)
+	}
+
+	existingPskByKeyName := map[string]string{}
+	if existingKeys, ok := d.GetOk("macsec_keys"); ok {
+		for _, v := range existingKeys.(*schema.Set).List() {
+			key := v.(map[string]any)
+			keyName := key["key_name"].(string)
+			psk := key["psk"].(string)
+			if psk != "" {
+				existingPskByKeyName[keyName] = psk
+			}
+		}
+	}
 
 	count, err := policy.ArrayCount("macsecKeys")
 	if err != nil {
@@ -184,8 +206,15 @@ func setMacsecPolicyData(d *schema.ResourceData, msoClient *client.Client, templ
 			return fmt.Errorf("unable to parse element %d from the list of macsec keys: %s", i, err)
 		}
 		macsecKeyEntry := make(map[string]any)
-		macsecKeyEntry["key_name"] = models.StripQuotes(macsecKeysCont.S("keyname").String())
-		macsecKeyEntry["psk"] = models.StripQuotes(macsecKeysCont.S("psk").String())
+		keyName := models.StripQuotes(macsecKeysCont.S("keyname").String())
+		macsecKeyEntry["key_name"] = keyName
+		psk := models.StripQuotes(macsecKeysCont.S("psk").String())
+		// The API returns an encrypted form of the PSK rather than the original plaintext.
+		// Always prefer the plaintext value from state to avoid perpetual diffs.
+		if existingPsk, exists := existingPskByKeyName[keyName]; exists {
+			psk = existingPsk
+		}
+		macsecKeyEntry["psk"] = psk
 		macsecKeyEntry["start_time"] = models.StripQuotes(macsecKeysCont.S("start").String())
 		macsecKeyEntry["end_time"] = models.StripQuotes(macsecKeysCont.S("end").String())
 		macsecKeys = append(macsecKeys, macsecKeyEntry)
@@ -231,9 +260,11 @@ func resourceMSOMacsecPolicyCreate(d *schema.ResourceData, m any) error {
 		payload["adminState"] = adminState.(string)
 	}
 
-	if interfaceType, ok := d.GetOk("interface_type"); ok {
-		payload["type"] = interfaceType.(string)
+	interfaceType, ok := d.GetOk("interface_type")
+	if !ok {
+		return fmt.Errorf("interface_type is required when creating a MACsec Policy")
 	}
+	payload["type"] = interfaceType.(string)
 
 	macsecParams := make(map[string]any)
 
@@ -383,7 +414,7 @@ func resourceMSOMacsecPolicyUpdate(d *schema.ResourceData, m any) error {
 	}
 
 	if d.HasChange("macsec_keys") {
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/macsecKeys", updatePath), setMacsecKeys(d.Get("vlan_range").(*schema.Set)))
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/macsecKeys", updatePath), setMacsecKeys(d.Get("macsec_keys").(*schema.Set)))
 		if err != nil {
 			return err
 		}
