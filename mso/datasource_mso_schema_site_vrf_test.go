@@ -40,12 +40,6 @@ func TestAccMSOSchemaSiteVrfDatasource(t *testing.T) {
 	})
 }
 
-// testAccMSOSchemaSiteVrfDatasourceConfig emits the prereq plus the site VRF
-// resource so the datasource has something to read.
-func testAccMSOSchemaSiteVrfDatasourceConfig() string {
-	return testAccMSOSchemaSiteVrfConfigCreate()
-}
-
 func testAccMSOSchemaSiteVrfDatasource() string {
 	return fmt.Sprintf(`%[1]s
 	data "mso_schema_site_vrf" "vrf" {
@@ -54,7 +48,7 @@ func testAccMSOSchemaSiteVrfDatasource() string {
 		template_name = mso_schema_site_vrf.%[2]s.template_name
 		vrf_name      = mso_schema_site_vrf.%[2]s.vrf_name
 	}`,
-		testAccMSOSchemaSiteVrfDatasourceConfig(),
+		testAccMSOSchemaSiteVrfConfigCreate(),
 		msoSchemaTemplateVrfName,
 	)
 }
@@ -70,7 +64,7 @@ func testAccMSOSchemaSiteVrfDatasourceNotFound() string {
 		template_name = mso_schema_site_vrf.%[2]s.template_name
 		vrf_name      = "non_existing_vrf_name"
 	}`,
-		testAccMSOSchemaSiteVrfDatasourceConfig(),
+		testAccMSOSchemaSiteVrfConfigCreate(),
 		msoSchemaTemplateVrfName,
 	)
 }
