@@ -42,13 +42,6 @@ func TestAccMSOSchemaSiteBdDatasource(t *testing.T) {
 	})
 }
 
-// testAccMSOSchemaSiteBdDatasourceConfig emits the prereq plus the site BD
-// resource (with host_route + svi_mac set so the datasource has computed
-// values to read back).
-func testAccMSOSchemaSiteBdDatasourceConfig() string {
-	return testAccMSOSchemaSiteBdConfigUpdateHostRouteAndSviMac()
-}
-
 func testAccMSOSchemaSiteBdDatasource() string {
 	return fmt.Sprintf(`%[1]s
 	data "mso_schema_site_bd" "bd" {
@@ -57,7 +50,7 @@ func testAccMSOSchemaSiteBdDatasource() string {
 		template_name = mso_schema_site_bd.%[2]s.template_name
 		bd_name       = mso_schema_site_bd.%[2]s.bd_name
 	}`,
-		testAccMSOSchemaSiteBdDatasourceConfig(),
+		testAccMSOSchemaSiteBdConfigUpdateHostRouteAndSviMac(),
 		msoSchemaTemplateBdName,
 	)
 }
@@ -73,7 +66,7 @@ func testAccMSOSchemaSiteBdDatasourceNotFound() string {
 		template_name = mso_schema_site_bd.%[2]s.template_name
 		bd_name       = "non_existing_bd_name"
 	}`,
-		testAccMSOSchemaSiteBdDatasourceConfig(),
+		testAccMSOSchemaSiteBdConfigUpdateHostRouteAndSviMac(),
 		msoSchemaTemplateBdName,
 	)
 }
