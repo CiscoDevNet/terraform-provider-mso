@@ -12,6 +12,31 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteAnpEpg manages an mso_schema_site_anp_epg association
+// (a template ANP EPG surfaced under a specific site on the schema).
+//
+// Unlike mso_schema_site_vrf and mso_schema_site_anp (which are pure
+// deprecation candidates), this resource will gain a new "shutdown" attribute
+// that controls the EPG admin state at the site level. Until that attribute
+// is added, the resource provides no incremental value on newer NDO releases
+// where the schema validation engine is always-on: once a template ANP EPG
+// exists and the template is associated with a site, NDO automatically
+// materializes the corresponding sites[].anps[].epgs[] entry on every schema
+// update.
+//
+// private_link_label: Deprecation candidate – this is a cloud-only service
+// EPG attribute that is not exercised by the current acceptance tests.
+// It should be investigated further and potentially moved to a dedicated
+// cloud-site resource.
+//
+// Create-error behaviour (intentionally not changed): if the user applies
+// this resource against a template that has no mso_schema_site association,
+// older NDO returns "Resource Not Found" and newer NDO silently drops the
+// PATCH (the follow-up Read finds nothing and the Terraform SDK reports
+// "Provider produced inconsistent result after apply"). Either surfaces the
+// misconfiguration to the user; we deliberately leave the current
+// replace-then-add Create flow alone to preserve backward compatibility on
+// pre-validator NDO releases that still rely on the inject-via-PATCH path.
 func resourceMSOSchemaSiteAnpEpg() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpEpgCreate,
