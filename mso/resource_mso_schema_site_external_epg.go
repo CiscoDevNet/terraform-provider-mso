@@ -55,7 +55,7 @@ func resourceMSOSchemaSiteExternalEpg() *schema.Resource {
 				Optional: true,
 				// Commented out computed to allow setting l3out_name to empty string
 				// Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"l3out_template_name": &schema.Schema{
 				Type:          schema.TypeString,
