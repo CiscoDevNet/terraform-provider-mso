@@ -28,8 +28,7 @@ func TestAccMSOServiceDeviceClusterDataSource(t *testing.T) {
 						"threshold_down_action": "permit",
 					}),
 					CustomTestCheckTypeSetElemAttrs("data.mso_service_device_cluster.cluster", "interface_properties", map[string]string{
-						"name":    "interface3",
-						"anycast": "true",
+						"name": "interface3",
 					}),
 				),
 			},
