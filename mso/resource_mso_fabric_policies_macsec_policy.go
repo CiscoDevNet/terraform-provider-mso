@@ -260,6 +260,9 @@ func resourceMSOMacsecPolicyCreate(d *schema.ResourceData, m any) error {
 		payload["adminState"] = adminState.(string)
 	}
 
+	// This guard is required due to the NDO API silently rejecting the policy creation if no type is set.
+	// The response is sucessful but no policy gets created.
+	// Confirmed on ND 4.1(1g).
 	interfaceType, ok := d.GetOk("interface_type")
 	if !ok {
 		return fmt.Errorf("interface_type is required when creating a MACsec Policy")
