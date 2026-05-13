@@ -195,12 +195,37 @@ func customTestCheckResourceTypeSetAttr(resourceName, resourceAttrRootkey string
 	}
 }
 
+// resolveStateReference resolves a value that looks like a Terraform resource reference
+// (e.g. "resource_type.resource_name.attribute") by looking up the actual value in state.
+// If the value does not match this pattern or the referenced resource/attribute is not found,
+// the original value is returned unchanged.
+func resolveStateReference(s *terraform.State, value string) string {
+	parts := strings.SplitN(value, ".", 3)
+	if len(parts) != 3 {
+		return value
+	}
+	resourceKey := parts[0] + "." + parts[1]
+	attrName := parts[2]
+	if rs, ok := s.RootModule().Resources[resourceKey]; ok {
+		if attrVal, ok := rs.Primary.Attributes[attrName]; ok {
+			return attrVal
+		}
+	}
+	return value
+}
+
 func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck map[string]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("Resource not found: %s", resourceName)
 		}
+
+		resolvedAttrs := make(map[string]string, len(attrsToCheck))
+		for k, v := range attrsToCheck {
+			resolvedAttrs[k] = resolveStateReference(s, v)
+		}
+
 		groupedAttrs := make(map[string]map[string]string)
 		re := regexp.MustCompile(fmt.Sprintf(`^%s\.(\d+)\.(.*)$`, setName))
 
@@ -218,7 +243,7 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 
 		for _, elemAttrs := range groupedAttrs {
 			match := true
-			for expectedKey, expectedVal := range attrsToCheck {
+			for expectedKey, expectedVal := range resolvedAttrs {
 				if val, ok := elemAttrs[expectedKey]; ok {
 					if fmt.Sprintf("%v", val) != expectedVal {
 						match = false
