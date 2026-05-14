@@ -12,6 +12,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteBdSubnet manages an mso_schema_site_bd_subnet entry
+// (a subnet attached to a site BD's subnets list on the schema).
+//
+// Create-error behaviour (intentionally not changed): if the user applies
+// this resource against a template that has no mso_schema_site association,
+// older NDO returns "Resource Not Found" and newer NDO silently drops the
+// PATCH (the follow-up Read finds nothing and the Terraform SDK reports
+// "Provider produced inconsistent result after apply"). Either surfaces the
+// misconfiguration to the user.
+//
+// Delete/Update implementation note: subnet entries are stored as objects in
+// the sites[].bds[].subnets[] array and are addressed by their array index
+// (path: /sites/{siteId}-{template}/bds/{bd_name}/subnets/{index}). The index
+// is resolved at delete/update time by scanning the array for the matching IP.
+// If the entry is not found during delete it is treated as a no-op.
+//
+// Future improvement: this resource manages one subnet per instance, meaning
+// N subnets require N separate schema GETs and PATCHes (plus the NDO
+// validation engine running on each). A replacement resource managing the
+// full subnets list as a TypeSet (alongside a similar change to
+// mso_schema_site_bd_l3out) would reduce this to a single bulk PATCH and
+// could be introduced as a new resource to avoid a breaking change.
 func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteBdSubnetCreate,
@@ -45,22 +67,32 @@ func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
+				Type:     schema.TypeString,
+				Required: true,
+				// ForceNew is required: subnet entries are stored under the
+				// site BD at /sites/{siteId}-{template}/bds/{bd_name}/subnets/.
+				// Moving a subnet to a different BD would require removing it
+				// from one BD's subnets array and adding it to another, which
+				// is equivalent to destroy+recreate.
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"ip": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
+				Type:     schema.TypeString,
+				Required: true,
+				// ForceNew is required: subnet entries are identified by their
+				// IP (CIDR) for array-index resolution during Update and Delete.
+				// There is no API operation to change the IP of an existing
+				// subnet in-place; a change must go through destroy+recreate.
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"description": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Type:     schema.TypeString,
+				Optional: true,
+				// Computed is intentionally omitted to allow setting description
+				// to an empty string to remove it.
+				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeString,
@@ -232,10 +264,7 @@ func resourceMSOSchemaSiteBdSubnetCreate(d *schema.ResourceData, m interface{}) 
 	if qr, ok := d.GetOk("querier"); ok {
 		Querier = qr.(bool)
 	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
-	}
+	Desc := d.Get("description").(string)
 	var Primary bool
 	if d, ok := d.GetOk("primary"); ok {
 		Primary = d.(bool)
@@ -386,10 +415,7 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 	if qr, ok := d.GetOk("querier"); ok {
 		Querier = qr.(bool)
 	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
-	}
+	Desc := d.Get("description").(string)
 	var Primary bool
 	if d, ok := d.GetOk("primary"); ok {
 		Primary = d.(bool)
