@@ -93,7 +93,26 @@ func dataSourceMSOSchemaSiteBdL3outRead(d *schema.ResourceData, m interface{}) e
 	}
 
 	found := false
-	if bdCont.Exists("l3OutRefs") {
+	l3outCount, err := bdCont.ArrayCount("l3Outs")
+	if err == nil {
+		for k := range l3outCount {
+			l3outCont, err := bdCont.ArrayElement(k, "l3Outs")
+			if err != nil {
+				continue
+			}
+			if strings.Trim(l3outCont.String(), "\"") == l3outName {
+				found = true
+				d.SetId(fmt.Sprintf("%s/sites/%s-%s/bds/%s/l3outs/%s-%s-%s", schemaId, siteId, templateName, bd, l3outSchemaId, l3outTemplateName, l3outName))
+				d.Set("l3out_name", l3outName)
+				d.Set("l3out_template_name", l3outTemplateName)
+				d.Set("l3out_schema_id", l3outSchemaId)
+				break
+			}
+		}
+	}
+
+	// Fallback for older NDO versions that used full reference paths in l3OutRefs.
+	if !found && bdCont.Exists("l3OutRefs") {
 		l3OutRefs := bdCont.S("l3OutRefs").Data()
 		for _, l3OutRef := range l3OutRefs.([]interface{}) {
 			splitl3OutRef := strings.Split(l3OutRef.(string), "/")
