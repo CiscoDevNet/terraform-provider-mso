@@ -29,11 +29,11 @@ func TestAccMSOTemplateResourceTenant(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Tenant Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceTenanErrorNoTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant is required for template of type tenant.`),
+				ExpectError: regexp.MustCompile(`Tenant is required for a template of type tenant.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Tenant Template without sites") },
-				Config:    testAccMSOTemplateResourceTenantConfig(),
+				Config:    testAccMSOTemplateResourceTenantConfigNoSites(),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMSOTemplateState(
 						"mso_template.template_tenant",
@@ -295,6 +295,16 @@ func testAccTenantConfig() string {
 	`, testSiteConfigAnsibleTest(), testSiteConfigAnsibleTest2(), msoTemplateTenantName, msoTemplateTenantName, msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
+func testAccMSOTemplateResourceTenantConfigNoSites() string {
+	return fmt.Sprintf(`%s
+	resource "mso_template" "template_tenant" {
+		template_name = "test_template_tenant"
+		template_type = "tenant"
+		tenant_id = mso_tenant.%s.id
+	}
+	`, testAccTenantConfig(), msoTemplateTenantName)
+}
+
 func testAccMSOTemplateResourceTenantConfig() string {
 	return fmt.Sprintf(`%s
 	resource "mso_template" "template_tenant" {
@@ -401,17 +411,17 @@ func TestAccMSOTemplateResourceL3out(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in L3out Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceL3outErrorNoTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant is required for template of type l3out.`),
+				ExpectError: regexp.MustCompile(`Tenant is required for a template of type l3out.`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: No sites provided in L3out Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceL3outErrorNoSitesConfig(),
-				ExpectError: regexp.MustCompile(`Site is required for template of type l3out.`),
+				ExpectError: regexp.MustCompile(`At least one site is required for a template of type l3out.`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: Two sites provided in L3out Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceL3outErrorTwositesConfig(),
-				ExpectError: regexp.MustCompile(`Only one site is allowed for template of type l3out.`),
+				ExpectError: regexp.MustCompile(`Only one site is allowed for a template of type l3out.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create L3out Template with 1 site") },
@@ -500,7 +510,7 @@ func TestAccMSOTemplateResourceFabricPolicy(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Fabric Policy Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceFabricPolicyErrorTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant cannot be attached to template of type fabric_policy.`),
+				ExpectError: regexp.MustCompile(`Tenant cannot be attached to a template of type fabric_policy.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Fabric Policy Template without sites") },
@@ -549,7 +559,7 @@ func TestAccMSOTemplateResourceFabricResource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Tenant provided in Fabric Resource Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceFabricResourceErrorTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant cannot be attached to template of type fabric_resource.`),
+				ExpectError: regexp.MustCompile(`Tenant cannot be attached to a template of type fabric_resource.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Fabric Resource Template without sites") },
@@ -598,17 +608,17 @@ func TestAccMSOTemplateResourceMonitoringTenant(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Monitoring Tenant Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceMonitoringTenantErrorNoTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant is required for template of type monitoring_tenant.`),
+				ExpectError: regexp.MustCompile(`Tenant is required for a template of type monitoring_tenant.`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: No site provided in Monitoring Tenant Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceMonitoringTenantErrorNoSiteConfig(),
-				ExpectError: regexp.MustCompile(`Site is required for template of type monitoring_tenant.`),
+				ExpectError: regexp.MustCompile(`At least one site is required for a template of type monitoring_tenant.`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: Two sites provided in Monitoring Tenant Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceMonitoringTenantErrorTwoSitesConfig(),
-				ExpectError: regexp.MustCompile(`Only one site is allowed for template of type monitoring_tenant.`),
+				ExpectError: regexp.MustCompile(`Only one site is allowed for a template of type monitoring_tenant.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Monitoring Tenant Template with 1 site") },
@@ -680,17 +690,17 @@ func TestAccMSOTemplateResourceMonitoringAccess(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Tenant provided in Monitoring Access Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceMonitoringAccessErrorTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant cannot be attached to template of type monitoring_access.`),
+				ExpectError: regexp.MustCompile(`Tenant cannot be attached to a template of type monitoring_access.`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: No site provided in Monitoring Access Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceMonitoringAccessErrorNoSiteConfig(),
-				ExpectError: regexp.MustCompile(`Site is required for template of type monitoring_access.`),
+				ExpectError: regexp.MustCompile(`At least one site is required for a template of type monitoring_access.`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: Two sites provided in Monitoring Access Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceMonitoringAccessErrorTwoSitesConfig(),
-				ExpectError: regexp.MustCompile(`Only one site is allowed for template of type monitoring_access.`),
+				ExpectError: regexp.MustCompile(`Only one site is allowed for a template of type monitoring_access.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Monitoring Access Template with 1 site") },
@@ -760,7 +770,7 @@ func TestAccMSOTemplateResourceServiceDevice(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Service Device Template configuration (error)") },
 				Config:      testAccMSOTemplateResourceServiceDeviceErrorNoTenantConfig(),
-				ExpectError: regexp.MustCompile(`Tenant is required for template of type service_device.`),
+				ExpectError: regexp.MustCompile(`Tenant is required for a template of type service_device\.`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create Service Device Template with 2 sites") },
