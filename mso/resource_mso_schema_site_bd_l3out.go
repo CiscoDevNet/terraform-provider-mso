@@ -13,6 +13,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteBdL3out manages an mso_schema_site_bd_l3out entry
+// (an L3out reference attached to a site BD's l3Outs list on the schema).
+//
+// Create-error behaviour (intentionally not changed): if the user applies
+// this resource against a template that has no mso_schema_site_bd parent,
+// older NDO returns "Resource Not Found" and newer NDO silently drops the
+// PATCH (the follow-up Read finds nothing and the Terraform SDK reports
+// "Provider produced inconsistent result after apply"). Either surfaces the
+// misconfiguration to the user.
+//
+// Delete implementation note: the l3out entry is stored as a plain string
+// in the sites[].bds[].l3Outs[] array and is removed by its array index
+// (path: /sites/{siteId}-{template}/bds/{bd_name}/l3Outs/{index}). The
+// index is resolved at delete time by scanning the array for the matching
+// name. If the entry is not found the delete is treated as a no-op.
+//
+// Future improvement: this resource manages one L3out per instance, meaning
+// N L3outs require N separate schema GETs and PATCHes (plus the NDO
+// validation engine running on each). A replacement resource managing the
+// full l3Outs list as a TypeSet (alongside a similar change to
+// mso_schema_site_bd_subnet) would reduce this to a single bulk PATCH and
+// could be introduced as a new resource to avoid a breaking change.
 func resourceMSOSchemaSiteBdL3out() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteBdL3outCreate,
@@ -45,14 +67,24 @@ func resourceMSOSchemaSiteBdL3out() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"bd_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
+				Type:     schema.TypeString,
+				Required: true,
+				// ForceNew is required: l3out entries are stored under the
+				// site BD at /sites/{siteId}-{template}/bds/{bd_name}/l3Outs/.
+				// Moving an l3out to a different BD would require removing it
+				// from one BD's l3Outs array and adding it to another, which
+				// is equivalent to destroy+recreate.
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"l3out_name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
+				Type:     schema.TypeString,
+				Required: true,
+				// ForceNew is required: l3out entries are plain strings in the
+				// l3Outs array and are identified by their array index for
+				// removal (see the Delete path: /l3Outs/{index}). There is no
+				// API operation to rename an existing entry in-place; a rename
+				// must go through destroy+recreate.
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
