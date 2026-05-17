@@ -887,7 +887,7 @@ func resourceMSOSchemaSiteAnpEpgDomainRead(d *schema.ResourceData, m interface{}
 									} else if tempVar, ok := d.GetOk("dn"); ok {
 										d.Set("dn", tempVar.(string))
 									}
-									d.Set("deployment_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
+									d.Set("deploy_immediacy", models.StripQuotes(domainCont.S("deployImmediacy").String()))
 									d.Set("resolution_immediacy", models.StripQuotes(domainCont.S("resolutionImmediacy").String()))
 
 									if domainCont.Exists("switchingMode") {
