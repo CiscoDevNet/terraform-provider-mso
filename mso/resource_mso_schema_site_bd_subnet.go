@@ -30,10 +30,11 @@ import (
 //
 // Future improvement: this resource manages one subnet per instance, meaning
 // N subnets require N separate schema GETs and PATCHes (plus the NDO
-// validation engine running on each). A replacement resource managing the
-// full subnets list as a TypeSet (alongside a similar change to
-// mso_schema_site_bd_l3out) would reduce this to a single bulk PATCH and
-// could be introduced as a new resource to avoid a breaking change.
+// validation engine running on each). A potential replacement is a subnet
+// TypeSet block on mso_schema_site_bd, which already owns the parent BD and
+// its site-level attributes (host_route, svi_mac). That would reduce N subnet
+// changes to a single PATCH on the BD resource, and this resource would then
+// be deprecated in favour of that block.
 func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteBdSubnetCreate,
