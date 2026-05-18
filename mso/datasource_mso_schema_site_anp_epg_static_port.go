@@ -152,7 +152,7 @@ func datasourceMSOSchemaSiteAnpEpgStaticPortRead(d *schema.ResourceData, m inter
 			found = true
 			d.SetId(fmt.Sprintf("%s/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%s", schemaId, siteId, templateName, anp, epg, portPath))
 			if portCont.Exists("type") {
-				d.Set("type", models.StripQuotes(portCont.S("type").String()))
+				d.Set("path_type", models.StripQuotes(portCont.S("type").String()))
 			}
 			if portCont.Exists("path") {
 				d.Set("pod", pod)
