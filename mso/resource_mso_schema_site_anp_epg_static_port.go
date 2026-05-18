@@ -13,6 +13,36 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteAnpEpgStaticPort manages a single static port binding
+// attached to a site ANP EPG's staticPorts list on the schema.
+//
+// Create-error behaviour (intentionally not changed): if the user applies
+// this resource against a template that has no mso_schema_site association,
+// older NDO returns "Resource Not Found" and newer NDO silently drops the
+// PATCH (the follow-up Read finds nothing and the Terraform SDK reports
+// "Provider produced inconsistent result after apply"). Either surfaces the
+// misconfiguration to the user.
+//
+// Delete implementation note: the static port entry is stored as an object
+// in the sites[].anps[].epgs[].staticPorts[] array and is removed by its
+// array index (path: /sites/{siteId}-{template}/anps/{anp}/epgs/{epg}/staticPorts/{index}).
+// The index is resolved at delete time by scanning the array for the matching
+// portPath. If the entry is not found the delete is treated as a no-op.
+//
+// ForceNew fields (path_type, pod, leaf, path, fex): these compose the
+// portPath string (via createPortPath) that uniquely identifies the static
+// port entry in the NDO API array. Changing any of them would change the
+// portPath, so Update would fail to locate the existing entry. ForceNew
+// ensures a destroy+recreate instead of a silent failure.
+//
+// Future improvement: this resource manages one static port per instance,
+// requiring N separate schema GETs and PATCHes for N static ports. A
+// potential replacement is a static_port TypeSet block on mso_schema_site_anp_epg,
+// which already owns the parent EPG and will gain further site-level EPG
+// attributes. That would reduce N static port changes to a single PATCH on
+// the EPG resource. This resource would then be deprecated in favour of
+// that block. However, this resource could be complex enough to justify a seperate
+// resource.
 func resourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpEpgStaticPortCreate,
@@ -57,6 +87,10 @@ func resourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
+			// path_type, pod, leaf, path, and fex together form the portPath
+			// identifier (assembled by createPortPath). All are ForceNew because
+			// changing any of them changes the portPath used to locate the entry
+			// in Update and Delete, which would fail to find the existing entry.
 			"path_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -97,10 +131,13 @@ func resourceMSOSchemaSiteAnpEpgStaticPort() *schema.Resource {
 					"lazy",
 				}, false),
 			},
+			// fex is also part of the portPath identity (see path_type comment above).
+			// Not Computed: the platform does not assign a default fex value, so
+			// omitting it from config must clear the field rather than preserve the
+			// prior state value.
 			"fex": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
@@ -483,7 +520,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortRead(d *schema.ResourceData, m interfa
 								portPath := createPortPath(pathType, statepod, stateleaf, fex, statepath)
 								if portPath == models.StripQuotes(portCont.S("path").String()) && pathType == models.StripQuotes(portCont.S("type").String()) {
 									d.SetId(portPath)
-									d.Set("type", pathType)
+									d.Set("path_type", pathType)
 									if portCont.Exists("path") {
 										d.Set("pod", statepod)
 										d.Set("leaf", stateleaf)
@@ -659,7 +696,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortUpdate(d *schema.ResourceData, m inter
 }
 
 func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Site Anp: Beginning Creation")
+	log.Printf("[DEBUG] Static Port: Beginning Deletion")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -676,8 +713,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 		return fmt.Errorf("No Sites found")
 	}
 
-	var pathType, pod, leaf, path, deploymentImmediacy, mode, fex string
-	var vlan, microsegvlan int
+	var pathType, pod, leaf, path, fex string
 
 	if tempVar, ok := d.GetOk("path_type"); ok {
 		pathType = tempVar.(string)
@@ -690,18 +726,6 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 	}
 	if tempVar, ok := d.GetOk("path"); ok {
 		path = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("deployment_immediacy"); ok {
-		deploymentImmediacy = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("mode"); ok {
-		mode = tempVar.(string)
-	}
-	if tempVar, ok := d.GetOk("vlan"); ok {
-		vlan = tempVar.(int)
-	}
-	if tempVar, ok := d.GetOk("micro_seg_vlan"); ok {
-		microsegvlan = tempVar.(int)
 	}
 	if tempVar, ok := d.GetOk("fex"); ok {
 		fex = tempVar.(string)
@@ -757,7 +781,7 @@ func resourceMSOSchemaSiteAnpEpgStaticPortDelete(d *schema.ResourceData, m inter
 								if portpath == apiportpath {
 									index := l
 									path := fmt.Sprintf("/sites/%s-%s/anps/%s/epgs/%s/staticPorts/%v", stateSite, stateTemplate, stateAnp, stateEpg, index)
-									anpStruct := models.NewSchemaSiteAnpEpgStaticPort("remove", path, pathType, portpath, vlan, deploymentImmediacy, microsegvlan, mode)
+									anpStruct := models.NewSchemaSiteAnpEpgStaticPort("remove", path, pathType, portpath, 0, "", 0, "")
 									response, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), anpStruct)
 
 									// Ignoring Error with code 141: Resource Not Found when deleting

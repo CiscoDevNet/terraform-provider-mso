@@ -58,6 +58,17 @@ var msoSchemaTemplateAnpEpgUsegAttrName2 = acctest.RandStringFromCharSet(10, acc
 // switch onboarded to the ansible_test site in the lab.
 const msoSchemaSiteAnpEpgStaticLeafPath = "topology/pod-1/node-101"
 
+// msoSchemaSiteAnpEpgStaticPortPod, msoSchemaSiteAnpEpgStaticPortLeaf, and
+// msoSchemaSiteAnpEpgStaticPortPath identify the physical interface used in
+// static port acceptance tests. They must correspond to a real interface on a
+// leaf switch onboarded to the ansible_test site in the lab.
+// The assembled portPath (for path_type="port") is:
+//
+//	topology/{pod}/paths-{leaf}/pathep-[{path}]
+const msoSchemaSiteAnpEpgStaticPortPod = "pod-1"
+const msoSchemaSiteAnpEpgStaticPortLeaf = "101"
+const msoSchemaSiteAnpEpgStaticPortPath = "eth1/1"
+
 const msoSchemaTemplateAnpEpgUsegAttrIp = "10.0.0.10/24"
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"
