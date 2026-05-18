@@ -53,6 +53,11 @@ var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, ac
 var msoSchemaTemplateAnpEpgUsegAttrName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateAnpEpgUsegAttrName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
+// msoSchemaSiteAnpEpgStaticLeafPath is the topology path of the leaf node
+// used in static leaf acceptance tests. It must correspond to a real leaf
+// switch onboarded to the ansible_test site in the lab.
+const msoSchemaSiteAnpEpgStaticLeafPath = "topology/pod-1/node-101"
+
 const msoSchemaTemplateAnpEpgUsegAttrIp = "10.0.0.10/24"
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
 const msoSchemaTemplateAnpEpgSubnetIp2 = "10.0.0.2/24"

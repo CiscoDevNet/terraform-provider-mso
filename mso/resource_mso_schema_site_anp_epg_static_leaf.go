@@ -13,6 +13,36 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteAnpEpgStaticleaf manages an
+// mso_schema_site_anp_epg_static_leaf entry (a static leaf binding attached
+// to a site ANP EPG's staticLeafs list on the schema).
+//
+// Create-error behaviour (intentionally not changed): if the user applies
+// this resource against a template that has no mso_schema_site association,
+// older NDO returns "Resource Not Found" and newer NDO silently drops the
+// PATCH (the follow-up Read finds nothing and the Terraform SDK reports
+// "Provider produced inconsistent result after apply"). Either surfaces the
+// misconfiguration to the user.
+//
+// Delete implementation note: the static leaf entry is stored as an object
+// in the sites[].anps[].epgs[].staticLeafs[] array and is removed by its
+// array index (path: /sites/{siteId}-{template}/anps/{anp}/epgs/{epg}/staticLeafs/{index}).
+// The index is resolved at delete time by scanning the array for the matching
+// path. If the entry is not found the delete is treated as a no-op.
+//
+// All schema attributes are ForceNew because the resource has no Update
+// function. The NDO PATCH API could support in-place updates of
+// port_encap_vlan (addressed by array index), but without an Update handler
+// Terraform would silently ignore any changes. ForceNew ensures a
+// destroy+recreate instead.
+//
+// Future improvement: this resource manages one static leaf per instance,
+// requiring N separate schema GETs and PATCHes for N static leafs. A
+// potential replacement is a static_leaf TypeSet block on mso_schema_site_anp_epg,
+// which already owns the parent EPG and will gain further site-level EPG
+// attributes. That would reduce N static leaf changes to a single PATCH on
+// the EPG resource. This resource would then be deprecated in favour of
+// that block.
 func resourceMSOSchemaSiteAnpEpgStaticleaf() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpEpgStaticleafCreate,
@@ -57,12 +87,22 @@ func resourceMSOSchemaSiteAnpEpgStaticleaf() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"path": &schema.Schema{
+				// ForceNew: the topology path (e.g. "topology/pod-1/node-101")
+				// identifies the static leaf binding. Changing it requires
+				// removing the old entry and adding a new one, which is
+				// equivalent to destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"port_encap_vlan": &schema.Schema{
+				// ForceNew: this resource has no Update function. Without
+				// ForceNew, a port_encap_vlan change would be silently ignored
+				// (the plan would show a diff but no PATCH would be sent).
+				// ForceNew ensures Terraform destroys and recreates the entry
+				// instead. An Update function could be added in the future to
+				// allow in-place changes.
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: true,
@@ -143,9 +183,9 @@ func resourceMSOSchemaSiteAnpEpgStaticleafImport(d *schema.ResourceData, m inter
 									d.SetId(apiPath)
 									d.Set("path", apiPath)
 									d.Set("site_id", apiSite)
-									d.Set("schema_id", split[2])
-									d.Set("template_name", split[4])
-									d.Set("anp_name", split[6])
+									d.Set("schema_id", schemaId)
+									d.Set("template_name", stateTemplate)
+									d.Set("anp_name", stateAnp)
 									d.Set("epg_name", apiEPG)
 									apiPort, _ := strconv.Atoi(staticLeafCont.S("portEncapVlan").String())
 									d.Set("port_encap_vlan", apiPort)
@@ -385,9 +425,9 @@ func resourceMSOSchemaSiteAnpEpgStaticleafRead(d *schema.ResourceData, m interfa
 									d.SetId(apiPath)
 									d.Set("path", apiPath)
 									d.Set("site_id", apiSite)
-									d.Set("schema_id", split[2])
-									d.Set("template_name", split[4])
-									d.Set("anp_name", split[6])
+									d.Set("schema_id", schemaId)
+									d.Set("template_name", stateTemplate)
+									d.Set("anp_name", stateAnp)
 									d.Set("epg_name", apiEPG)
 									apiPort, _ := strconv.Atoi(staticLeafCont.S("portEncapVlan").String())
 									d.Set("port_encap_vlan", apiPort)

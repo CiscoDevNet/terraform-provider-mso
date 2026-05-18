@@ -31,10 +31,11 @@ import (
 //
 // Future improvement: this resource manages one L3out per instance, meaning
 // N L3outs require N separate schema GETs and PATCHes (plus the NDO
-// validation engine running on each). A replacement resource managing the
-// full l3Outs list as a TypeSet (alongside a similar change to
-// mso_schema_site_bd_subnet) would reduce this to a single bulk PATCH and
-// could be introduced as a new resource to avoid a breaking change.
+// validation engine running on each). A potential replacement is an l3out
+// TypeSet block on mso_schema_site_bd, which already owns the parent BD and
+// its site-level attributes (host_route, svi_mac). That would reduce N L3out
+// changes to a single PATCH on the BD resource, and this resource would then
+// be deprecated in favour of that block.
 func resourceMSOSchemaSiteBdL3out() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteBdL3outCreate,
