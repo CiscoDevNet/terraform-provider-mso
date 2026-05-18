@@ -7,6 +7,27 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 )
 
+// cleanupOrphanSchemaSiteTestResources deletes any leftover schema/tenant on
+// MSO that match the package-global test names (msoSchemaName, msoTenantName).
+//
+// Why this exists: SDK v1's testing framework rolls back state when an apply
+// errors -- including an apply that fails on a data source read. Error-flow
+// acceptance tests intentionally trigger such failures, so the prereq
+// tenant/schema/site association created during the failing apply are
+// orphaned on MSO (present on the server, absent from Terraform state).
+// Without explicit cleanup, the next step (or test run) fails on
+// "Tenant/Schema: '...' already exists".
+//
+// Cleanup order: schema first (so the schema_site association inside it goes
+// with it), then tenant. Lives here in test_cleanup_helpers.go so any
+// acceptance test in the package that intentionally triggers apply-time
+// errors can reuse it.
+func cleanupOrphanSchemaSiteTestResources(t *testing.T) {
+	msoClient := testAccPreCheck(t)
+	deleteSchemaByDisplayName(t, msoClient, msoSchemaName)
+	deleteTenantByName(t, msoClient, msoTenantName)
+}
+
 // deleteSchemaByDisplayName best-effort deletes a schema on MSO whose
 // `displayName` matches the supplied value. Intended as a PreConfig cleanup
 // helper for acceptance tests that intentionally trigger apply-time errors --
