@@ -12,6 +12,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteAnpEpgSubnet manages an mso_schema_site_anp_epg_subnet
+// entry (a subnet attached to a site-level EPG in the schema document).
+//
+// Create-error behaviour (intentionally not changed): if the user applies this
+// resource without a prior mso_schema_site association for the target site,
+// older NDO rejects the PATCH with "Resource Not Found" and newer NDO silently
+// drops it so the follow-up Read finds nothing and the SDK reports "Provider
+// produced inconsistent result after apply". Either outcome surfaces the
+// misconfiguration to the user.
+//
+// Delete/Update implementation note: the subnet entry is identified by its
+// array index at operation time, resolved by scanning subnets[] for the
+// matching IP. If the entry is not found the operation is treated as a no-op.
+//
+// Future improvement: the subnets could be managed as a TypeSet block on
+// mso_schema_site_anp_epg, which already owns the parent site EPG. That would
+// consolidate N subnet changes into a single PATCH and allow this resource to
+// be deprecated.
 func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpEpgSubnetCreate,
@@ -65,7 +83,7 @@ func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				// Not Computed: description can be cleared to "" after being set.
 			},
 			"scope": &schema.Schema{
 				Type:     schema.TypeString,
@@ -90,11 +108,17 @@ func resourceMSOSchemaSiteAnpEpgSubnet() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
+				// querier is only supported for Bridge Domain subnets. Setting
+				// it on an EPG subnet is rejected by NDO. This attribute is a
+				// deprecation candidate and should be removed in a future release.
 			},
 			"primary": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
+				// primary is only supported for Bridge Domain subnets. Setting
+				// it on an EPG subnet is rejected by NDO. This attribute is a
+				// deprecation candidate and should be removed in a future release.
 			},
 		}),
 	}
@@ -248,10 +272,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetCreate(d *schema.ResourceData, m interface
 	if qr, ok := d.GetOk("querier"); ok {
 		Querier = qr.(bool)
 	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
-	}
+	Desc := d.Get("description").(string)
 	var Primary bool
 	if d, ok := d.GetOk("primary"); ok {
 		Primary = d.(bool)
@@ -525,10 +546,7 @@ func resourceMSOSchemaSiteAnpEpgSubnetUpdate(d *schema.ResourceData, m interface
 	if qr, ok := d.GetOk("querier"); ok {
 		Querier = qr.(bool)
 	}
-	var Desc string
-	if d, ok := d.GetOk("description"); ok {
-		Desc = d.(string)
-	}
+	Desc := d.Get("description").(string)
 	var Primary bool
 	if d, ok := d.GetOk("primary"); ok {
 		Primary = d.(bool)

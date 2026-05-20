@@ -66,6 +66,7 @@ const msoSchemaTemplateExtEpgSubnetIp2 = "10.0.1.2/24"
 const msoSchemaTemplateBdSubnetIp = "10.1.0.1/24"
 const msoSchemaSiteBdSubnetIp = "10.2.0.1/24"
 const msoSchemaSiteBdSubnetIp2 = "10.2.0.2/24"
+const msoSchemaSiteAnpEpgSubnetIp = "10.3.0.1/24"
 
 var msoFabricResourceTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricResourcePortChannelInterfaceName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
