@@ -51,7 +51,7 @@ resource "mso_schema_site_anp_epg_bulk_staticport" "static_port" {
 * `anp_name` - (Required) ANP name under which the Static Port is deployed.
 * `epg_name` - (Required) EPG name under which the Static Port is deployed.
 * `static_ports` - (Optional) A block representing a Static Port object. Type - Block.
-    * `path_type` - (Required) The path type of the static port. Allowed values are `port`, `vpc` and `dpc`. Default to `port`.
+    * `path_type` - (Optional) The path type of the static port. Allowed values are `port`, `vpc` and `dpc`. Default to `port`.
     * `pod` - (Required) The pod of the static port.
     * `leaf` - (Required) The leaf of the static port. When `path_type` is `port` or `dpc`, then `leaf` is a string of the leaf ID; Example - '101'. When `path_type` is `vpc`, then `leaf` is a list with both leaf IDs; Example - '101-102'.
     * `path` - (Required) The path of the static port.

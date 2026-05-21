@@ -12,6 +12,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteAnpEpgBulkStaticPort manages the complete set of static
+// ports for a site-level EPG. Unlike mso_schema_site_anp_epg_static_port which
+// manages a single port entry, this resource owns the entire staticPorts list
+// for the EPG — Create and Update replace all ports in one PATCH operation.
+//
+// If the site-template association does not exist when Create is called,
+// getSiteFromSiteIdAndTemplate returns "Site-Template association for X-Y is
+// not found." and the resource is never created.
+//
+// The resource ID is the EPG DN:
+//
+//	{schemaId}/site/{siteId}/template/{templateName}/anp/{anpName}/epg/{epgName}
 func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate,
@@ -57,7 +69,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"static_ports": &schema.Schema{
-				Type: schema.TypeList,
+				Type: schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"path_type": {
@@ -76,11 +88,8 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"leaf": {
-							Type:     schema.TypeString,
-							Optional: true,
-							// Remove computed because when a user updates the list and causes index shifts
-							//  the leaf state value will be used at the location of the list index when not provided in config.
-							// Computed:     true,
+							Type:         schema.TypeString,
+							Required:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 						"path": {
@@ -94,36 +103,24 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						},
 						"deployment_immediacy": {
 							Type:     schema.TypeString,
-							Optional: true,
-							// Remove computed because when a user updates the list and causes index shifts
-							//  the deployment_immediacy state value will be used at the location of the list index when not provided in config.
-							// Computed:     true,
+							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
 								"immediate",
 								"lazy",
 							}, false),
 						},
 						"fex": {
-							Type:     schema.TypeString,
-							Optional: true,
-							// Remove computed because when a user updates the list and causes index shifts
-							//  the fex state value will be used at the location of the list index when not provided in config.
-							// Computed:     true,
+							Type:         schema.TypeString,
+							Optional:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						"micro_seg_vlan": {
 							Type:     schema.TypeInt,
 							Optional: true,
-							// Remove computed because when a user updates the list and causes index shifts
-							//  the micro_seg_vlan state value will be used at the location of the list index when not provided in config.
-							// Computed: true,
 						},
 						"mode": {
 							Type:     schema.TypeString,
-							Optional: true,
-							// Remove computed because when a user updates the list and causes index shifts
-							//  the mode state value will be used at the location of the list index when not provided in config.
-							// Computed:     true,
+							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
 								"native",
 								"regular",
@@ -132,7 +129,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 						},
 					},
 				},
-				Required: true,
+				Optional: true,
 			},
 		}),
 	}
@@ -226,7 +223,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, siteId, templateName, anp, epg)
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		staticPorts := staticPortsValue.([]interface{})
+		staticPorts := staticPortsValue.(*schema.Set).List()
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -427,7 +424,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		staticPorts := staticPortsValue.([]interface{})
+		staticPorts := staticPortsValue.(*schema.Set).List()
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -511,7 +508,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		staticPorts := staticPortsValue.([]interface{})
+		staticPorts := staticPortsValue.(*schema.Set).List()
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -578,7 +575,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 	response, errs := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), staticStruct)
 
 	if errs != nil && !(response.Exists("code") && response.S("code").String() == "141") {
-		return err
+		return errs
 	}
 
 	d.SetId("")
