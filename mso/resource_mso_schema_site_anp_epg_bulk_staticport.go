@@ -69,7 +69,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPort() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"static_ports": &schema.Schema{
-				Type: schema.TypeSet,
+				Type: schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"path_type": {
@@ -223,7 +223,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortCreate(d *schema.ResourceData, m i
 	epgDn := fmt.Sprintf("%s/site/%s/template/%s/anp/%s/epg/%s", schemaId, siteId, templateName, anp, epg)
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		staticPorts := staticPortsValue.(*schema.Set).List()
+		staticPorts := staticPortsValue.([]interface{})
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -424,7 +424,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortUpdate(d *schema.ResourceData, m i
 
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		staticPorts := staticPortsValue.(*schema.Set).List()
+		staticPorts := staticPortsValue.([]interface{})
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
@@ -508,7 +508,7 @@ func resourceMSOSchemaSiteAnpEpgBulkStaticPortDelete(d *schema.ResourceData, m i
 
 	staticPortsList := make([]interface{}, 0, 1)
 	if staticPortsValue, ok := d.GetOk("static_ports"); ok {
-		staticPorts := staticPortsValue.(*schema.Set).List()
+		staticPorts := staticPortsValue.([]interface{})
 		for _, staticPortValue := range staticPorts {
 			staticPort := staticPortValue.(map[string]interface{})
 			staticPortMap := make(map[string]interface{})
