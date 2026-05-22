@@ -47,6 +47,8 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource(t *testing.T) {
 						"vlan":                 "200",
 						"deployment_immediacy": "lazy",
 						"mode":                 "regular",
+						"micro_seg_vlan":       "300",
+						"fex":                  "",
 					}),
 					CustomTestCheckTypeSetElemAttrs(bulkStaticPortDatasource, "static_ports", map[string]string{
 						"path_type":            "port",
@@ -56,6 +58,7 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource(t *testing.T) {
 						"vlan":                 "201",
 						"deployment_immediacy": "immediate",
 						"mode":                 "untagged",
+						"fex":                  msoSchemaSiteAnpEpgStaticPortFex,
 					}),
 				),
 			},

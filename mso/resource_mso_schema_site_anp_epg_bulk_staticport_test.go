@@ -19,8 +19,6 @@ import (
 //   - update: modify one port's attributes and drop the second (verifies removal)
 //   - import the resource
 //
-// fex and micro_seg_vlan are not tested: no FEX hardware is available in the lab.
-//
 // The test requires msoSchemaSiteAnpEpgStaticPortPod/Leaf/Path/Path2 to
 // correspond to real interfaces on a leaf switch onboarded to the ansible_test site.
 //
@@ -58,6 +56,7 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortResource(t *testing.T) {
 						"vlan":                 "200",
 						"deployment_immediacy": "lazy",
 						"mode":                 "regular",
+						"micro_seg_vlan":       "300",
 					}),
 					CustomTestCheckTypeSetElemAttrs(bulkStaticPortResource, "static_ports", map[string]string{
 						"path_type":            "port",
@@ -67,6 +66,7 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortResource(t *testing.T) {
 						"vlan":                 "201",
 						"deployment_immediacy": "immediate",
 						"mode":                 "untagged",
+						"fex":                  msoSchemaSiteAnpEpgStaticPortFex,
 					}),
 					resource.TestCheckResourceAttrPair(
 						bulkStaticPortResource, "site_id",
@@ -143,6 +143,7 @@ func testAccMSOSchemaSiteAnpEpgBulkStaticPortConfigCreate() string {
 			vlan                 = 200
 			deployment_immediacy = "lazy"
 			mode                 = "regular"
+			micro_seg_vlan       = 300
 		}
 
 		static_ports {
@@ -153,6 +154,7 @@ func testAccMSOSchemaSiteAnpEpgBulkStaticPortConfigCreate() string {
 			vlan                 = 201
 			deployment_immediacy = "immediate"
 			mode                 = "untagged"
+			fex                  = "%[11]s"
 		}
 	}`,
 		testAccMSOSchemaSiteAnpEpgStaticLeafPrerequisiteConfig(),
@@ -165,6 +167,7 @@ func testAccMSOSchemaSiteAnpEpgBulkStaticPortConfigCreate() string {
 		msoSchemaSiteAnpEpgStaticPortLeaf,
 		msoSchemaSiteAnpEpgStaticPortPath,
 		msoSchemaSiteAnpEpgStaticPortPath2,
+		msoSchemaSiteAnpEpgStaticPortFex,
 	)
 }
 
@@ -239,6 +242,7 @@ func testAccMSOSchemaSiteAnpEpgBulkStaticPortConfigNoSiteAssociation() string {
 			vlan                 = 200
 			deployment_immediacy = "lazy"
 			mode                 = "regular"
+			micro_seg_vlan       = 300
 		}
 	}`,
 		fmt.Sprintf(`%s%s%s%s`,

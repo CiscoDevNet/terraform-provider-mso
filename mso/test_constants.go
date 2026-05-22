@@ -65,10 +65,16 @@ const msoSchemaSiteAnpEpgStaticLeafPath = "topology/pod-1/node-101"
 // The assembled portPath (for path_type="port") is:
 //
 //	topology/{pod}/paths-{leaf}/pathep-[{path}]
+//
+// msoSchemaSiteAnpEpgStaticPortFex is the FEX extender ID used when testing
+// the fex attribute. The assembled portPath with fex is:
+//
+//	topology/{pod}/paths-{leaf}/extpaths-{fex}/pathep-[{path}]
 const msoSchemaSiteAnpEpgStaticPortPod = "pod-1"
 const msoSchemaSiteAnpEpgStaticPortLeaf = "101"
 const msoSchemaSiteAnpEpgStaticPortPath = "eth1/1"
 const msoSchemaSiteAnpEpgStaticPortPath2 = "eth1/2"
+const msoSchemaSiteAnpEpgStaticPortFex = "101"
 
 const msoSchemaTemplateAnpEpgUsegAttrIp = "10.0.0.10/24"
 const msoSchemaTemplateAnpEpgSubnetIp = "10.0.0.1/24"
