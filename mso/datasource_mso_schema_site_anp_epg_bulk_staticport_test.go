@@ -11,7 +11,7 @@ import (
 // TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource verifies the read-only
 // datasource for mso_schema_site_anp_epg_bulk_staticport:
 //   - lookup with a non-existent epg_name returns an error
-//   - successful read returns the expected static_ports list and all values
+//   - successful read returns two static ports and all attribute values
 //     pair with the managing resource
 func TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource(t *testing.T) {
 	bulkStaticPortResource := "mso_schema_site_anp_epg_bulk_staticport." + msoSchemaTemplateAnpEpgName
@@ -38,14 +38,25 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(bulkStaticPortDatasource, "template_name", bulkStaticPortResource, "template_name"),
 					resource.TestCheckResourceAttrPair(bulkStaticPortDatasource, "anp_name", bulkStaticPortResource, "anp_name"),
 					resource.TestCheckResourceAttrPair(bulkStaticPortDatasource, "epg_name", bulkStaticPortResource, "epg_name"),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.#", "1"),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.path_type", "port"),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.pod", msoSchemaSiteAnpEpgStaticPortPod),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.leaf", msoSchemaSiteAnpEpgStaticPortLeaf),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.path", msoSchemaSiteAnpEpgStaticPortPath),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.vlan", "200"),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.deployment_immediacy", "lazy"),
-					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.0.mode", "regular"),
+					resource.TestCheckResourceAttr(bulkStaticPortDatasource, "static_ports.#", "2"),
+					CustomTestCheckTypeSetElemAttrs(bulkStaticPortDatasource, "static_ports", map[string]string{
+						"path_type":            "port",
+						"pod":                  msoSchemaSiteAnpEpgStaticPortPod,
+						"leaf":                 msoSchemaSiteAnpEpgStaticPortLeaf,
+						"path":                 msoSchemaSiteAnpEpgStaticPortPath,
+						"vlan":                 "200",
+						"deployment_immediacy": "lazy",
+						"mode":                 "regular",
+					}),
+					CustomTestCheckTypeSetElemAttrs(bulkStaticPortDatasource, "static_ports", map[string]string{
+						"path_type":            "port",
+						"pod":                  msoSchemaSiteAnpEpgStaticPortPod,
+						"leaf":                 msoSchemaSiteAnpEpgStaticPortLeaf,
+						"path":                 msoSchemaSiteAnpEpgStaticPortPath2,
+						"vlan":                 "201",
+						"deployment_immediacy": "immediate",
+						"mode":                 "untagged",
+					}),
 				),
 			},
 		},
@@ -77,7 +88,7 @@ func testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceNotFoundConfig() string {
 }
 
 // testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceReadConfig creates the
-// bulk static port resource (one port) and reads it back via the datasource,
+// bulk static port resource (two ports) and reads it back via the datasource,
 // verifying all computed attributes are populated correctly.
 func testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceReadConfig() string {
 	return fmt.Sprintf(`%[1]s
@@ -88,41 +99,7 @@ func testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceReadConfig() string {
 		anp_name      = mso_schema_site_anp_epg_bulk_staticport.%[2]s.anp_name
 		epg_name      = mso_schema_site_anp_epg_bulk_staticport.%[2]s.epg_name
 	}`,
-		testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceCreateOnePortConfig(),
+		testAccMSOSchemaSiteAnpEpgBulkStaticPortConfigCreate(),
 		msoSchemaTemplateAnpEpgName,
-	)
-}
-
-// testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceCreateOnePortConfig creates
-// a single static port so the datasource read step has a stable, ordered list
-// to check with index-based TestCheckResourceAttr calls.
-func testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceCreateOnePortConfig() string {
-	return fmt.Sprintf(`%[1]s
-	resource "mso_schema_site_anp_epg_bulk_staticport" "%[2]s" {
-		schema_id     = mso_schema.%[3]s.id
-		site_id       = mso_schema_site.%[4]s.site_id
-		template_name = "%[5]s"
-		anp_name      = mso_schema_template_anp.%[6]s.name
-		epg_name      = mso_schema_site_anp_epg.%[2]s.epg_name
-
-		static_ports {
-			path_type            = "port"
-			pod                  = "%[7]s"
-			leaf                 = "%[8]s"
-			path                 = "%[9]s"
-			vlan                 = 200
-			deployment_immediacy = "lazy"
-			mode                 = "regular"
-		}
-	}`,
-		testAccMSOSchemaSiteAnpEpgStaticLeafPrerequisiteConfig(),
-		msoSchemaTemplateAnpEpgName,
-		msoSchemaName,
-		msoSchemaSiteResourceLabel1,
-		msoSchemaTemplateName,
-		msoSchemaTemplateAnpName,
-		msoSchemaSiteAnpEpgStaticPortPod,
-		msoSchemaSiteAnpEpgStaticPortLeaf,
-		msoSchemaSiteAnpEpgStaticPortPath,
 	)
 }
