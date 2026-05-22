@@ -45,6 +45,8 @@ func TestAccMSOSchemaSiteAnpEpgStaticPortDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(staticPortDatasource, "vlan", staticPortResource, "vlan"),
 					resource.TestCheckResourceAttrPair(staticPortDatasource, "deployment_immediacy", staticPortResource, "deployment_immediacy"),
 					resource.TestCheckResourceAttrPair(staticPortDatasource, "mode", staticPortResource, "mode"),
+					resource.TestCheckResourceAttrPair(staticPortDatasource, "fex", staticPortResource, "fex"),
+					resource.TestCheckResourceAttrPair(staticPortDatasource, "micro_seg_vlan", staticPortResource, "micro_seg_vlan"),
 				),
 			},
 		},
@@ -96,6 +98,7 @@ func testAccMSOSchemaSiteAnpEpgStaticPortDatasourceReadConfig() string {
 		pod           = mso_schema_site_anp_epg_static_port.%[2]s.pod
 		leaf          = mso_schema_site_anp_epg_static_port.%[2]s.leaf
 		path          = mso_schema_site_anp_epg_static_port.%[2]s.path
+		fex           = mso_schema_site_anp_epg_static_port.%[2]s.fex
 	}`,
 		testAccMSOSchemaSiteAnpEpgStaticPortConfigCreate(),
 		msoSchemaTemplateAnpEpgName,

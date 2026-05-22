@@ -60,6 +60,7 @@ func TestAccMSOSchemaSiteAnpEpgStaticPortResource(t *testing.T) {
 					resource.TestCheckResourceAttr(staticPortResource, "micro_seg_vlan", "300"),
 					resource.TestCheckResourceAttr(staticPortResource, "deployment_immediacy", "lazy"),
 					resource.TestCheckResourceAttr(staticPortResource, "mode", "regular"),
+					resource.TestCheckResourceAttr(staticPortResource, "fex", msoSchemaSiteAnpEpgStaticPortFex),
 					resource.TestCheckResourceAttrPair(
 						staticPortResource, "site_id",
 						"data.mso_site."+msoTemplateSiteName1, "id",
@@ -75,8 +76,7 @@ func TestAccMSOSchemaSiteAnpEpgStaticPortResource(t *testing.T) {
 					resource.TestCheckResourceAttr(staticPortResource, "mode", "untagged"),
 					resource.TestCheckResourceAttr(staticPortResource, "deployment_immediacy", "immediate"),
 					// ForceNew identity fields must be unchanged after an in-place update.
-					// fex is also ForceNew but is not tested here: the lab has no FEX
-					// hardware, so setting fex would require a different physical topology.
+					resource.TestCheckResourceAttr(staticPortResource, "fex", msoSchemaSiteAnpEpgStaticPortFex),
 					resource.TestCheckResourceAttr(staticPortResource, "path_type", "port"),
 					resource.TestCheckResourceAttr(staticPortResource, "pod", msoSchemaSiteAnpEpgStaticPortPod),
 					resource.TestCheckResourceAttr(staticPortResource, "leaf", msoSchemaSiteAnpEpgStaticPortLeaf),
@@ -110,6 +110,17 @@ func TestAccMSOSchemaSiteAnpEpgStaticPortResource(t *testing.T) {
 					), nil
 				},
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Remove fex (ForceNew, destroy + recreate)")
+				},
+				Config: testAccMSOSchemaSiteAnpEpgStaticPortConfigRemoveFex(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(staticPortResource, "fex", ""),
+					resource.TestCheckResourceAttr(staticPortResource, "vlan", "201"),
+					resource.TestCheckResourceAttr(staticPortResource, "mode", "untagged"),
+				),
 			},
 		},
 	})
@@ -152,6 +163,7 @@ func testAccMSOSchemaSiteAnpEpgStaticPortConfigCreate() string {
 		micro_seg_vlan       = 300
 		deployment_immediacy = "lazy"
 		mode                 = "regular"
+		fex                  = "%[10]s"
 	}`,
 		testAccMSOSchemaSiteAnpEpgStaticPortPrerequisiteConfig(),
 		msoSchemaTemplateAnpEpgName,
@@ -162,10 +174,45 @@ func testAccMSOSchemaSiteAnpEpgStaticPortConfigCreate() string {
 		msoSchemaSiteAnpEpgStaticPortPod,
 		msoSchemaSiteAnpEpgStaticPortLeaf,
 		msoSchemaSiteAnpEpgStaticPortPath,
+		msoSchemaSiteAnpEpgStaticPortFex,
 	)
 }
 
 func testAccMSOSchemaSiteAnpEpgStaticPortConfigUpdate() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_site_anp_epg_static_port" "%[2]s" {
+		schema_id            = mso_schema.%[3]s.id
+		site_id              = mso_schema_site.%[4]s.site_id
+		template_name        = "%[5]s"
+		anp_name             = mso_schema_template_anp.%[6]s.name
+		epg_name             = mso_schema_site_anp_epg.%[2]s.epg_name
+		path_type            = "port"
+		pod                  = "%[7]s"
+		leaf                 = "%[8]s"
+		path                 = "%[9]s"
+		vlan                 = 201
+		micro_seg_vlan       = 301
+		deployment_immediacy = "immediate"
+		mode                 = "untagged"
+		fex                  = "%[10]s"
+	}`,
+		testAccMSOSchemaSiteAnpEpgStaticPortPrerequisiteConfig(),
+		msoSchemaTemplateAnpEpgName,
+		msoSchemaName,
+		msoSchemaSiteResourceLabel1,
+		msoSchemaTemplateName,
+		msoSchemaTemplateAnpName,
+		msoSchemaSiteAnpEpgStaticPortPod,
+		msoSchemaSiteAnpEpgStaticPortLeaf,
+		msoSchemaSiteAnpEpgStaticPortPath,
+		msoSchemaSiteAnpEpgStaticPortFex,
+	)
+}
+
+// testAccMSOSchemaSiteAnpEpgStaticPortConfigRemoveFex is the same as the
+// update config but omits fex, triggering a destroy + recreate because fex is
+// ForceNew. Confirms NDO correctly removes the FEX path on recreate.
+func testAccMSOSchemaSiteAnpEpgStaticPortConfigRemoveFex() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_schema_site_anp_epg_static_port" "%[2]s" {
 		schema_id            = mso_schema.%[3]s.id
