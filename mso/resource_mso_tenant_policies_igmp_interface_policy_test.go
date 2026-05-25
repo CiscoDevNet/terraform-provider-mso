@@ -34,6 +34,7 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "robustness_variable", "2"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "maximum_multicast_entries", "1000000"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "reserved_multicast_entries", "100000"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_igmp_interface_policy.igmp_policy", "state_limit_route_map_uuid"),
 				),
 			},
 			{
@@ -102,6 +103,7 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "robustness_variable", "7"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "maximum_multicast_entries", "4294967295"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "reserved_multicast_entries", "4294967295"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_igmp_interface_policy.igmp_policy", "state_limit_route_map_uuid"),
 				),
 			},
 			{
@@ -141,8 +143,24 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyResource(t *testing.T) {
 	})
 }
 
+func testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig() string {
+	return `
+    resource "mso_tenant_policies_route_map_policy_multicast" "state_limit" {
+        template_id = mso_template.template_tenant.id
+        name        = "tf_test_state_limit"
+        route_map_multicast_entries {
+            order               = 1
+            group_ip            = "226.2.2.2/8"
+            source_ip           = "1.1.1.1/1"
+            rendezvous_point_ip = "1.1.1.2"
+            action              = "permit"
+        }
+    }
+`
+}
+
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigCreate() string {
-	return fmt.Sprintf(`%s
+	return fmt.Sprintf(`%s%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id                 = mso_template.template_tenant.id
         name                        = "test_igmp_interface_policy"
@@ -162,11 +180,12 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigCreate() string {
         robustness_variable         = 2
         maximum_multicast_entries   = 1000000
         reserved_multicast_entries  = 100000
-    }`, testAccMSOTemplateResourceTenantConfig())
+        state_limit_route_map_uuid  = mso_tenant_policies_route_map_policy_multicast.state_limit.uuid
+    }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig())
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateV2() string {
-	return fmt.Sprintf(`%s
+	return fmt.Sprintf(`%s%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id                 = mso_template.template_tenant.id
         name                        = "test_igmp_interface_policy"
@@ -184,7 +203,9 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateV2() string {
         startup_query_interval      = 31
         querier_timeout             = 255
         robustness_variable         = 2
-    }`, testAccMSOTemplateResourceTenantConfig())
+        reserved_multicast_entries  = 0
+        state_limit_route_map_uuid  = ""
+    }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig())
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateWithRouteMaps() string {
@@ -311,7 +332,7 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateTimers() string {
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateMaxValues() string {
-	return fmt.Sprintf(`%s
+	return fmt.Sprintf(`%s%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id                 = mso_template.template_tenant.id
         name                        = "test_igmp_interface_policy_max"
@@ -331,11 +352,12 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateMaxValues() string {
         robustness_variable         = 7
         maximum_multicast_entries   = 4294967295
         reserved_multicast_entries  = 4294967295
-    }`, testAccMSOTemplateResourceTenantConfig())
+        state_limit_route_map_uuid  = mso_tenant_policies_route_map_policy_multicast.state_limit.uuid
+    }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig())
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateMinValues() string {
-	return fmt.Sprintf(`%s
+	return fmt.Sprintf(`%s%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id                 = mso_template.template_tenant.id
         name                        = "test_igmp_interface_policy_min"
@@ -355,7 +377,8 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateMinValues() string {
         robustness_variable         = 1
         maximum_multicast_entries   = 1
         reserved_multicast_entries  = 0
-    }`, testAccMSOTemplateResourceTenantConfig())
+        state_limit_route_map_uuid  = ""
+    }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig())
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateName() string {

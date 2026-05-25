@@ -36,6 +36,7 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_tenant_policies_igmp_interface_policy.igmp_policy", "maximum_multicast_entries", "4294967295"),
 					resource.TestCheckResourceAttr("data.mso_tenant_policies_igmp_interface_policy.igmp_policy", "reserved_multicast_entries", "4294967295"),
 					resource.TestCheckResourceAttrSet("data.mso_tenant_policies_igmp_interface_policy.igmp_policy", "static_report_route_map_uuid"),
+					resource.TestCheckResourceAttrSet("data.mso_tenant_policies_igmp_interface_policy.igmp_policy", "state_limit_route_map_uuid"),
 				),
 			},
 		},
@@ -76,6 +77,7 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyDataSource() string {
         robustness_variable            = 7
         maximum_multicast_entries      = 4294967295
         reserved_multicast_entries     = 4294967295
+        state_limit_route_map_uuid     = mso_tenant_policies_route_map_policy_multicast.static_report.uuid
         static_report_route_map_uuid   = mso_tenant_policies_route_map_policy_multicast.static_report.uuid
     }
 
