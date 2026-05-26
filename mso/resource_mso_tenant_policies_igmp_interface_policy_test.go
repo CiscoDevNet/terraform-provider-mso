@@ -208,47 +208,36 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateV2() string {
     }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig())
 }
 
-func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateWithRouteMaps() string {
+func testAccMSOTenantPoliciesIGMPAllRouteMapsConfig() string {
 	return fmt.Sprintf(`%s
-    resource "mso_tenant_policies_route_map_policy_multicast" "state_limit" {
-		template_id = mso_template.template_tenant.id
-		name        = "tf_test_state_limit"
-		description = "Terraform test Route Map Policy for Multicast"
-		route_map_multicast_entries {
-			order                   = 1
-			group_ip                = "226.2.2.2/8"
-			source_ip               = "1.1.1.1/1"
-			rendezvous_point_ip     = "1.1.1.2"
-			action                  = "permit"
-		}
-	}
-
     resource "mso_tenant_policies_route_map_policy_multicast" "report_policy" {
-		template_id = mso_tenant_policies_route_map_policy_multicast.state_limit.template_id
-		name        = "tf_test_report_policy"
-		description = "Terraform test Route Map Policy for Multicast"
-		route_map_multicast_entries {
-			order                   = 1
-			group_ip                = "226.2.2.2/8"
-			source_ip               = "1.1.1.1/1"
-			rendezvous_point_ip     = "1.1.1.2"
-			action                  = "permit"
-		}
-	}
+        template_id = mso_tenant_policies_route_map_policy_multicast.state_limit.template_id
+        name        = "tf_test_report_policy"
+        route_map_multicast_entries {
+            order               = 1
+            group_ip            = "226.2.2.2/8"
+            source_ip           = "1.1.1.1/1"
+            rendezvous_point_ip = "1.1.1.2"
+            action              = "permit"
+        }
+    }
 
-	resource "mso_tenant_policies_route_map_policy_multicast" "static_report" {
-		template_id = mso_tenant_policies_route_map_policy_multicast.report_policy.template_id
-		name        = "tf_test_static_report"
-		description = "Terraform test Route Map Policy for Multicast"
-		route_map_multicast_entries {
-			order                   = 1
-			group_ip                = "226.2.2.2/8"
-			source_ip               = "1.1.1.1/1"
-			rendezvous_point_ip     = "1.1.1.2"
-			action                  = "permit"
-		}
-	}
+    resource "mso_tenant_policies_route_map_policy_multicast" "static_report" {
+        template_id = mso_tenant_policies_route_map_policy_multicast.report_policy.template_id
+        name        = "tf_test_static_report"
+        route_map_multicast_entries {
+            order               = 1
+            group_ip            = "226.2.2.2/8"
+            source_ip           = "1.1.1.1/1"
+            rendezvous_point_ip = "1.1.1.2"
+            action              = "permit"
+        }
+    }
+`, testAccMSOTenantPoliciesIGMPStateLimitRouteMapConfig())
+}
 
+func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateWithRouteMaps() string {
+	return fmt.Sprintf(`%s%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id                    = mso_template.template_tenant.id
         name                           = "test_igmp_interface_policy"
@@ -258,58 +247,20 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateWithRouteMaps() stri
         report_policy_route_map_uuid   = mso_tenant_policies_route_map_policy_multicast.report_policy.uuid
         static_report_route_map_uuid   = mso_tenant_policies_route_map_policy_multicast.static_report.uuid
         maximum_multicast_entries      = 5000000
-    }`, testAccMSOTemplateResourceTenantConfig())
+    }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPAllRouteMapsConfig())
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateRemoveRouteMaps() string {
-	return fmt.Sprintf(`%s
-	resource "mso_tenant_policies_route_map_policy_multicast" "state_limit" {
-		template_id = mso_template.template_tenant.id
-		name        = "tf_test_state_limit"
-		description = "Terraform test Route Map Policy for Multicast"
-		route_map_multicast_entries {
-			order                   = 1
-			group_ip                = "226.2.2.2/8"
-			source_ip               = "1.1.1.1/1"
-			rendezvous_point_ip     = "1.1.1.2"
-			action                  = "permit"
-		}
-	}
-
-    resource "mso_tenant_policies_route_map_policy_multicast" "report_policy" {
-		template_id = mso_tenant_policies_route_map_policy_multicast.state_limit.template_id
-		name        = "tf_test_report_policy"
-		description = "Terraform test Route Map Policy for Multicast"
-		route_map_multicast_entries {
-			order                   = 1
-			group_ip                = "226.2.2.2/8"
-			source_ip               = "1.1.1.1/1"
-			rendezvous_point_ip     = "1.1.1.2"
-			action                  = "permit"
-		}
-	}
-
-	resource "mso_tenant_policies_route_map_policy_multicast" "static_report" {
-		template_id = mso_tenant_policies_route_map_policy_multicast.report_policy.template_id
-		name        = "tf_test_static_report"
-		description = "Terraform test Route Map Policy for Multicast"
-		route_map_multicast_entries {
-			order                   = 1
-			group_ip                = "226.2.2.2/8"
-			source_ip               = "1.1.1.1/1"
-			rendezvous_point_ip     = "1.1.1.2"
-			action                  = "permit"
-		}
-	}
+	return fmt.Sprintf(`%s%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
-        template_id                 = mso_template.template_tenant.id
-        name                        = "test_igmp_interface_policy"
-        description                 = "Route Maps Removed"
-        igmp_version                = "v3"
-        state_limit_route_map_uuid  = ""
+        template_id                  = mso_template.template_tenant.id
+        name                         = "test_igmp_interface_policy"
+        description                  = "Route Maps Removed"
+        igmp_version                 = "v3"
+        state_limit_route_map_uuid   = ""
         report_policy_route_map_uuid = ""
         static_report_route_map_uuid = ""
-    }`, testAccMSOTemplateResourceTenantConfig())
+    }`, testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPAllRouteMapsConfig())
 }
 
 func testAccMSOTenantPoliciesIGMPInterfacePolicyConfigUpdateTimers() string {
