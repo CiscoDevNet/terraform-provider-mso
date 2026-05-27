@@ -96,6 +96,37 @@ func resourceMSORestUpdate(d *schema.ResourceData, m interface{}) error {
 	return resourceMSORestRead(d, m)
 }
 
+// resourceMSORestDelete has surprising semantics that are preserved for
+// backwards compatibility:
+//
+//   - A DELETE request against `path` is issued ONLY when the `method`
+//     attribute is unset in state (`d.GetOk("method")` returns false). In
+//     that case the function uses the hard-coded method "DELETE" and ignores
+//     whatever the user may have configured.
+//   - When `method` is set in state to ANY value -- including "DELETE" --
+//     the destroy short-circuits, performs no HTTP call, and simply clears
+//     the resource id. The underlying object on MSO is left untouched.
+//
+// Consequences for callers:
+//
+//   - To get a real DELETE on `terraform destroy`, leave `method` unset on
+//     the resource for its entire lifecycle. Once `method` has ever been
+//     set, it stays in state (the attribute is Optional+Computed) and the
+//     destroy short-circuits.
+//   - If you need to remove the remote object while `method` is already
+//     set, issue an Update with `method = "DELETE"` (the Update path
+//     respects the configured method). That is what the
+//     `Update with method=DELETE` step in resource_mso_rest_test.go
+//     exercises.
+//
+// This shape is non-obvious -- a user might reasonably expect
+// `method = "DELETE"` to fire a DELETE on destroy too -- but changing it
+// would break existing configurations that rely on the short-circuit to
+// keep a remote object alive across `terraform destroy` runs.
+//
+// History: this behaviour was introduced in commit 76f1ca6b3ffb70012973bf80657a4ca97073d305
+// (https://github.com/CiscoDevNet/terraform-provider-mso/commit/76f1ca6b3ffb70012973bf80657a4ca97073d305),
+// which added the `method` short-circuit to resourceMSORestDelete.
 func resourceMSORestDelete(d *schema.ResourceData, m interface{}) error {
 	var method, path, payload string
 	path = d.Get("path").(string)
