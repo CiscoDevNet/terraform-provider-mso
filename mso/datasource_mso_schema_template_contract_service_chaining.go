@@ -119,6 +119,9 @@ func dataSourceMSOSchemaTemplateContractServiceChainingRead(d *schema.ResourceDa
 	if err := setServiceChainingFromSchema(d, schemaCont, schemaId, templateName, contractName); err != nil {
 		return err
 	}
+	if d.Id() == "" {
+		return fmt.Errorf("serviceChaining not found for contract %s in template %s", contractName, templateName)
+	}
 
 	log.Printf("[DEBUG] Completed Read Service Chaining (data source)")
 	return nil

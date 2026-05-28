@@ -327,7 +327,7 @@ func setServiceChainingFromSchema(d *schema.ResourceData, schemaCont *container.
 	serviceChainingIface, ok := contractDetails["serviceChaining"]
 	if !ok || serviceChainingIface == nil {
 		d.SetId("")
-		return fmt.Errorf("serviceChaining not found in contract %s", contractName)
+		return nil
 	}
 
 	serviceChain, ok := serviceChainingIface.(map[string]interface{})
