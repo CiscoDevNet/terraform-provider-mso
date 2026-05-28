@@ -33,6 +33,7 @@ var msoTenantPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.Char
 var msoFabricPolicyTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateMCPGlobalPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateBdName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateBdName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPolicyTemplateIPSLAMonitoringPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPolicyTemplateIPSLATrackListName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoFabricPolicyTemplateInterfaceSettingName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -52,6 +53,9 @@ var msoTenantPoliciesDhcpRelayPolicyName2 = acctest.RandStringFromCharSet(10, ac
 var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateAnpEpgUsegAttrName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateAnpEpgUsegAttrName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoServiceDeviceTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoServiceDeviceClusterLbName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoServiceDeviceClusterFwName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 // msoSchemaSiteAnpEpgStaticLeafPath is the topology path of the leaf node
 // used in static leaf acceptance tests. It must correspond to a real leaf

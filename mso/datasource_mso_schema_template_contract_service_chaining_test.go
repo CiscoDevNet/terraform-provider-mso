@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -9,13 +10,22 @@ import (
 
 func TestAccMSOSchemaTemplateContractServiceChainingDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMSOSchemaTemplateContractServiceChainingDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMSOSchemaTemplateContractServiceChainingDataSourceConfig(),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.mso_schema_template_contract_service_chaining.chain1_data", "contract_name", "contract1"),
+				PreConfig:   func() { fmt.Println("Test: Datasource Service Chaining contract not found") },
+				Config:      testAccMSOSchemaTemplateContractServiceChainingDataSourceConfigNotFound(),
+				ExpectError: regexp.MustCompile("not found"),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Read Datasource Service Chaining") },
+				Config:    testAccMSOSchemaTemplateContractServiceChainingDataSourceConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.mso_schema_template_contract_service_chaining.chain1_data", "schema_id"),
+					resource.TestCheckResourceAttr("data.mso_schema_template_contract_service_chaining.chain1_data", "template_name", msoSchemaTemplateName),
+					resource.TestCheckResourceAttr("data.mso_schema_template_contract_service_chaining.chain1_data", "contract_name", msoSchemaTemplateContractName),
 					resource.TestCheckResourceAttr("data.mso_schema_template_contract_service_chaining.chain1_data", "node_filter", "allow-all"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_contract_service_chaining.chain1_data", "service_nodes.#", "2"),
 					CustomTestCheckTypeSetElemAttrs("data.mso_schema_template_contract_service_chaining.chain1_data", "service_nodes", map[string]string{
@@ -41,12 +51,23 @@ func TestAccMSOSchemaTemplateContractServiceChainingDataSource(t *testing.T) {
 }
 
 func testAccMSOSchemaTemplateContractServiceChainingDataSourceConfig() string {
-	return fmt.Sprintf(`%s
+	return fmt.Sprintf(`%[1]s
 
-    data "mso_schema_template_contract_service_chaining" "chain1_data" {
-        schema_id     = mso_schema_template_contract_service_chaining.chain1.schema_id
-        template_name = mso_schema_template_contract_service_chaining.chain1.template_name
-        contract_name = mso_schema_template_contract_service_chaining.chain1.contract_name
-    }
+data "mso_schema_template_contract_service_chaining" "chain1_data" {
+	schema_id     = mso_schema_template_contract_service_chaining.chain1.schema_id
+	template_name = mso_schema_template_contract_service_chaining.chain1.template_name
+	contract_name = mso_schema_template_contract_service_chaining.chain1.contract_name
+}
+`, testAccMSOSchemaTemplateContractServiceChainingConfigCreateTwoNodes())
+}
+
+func testAccMSOSchemaTemplateContractServiceChainingDataSourceConfigNotFound() string {
+	return fmt.Sprintf(`%[1]s
+
+data "mso_schema_template_contract_service_chaining" "chain1_data" {
+	schema_id     = mso_schema_template_contract_service_chaining.chain1.schema_id
+	template_name = mso_schema_template_contract_service_chaining.chain1.template_name
+	contract_name = "non_existing_contract"
+}
 `, testAccMSOSchemaTemplateContractServiceChainingConfigCreateTwoNodes())
 }
