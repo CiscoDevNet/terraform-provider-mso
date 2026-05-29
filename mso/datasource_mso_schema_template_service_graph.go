@@ -33,12 +33,6 @@ func dataSourceMSOSchemaTemplateServiceGraph() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"service_node_type": &schema.Schema{
-				Type:          schema.TypeString,
-				Computed:      true,
-				ConflictsWith: []string{"service_node"},
-				Deprecated:    "Use service_node to configure service nodes.",
-			},
 			"service_node": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -72,10 +66,7 @@ func dataSourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m inter
 	}
 
 	stateTemplate := d.Get("template_name").(string)
-	var graphName string
-	if tempVar, ok := d.GetOk("service_graph_name"); ok {
-		graphName = tempVar.(string)
-	}
+	graphName := d.Get("service_graph_name").(string)
 
 	sgCont, _, err := getTemplateServiceGraphCont(cont, stateTemplate, graphName)
 
@@ -84,28 +75,24 @@ func dataSourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m inter
 		return err
 	}
 
-	if tempVar, ok := d.GetOk("service_node_type"); ok {
-		serviceNodeType := tempVar.(string)
-		d.Set("service_node_type", serviceNodeType)
-	} else {
-		serviceNodeList := make([]interface{}, 0, 1)
-		for _, val := range sgCont.S("serviceNodes").Data().([]interface{}) {
-			nodeType, err := getNodeNameFromId(msoClient, models.StripQuotes(val.(map[string]interface{})["serviceNodeTypeId"].(string)))
-			if err != nil {
-				return err
-			}
-			serviceNodeMap := map[string]interface{}{
-				"type": nodeType,
-			}
-
-			serviceNodeList = append(serviceNodeList, serviceNodeMap)
+	serviceNodeList := make([]interface{}, 0, 1)
+	for _, val := range sgCont.S("serviceNodes").Data().([]interface{}) {
+		nodeType, err := getNodeNameFromId(msoClient, models.StripQuotes(val.(map[string]interface{})["serviceNodeTypeId"].(string)))
+		if err != nil {
+			return err
 		}
-		d.Set("service_node", serviceNodeList)
+		serviceNodeMap := map[string]interface{}{
+			"type": nodeType,
+		}
+
+		serviceNodeList = append(serviceNodeList, serviceNodeMap)
 	}
+	d.Set("service_node", serviceNodeList)
 
 	d.Set("schema_id", schemaId)
 	d.Set("template_name", stateTemplate)
 	d.Set("service_graph_name", graphName)
+	d.Set("description", models.StripQuotes(sgCont.S("description").String()))
 	d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, stateTemplate, graphName))
 	log.Printf("[DEBUG] %s: Datasource read finished successfully", d.Id())
 	return nil

@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -45,29 +44,17 @@ func resourceMSOSchemaTemplateServiceGraphs() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
-			"service_node_type": &schema.Schema{
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ValidateFunc:  validation.StringLenBetween(1, 1000),
-				ConflictsWith: []string{"service_node"},
-				Deprecated:    "Use service_node to configure service nodes.",
-			},
 			"service_node": &schema.Schema{
 				Type:        schema.TypeList,
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
+				MinItems:    1,
 				Description: "Configure service nodes for the service graph.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"firewall",
-								"load-balancer",
-								"other",
-							}, false),
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
 						},
 					},
 				},
@@ -75,18 +62,9 @@ func resourceMSOSchemaTemplateServiceGraphs() *schema.Resource {
 			"description": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(1, 1000),
+				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 		}),
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
-			_, service_node_type := diff.GetOk("service_node_type")
-			_, service_node := diff.GetOk("service_node")
-			if !service_node_type && !service_node {
-				return errors.New(`"service_node" is required.`)
-			}
-			return nil
-		},
 	}
 }
 
@@ -132,7 +110,6 @@ func resourceMSOSchemaTemplateServiceGraphImport(d *schema.ResourceData, m inter
 		serviceNodeList = append(serviceNodeList, serviceNodeMap)
 	}
 	d.Set("service_node", serviceNodeList)
-	d.Set("service_node_type", serviceNodeList[0].(map[string]interface{})["type"])
 
 	d.SetId(fmt.Sprintf("%s/templates/%s/serviceGraphs/%s", schemaId, templateName, graphName))
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
@@ -140,7 +117,7 @@ func resourceMSOSchemaTemplateServiceGraphImport(d *schema.ResourceData, m inter
 }
 
 func resourceMSOSchemaTemplateServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Creation Template Service Graph")
+	log.Printf("[DEBUG] Beginning Creation Template Service Graph")
 	msoClient := m.(*client.Client)
 
 	var schemaId string
@@ -202,10 +179,7 @@ func resourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m interfa
 	}
 
 	templateName := d.Get("template_name").(string)
-	var graphName string
-	if tempVar, ok := d.GetOk("service_graph_name"); ok {
-		graphName = tempVar.(string)
-	}
+	graphName := d.Get("service_graph_name").(string)
 
 	sgCont, _, err := getTemplateServiceGraphCont(cont, templateName, graphName)
 	if err != nil {
@@ -214,27 +188,22 @@ func resourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m interfa
 		return nil
 	}
 
-	if tempVar, ok := d.GetOk("service_node_type"); ok {
-		serviceNodeType := tempVar.(string)
-		d.Set("service_node_type", serviceNodeType)
-	} else {
-		serviceNodeList := make([]interface{}, 0, 1)
-		serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
-		for _, val := range serviceNodes {
-			serviceNodeValues := val.(map[string]interface{})
-			serviceNodeMap := make(map[string]interface{})
-			nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
+	serviceNodeList := make([]interface{}, 0, 1)
+	serviceNodes := sgCont.S("serviceNodes").Data().([]interface{})
+	for _, val := range serviceNodes {
+		serviceNodeValues := val.(map[string]interface{})
+		serviceNodeMap := make(map[string]interface{})
+		nodeId := models.StripQuotes(serviceNodeValues["serviceNodeTypeId"].(string))
 
-			nodeType, err := getNodeNameFromId(msoClient, nodeId)
-			if err != nil {
-				return err
-			}
-			serviceNodeMap["type"] = nodeType
-
-			serviceNodeList = append(serviceNodeList, serviceNodeMap)
+		nodeType, err := getNodeNameFromId(msoClient, nodeId)
+		if err != nil {
+			return err
 		}
-		d.Set("service_node", serviceNodeList)
+		serviceNodeMap["type"] = nodeType
+
+		serviceNodeList = append(serviceNodeList, serviceNodeMap)
 	}
+	d.Set("service_node", serviceNodeList)
 
 	d.Set("schema_id", schemaId)
 	d.Set("template_name", templateName)
@@ -246,7 +215,7 @@ func resourceMSOSchemaTemplateServiceGraphRead(d *schema.ResourceData, m interfa
 }
 
 func resourceMSOSchemaTemplateServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Update Template Service Graph")
+	log.Printf("[DEBUG] Beginning Update Template Service Graph")
 	msoClient := m.(*client.Client)
 
 	var schemaId string
@@ -265,23 +234,15 @@ func resourceMSOSchemaTemplateServiceGraphUpdate(d *schema.ResourceData, m inter
 	}
 
 	if d.HasChange("description") {
-		var desc string
-		if tempVar, ok := d.GetOk("description"); ok {
-			desc = tempVar.(string)
-		} else {
-			desc = ""
-		}
-
 		templatePath := fmt.Sprintf("/templates/%s/serviceGraphs/%s/description", templateName, graphName)
-		graphUpdate := models.NewTemplateServiceGraphUpdate("replace", templatePath, desc)
+		graphUpdate := models.NewTemplateServiceGraphUpdate("replace", templatePath, d.Get("description").(string))
 		_, err := msoClient.PatchbyID(fmt.Sprintf("/api/v1/schemas/%s", schemaId), graphUpdate)
 		if err != nil {
 			return err
 		}
-
 	}
 
-	if d.HasChange("service_node_type") || d.HasChange("service_node") {
+	if d.HasChange("service_node") {
 		templatePath := fmt.Sprintf("/templates/%s/serviceGraphs/%s/serviceNodes", templateName, graphName)
 		serviceNodes, err := getServiceGraphNodes(d, msoClient)
 		if err != nil {
@@ -332,99 +293,6 @@ func resourceMSOSchemaTemplateServiceGraphDelete(d *schema.ResourceData, m inter
 	d.SetId("")
 
 	return nil
-}
-
-func getSiteServiceNodeCont(graphCont *container.Container, schemaId, templateName, graphName, nodeName string) (*container.Container, int, error) {
-
-	nodesCount, err := graphCont.ArrayCount("serviceNodes")
-	if err != nil {
-		return nil, -1, fmt.Errorf("Unable to load count site service node")
-	}
-	for i := 0; i < nodesCount; i++ {
-		nodeCont, err := graphCont.ArrayElement(i, "serviceNodes")
-		if err != nil {
-			return nil, -1, fmt.Errorf("Unable to site service node element")
-		}
-
-		nodeRef := models.StripQuotes(nodeCont.S("serviceNodeRef").String())
-
-		nodeSplit := strings.Split(nodeRef, "/")
-		if len(nodeSplit) == 9 {
-			if nodeSplit[2] == schemaId && nodeSplit[4] == templateName && nodeSplit[6] == graphName && nodeSplit[8] == nodeName {
-				return nodeCont, i, nil
-
-			}
-		} else {
-			return nil, -1, fmt.Errorf("Spilt on nodeRef failed")
-		}
-	}
-	return nil, -1, fmt.Errorf("Unable to find site service node")
-}
-func getSiteServiceGraphCont(cont *container.Container, schemaId, templateName, siteId, graphName string) (*container.Container, int, error) {
-	sitesCount, err := cont.ArrayCount("sites")
-
-	if err != nil {
-		return nil, -1, fmt.Errorf("Unable to find sites")
-	}
-
-	for i := 0; i < sitesCount; i++ {
-		siteCont, err := cont.ArrayElement(i, "sites")
-		if err != nil {
-			return nil, -1, fmt.Errorf("Unable to load site element")
-		}
-
-		siteTemplate := models.StripQuotes(siteCont.S("templateName").String())
-		apiSiteId := models.StripQuotes(siteCont.S("siteId").String())
-
-		if siteTemplate == templateName && siteId == apiSiteId {
-			sgCount, err := siteCont.ArrayCount("serviceGraphs")
-			if err != nil {
-				return nil, -1, fmt.Errorf("Unable to load site service graphs")
-			}
-			for j := 0; j < sgCount; j++ {
-				sgCont, err := siteCont.ArrayElement(j, "serviceGraphs")
-				if err != nil {
-					return nil, -1, fmt.Errorf("Unable to load site service graph element")
-				}
-
-				graphRef := models.StripQuotes(sgCont.S("serviceGraphRef").String())
-				graphEle := strings.Split(graphRef, "/")
-
-				if len(graphEle) != 7 {
-					return nil, -1, fmt.Errorf("Inavlid site service graph")
-				}
-
-				if schemaId == graphEle[2] && templateName == graphEle[4] && graphName == graphEle[6] {
-					return sgCont, j, nil
-				}
-			}
-		}
-	}
-
-	return nil, -1, fmt.Errorf("Unable to find site service graph")
-}
-
-func getTemplateServiceNodeCont(cont *container.Container, nodeName, nodeType string) (*container.Container, int, error) {
-
-	nodeCount, err := cont.ArrayCount("serviceNodes")
-	if err != nil {
-		return nil, -1, fmt.Errorf("Unable to load node count")
-	}
-
-	for i := 0; i < nodeCount; i++ {
-		nodeCont, err := cont.ArrayElement(i, "serviceNodes")
-		if err != nil {
-			return nil, -1, fmt.Errorf("Unable to load node element")
-		}
-
-		apiNodeName := models.StripQuotes(nodeCont.S("name").String())
-		apiNodeType := models.StripQuotes(nodeCont.S("serviceNodeTypeId").String())
-
-		if apiNodeName == nodeName && apiNodeType == nodeType {
-			return nodeCont, i, nil
-		}
-	}
-	return nil, -1, fmt.Errorf("Unable to find the service node")
 }
 
 func getTemplateServiceGraphCont(cont *container.Container, templateName, graphName string) (*container.Container, int, error) {
@@ -507,7 +375,7 @@ func getNodeNameFromId(msoClient *client.Client, nodeId string) (string, error) 
 		}
 	}
 
-	return "", fmt.Errorf("Unable to find nodeNamefor nodeid %s", nodeId)
+	return "", fmt.Errorf("Unable to find nodeName for nodeId %s", nodeId)
 }
 
 func getServiceGraphNodes(d *schema.ResourceData, msoClient *client.Client) ([]interface{}, error) {
@@ -522,36 +390,20 @@ func getServiceGraphNodes(d *schema.ResourceData, msoClient *client.Client) ([]i
 	}
 
 	serviceNodes := make([]interface{}, 0, 1)
-	if tempVar, ok := d.GetOk("service_node_type"); ok {
-		serviceNodeType := tempVar.(string)
-		nodeId, err := getNodeIdFromName(cont, nodesCount, serviceNodeType)
-		if err != nil {
-			return nil, err
-		}
-		serviceNode := map[string]interface{}{
-			"name":              "node1",
-			"index":             1,
-			"serviceNodeTypeId": nodeId,
-		}
-		serviceNodes = append(serviceNodes, serviceNode)
-	} else {
-		if val, ok := d.GetOk("service_node"); ok {
-			for i, val := range val.([]interface{}) {
-				serviceNodeValues := val.(map[string]interface{})
-				if serviceNodeValues["type"] != "" {
-					nodeId, err := getNodeIdFromName(cont, nodesCount, fmt.Sprintf("%v", serviceNodeValues["type"]))
-					if err != nil {
-						return nil, err
-					}
-					index := i + 1
-					serviceNodeMap := map[string]interface{}{
-						"name":              fmt.Sprintf("node%v", index),
-						"index":             index,
-						"serviceNodeTypeId": nodeId,
-					}
-					serviceNodes = append(serviceNodes, serviceNodeMap)
-				}
+	for i, val := range d.Get("service_node").([]interface{}) {
+		serviceNodeValues := val.(map[string]interface{})
+		if serviceNodeValues["type"] != "" {
+			nodeId, err := getNodeIdFromName(cont, nodesCount, fmt.Sprintf("%v", serviceNodeValues["type"]))
+			if err != nil {
+				return nil, err
 			}
+			index := i + 1
+			serviceNodeMap := map[string]interface{}{
+				"name":              fmt.Sprintf("node%v", index),
+				"index":             index,
+				"serviceNodeTypeId": nodeId,
+			}
+			serviceNodes = append(serviceNodes, serviceNodeMap)
 		}
 	}
 	return serviceNodes, nil
