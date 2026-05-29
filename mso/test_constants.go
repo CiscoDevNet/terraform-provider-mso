@@ -56,6 +56,8 @@ var msoSchemaTemplateAnpEpgUsegAttrName2 = acctest.RandStringFromCharSet(10, acc
 var msoServiceDeviceTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoServiceDeviceClusterLbName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoServiceDeviceClusterFwName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoSchemaTemplateServiceGraphName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoServiceNodeTypeName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 // msoSchemaSiteAnpEpgStaticLeafPath is the topology path of the leaf node
 // used in static leaf acceptance tests. It must correspond to a real leaf

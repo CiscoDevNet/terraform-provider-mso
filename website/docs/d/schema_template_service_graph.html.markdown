@@ -30,10 +30,6 @@ data "mso_schema_template_service_graph" "example" {
 
 ## Attribute Reference ##
 
-* `service_node_type` - (Read-Only) **Deprecated**. The type of the Service Node.
 * `description` - (Read-Only) Description of Service Graph.
 * `service_node` - (Read-Only) List of service nodes attached to Service Graph.
-    * `type` - (Read-Only) Type of Service Node attached to the Service Graph.
-
-## NOTE ##
-The `site_nodes` parameters are removed from Template level Service Graph datasource.
+    * `type` - (Read-Only) The name of the service node type.

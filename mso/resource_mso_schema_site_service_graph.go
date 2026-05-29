@@ -374,3 +374,93 @@ func setServiceNodeList(graphCont *container.Container) ([]interface{}, error) {
 	}
 	return serviceNodeList, nil
 }
+
+func getSiteServiceNodeCont(graphCont *container.Container, schemaId, templateName, graphName, nodeName string) (*container.Container, int, error) {
+	nodesCount, err := graphCont.ArrayCount("serviceNodes")
+	if err != nil {
+		return nil, -1, fmt.Errorf("Unable to load site service node count")
+	}
+	for i := 0; i < nodesCount; i++ {
+		nodeCont, err := graphCont.ArrayElement(i, "serviceNodes")
+		if err != nil {
+			return nil, -1, fmt.Errorf("Unable to load site service node element")
+		}
+
+		nodeRef := models.StripQuotes(nodeCont.S("serviceNodeRef").String())
+
+		nodeSplit := strings.Split(nodeRef, "/")
+		if len(nodeSplit) == 9 {
+			if nodeSplit[2] == schemaId && nodeSplit[4] == templateName && nodeSplit[6] == graphName && nodeSplit[8] == nodeName {
+				return nodeCont, i, nil
+			}
+		} else {
+			return nil, -1, fmt.Errorf("Spilt on nodeRef failed")
+		}
+	}
+	return nil, -1, fmt.Errorf("Unable to find site service node")
+}
+
+func getSiteServiceGraphCont(cont *container.Container, schemaId, templateName, siteId, graphName string) (*container.Container, int, error) {
+	sitesCount, err := cont.ArrayCount("sites")
+	if err != nil {
+		return nil, -1, fmt.Errorf("Unable to find sites")
+	}
+
+	for i := 0; i < sitesCount; i++ {
+		siteCont, err := cont.ArrayElement(i, "sites")
+		if err != nil {
+			return nil, -1, fmt.Errorf("Unable to load site element")
+		}
+
+		siteTemplate := models.StripQuotes(siteCont.S("templateName").String())
+		apiSiteId := models.StripQuotes(siteCont.S("siteId").String())
+
+		if siteTemplate == templateName && siteId == apiSiteId {
+			sgCount, err := siteCont.ArrayCount("serviceGraphs")
+			if err != nil {
+				return nil, -1, fmt.Errorf("Unable to load site service graphs")
+			}
+			for j := 0; j < sgCount; j++ {
+				sgCont, err := siteCont.ArrayElement(j, "serviceGraphs")
+				if err != nil {
+					return nil, -1, fmt.Errorf("Unable to load site service graph element")
+				}
+
+				graphRef := models.StripQuotes(sgCont.S("serviceGraphRef").String())
+				graphEle := strings.Split(graphRef, "/")
+
+				if len(graphEle) != 7 {
+					return nil, -1, fmt.Errorf("Invalid site service graph")
+				}
+
+				if schemaId == graphEle[2] && templateName == graphEle[4] && graphName == graphEle[6] {
+					return sgCont, j, nil
+				}
+			}
+		}
+	}
+
+	return nil, -1, fmt.Errorf("Unable to find site service graph")
+}
+
+func getTemplateServiceNodeCont(cont *container.Container, nodeName, nodeType string) (*container.Container, int, error) {
+	nodeCount, err := cont.ArrayCount("serviceNodes")
+	if err != nil {
+		return nil, -1, fmt.Errorf("Unable to load node count")
+	}
+
+	for i := 0; i < nodeCount; i++ {
+		nodeCont, err := cont.ArrayElement(i, "serviceNodes")
+		if err != nil {
+			return nil, -1, fmt.Errorf("Unable to load node element")
+		}
+
+		apiNodeName := models.StripQuotes(nodeCont.S("name").String())
+		apiNodeType := models.StripQuotes(nodeCont.S("serviceNodeTypeId").String())
+
+		if apiNodeName == nodeName && apiNodeType == nodeType {
+			return nodeCont, i, nil
+		}
+	}
+	return nil, -1, fmt.Errorf("Unable to find the service node")
+}
