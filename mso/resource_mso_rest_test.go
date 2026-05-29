@@ -353,10 +353,9 @@ resource "mso_rest" "schema" {
 `, testAccMSORestPrereqConfig(), testAccMSORestSchemaLookupConfig(), patch)
 }
 
-// testAccMSORestPatchReplaceConfig is step 4 (method=PATCH, retrigger=true)
-// and step 7 (method="" so destroy uses default DELETE). The payload is an
-// idempotent replace of epg2.displayName so the PATCH can be applied twice
-// without MSO complaining about duplicate operations.
+// testAccMSORestPatchReplaceConfig is step 4 (method=PATCH, retrigger=true).
+// The payload is an idempotent replace of epg2.displayName so the PATCH can
+// be applied twice without MSO complaining about duplicate operations.
 func testAccMSORestPatchReplaceConfig(retrigger bool) string {
 	patch := fmt.Sprintf(`jsonencode([{
     op    = "replace"
