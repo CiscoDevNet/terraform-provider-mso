@@ -99,13 +99,10 @@ func resourceMSOServiceNodeTypeCreate(d *schema.ResourceData, m interface{}) err
 	}
 
 	nodeType := models.NewServiceNodeType(typeAttr)
-	d.Partial(true)
 	cont, err := msoClient.Save("api/v1/schemas/service-node-types", nodeType)
-
 	if err != nil {
 		return err
 	}
-	d.Partial(false)
 	d.SetId(models.StripQuotes(cont.S("id").String()))
 	log.Printf("[DEBUG] Creation finished successfully %s", d.Id())
 	return resourceMSOServiceNodeTypeRead(d, m)
