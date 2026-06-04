@@ -217,7 +217,7 @@ resource "mso_template" "%[1]s" {
 `, msoFabricPolicyTemplateName)
 }
 
-func testSchemaTemplateBdConfig() string {
+func testSchemaTemplateBdConfigWithName(bdName string) string {
 	return fmt.Sprintf(`
 resource "mso_schema_template_bd" "%[1]s" {
 	schema_id				= mso_schema.%[2]s.id
@@ -227,7 +227,15 @@ resource "mso_schema_template_bd" "%[1]s" {
 	layer2_unknown_unicast 	= "proxy"
 	vrf_name				= mso_schema_template_vrf.%[4]s.name
 }
-`, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
+`, bdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
+}
+
+func testSchemaTemplateBdConfig() string {
+	return testSchemaTemplateBdConfigWithName(msoSchemaTemplateBdName)
+}
+
+func testSchemaTemplateBdConfig2() string {
+	return testSchemaTemplateBdConfigWithName(msoSchemaTemplateBdName2)
 }
 
 func testSchemaTemplateBdStretchedConfig() string {

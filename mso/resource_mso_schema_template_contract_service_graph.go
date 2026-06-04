@@ -125,7 +125,9 @@ func resourceMSOSchemaTemplateContractServiceGraphImport(d *schema.ResourceData,
 	if err != nil {
 		return nil, err
 	}
-	d.SetId(d.Id())
+	if d.Id() == "" {
+		return nil, fmt.Errorf("service graph relationship not found for contract %s in template %s", serviceGraphTokens[4], serviceGraphTokens[2])
+	}
 	log.Printf("[DEBUG] %s: Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -286,7 +288,8 @@ func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *sc
 				apiContractName := models.StripQuotes(contractCont.S("name").String())
 				if apiContractName == contractName {
 					if !contractCont.Exists("serviceGraphRelationship") {
-						return fmt.Errorf("No service graph found")
+						d.SetId("")
+						return nil
 					} else {
 						// Template Contract Service Graph configurations
 						serviceGraphRelationship := contractCont.S("serviceGraphRelationship")
@@ -294,18 +297,8 @@ func setSchemaTemplateContractServiceGraphAttrs(cont *container.Container, d *sc
 						serviceGraphReftokens := strings.Split(serviceGraphRef, "/")
 
 						d.Set("service_graph_name", serviceGraphReftokens[6])
-
-						if _, ok := d.GetOk("service_graph_schema_id"); !ok {
-							d.Set("service_graph_schema_id", serviceGraphReftokens[2])
-						} else {
-							d.Set("service_graph_schema_id", d.Get("service_graph_schema_id"))
-						}
-
-						if _, ok := d.GetOk("service_graph_template_name"); !ok {
-							d.Set("service_graph_template_name", serviceGraphReftokens[4])
-						} else {
-							d.Set("service_graph_template_name", d.Get("service_graph_template_name"))
-						}
+						d.Set("service_graph_schema_id", serviceGraphReftokens[2])
+						d.Set("service_graph_template_name", serviceGraphReftokens[4])
 
 						// Template Contract Service Graph Node configurations
 						serviceNodesRelationshipCount, err := serviceGraphRelationship.ArrayCount("serviceNodesRelationship")
