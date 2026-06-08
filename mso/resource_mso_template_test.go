@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const msoTemplateTenantName = "tf_test_mso_template_tenant"
