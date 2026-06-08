@@ -12,6 +12,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteServiceGraph manages an mso_schema_site_service_graph
+// entry (the site-level instantiation of a template service graph, binding
+// physical or cloud L4-L7 service devices to each graph node).
+//
+// Delete implementation note: the NDO API does not support deleting a site
+// service graph in isolation. The Delete handler is a no-op — the graph entry
+// persists in the schema until the parent mso_schema_template_service_graph is
+// deleted or the site association is removed. This is intentional API behaviour
+// and not a provider limitation.
+//
+// ForceNew on identity fields: schema_id, template_name, site_id, and
+// service_graph_name together identify the exact API path
+// (/sites/{siteId}-{template}/serviceGraphs/{graphName}) used for all PATCH
+// operations. Changing any of them would target a different object in the
+// schema document, which is not achievable via an in-place update. Because
+// Delete is a no-op, ForceNew ensures Terraform plans a new resource at the
+// new location rather than silently leaving the old entry orphaned.
+//
+// CustomizeDiff: validates provider_connector_type values against the node
+// type declared in the parent template service graph ("other" allows only
+// "none"/"redir"; "firewall" additionally allows "snat", "dnat",
+// "snat_dnat"). Validation is skipped when schema_id is not yet known (e.g.
+// when the schema resource is being created in the same plan).
 func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteServiceGraphCreate,
@@ -27,24 +50,36 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 
 		Schema: (map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
+				// ForceNew: schema_id is part of the resource identity and the
+				// API path. Changing it targets a different schema document,
+				// which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
+				// ForceNew: template_name is part of the API path key
+				// ({siteId}-{template}). Changing it targets a different
+				// site-template association, which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
+				// ForceNew: site_id is part of the API path key
+				// ({siteId}-{template}). Changing it targets a different site,
+				// which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"service_graph_name": &schema.Schema{
+				// ForceNew: service_graph_name is the final segment of the API
+				// path. Changing it targets a different graph entry, which
+				// requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -158,8 +193,11 @@ func validateServiceNodeConfig(msoClient *client.Client, serviceNode interface{}
 						templateServiceNodeList = append(templateServiceNodeList, nodeType)
 					}
 
-					/* Loop trough the templateServiceNodeList and validate the site level user input(provider_connector_type)
+					/* Loop through the templateServiceNodeList and validate the site level user input(provider_connector_type)
 					to verify it's value for nodetype 'other' and 'firewall'. */
+					if len(serviceNode.([]interface{})) != len(templateServiceNodeList) {
+						return fmt.Errorf("service graph has %d service node(s) in the template but %d service node(s) were provided", len(templateServiceNodeList), len(serviceNode.([]interface{})))
+					}
 					for i, val := range serviceNode.([]interface{}) {
 						serviceNode := val.(map[string]interface{})
 						if templateServiceNodeList[i] == "other" && !valueInSliceofStrings(serviceNode["provider_connector_type"].(string), []string{"none", "redir"}) {
@@ -181,6 +219,9 @@ func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface
 
 	msoClient := m.(*client.Client)
 	get_attribute := strings.Split(d.Id(), "/")
+	if len(get_attribute) < 7 {
+		return nil, fmt.Errorf("invalid import ID %q: expected format {schema_id}/sites/{site_id}/template/{template_name}/serviceGraphs/{graph_name}", d.Id())
+	}
 	schemaId := get_attribute[0]
 	siteId := get_attribute[2]
 	templateName := get_attribute[4]
@@ -198,6 +239,9 @@ func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface
 	}
 
 	serviceNodeList, err := setServiceNodeList(graphCont)
+	if err != nil {
+		return nil, err
+	}
 	d.Set("service_node", serviceNodeList)
 
 	d.Set("schema_id", schemaId)
@@ -211,7 +255,7 @@ func resourceMSOSchemaSiteServiceGraphImport(d *schema.ResourceData, m interface
 }
 
 func resourceMSOSchemaSiteServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Creation Site Service Graph")
+	log.Printf("[DEBUG] Beginning Creation Site Service Graph")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -276,6 +320,9 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 	}
 
 	serviceNodeList, err := setServiceNodeList(graphCont)
+	if err != nil {
+		return err
+	}
 	d.Set("service_node", serviceNodeList)
 
 	d.Set("schema_id", schemaId)
@@ -288,7 +335,7 @@ func resourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface{}
 }
 
 func resourceMSOSchemaSiteServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Update Site Service Graph")
+	log.Printf("[DEBUG] Beginning Update Site Service Graph")
 	msoClient := m.(*client.Client)
 
 	schemaId := d.Get("schema_id").(string)
@@ -340,9 +387,14 @@ func resourceMSOSchemaSiteServiceGraphDelete(d *schema.ResourceData, m interface
 }
 
 func createSiteServiceNodeList(msoClient *client.Client, siteServiceNodes interface{}, graphCont *container.Container) ([]interface{}, error) {
-	siteServiceNodeList := make([]interface{}, 0, 1)
-	for index, serviceNode := range graphCont.S("serviceNodes").Data().([]interface{}) {
-		siteServiceNodeMap := siteServiceNodes.([]interface{})[index].(map[string]interface{})
+	templateNodes := graphCont.S("serviceNodes").Data().([]interface{})
+	siteNodes := siteServiceNodes.([]interface{})
+	if len(siteNodes) != len(templateNodes) {
+		return nil, fmt.Errorf("service graph has %d service node(s) in the template but %d service node(s) were provided", len(templateNodes), len(siteNodes))
+	}
+	siteServiceNodeList := make([]interface{}, 0, len(templateNodes))
+	for index, serviceNode := range templateNodes {
+		siteServiceNodeMap := siteNodes[index].(map[string]interface{})
 
 		serviceNodeMap := map[string]interface{}{
 			"serviceNodeRef": serviceNode.(map[string]interface{})["serviceNodeRef"],
@@ -394,7 +446,7 @@ func getSiteServiceNodeCont(graphCont *container.Container, schemaId, templateNa
 				return nodeCont, i, nil
 			}
 		} else {
-			return nil, -1, fmt.Errorf("Spilt on nodeRef failed")
+			return nil, -1, fmt.Errorf("Split on nodeRef failed")
 		}
 	}
 	return nil, -1, fmt.Errorf("Unable to find site service node")

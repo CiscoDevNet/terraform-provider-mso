@@ -59,6 +59,14 @@ var msoServiceDeviceClusterFwName = acctest.RandStringFromCharSet(10, acctest.Ch
 var msoSchemaTemplateServiceGraphName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoServiceNodeTypeName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
+// msoSchemaSiteServiceGraphDeviceDn and msoSchemaSiteServiceGraphDeviceDn2 are
+// the DNs of pre-existing L4-L7 firewall devices in the ansible_test tenant on
+// the ansible_test fabric. They must be created on APIC before running these tests
+// (see l4_l7_devices.yml in the ansible-mso integration tests).
+// Format: uni/tn-<tenant>/lDevVip-<device-name>
+const msoSchemaSiteServiceGraphDeviceDn = "uni/tn-ansible_test/lDevVip-ansible_test_firewall1"
+const msoSchemaSiteServiceGraphDeviceDn2 = "uni/tn-ansible_test/lDevVip-ansible_test_firewall2"
+
 // msoSchemaSiteAnpEpgStaticLeafPath is the topology path of the leaf node
 // used in static leaf acceptance tests. It must correspond to a real leaf
 // switch onboarded to the ansible_test site in the lab.
@@ -536,6 +544,37 @@ func testSchemaWithBothSitesPrerequisiteConfig() string {
 func testSchemaWithSingleSiteAssociationConfig() string {
 	return fmt.Sprintf(`%s%s`,
 		testSchemaWithBothSitesPrerequisiteConfig(),
+		testSchemaSiteConfig(msoSchemaSiteResourceLabel1, msoTemplateSiteName1, false),
+	)
+}
+
+// testSchemaWithAnsibleTestTenantAndSingleSiteConfig is a variant of
+// testSchemaWithSingleSiteAssociationConfig that associates the schema template
+// with the pre-existing "ansible_test" NDO tenant (looked up via data source)
+// rather than creating a randomly-named tenant. This is required for resources
+// that reference APIC objects scoped to the "ansible_test" tenant — for example,
+// mso_schema_site_service_graph nodes whose device_dn is
+// "uni/tn-ansible_test/lDevVip-<device>" — because NDO validates that the
+// referenced device belongs to the schema's tenant.
+func testSchemaWithAnsibleTestTenantAndSingleSiteConfig() string {
+	return fmt.Sprintf(`%s%s
+data "mso_tenant" "ansible_test" {
+  name = "ansible_test"
+}
+
+resource "mso_schema" "%[3]s" {
+  name = "%[3]s"
+  template {
+    name         = "%[4]s"
+    display_name = "%[4]s"
+    tenant_id    = data.mso_tenant.ansible_test.id
+  }
+}
+%s`,
+		testSiteConfigAnsibleTest(),
+		testSiteConfigAnsibleTest2(),
+		msoSchemaName,
+		msoSchemaTemplateName,
 		testSchemaSiteConfig(msoSchemaSiteResourceLabel1, msoTemplateSiteName1, false),
 	)
 }

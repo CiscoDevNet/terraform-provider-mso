@@ -14,22 +14,16 @@ Manages MSO Schema Site Level Service Graph.
 
 ```hcl
 
-resource "mso_schema_site_service_graph" "example" {
+resource "mso_schema_site_service_graph" "example_sg_site" {
   schema_id          = mso_schema_site.schema_site_1.schema_id
   site_id            = mso_schema_site.schema_site_1.site_id
-  template_name      = "template1"
-  service_graph_name = "service_graph1"
+  template_name      = mso_schema_template_service_graph.example_sg.template_name
+  service_graph_name = mso_schema_template_service_graph.example_sg.service_graph_name
   service_node {
     device_dn = data.aci_l4_l7_device.l4_l7_device_1.id
-    provider_connector_type = "redir"
-    consumer_connector_type = "redir"
   }
   service_node {
     device_dn = data.aci_l4_l7_device.l4_l7_device_2.id
-    firewall_provider_connector_type = "snat_dnat"
-    consumer_connector_type          = "redir"
-    consumer_interface               = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
-    provider_interface               = tolist(data.aci_cloud_l4_l7_third_party_device.third_party_load_balancer.interface_selectors)[0].name
   }
 }
 
@@ -40,13 +34,13 @@ resource "mso_schema_site_service_graph" "example" {
 * `template_name` - (Required) The template name under which you want to deploy Service Graph.
 * `site_id` - (Required) The site ID under which you want to deploy Service Graph.
 * `service_graph_name` - (Required) The name of the Service Graph.
-* `service_node` - (Required) List of service nodes attached to the Site Service Graph. Maintaining the order of the service nodes is essential.
+* `service_node` - (Required) List of service nodes attached to the Site Service Graph. The number of `service_node` blocks must match the number of nodes defined in the template service graph. Maintaining the order of the service nodes is essential.
     * `device_dn` - (Required) Dn of device associated with the service node of the Service Graph.
-    * `provider_connector_type` - (Optional) Provider connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites. Allowed values are `none`, `redir`, `snat`, `dnat` or `snat_dnat`.
+    * `provider_connector_type` - (Optional) Provider connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites. Allowed values are `none`, `redir`, `snat`, `dnat` or `snat_dnat`. Default value is `none`.
 
         -> `snat`, `dnat` or `snat_dnat` are only supported for template_service_graph.service_node.type `firewall`.
 
-    * `consumer_connector_type` - (Optional) Consumer connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites. Allowed values are `redir` and `none`.
+    * `consumer_connector_type` - (Optional) Consumer connector type of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for third_party_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites. Allowed values are `redir` and `none`. Default value is `none`.
     * `provider_interface` - (Optional) Interface name of the provider interface of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
     * `consumer_interface` - (Optional) Interface name of the consumer interface of the service node. This parameter is only applicable for cloud sites. This parameter is only applicable for network_load_balancer and third-party firewall service nodes, when the template is attached to cloud sites.
 

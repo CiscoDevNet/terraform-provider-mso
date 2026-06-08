@@ -18,27 +18,27 @@ provider "aci" {
 }
 
 # ACI
-data "aci_tenant" "ansible_test" {
-  name = "ansible_test_anv"
+data "aci_tenant" "tf_tenant" {
+  name = "tenant"
 }
 
 data "aci_cloud_l4_l7_native_load_balancer" "application_load_balancer" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "tf_application_load_balancer"
 }
 
 data "aci_cloud_l4_l7_native_load_balancer" "network_load_balancer" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "tf_network_load_balancer"
 }
 
 data "aci_cloud_l4_l7_third_party_device" "third_party_load_balancer" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "tf_third_party_load_balancer"
 }
 
 data "aci_cloud_l4_l7_third_party_device" "third_party_firewall" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "tf_third_party_firewall"
 }
 
@@ -53,11 +53,11 @@ provider "mso" {
 }
 
 data "mso_tenant" "tf_tenant" {
-  name = "ansible_test_anv"
+  name = "tenant"
 }
 
 data "mso_site" "tf_site" {
-  name = "azure_ansible_test_2"
+  name = "cloud_site"
 }
 
 resource "mso_schema" "schema_test" {
