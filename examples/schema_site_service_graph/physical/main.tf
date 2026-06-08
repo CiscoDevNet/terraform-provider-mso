@@ -17,18 +17,18 @@ provider "aci" {
   insecure = true
 }
 
-data "aci_tenant" "ansible_test" {
-  name = "ansible_test"
+data "aci_tenant" "tf_tenant" {
+  name = "tenant"
 }
 
 data "aci_l4_l7_device" "l4_l7_device_1" {
-  tenant_dn = data.aci_tenant.ansible_test.id
-  name      = "ansible_test_firewall1"
+  tenant_dn = data.aci_tenant.tf_tenant.id
+  name      = "firewall1"
 }
 
 data "aci_l4_l7_device" "l4_l7_device_2" {
-  tenant_dn = data.aci_tenant.ansible_test.id
-  name      = "ansible_test_other"
+  tenant_dn = data.aci_tenant.tf_tenant.id
+  name      = "other"
 }
 
 
@@ -42,11 +42,11 @@ provider "mso" {
 }
 
 data "mso_tenant" "tf_tenant" {
-  name = "ansible_test"
+  name = "tenant"
 }
 
 data "mso_site" "tf_site" {
-  name = "ansible_test"
+  name = "site"
 }
 
 resource "mso_schema" "schema_test" {
