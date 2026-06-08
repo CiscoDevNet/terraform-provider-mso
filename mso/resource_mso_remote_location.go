@@ -1,14 +1,15 @@
 package mso
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceMSORemoteLocation() *schema.Resource {
@@ -86,7 +87,7 @@ func resourceMSORemoteLocation() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			_, password_ok := diff.GetOk("password")
 			_, ssh_key_ok := diff.GetOk("ssh_key")
 			if password_ok && ssh_key_ok {

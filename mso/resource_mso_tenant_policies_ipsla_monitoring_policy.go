@@ -1,14 +1,15 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceMSOIPSLAMonitoringPolicy() *schema.Resource {
@@ -111,7 +112,7 @@ func resourceMSOIPSLAMonitoringPolicy() *schema.Resource {
 				ValidateFunc: validation.IntBetween(0, 255),
 			},
 		},
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			slaType, _ := diff.GetOk("sla_type")
 			if slaType == "icmp" || slaType == "l2ping" {
 				diff.SetNew("destination_port", 0)

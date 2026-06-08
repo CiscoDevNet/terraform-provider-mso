@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -8,8 +9,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // resourceMSOSchemaSiteServiceGraph manages an mso_schema_site_service_graph
@@ -125,7 +126,7 @@ func resourceMSOSchemaSiteServiceGraph() *schema.Resource {
 			},
 		}),
 
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			/* This function validates the user input for service_node.provider_connector_type when
 			the template_service_graph.service_node.type is 'other' or 'firewall'.
 
