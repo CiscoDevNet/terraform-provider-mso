@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,8 +11,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceMSOSchema() *schema.Resource {
@@ -89,7 +90,7 @@ func resourceMSOSchema() *schema.Resource {
 				},
 			},
 		}),
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			// check if template_type is changed between known state and provided configuration and error out during plan if it is
 			stateTemplate, configTemplate := diff.GetChange("template")
 			for _, valueState := range stateTemplate.(*schema.Set).List() {

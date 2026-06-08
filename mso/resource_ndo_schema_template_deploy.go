@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -9,8 +10,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceNDOSchemaTemplateDeploy() *schema.Resource {
@@ -22,7 +23,7 @@ func resourceNDOSchemaTemplateDeploy() *schema.Resource {
 
 		SchemaVersion: version,
 
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			// Plan time validation.
 			msoClient := v.(*client.Client)
 			if msoClient.GetPlatform() != "nd" {

@@ -5,6 +5,7 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sort"
@@ -14,8 +15,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var listenerProtocols = []string{"http", "https", "tcp", "udp", "tls", "inherit"}
@@ -381,7 +382,7 @@ func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 			},
 		},
 		// Clear the "rules" attribute diff when its not a valid change
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			// When the listener Protocol is https
 			_, listenerProtocol := diff.GetChange("protocol")
 			if listenerProtocol.(string) == "https" {
