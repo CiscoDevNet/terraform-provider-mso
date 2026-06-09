@@ -5,16 +5,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 	name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
-		PreCheck:            func() { testAccPreCheck(t) },
-		Providers:           testAccProviders,
-		DisableBinaryDriver: true,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Create DHCP Relay Policy without dhcp_relay_providers") },
