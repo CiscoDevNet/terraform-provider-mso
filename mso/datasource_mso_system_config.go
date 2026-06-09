@@ -3,7 +3,7 @@ package mso
 import (
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceMSOSystemConfig() *schema.Resource {
@@ -40,18 +40,20 @@ func dataSourceMSOSystemConfig() *schema.Resource {
 			"change_control": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"workflow": &schema.Schema{
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"number_of_approvers": &schema.Schema{
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-					},
-				},
+				// TODO: Implement an alternative validation solution for maps.
+				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
+				// Elem: &schema.Resource{
+				// 	Schema: map[string]*schema.Schema{
+				// 		"workflow": &schema.Schema{
+				// 			Type:     schema.TypeString,
+				// 			Computed: true,
+				// 		},
+				// 		"number_of_approvers": &schema.Schema{
+				// 			Type:     schema.TypeInt,
+				// 			Computed: true,
+				// 		},
+				// 	},
+				// },
 			},
 		}),
 	}

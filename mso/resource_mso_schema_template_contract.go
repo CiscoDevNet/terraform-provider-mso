@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,8 +10,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceMSOTemplateContract() *schema.Resource {
@@ -185,29 +186,31 @@ func resourceMSOTemplateContract() *schema.Resource {
 				},
 			},
 			"filter_relationships": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"filter_schema_id": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"filter_template_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"filter_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
-				},
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Computed:      true,
 				ConflictsWith: []string{"filter_relationship"},
 				Deprecated:    "use filter_relationship instead",
+				// TODO: Implement an alternative validation solution for maps.
+				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
+				// Elem: &schema.Resource{
+				// 	Schema: map[string]*schema.Schema{
+				// 		"filter_schema_id": &schema.Schema{
+				// 			Type:     schema.TypeString,
+				// 			Optional: true,
+				// 			Computed: true,
+				// 		},
+				// 		"filter_template_name": &schema.Schema{
+				// 			Type:     schema.TypeString,
+				// 			Optional: true,
+				// 			Computed: true,
+				// 		},
+				// 		"filter_name": &schema.Schema{
+				// 			Type:     schema.TypeString,
+				// 			Optional: true,
+				// 		},
+				// 	},
+				// },
 			},
 			"directives": {
 				Type:       schema.TypeList,
@@ -223,7 +226,7 @@ func resourceMSOTemplateContract() *schema.Resource {
 				// Computed: true,
 			},
 		}),
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			stateFilterType, configFilterType := diff.GetChange("filter_type")
 			if configFilterType != stateFilterType && stateFilterType != "" {
 				return fmt.Errorf("The filter_type cannot be changed. Change detected from '%s' to '%s'.", stateFilterType, configFilterType)

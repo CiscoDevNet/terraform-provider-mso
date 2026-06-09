@@ -5,14 +5,15 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
@@ -74,20 +75,22 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-						"tenant_name": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1000),
-						},
-					},
-				},
+				// TODO: Implement an alternative validation solution for maps.
+				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
+				// Elem: &schema.Resource{
+				// 	Schema: map[string]*schema.Schema{
+				// 		"name": &schema.Schema{
+				// 			Type:         schema.TypeString,
+				// 			Required:     true,
+				// 			ValidateFunc: validation.StringLenBetween(1, 1000),
+				// 		},
+				// 		"tenant_name": &schema.Schema{
+				// 			Type:         schema.TypeString,
+				// 			Required:     true,
+				// 			ValidateFunc: validation.StringLenBetween(1, 1000),
+				// 		},
+				// 	},
+				// },
 			},
 			"cidr": &schema.Schema{
 				Type:     schema.TypeList,
@@ -145,7 +148,7 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 				},
 			},
 		}),
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			configOld, configNew := diff.GetChange("hub_network")
 			stateHub := configOld.(map[string]interface{})
 			configHub := configNew.(map[string]interface{})

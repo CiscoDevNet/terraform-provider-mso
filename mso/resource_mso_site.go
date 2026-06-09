@@ -10,8 +10,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceMSOSite() *schema.Resource {
@@ -63,21 +63,22 @@ func resourceMSOSite() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				// Computed: true -> Removed, as it creates discrepancy for idempotency.
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-
-						"lat": &schema.Schema{
-							Type:     schema.TypeFloat,
-							Optional: true,
-							Computed: true,
-						},
-						"long": &schema.Schema{
-							Type:     schema.TypeFloat,
-							Optional: true,
-							Computed: true,
-						},
-					},
-				},
+				// TODO: Implement an alternative validation solution for maps.
+				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
+				// Elem: &schema.Resource{
+				// 	Schema: map[string]*schema.Schema{
+				// 		"lat": &schema.Schema{
+				// 			Type:     schema.TypeFloat,
+				// 			Optional: true,
+				// 			Computed: true,
+				// 		},
+				// 		"long": &schema.Schema{
+				// 			Type:     schema.TypeFloat,
+				// 			Optional: true,
+				// 			Computed: true,
+				// 		},
+				// 	},
+				// },
 			},
 
 			"urls": &schema.Schema{

@@ -1,14 +1,15 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const systemConfigUrl = "api/v1/platform/systemConfig"
@@ -69,29 +70,31 @@ func resourceMSOSystemConfig() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"workflow": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-							// Validate function is not working in TypeMap
-							ValidateFunc: validation.StringInSlice([]string{
-								"enabled",
-								"disabled",
-							}, false),
-						},
-						"number_of_approvers": &schema.Schema{
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
-							// Validate function is not working in TypeMap
-							ValidateFunc: validation.IntAtLeast(1),
-						},
-					},
-				},
+				// TODO: Implement an alternative validation solution for maps.
+				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
+				// Elem: &schema.Resource{
+				// 	Schema: map[string]*schema.Schema{
+				// 		"workflow": &schema.Schema{
+				// 			Type:     schema.TypeString,
+				// 			Required: true,
+				// 			// Validate function is not working in TypeMap
+				// 			ValidateFunc: validation.StringInSlice([]string{
+				// 				"enabled",
+				// 				"disabled",
+				// 			}, false),
+				// 		},
+				// 		"number_of_approvers": &schema.Schema{
+				// 			Type:     schema.TypeInt,
+				// 			Optional: true,
+				// 			Computed: true,
+				// 			// Validate function is not working in TypeMap
+				// 			ValidateFunc: validation.IntAtLeast(1),
+				// 		},
+				// 	},
+				// },
 			},
 		}),
-		CustomizeDiff: func(diff *schema.ResourceDiff, v interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 			// Validate function is not working in TypeMap thus providing function to validate the input during plan
 			_, configChangeControl := diff.GetChange("change_control")
 			configChangeControlMap := configChangeControl.(map[string]interface{})
