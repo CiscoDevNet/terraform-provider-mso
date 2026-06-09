@@ -2,63 +2,33 @@ module github.com/CiscoDevNet/terraform-provider-mso
 
 go 1.25.8
 
-require (
-	github.com/ciscoecosystem/mso-go-client v1.34.0
-	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-)
+require github.com/ciscoecosystem/mso-go-client v1.34.0
 
 require (
-	cloud.google.com/go v0.65.0 // indirect
-	cloud.google.com/go/storage v1.10.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
-	github.com/apparentlymart/go-cidr v1.1.0 // indirect
-	github.com/apparentlymart/go-textseg/v12 v12.0.0 // indirect
-	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.37.0 // indirect
-	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/hashicorp/go-cty v1.5.0 // indirect
-	github.com/hashicorp/go-getter v1.5.3 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
-	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/hc-install v0.9.4 // indirect
-	github.com/hashicorp/hcl v0.0.0-20170504190234-a4b07c25de5f // indirect
-	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-plugin-go v0.31.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.10.0 // indirect
-	github.com/hashicorp/terraform-plugin-test/v2 v2.2.1 // indirect
 	github.com/hashicorp/terraform-registry-address v0.4.0 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/klauspost/compress v1.11.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mitchellh/cli v1.1.2 // indirect
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
-	github.com/spf13/afero v1.2.2 // indirect
-	github.com/ulikunitz/xz v0.5.8 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
-	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
-	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/zclconf/go-cty-yaml v1.0.2 // indirect
-	go.opencensus.io v0.22.4 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	google.golang.org/api v0.34.0 // indirect
 )
 
 require (
