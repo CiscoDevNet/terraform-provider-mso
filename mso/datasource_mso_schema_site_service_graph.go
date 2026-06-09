@@ -86,7 +86,7 @@ func dataSourceMSOSchemaSiteServiceGraphRead(d *schema.ResourceData, m interface
 	graphCont, _, err := getSiteServiceGraphCont(cont, schemaId, templateName, siteId, graphName)
 	if err != nil {
 		d.SetId("")
-		return nil
+		return err
 	}
 
 	serviceNodeList, err := setServiceNodeList(graphCont)

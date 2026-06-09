@@ -14,8 +14,9 @@ import (
 // mso_schema_site_service_graph resource:
 //
 //  1. Create — attach firewall1 device with default connector types (none/none)
-//  2. Update — change device to firewall2 and set connector types to redir/redir
-//  3. Import — verify state round-trips through the import path
+//  2. Error  — service_node count mismatch against template node count
+//  3. Update — change device to firewall2 and set connector types to redir/redir
+//  4. Import — verify state round-trips through the import path
 func TestAccMSOSchemaSiteServiceGraphResource(t *testing.T) {
 	resourceRef := "mso_schema_site_service_graph." + msoSchemaTemplateServiceGraphName
 
@@ -38,6 +39,10 @@ func TestAccMSOSchemaSiteServiceGraphResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceRef, "service_node.0.device_dn", msoSchemaSiteServiceGraphDeviceDn),
 					resource.TestCheckResourceAttr(resourceRef, "service_node.0.consumer_connector_type", "none"),
 					resource.TestCheckResourceAttr(resourceRef, "service_node.0.provider_connector_type", "none"),
+					// consumer_interface and provider_interface are only applicable for cloud sites;
+					// they default to empty for on-prem sites used in this test.
+					resource.TestCheckResourceAttr(resourceRef, "service_node.0.consumer_interface", ""),
+					resource.TestCheckResourceAttr(resourceRef, "service_node.0.provider_interface", ""),
 				),
 			},
 			{
@@ -57,6 +62,8 @@ func TestAccMSOSchemaSiteServiceGraphResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceRef, "service_node.0.device_dn", msoSchemaSiteServiceGraphDeviceDn2),
 					resource.TestCheckResourceAttr(resourceRef, "service_node.0.consumer_connector_type", "redir"),
 					resource.TestCheckResourceAttr(resourceRef, "service_node.0.provider_connector_type", "redir"),
+					resource.TestCheckResourceAttr(resourceRef, "service_node.0.consumer_interface", ""),
+					resource.TestCheckResourceAttr(resourceRef, "service_node.0.provider_interface", ""),
 				),
 			},
 			{
