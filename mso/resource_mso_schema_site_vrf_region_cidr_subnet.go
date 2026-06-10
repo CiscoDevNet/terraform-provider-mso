@@ -1,3 +1,7 @@
+// NOTE: Acceptance tests for this resource are intentionally not provided.
+// Exercising this resource requires a cloud site (AWS/Azure/GCP) attached
+// to the MSO/ND test fabric, which is not part of the CI test environment.
+
 package mso
 
 import (
@@ -14,10 +18,11 @@ import (
 
 func resourceMSOSchemaSiteVrfRegionCidrSubnet() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSchemaSiteVrfRegionCidrSubnetCreate,
-		Read:   resourceMSOSchemaSiteVrfRegionCidrSubnetRead,
-		Update: resourceMSOSchemaSiteVrfRegionCidrSubnetUpdate,
-		Delete: resourceMSOSchemaSiteVrfRegionCidrSubnetDelete,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_vrf_region_cidr_subnet"),
+		Create:             resourceMSOSchemaSiteVrfRegionCidrSubnetCreate,
+		Read:               resourceMSOSchemaSiteVrfRegionCidrSubnetRead,
+		Update:             resourceMSOSchemaSiteVrfRegionCidrSubnetUpdate,
+		Delete:             resourceMSOSchemaSiteVrfRegionCidrSubnetDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceMSOSchemaSiteVrfRegionCidrSubnetImport,

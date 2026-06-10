@@ -8,6 +8,8 @@ description: |-
 
 # mso_schema_site_anp_epg_selector#
 
+!> **Deprecated** This resource is deprecated: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases. Ensure the related configuration is removed from the NDO schema before upgrading Nexus Dashboard to 4.x (NDO 5.x).
+
 Manages MSO Schema site Application Network Profiles Endpoint Groups Selectors.
 
 ## Example Usage ##

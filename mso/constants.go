@@ -1,5 +1,11 @@
 package mso
 
+import "fmt"
+
+func cloudDeprecationMessage(resourceName string) string {
+	return fmt.Sprintf("%s is deprecated: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases. Ensure the related configuration is removed from the NDO schema before upgrading Nexus Dashboard to 4.x (NDO 5.x).", resourceName)
+}
+
 var controlMap = map[string]string{
 	"fast_sel_hot_stdby": "fast-sel-hot-stdby",
 	"graceful_conv":      "graceful-conv",

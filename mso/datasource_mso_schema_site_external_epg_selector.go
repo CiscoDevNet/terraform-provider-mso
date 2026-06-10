@@ -1,3 +1,7 @@
+// NOTE: Acceptance tests for this data source are intentionally not provided.
+// Exercising this data source requires a cloud site (AWS/Azure/GCP) attached
+// to the MSO/ND test fabric, which is not part of the CI test environment.
+
 package mso
 
 import (
@@ -12,7 +16,8 @@ import (
 
 func datasourceMSOSchemaSiteExternalEpgSelector() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceMSOSchemaSiteExternalEpgSelectorRead,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_external_epg_selector"),
+		Read:               datasourceMSOSchemaSiteExternalEpgSelectorRead,
 
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{

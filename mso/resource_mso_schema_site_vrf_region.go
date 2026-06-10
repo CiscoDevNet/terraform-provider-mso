@@ -1,3 +1,7 @@
+// NOTE: Acceptance tests for this resource are intentionally not provided.
+// Exercising this resource requires a cloud site (AWS/Azure/GCP) attached
+// to the MSO/ND test fabric, which is not part of the CI test environment.
+
 package mso
 
 import (
@@ -13,10 +17,11 @@ import (
 
 func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSchemaSiteVrfRegionCreate,
-		Update: resourceMSOSchemaSiteVrfRegionUpdate,
-		Read:   resourceMSOSchemaSiteVrfRegionRead,
-		Delete: resourceMSOSchemaSiteVrfRegionDelete,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_vrf_region"),
+		Create:             resourceMSOSchemaSiteVrfRegionCreate,
+		Update:             resourceMSOSchemaSiteVrfRegionUpdate,
+		Read:               resourceMSOSchemaSiteVrfRegionRead,
+		Delete:             resourceMSOSchemaSiteVrfRegionDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceMSOSchemaSiteVrfRegionImport,

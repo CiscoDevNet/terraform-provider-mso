@@ -1,3 +1,7 @@
+// NOTE: Acceptance tests for this resource are intentionally not provided.
+// Exercising this resource requires a cloud site (AWS/Azure/GCP) attached
+// to the MSO/ND test fabric, which is not part of the CI test environment.
+
 package mso
 
 import (
@@ -64,10 +68,11 @@ var listenerRedirectCodeKeys = getMapKeys(listenerRedirectCodeMap)
 
 func resourceMSOSchemaSiteContractServiceGraphListener() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSchemaSiteContractServiceGraphListenerCreate,
-		Update: resourceMSOSchemaSiteContractServiceGraphListenerUpdate,
-		Read:   resourceMSOSchemaSiteContractServiceGraphListenerRead,
-		Delete: resourceMSOSchemaSiteContractServiceGraphListenerDelete,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_contract_service_graph_listener"),
+		Create:             resourceMSOSchemaSiteContractServiceGraphListenerCreate,
+		Update:             resourceMSOSchemaSiteContractServiceGraphListenerUpdate,
+		Read:               resourceMSOSchemaSiteContractServiceGraphListenerRead,
+		Delete:             resourceMSOSchemaSiteContractServiceGraphListenerDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceMSOSchemaSiteContractServiceGraphListenerImport,
