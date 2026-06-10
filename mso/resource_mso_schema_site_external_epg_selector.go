@@ -1,3 +1,7 @@
+// NOTE: Acceptance tests for this resource are intentionally not provided.
+// Exercising this resource requires a cloud site (AWS/Azure/GCP) attached
+// to the MSO/ND test fabric, which is not part of the CI test environment.
+
 package mso
 
 import (
@@ -14,10 +18,11 @@ import (
 
 func resourceMSOSchemaSiteExternalEpgSelector() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSchemaSiteExternalEpgSelectorCreate,
-		Update: resourceMSOSchemaSiteExternalEpgSelectorUpdate,
-		Read:   resourceMSOSchemaSiteExternalEpgSelectorRead,
-		Delete: resourceMSOSchemaSiteExternalEpgSelectorDelete,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_external_epg_selector"),
+		Create:             resourceMSOSchemaSiteExternalEpgSelectorCreate,
+		Update:             resourceMSOSchemaSiteExternalEpgSelectorUpdate,
+		Read:               resourceMSOSchemaSiteExternalEpgSelectorRead,
+		Delete:             resourceMSOSchemaSiteExternalEpgSelectorDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceMSOSchemaSiteExternalEpgSelectorImport,
