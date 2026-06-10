@@ -20,6 +20,7 @@ const msoSchemaSiteResourceLabel1 = "site_1"
 const msoSchemaSiteResourceLabel2 = "site_2"
 
 var msoTenantName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)

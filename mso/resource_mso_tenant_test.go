@@ -49,7 +49,7 @@ func TestAccMSOTenantResource(t *testing.T) {
 				Config:    testAccMSOTenantConfigUpdateBasicFields(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant.tenant", "name", msoTenantName),
-					resource.TestCheckResourceAttr("mso_tenant.tenant", "display_name", msoTenantName+" updated"),
+					resource.TestCheckResourceAttr("mso_tenant.tenant", "display_name", msoTenantName),
 					resource.TestCheckResourceAttr("mso_tenant.tenant", "description", "Terraform test tenant updated"),
 				),
 			},
@@ -58,7 +58,7 @@ func TestAccMSOTenantResource(t *testing.T) {
 				Config:    testAccMSOTenantConfigRemoveDescription(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant.tenant", "name", msoTenantName),
-					resource.TestCheckResourceAttr("mso_tenant.tenant", "display_name", msoTenantName+" updated"),
+					resource.TestCheckResourceAttr("mso_tenant.tenant", "display_name", msoTenantName),
 					resource.TestCheckResourceAttr("mso_tenant.tenant", "description", ""),
 				),
 			},
@@ -135,7 +135,7 @@ func testAccMSOTenantConfigUpdateBasicFields() string {
 	return fmt.Sprintf(`
 	resource "mso_tenant" "tenant" {
 		name         = "%s"
-		display_name = "%s updated"
+		display_name = "%s"
 		description  = "Terraform test tenant updated"
 	}`, msoTenantName, msoTenantName)
 }
@@ -144,7 +144,7 @@ func testAccMSOTenantConfigRemoveDescription() string {
 	return fmt.Sprintf(`
 	resource "mso_tenant" "tenant" {
 		name         = "%s"
-		display_name = "%s updated"
+		display_name = "%s"
 	}`, msoTenantName, msoTenantName)
 }
 
@@ -152,7 +152,7 @@ func testAccMSOTenantConfigAddSiteAssociation() string {
 	return fmt.Sprintf(`%s
 	resource "mso_tenant" "tenant" {
 		name         = "%s"
-		display_name = "%s updated"
+		display_name = "%s"
 		site_associations {
 			site_id = data.mso_site.%s.id
 		}
@@ -163,7 +163,7 @@ func testAccMSOTenantConfigAddExtraSiteAssociation() string {
 	return fmt.Sprintf(`%s%s
 	resource "mso_tenant" "tenant" {
 		name         = "%s"
-		display_name = "%s updated"
+		display_name = "%s"
 		site_associations {
 			site_id = data.mso_site.%s.id
 		}
@@ -177,7 +177,7 @@ func testAccMSOTenantConfigRemoveSiteAssociation() string {
 	return fmt.Sprintf(`%s
 	resource "mso_tenant" "tenant" {
 		name         = "%s"
-		display_name = "%s updated"
+		display_name = "%s"
 		site_associations {
 			site_id = data.mso_site.%s.id
 		}
@@ -203,4 +203,54 @@ func testAccCheckMsoTenantDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+// TestAccMSOTenantResourceDisplayNameDefault validates that display_name is
+// optional and defaults to the value of name on create, and that omitting it
+// on a subsequent update keeps display_name equal to name (the Computed
+// behavior retains the value across updates).
+func TestAccMSOTenantResourceDisplayNameDefault(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMsoTenantDestroy,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Create Tenant without display_name (defaults to name)")
+				},
+				Config: testAccMSOTenantConfigNoDisplayName(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant.tenant_default", "name", msoTenantName2),
+					resource.TestCheckResourceAttr("mso_tenant.tenant_default", "display_name", msoTenantName2),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Update Tenant without display_name (Computed keeps prior value)")
+				},
+				Config: testAccMSOTenantConfigNoDisplayNameWithDescription(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant.tenant_default", "name", msoTenantName2),
+					resource.TestCheckResourceAttr("mso_tenant.tenant_default", "display_name", msoTenantName2),
+					resource.TestCheckResourceAttr("mso_tenant.tenant_default", "description", "display_name default test"),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOTenantConfigNoDisplayName() string {
+	return fmt.Sprintf(`
+	resource "mso_tenant" "tenant_default" {
+		name = "%s"
+	}`, msoTenantName2)
+}
+
+func testAccMSOTenantConfigNoDisplayNameWithDescription() string {
+	return fmt.Sprintf(`
+	resource "mso_tenant" "tenant_default" {
+		name        = "%s"
+		description = "display_name default test"
+	}`, msoTenantName2)
 }
