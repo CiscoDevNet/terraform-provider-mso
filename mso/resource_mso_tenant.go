@@ -35,8 +35,13 @@ func resourceMSOTenant() *schema.Resource {
 
 			"display_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
+				Deprecated: "On Nexus Dashboard 4.2+ display_name must equal name (the MSO " +
+					"API rejects site_associations updates otherwise); do not set " +
+					"display_name. When omitted on create it defaults to name; on " +
+					"update the existing value in state is retained.",
 			},
 
 			"description": &schema.Schema{
@@ -376,6 +381,8 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 
 	if display_name, ok := d.GetOk("display_name"); ok {
 		tenantAttr.DisplayName = display_name.(string)
+	} else {
+		tenantAttr.DisplayName = tenantAttr.Name
 	}
 
 	if description, ok := d.GetOk("description"); ok {
