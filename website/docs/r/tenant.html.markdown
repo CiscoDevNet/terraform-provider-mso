@@ -97,9 +97,9 @@ resource "mso_tenant" "tenant4" {
 ## Argument Reference ##
 
 * `name` - (Required) The name of the tenant.
-* `display_name` - (Optional) **Deprecated** The name of the tenant to be displayed in the web UI. When omitted on create it defaults to the value of `name`; on update the existing value in state is retained.
+* `display_name` - (Optional) **Deprecated** The name of the tenant to be displayed in the web UI. When omitted on create it defaults to the value of `name`; on update the previously stored value is retained in state and sent back to the server on every PUT, so ensure `display_name` still matches `name` before any update or delete that modifies `site_associations`.
 
-  !> **Deprecated Warning:** On Nexus Dashboard 4.2+ `display_name` must equal `name` — the MSO API rejects any update that modifies `site_associations` otherwise. Do not set `display_name`; let it default to `name` on create.
+  !> **Deprecated Warning:** On Nexus Dashboard 4.2+ `display_name` must equal `name` — the API rejects any update that modifies `site_associations` otherwise. Do not set `display_name`; let it default to `name` on create, and ensure it still matches `name` before any update or delete that modifies `site_associations`.
 
 * `description` - (Optional) The description for this tenant.
 * `orchestrator_only` - (Optional) Option to delete this tenant only from orchestrator or not. Default value is "false".

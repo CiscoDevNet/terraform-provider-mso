@@ -38,10 +38,12 @@ func resourceMSOTenant() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
-				Deprecated: "On Nexus Dashboard 4.2+ display_name must equal name (the MSO " +
-					"API rejects site_associations updates otherwise); do not set " +
-					"display_name. When omitted on create it defaults to name; on " +
-					"update the existing value in state is retained.",
+				Deprecated: "On Nexus Dashboard 4.2+ display_name must equal name; the " +
+					"API rejects site_associations updates otherwise. Do not set " +
+					"display_name on create. When omitted on create it defaults to name; " +
+					"on update the previously stored value is retained in state and sent " +
+					"back to the server on every PUT, so ensure display_name still matches " +
+					"name before any update or delete that modifies site_associations.",
 			},
 
 			"description": &schema.Schema{
