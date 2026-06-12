@@ -17,12 +17,13 @@ This resource is only compatible with NDO versions 3.7 and 4.2+. NDO versions 4.
 
 ```hcl
 
+# On-premises site configuration
 resource "mso_schema_site_contract_service_graph" "example" {
   schema_id          = mso_schema.schema.id
   template_name      = "Template1"
   contract_name      = "C1"
   service_graph_name = "SG1"
-  site_id            = mso_site.id
+  site_id            = mso_site.example.id
   node_relationship {
     provider_connector_cluster_interface      = "example_provider_cluster_interface"
     provider_connector_redirect_policy_tenant = "example_tenant"
@@ -39,12 +40,12 @@ resource "mso_schema_site_contract_service_graph" "example" {
 }
 
 # Cloud Network Controller site configuration
-resource "mso_schema_site_contract_service_graph" "example" {
+resource "mso_schema_site_contract_service_graph" "example_cloud" {
   schema_id          = mso_schema.schema.id
   template_name      = "Template1"
   contract_name      = "C1"
   service_graph_name = "SG1"
-  site_id            = mso_site.id
+  site_id            = mso_site.example_cloud.id
 }
 
 ```
@@ -57,12 +58,12 @@ resource "mso_schema_site_contract_service_graph" "example" {
 * `service_graph_name` - (Required) The name of the Service Graph.
 * `service_graph_schema_id` - (Optional) The schema ID of the Service Graph. The `schema_id` will be used if not provided.
 * `service_graph_template_name` - (Optional) The template name of the Service Graph. The `template_name` will be used if not provided.
-* `node_relationship` - (Optional) The Site Template Contract Service Graph Node relationship information. The order of the node_relationship object should match the node types in the Service Graph. **The `node_relationship` is not supported for the Cloud Network Controller site.**
+* `node_relationship` - (Optional) The Site Template Contract Service Graph Node relationship information. One block must be provided per node in the Service Graph template, in matching order. **The `node_relationship` is not supported for the Cloud Network Controller site.**
   * `provider_connector_cluster_interface` - (Required) The name of the Cluster Interface that has to be connected to a Provider Connector.
-  * `provider_connector_redirect_policy_tenant` - (Optional) The name of the Redirect Policy Tenant that has to be connected to a Provider Connector.
+  * `provider_connector_redirect_policy_tenant` - (Optional) The name of the Redirect Policy Tenant that has to be connected to a Provider Connector. Required when `provider_connector_redirect_policy` is set.
   * `provider_connector_redirect_policy` - (Optional) The name of the Redirect Policy that has to be connected to a Provider Connector.
   * `consumer_connector_cluster_interface` - (Required) The name of the Cluster Interface that has to be connected to a Consumer Connector.
-  * `consumer_connector_redirect_policy_tenant` - (Optional) The name of the Redirect Policy Tenant that has to be connected to a Consumer Connector.
+  * `consumer_connector_redirect_policy_tenant` - (Optional) The name of the Redirect Policy Tenant that has to be connected to a Consumer Connector. Required when `consumer_connector_redirect_policy` is set.
   * `consumer_connector_redirect_policy` - (Optional) The name of the Redirect Policy that has to be connected to a Consumer Connector.
   * `consumer_subnet_ips` - (Optional) List of subnets connected to a Consumer Connector EPG. Only supported for the load balancer device.
 
