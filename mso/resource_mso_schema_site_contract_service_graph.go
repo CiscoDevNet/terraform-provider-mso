@@ -125,6 +125,9 @@ func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 func resourceMSOSchemaSiteContractServiceGraphImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] %s: Beginning Import", d.Id())
 	serviceGraphTokens := strings.Split(d.Id(), "/")
+	if len(serviceGraphTokens) < 7 {
+		return nil, fmt.Errorf("invalid import ID %q: expected format {schema_id}/sites/{site_id}/templates/{template_name}/contracts/{contract_name}", d.Id())
+	}
 	d.Set("schema_id", serviceGraphTokens[0])
 	d.Set("site_id", serviceGraphTokens[2])
 	d.Set("template_name", serviceGraphTokens[4])
@@ -144,7 +147,7 @@ func resourceMSOSchemaSiteContractServiceGraphImport(d *schema.ResourceData, m i
 }
 
 func resourceMSOSchemaSiteContractServiceGraphCreate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Site Template Contract Service Graph: Beginning Creation")
+	log.Printf("[DEBUG] Site Contract Service Graph: Beginning Creation")
 	err := postSiteContractServiceGraphConfig("add", d, m)
 	if err != nil {
 		return err
@@ -155,7 +158,7 @@ func resourceMSOSchemaSiteContractServiceGraphCreate(d *schema.ResourceData, m i
 }
 
 func resourceMSOSchemaSiteContractServiceGraphUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Site Template Contract Service Graph: Beginning Update")
+	log.Printf("[DEBUG] Site Contract Service Graph: Beginning Update")
 	err := postSiteContractServiceGraphConfig("replace", d, m)
 	if err != nil {
 		return err
@@ -165,7 +168,7 @@ func resourceMSOSchemaSiteContractServiceGraphUpdate(d *schema.ResourceData, m i
 }
 
 func resourceMSOSchemaSiteContractServiceGraphRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Read Site Template Contract Service Graph")
+	log.Printf("[DEBUG] Beginning Read Site Contract Service Graph")
 	msoClient := m.(*client.Client)
 	schemaId := d.Get("schema_id").(string)
 	cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
@@ -177,12 +180,12 @@ func resourceMSOSchemaSiteContractServiceGraphRead(d *schema.ResourceData, m int
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Completed Read Site Template Contract Service Graph")
+	log.Printf("[DEBUG] Completed Read Site Contract Service Graph")
 	return nil
 }
 
 func resourceMSOSchemaSiteContractServiceGraphDelete(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] Begining Delete Site Template Contract Service Graph")
+	log.Printf("[DEBUG] Beginning Delete Site Contract Service Graph")
 	msoClient := m.(*client.Client)
 	schemaID := d.Get("schema_id").(string)
 	siteID := d.Get("site_id").(string)
@@ -197,7 +200,7 @@ func resourceMSOSchemaSiteContractServiceGraphDelete(d *schema.ResourceData, m i
 	}
 
 	d.SetId("")
-	log.Printf("[DEBUG] Completed Delete Site Template Contract Service Graph")
+	log.Printf("[DEBUG] %s: Delete Site Contract Service Graph finished successfully", d.Id())
 	return nil
 }
 
@@ -340,14 +343,6 @@ func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.Resou
 
 						d.Set("site_id", siteID)
 						d.Set("node_relationship", nodeList)
-
-						var graphSiteID string
-						if graphSite, ok := d.GetOk("service_graph_site_id"); ok {
-							graphSiteID = graphSite.(string)
-						} else {
-							graphSiteID = siteID
-						}
-						d.Set("service_graph_site_id", graphSiteID)
 						d.SetId(fmt.Sprintf("%s/sites/%s/templates/%s/contracts/%s", schemaID, siteID, templateName, contractName))
 						return nil
 					}
@@ -456,7 +451,7 @@ func getSiteTemplateServiceGraphNode(serviceGraphCont *container.Container, sche
 				return serviceNodeCont, i, nil
 			}
 		} else {
-			return nil, -1, fmt.Errorf("Spilt on nodeRef failed")
+			return nil, -1, fmt.Errorf("Split on nodeRef failed")
 		}
 	}
 	return nil, -1, fmt.Errorf("Unable to find site service node")
@@ -524,13 +519,7 @@ func postSiteContractServiceGraphConfig(ops string, d *schema.ResourceData, m in
 	templateName := d.Get("template_name").(string)
 	contractName := d.Get("contract_name").(string)
 	siteID := d.Get("site_id").(string)
-
-	var serviceGraphSiteID string
-	if tempServiceGraphSiteID, ok := d.GetOk("service_graph_site_id"); ok {
-		serviceGraphSiteID = tempServiceGraphSiteID.(string)
-	} else {
-		serviceGraphSiteID = siteID
-	}
+	serviceGraphSiteID := siteID
 
 	serviceGraphRef := make(map[string]interface{})
 	serviceGraphName := d.Get("service_graph_name").(string)
@@ -564,7 +553,10 @@ func postSiteContractServiceGraphConfig(ops string, d *schema.ResourceData, m in
 
 	nodeRelationshipList := d.Get("node_relationship").([]interface{})
 	includeNodesRelationship := false
-	if len(nodeRelationshipList) == len(apiNodeRelationshipList) {
+	if len(nodeRelationshipList) > 0 {
+		if len(nodeRelationshipList) != len(apiNodeRelationshipList) {
+			return fmt.Errorf("service graph has %d service node(s) in the template but %d node_relationship(s) were provided", len(apiNodeRelationshipList), len(nodeRelationshipList))
+		}
 		includeNodesRelationship = true
 	}
 

@@ -67,6 +67,34 @@ var msoServiceNodeTypeName = acctest.RandStringFromCharSet(10, acctest.CharSetAl
 const msoSchemaSiteServiceGraphDeviceDn = "uni/tn-ansible_test/lDevVip-ansible_test_firewall1"
 const msoSchemaSiteServiceGraphDeviceDn2 = "uni/tn-ansible_test/lDevVip-ansible_test_firewall2"
 
+// msoSchemaSiteContractServiceGraphDeviceDn is the DN of the pre-existing
+// L4-L7 firewall device used in mso_schema_site_contract_service_graph tests.
+// It is created by the l4_l7_devices.yml playbook at:
+// tests/integration/targets/mso_schema_site_contract_service_graph/tasks/l4_l7_devices.yml
+// in the CiscoDevNet/ansible-mso repository.
+// Format: uni/tn-<tenant>/lDevVip-<device-name>
+const msoSchemaSiteContractServiceGraphDeviceDn = "uni/tn-ansible_test/lDevVip-ansible_tenant_firewall1"
+
+// msoSchemaSiteContractServiceGraphProviderClusterInterface and
+// msoSchemaSiteContractServiceGraphConsumerClusterInterface are the logical
+// interface (lIf) names on ansible_tenant_firewall1, created by l4_l7_devices.yml.
+// The _2 variants are used in the update test step to exercise a config change.
+const msoSchemaSiteContractServiceGraphProviderClusterInterface = "clu_if1"
+const msoSchemaSiteContractServiceGraphConsumerClusterInterface = "clu_if1_2"
+const msoSchemaSiteContractServiceGraphProviderClusterInterface2 = "clu_if1_2"
+const msoSchemaSiteContractServiceGraphConsumerClusterInterface2 = "clu_if1"
+
+// Redirect policies created by l4_l7_devices.yml:
+//   - redirect_policy1 under tenant ansible_test
+//   - redirect_policy2 under tenant common
+//
+// The provider and consumer connectors intentionally use different tenants to
+// exercise the cross-tenant redirect policy path.
+const msoSchemaSiteContractServiceGraphProviderRedirectPolicyTenant = "ansible_test"
+const msoSchemaSiteContractServiceGraphProviderRedirectPolicy = "redirect_policy1"
+const msoSchemaSiteContractServiceGraphConsumerRedirectPolicyTenant = "common"
+const msoSchemaSiteContractServiceGraphConsumerRedirectPolicy = "redirect_policy2"
+
 // msoSchemaSiteAnpEpgStaticLeafPath is the topology path of the leaf node
 // used in static leaf acceptance tests. It must correspond to a real leaf
 // switch onboarded to the ansible_test site in the lab.

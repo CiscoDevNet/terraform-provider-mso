@@ -12,7 +12,7 @@ terraform {
 provider "aci" {
   username = "" # <APIC username>
   password = "" # <APIC pwd>
-  url      = "" # <cloud APIC URL>
+  url      = "" # <APIC URL>
   insecure = true
 }
 
@@ -26,22 +26,22 @@ provider "mso" {
 
 # ACI config begins
 
-data "aci_tenant" "ansible_test" {
-  name = "ansible_test"
+data "aci_tenant" "tf_tenant" {
+  name = "tenant"
 }
 
 data "aci_l4_l7_device" "l4_l7_fw" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "l4_l7_fw"
 }
 
 data "aci_l4_l7_device" "l4_l7_adc_lb" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "l4_l7_adc_lb"
 }
 
 data "aci_l4_l7_device" "l4_l7_others" {
-  tenant_dn = data.aci_tenant.ansible_test.id
+  tenant_dn = data.aci_tenant.tf_tenant.id
   name      = "l4_l7_others"
 }
 
@@ -76,12 +76,12 @@ data "aci_l4_l7_logical_interface" "l4_l7_others_cons_inf" {
 
 # ND Config begins
 
-data "mso_site" "ansible_test" {
-  name = "ansible_test"
+data "mso_site" "tf_site" {
+  name = "site"
 }
 
-data "mso_tenant" "ansible_test" {
-  name = "ansible_test"
+data "mso_tenant" "tf_tenant" {
+  name = "tenant"
 }
 
 resource "mso_schema" "tf_schema_sg" {
@@ -89,7 +89,7 @@ resource "mso_schema" "tf_schema_sg" {
   template {
     name         = "template1"
     display_name = "template1"
-    tenant_id    = data.mso_tenant.ansible_test.id
+    tenant_id    = data.mso_tenant.tf_tenant.id
   }
 }
 
@@ -226,7 +226,7 @@ resource "mso_schema_template_contract_service_graph" "template_contract_sg" {
 resource "mso_schema_site" "site1" {
   schema_id     = mso_schema.tf_schema_sg.id
   template_name = one(mso_schema.tf_schema_sg.template).name
-  site_id       = data.mso_site.ansible_test.id
+  site_id       = data.mso_site.tf_site.id
 }
 
 # Note: This resource(mso_schema_site_service_graph) is supported only for NDO 4.1.1i and above.
@@ -270,4 +270,11 @@ resource "mso_schema_site_contract_service_graph" "site_contract_service_graph" 
     provider_connector_cluster_interface = data.aci_l4_l7_logical_interface.l4_l7_others_prov_inf.name
     consumer_connector_cluster_interface = data.aci_l4_l7_logical_interface.l4_l7_others_cons_inf.name
   }
+}
+
+data "mso_schema_site_contract_service_graph" "site_contract_service_graph" {
+  schema_id     = mso_schema_site_contract_service_graph.site_contract_service_graph.schema_id
+  template_name = mso_schema_site_contract_service_graph.site_contract_service_graph.template_name
+  site_id       = mso_schema_site_contract_service_graph.site_contract_service_graph.site_id
+  contract_name = mso_schema_site_contract_service_graph.site_contract_service_graph.contract_name
 }
