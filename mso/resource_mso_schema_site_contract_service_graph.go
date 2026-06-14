@@ -13,6 +13,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// resourceMSOSchemaSiteContractServiceGraph manages an
+// mso_schema_site_contract_service_graph entry (the site-level binding of a
+// service graph to a specific contract, expressed as a
+// serviceGraphRelationship on the site contract object).
+//
+// ForceNew on identity fields: schema_id, template_name, site_id, and
+// contract_name together identify the API path used for all PATCH operations.
+// service_graph_name, service_graph_schema_id, and service_graph_template_name
+// identify which graph is attached. Changing any of these would target a
+// different object in the schema document, which is not achievable via an
+// in-place update and therefore requires destroy+recreate.
 func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMSOSchemaSiteContractServiceGraphCreate,
@@ -26,30 +37,44 @@ func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"schema_id": &schema.Schema{
+				// ForceNew: schema_id is part of the resource identity and the
+				// API path. Changing it targets a different schema document,
+				// which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"template_name": &schema.Schema{
+				// ForceNew: template_name is part of the API path key
+				// ({siteId}-{template}). Changing it targets a different
+				// site-template association, which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"contract_name": &schema.Schema{
+				// ForceNew: contract_name is part of the API path. Changing it
+				// targets a different contract, which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"site_id": &schema.Schema{
+				// ForceNew: site_id is part of the API path key
+				// ({siteId}-{template}). Changing it targets a different site,
+				// which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"service_graph_schema_id": &schema.Schema{
+				// ForceNew: identifies which schema owns the referenced graph.
+				// Changing it re-points to a different graph definition,
+				// which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -57,6 +82,9 @@ func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"service_graph_template_name": &schema.Schema{
+				// ForceNew: identifies which template owns the referenced graph.
+				// Changing it re-points to a different graph definition,
+				// which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
@@ -64,6 +92,9 @@ func resourceMSOSchemaSiteContractServiceGraph() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"service_graph_name": &schema.Schema{
+				// ForceNew: service_graph_name identifies the graph being
+				// attached to the contract. Changing it re-points to a
+				// different graph, which requires destroy+recreate.
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -248,7 +279,8 @@ func setSiteContractServiceGraphAttrs(cont *container.Container, d *schema.Resou
 				apiContractName := contractTokens[len(contractTokens)-1]
 				if apiContractName == contractName {
 					if !contractCont.Exists("serviceGraphRelationship") {
-						return fmt.Errorf("No service graph found")
+						d.SetId("")
+						return nil
 					} else {
 						siteServiceGraphRef := models.StripQuotes(contractCont.S("serviceGraphRelationship", "serviceGraphRef").String())
 						consumerConnectorPresent := models.StripQuotes(contractCont.S("serviceGraphRelationship", "serviceNodesRelationship", "consumerConnector").String())

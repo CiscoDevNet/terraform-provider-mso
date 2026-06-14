@@ -12,6 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+// msoSchemaSiteContractServiceGraphSchemaId and
+// msoSchemaSiteContractServiceGraphSiteId are set during the first test step's
+// Check to capture dynamic IDs for use in the manual deletion PreConfig step.
+var msoSchemaSiteContractServiceGraphSchemaId string
+var msoSchemaSiteContractServiceGraphSiteId string
+
 // TestAccMSOSchemaSiteContractServiceGraphResource tests the full lifecycle of
 // the mso_schema_site_contract_service_graph resource:
 //
@@ -23,6 +29,8 @@ import (
 //  4. Update — swap cluster interfaces and set redirect policies for both
 //     provider and consumer connectors.
 //  5. Import — verify state round-trips through the import path.
+//  6. Recreate — manually delete the serviceGraphRelationship via the API and
+//     verify Terraform detects the drift and recreates it.
 //
 // Note: consumer_subnet_ips is only accepted by the API when the service node
 // type is Load Balancer. This test uses a Firewall node, so subnet IPs are
@@ -55,6 +63,15 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_redirect_policy", ""),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_redirect_policy_tenant", ""),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_subnet_ips.#", "0"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceRef]
+						if !ok {
+							return fmt.Errorf("resource not found in state: %s", resourceRef)
+						}
+						msoSchemaSiteContractServiceGraphSchemaId = rs.Primary.Attributes["schema_id"]
+						msoSchemaSiteContractServiceGraphSiteId = rs.Primary.Attributes["site_id"]
+						return nil
+					},
 				),
 			},
 			{
@@ -78,8 +95,8 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 				Config: testAccMSOSchemaSiteContractServiceGraphConfigUpdate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.#", "1"),
-					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_cluster_interface", msoSchemaSiteContractServiceGraphProviderClusterInterface2),
-					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_cluster_interface", msoSchemaSiteContractServiceGraphConsumerClusterInterface2),
+					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_cluster_interface", msoSchemaSiteContractServiceGraphConsumerClusterInterface),
+					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_cluster_interface", msoSchemaSiteContractServiceGraphProviderClusterInterface),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_redirect_policy_tenant", msoSchemaSiteContractServiceGraphProviderRedirectPolicyTenant),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_redirect_policy", msoSchemaSiteContractServiceGraphProviderRedirectPolicy),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_redirect_policy_tenant", msoSchemaSiteContractServiceGraphConsumerRedirectPolicyTenant),
@@ -93,6 +110,30 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateIdFunc: testAccMSOSchemaSiteContractServiceGraphImportStateId(resourceRef),
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate site contract service graph after manual deletion")
+					msoClient := testAccProvider.Meta().(*client.Client)
+					path := fmt.Sprintf("/sites/%s-%s/contracts/%s/serviceGraphRelationship",
+						msoSchemaSiteContractServiceGraphSiteId,
+						msoSchemaTemplateName,
+						msoSchemaTemplateContractName,
+					)
+					_, err := msoClient.PatchbyID(
+						fmt.Sprintf("api/v1/schemas/%s", msoSchemaSiteContractServiceGraphSchemaId),
+						models.GetRemovePatchPayload(path),
+					)
+					if err != nil {
+						t.Fatalf("Failed to manually delete site contract service graph relationship: %v", err)
+					}
+				},
+				Config: testAccMSOSchemaSiteContractServiceGraphConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceRef, "id"),
+					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_cluster_interface", msoSchemaSiteContractServiceGraphProviderClusterInterface),
+					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_cluster_interface", msoSchemaSiteContractServiceGraphConsumerClusterInterface),
+				),
 			},
 		},
 	})
@@ -283,8 +324,8 @@ resource "mso_schema_site_contract_service_graph" "%[2]s" {
 		msoSchemaSiteResourceLabel1,                                   // %[4]s
 		msoSchemaTemplateName,                                         // %[5]s
 		msoSchemaTemplateServiceGraphName,                             // %[6]s
-		msoSchemaSiteContractServiceGraphProviderClusterInterface2,    // %[7]s
-		msoSchemaSiteContractServiceGraphConsumerClusterInterface2,    // %[8]s
+		msoSchemaSiteContractServiceGraphConsumerClusterInterface,     // %[7]s
+		msoSchemaSiteContractServiceGraphProviderClusterInterface,     // %[8]s
 		msoSchemaSiteContractServiceGraphProviderRedirectPolicyTenant, // %[9]s
 		msoSchemaSiteContractServiceGraphProviderRedirectPolicy,       // %[10]s
 		msoSchemaSiteContractServiceGraphConsumerRedirectPolicyTenant, // %[11]s
