@@ -78,11 +78,9 @@ const msoSchemaSiteContractServiceGraphDeviceDn = "uni/tn-ansible_test/lDevVip-a
 // msoSchemaSiteContractServiceGraphProviderClusterInterface and
 // msoSchemaSiteContractServiceGraphConsumerClusterInterface are the logical
 // interface (lIf) names on ansible_tenant_firewall1, created by l4_l7_devices.yml.
-// The _2 variants are used in the update test step to exercise a config change.
+// The update test step swaps these two values to exercise a config change.
 const msoSchemaSiteContractServiceGraphProviderClusterInterface = "clu_if1"
 const msoSchemaSiteContractServiceGraphConsumerClusterInterface = "clu_if1_2"
-const msoSchemaSiteContractServiceGraphProviderClusterInterface2 = "clu_if1_2"
-const msoSchemaSiteContractServiceGraphConsumerClusterInterface2 = "clu_if1"
 
 // Redirect policies created by l4_l7_devices.yml:
 //   - redirect_policy1 under tenant ansible_test
