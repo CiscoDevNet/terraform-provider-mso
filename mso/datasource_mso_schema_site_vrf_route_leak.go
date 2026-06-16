@@ -11,7 +11,8 @@ import (
 
 func dataSourceMSOSchemaSiteVrfRouteLeak() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceMSOSchemaSiteVrfRouteLeakRead,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_vrf_route_leak"),
+		Read:               dataSourceMSOSchemaSiteVrfRouteLeakRead,
 
 		SchemaVersion: version,
 

@@ -8,6 +8,8 @@ description: |-
 
 # mso_schema_site_vrf_route_leak #
 
+!> **Deprecated** This data source is deprecated: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases. Ensure the related configuration is removed from the NDO schema before upgrading Nexus Dashboard to 4.x (NDO 5.x).
+
 Data source for MSO Schema Site VRF Route Leak.
 
 ## Example Usage ##

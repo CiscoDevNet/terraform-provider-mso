@@ -14,10 +14,11 @@ import (
 
 func resourceMSOSchemaSiteVrfRouteLeak() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMSOSchemaSiteVrfRouteLeakCreate,
-		Update: resourceMSOSchemaSiteVrfRouteLeakUpdate,
-		Read:   resourceMSOSchemaSiteVrfRouteLeakRead,
-		Delete: resourceMSOSchemaSiteVrfRouteLeakDelete,
+		DeprecationMessage: cloudDeprecationMessage("mso_schema_site_vrf_route_leak"),
+		Create:             resourceMSOSchemaSiteVrfRouteLeakCreate,
+		Update:             resourceMSOSchemaSiteVrfRouteLeakUpdate,
+		Read:               resourceMSOSchemaSiteVrfRouteLeakRead,
+		Delete:             resourceMSOSchemaSiteVrfRouteLeakDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceMSOSchemaSiteVrfRouteLeakImport,
