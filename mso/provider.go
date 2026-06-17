@@ -1,10 +1,12 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -240,11 +242,11 @@ func Provider() *schema.Provider {
 			"mso_user": datasourceMSOUser(),
 		},
 
-		ConfigureFunc: configureClient,
+		ConfigureContextFunc: configureClient,
 	}
 }
 
-func configureClient(d *schema.ResourceData) (interface{}, error) {
+func configureClient(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	config := Config{
 		Username:   d.Get("username").(string),
 		Password:   d.Get("password").(string),
@@ -259,13 +261,13 @@ func configureClient(d *schema.ResourceData) (interface{}, error) {
 	if d.Get("retries").(string) != "" {
 		maxRetries, err := strconv.Atoi(d.Get("retries").(string))
 		if err != nil {
-			return nil, fmt.Errorf("Invalid value for retries")
+			return nil, diag.Errorf("Invalid value for retries")
 		}
 		config.MaxRetries = maxRetries
 	}
 
 	if err := config.Valid(); err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	}
 
 	return config.getClient(), nil
