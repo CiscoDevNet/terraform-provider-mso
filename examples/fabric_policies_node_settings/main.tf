@@ -26,11 +26,11 @@ resource "mso_fabric_policies_node_settings" "node_settings" {
   template_id     = mso_template.fabric_policy_template.id
   name            = "tf_node_settings"
   description     = "Terraform Node Settings Policy"
-  synce = {
+  synce {
     admin_state   = "enabled"
     quality_level = "option_2_generation_1"
   }
-  ptp = {
+  ptp {
     node_domain   = 25
     priority_2    = 99
   }

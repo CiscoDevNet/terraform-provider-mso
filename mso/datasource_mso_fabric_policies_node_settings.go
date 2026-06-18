@@ -28,8 +28,8 @@ func datasourceMSONodeSettings() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"synce": &schema.Schema{
-				Type:     schema.TypeMap,
+			"synce": {
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -44,16 +44,16 @@ func datasourceMSONodeSettings() *schema.Resource {
 					},
 				},
 			},
-			"ptp": &schema.Schema{
-				Type:     schema.TypeMap,
+			"ptp": {
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"node_domain": &schema.Schema{
+						"node_domain": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
-						"priority_2": &schema.Schema{
+						"priority_2": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
