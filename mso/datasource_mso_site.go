@@ -75,20 +75,8 @@ func datasourceMSOSite() *schema.Resource {
 			"location": &schema.Schema{
 				Type:     schema.TypeMap,
 				Computed: true,
-				// TODO: Implement an alternative validation solution for maps.
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
-				// Elem: &schema.Resource{
-				// 	Schema: map[string]*schema.Schema{
-				// 		"lat": &schema.Schema{
-				// 			Type:     schema.TypeFloat,
-				// 			Computed: true,
-				// 		},
-				// 		"long": &schema.Schema{
-				// 			Type:     schema.TypeFloat,
-				// 			Computed: true,
-				// 		},
-				// 	},
-				// },
+				// Expected keys: "lat" (float), "long" (float). Validation skipped - resource is deprecated.
 			},
 			"urls": &schema.Schema{
 				Type:     schema.TypeList,

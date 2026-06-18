@@ -191,26 +191,8 @@ func resourceMSOTemplateContract() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"filter_relationship"},
 				Deprecated:    "use filter_relationship instead",
-				// TODO: Implement an alternative validation solution for maps.
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
-				// Elem: &schema.Resource{
-				// 	Schema: map[string]*schema.Schema{
-				// 		"filter_schema_id": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Optional: true,
-				// 			Computed: true,
-				// 		},
-				// 		"filter_template_name": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Optional: true,
-				// 			Computed: true,
-				// 		},
-				// 		"filter_name": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Optional: true,
-				// 		},
-				// 	},
-				// },
+				// Expected keys: "filter_schema_id" (string), "filter_template_name" (string), "filter_name" (string). Validation skipped - field is deprecated.
 			},
 			"directives": {
 				Type:       schema.TypeList,

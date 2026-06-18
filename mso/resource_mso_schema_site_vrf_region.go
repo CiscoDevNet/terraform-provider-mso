@@ -75,22 +75,8 @@ func resourceMSOSchemaSiteVrfRegion() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				// TODO: Implement an alternative validation solution for maps.
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
-				// Elem: &schema.Resource{
-				// 	Schema: map[string]*schema.Schema{
-				// 		"name": &schema.Schema{
-				// 			Type:         schema.TypeString,
-				// 			Required:     true,
-				// 			ValidateFunc: validation.StringLenBetween(1, 1000),
-				// 		},
-				// 		"tenant_name": &schema.Schema{
-				// 			Type:         schema.TypeString,
-				// 			Required:     true,
-				// 			ValidateFunc: validation.StringLenBetween(1, 1000),
-				// 		},
-				// 	},
-				// },
+				// Expected keys: "name" (string), "tenant_name" (string). Validation skipped - resource is deprecated.
 			},
 			"cidr": &schema.Schema{
 				Type:     schema.TypeList,
