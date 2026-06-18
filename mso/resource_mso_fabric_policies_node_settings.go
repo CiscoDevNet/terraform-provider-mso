@@ -3,7 +3,6 @@ package mso
 import (
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -42,10 +41,10 @@ func resourceMSONodeSettings() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"synce": &schema.Schema{
-				Type:     schema.TypeMap,
+			"synce": {
+				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"admin_state": {
@@ -65,18 +64,18 @@ func resourceMSONodeSettings() *schema.Resource {
 					},
 				},
 			},
-			"ptp": &schema.Schema{
-				Type:     schema.TypeMap,
+			"ptp": {
+				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"node_domain": &schema.Schema{
+						"node_domain": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							ValidateFunc: validation.IntBetween(24, 43),
 						},
-						"priority_2": &schema.Schema{
+						"priority_2": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							ValidateFunc: validation.IntBetween(0, 255),
@@ -89,30 +88,20 @@ func resourceMSONodeSettings() *schema.Resource {
 }
 
 func getSyncePayload(synce any) map[string]string {
-	synceMap := synce.(map[string]any)
-	syncePayload := map[string]string{
+	synceMap := synce.([]interface{})[0].(map[string]interface{})
+	return map[string]string{
 		"adminState": synceMap["admin_state"].(string),
 		"qlOption":   convertValueWithMap(synceMap["quality_level"].(string), synceQualityLevelOptionsMap),
 	}
-	return syncePayload
 }
 
-func getPtpPayload(ptp any) (map[string]int, error) {
-	ptpMap := ptp.(map[string]any)
-	domain, err := strconv.Atoi(ptpMap["node_domain"].(string))
-	if err != nil {
-		return nil, err
-	}
-	prio2, err := strconv.Atoi(ptpMap["priority_2"].(string))
-	if err != nil {
-		return nil, err
-	}
-	ptpPayload := map[string]int{
-		"domain": domain,
-		"prio2":  prio2,
+func getPtpPayload(ptp any) map[string]int {
+	ptpMap := ptp.([]interface{})[0].(map[string]interface{})
+	return map[string]int{
+		"domain": ptpMap["node_domain"].(int),
+		"prio2":  ptpMap["priority_2"].(int),
 		"prio1":  128,
 	}
-	return ptpPayload, nil
 }
 
 func setNodeSettingsData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
@@ -135,20 +124,18 @@ func setNodeSettingsData(d *schema.ResourceData, msoClient *client.Client, templ
 
 	if policy.Exists("synce") {
 		synce := policy.S("synce")
-		synceMap := map[string]any{
+		d.Set("synce", []interface{}{map[string]interface{}{
 			"admin_state":   models.StripQuotes(synce.S("adminState").String()),
 			"quality_level": convertValueWithMap(models.StripQuotes(synce.S("qlOption").String()), synceQualityLevelOptionsMap),
-		}
-		d.Set("synce", synceMap)
+		}})
 	}
 
 	if policy.Exists("ptp") {
 		ptp := policy.S("ptp")
-		ptpMap := map[string]any{
-			"node_domain": ptp.S("domain").Data().(float64),
-			"priority_2":  ptp.S("prio2").Data().(float64),
-		}
-		d.Set("ptp", ptpMap)
+		d.Set("ptp", []interface{}{map[string]interface{}{
+			"node_domain": int(ptp.S("domain").Data().(float64)),
+			"priority_2":  int(ptp.S("prio2").Data().(float64)),
+		}})
 	}
 
 	return nil
@@ -188,17 +175,12 @@ func resourceMSONodeSettingsCreate(d *schema.ResourceData, m any) error {
 		payload["description"] = description.(string)
 	}
 
-	if synce, ok := d.GetOk("synce"); ok {
-		syncePayload := getSyncePayload(synce)
-		payload["synce"] = syncePayload
+	if synceList := d.Get("synce").([]interface{}); len(synceList) > 0 {
+		payload["synce"] = getSyncePayload(synceList)
 	}
 
-	if ptp, ok := d.GetOk("ptp"); ok {
-		ptpPayload, err := getPtpPayload(ptp)
-		if err != nil {
-			return err
-		}
-		payload["ptp"] = ptpPayload
+	if ptpList := d.Get("ptp").([]interface{}); len(ptpList) > 0 {
+		payload["ptp"] = getPtpPayload(ptpList)
 	}
 
 	payloadModel := models.GetPatchPayload("add", "/fabricPolicyTemplate/template/nodePolicyGroups/-", payload)
@@ -263,9 +245,8 @@ func resourceMSONodeSettingsUpdate(d *schema.ResourceData, m any) error {
 	}
 
 	if d.HasChange("synce") {
-		if synce, ok := d.GetOk("synce"); ok {
-			syncePayload := getSyncePayload(synce)
-			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/synce", updatePath), syncePayload)
+		if synceList := d.Get("synce").([]interface{}); len(synceList) > 0 {
+			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/synce", updatePath), getSyncePayload(synceList))
 			if err != nil {
 				return err
 			}
@@ -278,12 +259,8 @@ func resourceMSONodeSettingsUpdate(d *schema.ResourceData, m any) error {
 	}
 
 	if d.HasChange("ptp") {
-		if ptp, ok := d.GetOk("ptp"); ok {
-			ptpPayload, err := getPtpPayload(ptp)
-			if err != nil {
-				return err
-			}
-			err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/ptp", updatePath), ptpPayload)
+		if ptpList := d.Get("ptp").([]interface{}); len(ptpList) > 0 {
+			err = addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/ptp", updatePath), getPtpPayload(ptpList))
 			if err != nil {
 				return err
 			}

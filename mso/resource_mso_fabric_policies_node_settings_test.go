@@ -18,10 +18,10 @@ func TestAccMSONodeSettingsResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", "Terraform test Node Settings Policy"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.admin_state", "enabled"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.quality_level", "option_2_generation_1"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.node_domain", "25"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.priority_2", "99"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.0.quality_level", "option_2_generation_1"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.0.node_domain", "25"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.0.priority_2", "99"),
 				),
 			},
 			{
@@ -30,10 +30,10 @@ func TestAccMSONodeSettingsResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings_new"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", "Terraform test Node Settings Policy updated"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.admin_state", "disabled"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.quality_level", "option_1"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.node_domain", "30"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.priority_2", "100"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.0.admin_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.0.quality_level", "option_1"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.0.node_domain", "30"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.0.priority_2", "100"),
 				),
 			},
 			{
@@ -42,8 +42,8 @@ func TestAccMSONodeSettingsResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings_new"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", ""),
-					resource.TestCheckNoResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce"),
-					resource.TestCheckNoResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.#", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.#", "0"),
 				),
 			},
 			{
@@ -63,13 +63,13 @@ func testAccMSONodeSettingsConfigCreate() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_node_settings"
 		description     = "Terraform test Node Settings Policy"
-		synce = {
-			admin_state = "enabled"
+		synce {
+			admin_state   = "enabled"
 			quality_level = "option_2_generation_1"
 		}
-		ptp = {
+		ptp {
 			node_domain = 25
-			priority_2 = 99
+			priority_2  = 99
 		}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
@@ -80,13 +80,13 @@ func testAccMSONodeSettingsConfigUpdate() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_node_settings_new"
 		description     = "Terraform test Node Settings Policy updated"
-		synce = {
-			admin_state = "disabled"
+		synce {
+			admin_state   = "disabled"
 			quality_level = "option_1"
 		}
-		ptp = {
+		ptp {
 			node_domain = 30
-			priority_2 = 100
+			priority_2  = 100
 		}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
@@ -97,8 +97,5 @@ func testAccMSONodeSettingsConfigUpdateRemove() string {
 		template_id     = mso_template.template_fabric_policy.id
 		name            = "tf_test_node_settings_new"
 		description     = ""
-
-		ptp = {}
-		synce = {}
 	}`, testAccMSOTemplateResourceFabricPolicyConfig())
 }
