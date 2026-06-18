@@ -40,20 +40,8 @@ func dataSourceMSOSystemConfig() *schema.Resource {
 			"change_control": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				// TODO: Implement an alternative validation solution for maps.
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
-				// Elem: &schema.Resource{
-				// 	Schema: map[string]*schema.Schema{
-				// 		"workflow": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Computed: true,
-				// 		},
-				// 		"number_of_approvers": &schema.Schema{
-				// 			Type:     schema.TypeInt,
-				// 			Computed: true,
-				// 		},
-				// 	},
-				// },
+				// Expected keys: "workflow" (string: "enabled"/"disabled"), "number_of_approvers" (integer ≥ 1). Validation skipped - resource is deprecated.
 			},
 		}),
 	}

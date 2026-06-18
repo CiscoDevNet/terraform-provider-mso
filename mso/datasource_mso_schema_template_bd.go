@@ -103,28 +103,8 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 				Type:        schema.TypeMap,
 				Description: "Configure dhcp policy in versions before NDO 3.2",
 				Computed:    true,
-				// TODO: Implement an alternative validation solution for maps.
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
-				// Elem: &schema.Resource{
-				// 	Schema: map[string]*schema.Schema{
-				// 		"name": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Computed: true,
-				// 		},
-				// 		"version": &schema.Schema{
-				// 			Type:     schema.TypeInt,
-				// 			Computed: true,
-				// 		},
-				// 		"dhcp_option_policy_name": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Computed: true,
-				// 		},
-				// 		"dhcp_option_policy_version": &schema.Schema{
-				// 			Type:     schema.TypeInt,
-				// 			Computed: true,
-				// 		},
-				// 	},
-				// },
+				// Expected keys: "name" (string), "version" (int), "dhcp_option_policy_name" (string), "dhcp_option_policy_version" (int). Validation skipped - field is deprecated.
 			},
 			"dhcp_policies": &schema.Schema{
 				Type:        schema.TypeSet,

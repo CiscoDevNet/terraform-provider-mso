@@ -70,28 +70,8 @@ func resourceMSOSystemConfig() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				// TODO: Implement an alternative validation solution for maps.
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
-				// Elem: &schema.Resource{
-				// 	Schema: map[string]*schema.Schema{
-				// 		"workflow": &schema.Schema{
-				// 			Type:     schema.TypeString,
-				// 			Required: true,
-				// 			// Validate function is not working in TypeMap
-				// 			ValidateFunc: validation.StringInSlice([]string{
-				// 				"enabled",
-				// 				"disabled",
-				// 			}, false),
-				// 		},
-				// 		"number_of_approvers": &schema.Schema{
-				// 			Type:     schema.TypeInt,
-				// 			Optional: true,
-				// 			Computed: true,
-				// 			// Validate function is not working in TypeMap
-				// 			ValidateFunc: validation.IntAtLeast(1),
-				// 		},
-				// 	},
-				// },
+				// Expected keys: "workflow" (string: "enabled"/"disabled"), "number_of_approvers" (integer ≥ 1). Validation skipped - resource is deprecated.
 			},
 		}),
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
