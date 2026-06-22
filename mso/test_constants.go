@@ -20,6 +20,7 @@ const msoSchemaSiteResourceLabel1 = "site_1"
 const msoSchemaSiteResourceLabel2 = "site_2"
 
 var msoTenantName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -59,39 +60,32 @@ var msoServiceDeviceClusterFwName = acctest.RandStringFromCharSet(10, acctest.Ch
 var msoSchemaTemplateServiceGraphName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoServiceNodeTypeName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-// msoSchemaSiteServiceGraphDeviceDn and msoSchemaSiteServiceGraphDeviceDn2 are
-// the DNs of pre-existing L4-L7 firewall devices in the ansible_test tenant on
-// the ansible_test fabric. They must be created on APIC before running these tests
-// (see l4_l7_devices.yml in the ansible-mso integration tests).
-// Format: uni/tn-<tenant>/lDevVip-<device-name>
-const msoSchemaSiteServiceGraphDeviceDn = "uni/tn-ansible_test/lDevVip-ansible_test_firewall1"
-const msoSchemaSiteServiceGraphDeviceDn2 = "uni/tn-ansible_test/lDevVip-ansible_test_firewall2"
+// msoSchemaSiteServiceGraphDeviceName and msoSchemaSiteServiceGraphDeviceName2
+// are randomised names for L4-L7 firewall devices created in msoTenantName on
+// APIC by apicSetup() in testAPICPreCheck.
+var msoSchemaSiteServiceGraphDeviceName = "fw1_" + acctest.RandStringFromCharSet(6, acctest.CharSetAlpha)
+var msoSchemaSiteServiceGraphDeviceName2 = "fw2_" + acctest.RandStringFromCharSet(6, acctest.CharSetAlpha)
+var msoSchemaSiteServiceGraphDeviceDn = "uni/tn-" + msoTenantName + "/lDevVip-" + msoSchemaSiteServiceGraphDeviceName
+var msoSchemaSiteServiceGraphDeviceDn2 = "uni/tn-" + msoTenantName + "/lDevVip-" + msoSchemaSiteServiceGraphDeviceName2
 
-// msoSchemaSiteContractServiceGraphDeviceDn is the DN of the pre-existing
-// L4-L7 firewall device used in mso_schema_site_contract_service_graph tests.
-// It is created by the l4_l7_devices.yml playbook at:
-// tests/integration/targets/mso_schema_site_contract_service_graph/tasks/l4_l7_devices.yml
-// in the CiscoDevNet/ansible-mso repository.
-// Format: uni/tn-<tenant>/lDevVip-<device-name>
-const msoSchemaSiteContractServiceGraphDeviceDn = "uni/tn-ansible_test/lDevVip-ansible_tenant_firewall1"
+// msoSchemaSiteContractServiceGraphDeviceName is the randomised name of the
+// L4-L7 firewall device created in msoTenantName on APIC by apicSetup()
+// in testAPICPreCheck.
+var msoSchemaSiteContractServiceGraphDeviceName = "csg_fw_" + acctest.RandStringFromCharSet(6, acctest.CharSetAlpha)
+var msoSchemaSiteContractServiceGraphDeviceDn = "uni/tn-" + msoTenantName + "/lDevVip-" + msoSchemaSiteContractServiceGraphDeviceName
 
 // msoSchemaSiteContractServiceGraphProviderClusterInterface and
-// msoSchemaSiteContractServiceGraphConsumerClusterInterface are the logical
-// interface (lIf) names on ansible_tenant_firewall1, created by l4_l7_devices.yml.
+// msoSchemaSiteContractServiceGraphConsumerClusterInterface are randomised
+// logical interface (lIf) names on the contract service graph firewall device.
 // The update test step swaps these two values to exercise a config change.
-const msoSchemaSiteContractServiceGraphProviderClusterInterface = "clu_if1"
-const msoSchemaSiteContractServiceGraphConsumerClusterInterface = "clu_if1_2"
+var msoSchemaSiteContractServiceGraphProviderClusterInterface = "clu_if_" + acctest.RandStringFromCharSet(4, acctest.CharSetAlpha)
+var msoSchemaSiteContractServiceGraphConsumerClusterInterface = "clu_if_" + acctest.RandStringFromCharSet(4, acctest.CharSetAlpha)
 
-// Redirect policies created by l4_l7_devices.yml:
-//   - redirect_policy1 under tenant ansible_test
-//   - redirect_policy2 under tenant common
-//
-// The provider and consumer connectors intentionally use different tenants to
-// exercise the cross-tenant redirect policy path.
-const msoSchemaSiteContractServiceGraphProviderRedirectPolicyTenant = "ansible_test"
-const msoSchemaSiteContractServiceGraphProviderRedirectPolicy = "redirect_policy1"
-const msoSchemaSiteContractServiceGraphConsumerRedirectPolicyTenant = "common"
-const msoSchemaSiteContractServiceGraphConsumerRedirectPolicy = "redirect_policy2"
+// Provider and consumer redirect policies use different tenants to exercise the
+// cross-tenant redirect policy path. The provider uses msoTenantName (the schema
+// tenant) and the consumer uses msoTenantName2.
+var msoSchemaSiteContractServiceGraphProviderRedirectPolicy = "rp1_" + acctest.RandStringFromCharSet(6, acctest.CharSetAlpha)
+var msoSchemaSiteContractServiceGraphConsumerRedirectPolicy = "rp2_" + acctest.RandStringFromCharSet(6, acctest.CharSetAlpha)
 
 // msoSchemaSiteAnpEpgStaticLeafPath is the topology path of the leaf node
 // used in static leaf acceptance tests. It must correspond to a real leaf
@@ -147,15 +141,7 @@ data "mso_site" "%[1]s" {
 }
 
 func testTenantConfig() string {
-	return fmt.Sprintf(`
-resource "mso_tenant" "%[1]s" {
-	name         = "%[1]s"
-	display_name = "%[1]s"
-	site_associations { 
-		site_id = data.mso_site.%[2]s.id
-	}
-}
-`, msoTenantName, msoTemplateSiteName1)
+	return testTenantConfigOneSite(msoTenantName)
 }
 
 func testTenantPolicyTemplateConfig() string {
@@ -513,6 +499,20 @@ resource "mso_tenant" "%[1]s" {
 `, msoTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
+// testTenantConfigOneSite creates an mso_tenant resource associated with the
+// primary site for the given tenant name.
+func testTenantConfigOneSite(tenantName string) string {
+	return fmt.Sprintf(`
+resource "mso_tenant" "%[1]s" {
+	name         = "%[1]s"
+	display_name = "%[1]s"
+	site_associations {
+		site_id = data.mso_site.%[2]s.id
+	}
+}
+`, tenantName, msoTemplateSiteName1)
+}
+
 // testSchemaSiteConfig emits a single mso_schema_site block referencing the
 // shared schema/template. resourceLabel is used as the Terraform resource
 // label (e.g. "site_1") and siteDataSource is the name of the existing
@@ -570,37 +570,6 @@ func testSchemaWithBothSitesPrerequisiteConfig() string {
 func testSchemaWithSingleSiteAssociationConfig() string {
 	return fmt.Sprintf(`%s%s`,
 		testSchemaWithBothSitesPrerequisiteConfig(),
-		testSchemaSiteConfig(msoSchemaSiteResourceLabel1, msoTemplateSiteName1, false),
-	)
-}
-
-// testSchemaWithAnsibleTestTenantAndSingleSiteConfig is a variant of
-// testSchemaWithSingleSiteAssociationConfig that associates the schema template
-// with the pre-existing "ansible_test" NDO tenant (looked up via data source)
-// rather than creating a randomly-named tenant. This is required for resources
-// that reference APIC objects scoped to the "ansible_test" tenant — for example,
-// mso_schema_site_service_graph nodes whose device_dn is
-// "uni/tn-ansible_test/lDevVip-<device>" — because NDO validates that the
-// referenced device belongs to the schema's tenant.
-func testSchemaWithAnsibleTestTenantAndSingleSiteConfig() string {
-	return fmt.Sprintf(`%s%s
-data "mso_tenant" "ansible_test" {
-  name = "ansible_test"
-}
-
-resource "mso_schema" "%[3]s" {
-  name = "%[3]s"
-  template {
-    name         = "%[4]s"
-    display_name = "%[4]s"
-    tenant_id    = data.mso_tenant.ansible_test.id
-  }
-}
-%s`,
-		testSiteConfigAnsibleTest(),
-		testSiteConfigAnsibleTest2(),
-		msoSchemaName,
-		msoSchemaTemplateName,
 		testSchemaSiteConfig(msoSchemaSiteResourceLabel1, msoTemplateSiteName1, false),
 	)
 }

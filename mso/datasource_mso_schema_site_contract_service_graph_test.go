@@ -24,7 +24,7 @@ func TestAccMSOSchemaSiteContractServiceGraphDatasource(t *testing.T) {
 	datasourceRef := "data.mso_schema_site_contract_service_graph." + msoSchemaTemplateContractName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSOSchemaSiteContractServiceGraphDestroy,
 		Steps: []resource.TestStep{
@@ -105,19 +105,19 @@ resource "mso_schema_site_service_graph" "%[2]s" {
   depends_on = [mso_schema_template_service_graph.%[2]s]
 }
 `,
-		testSchemaWithAnsibleTestTenantAndSingleSiteConfig(), // %[1]s
-		msoSchemaTemplateServiceGraphName,                    // %[2]s
-		msoSchemaName,                                        // %[3]s
-		msoSchemaTemplateName,                                // %[4]s
-		testSchemaTemplateVrfConfig(),                        // %[5]s
-		testSchemaTemplateBdConfig(),                         // %[6]s
-		testSchemaTemplateFilterEntryConfig(),                // %[7]s
-		testSchemaTemplateContractConfig(),                   // %[8]s
-		testSchemaTemplateVrfContractConfig(),                // %[9]s
-		msoSchemaTemplateContractName,                        // %[10]s
-		msoSchemaTemplateBdName,                              // %[11]s
-		msoSchemaSiteResourceLabel1,                          // %[12]s
-		msoSchemaSiteContractServiceGraphDeviceDn,            // %[13]s
+		testSchemaWithSingleSiteAssociationConfig(), // %[1]s
+		msoSchemaTemplateServiceGraphName,           // %[2]s
+		msoSchemaName,                               // %[3]s
+		msoSchemaTemplateName,                       // %[4]s
+		testSchemaTemplateVrfConfig(),               // %[5]s
+		testSchemaTemplateBdConfig(),                // %[6]s
+		testSchemaTemplateFilterEntryConfig(),       // %[7]s
+		testSchemaTemplateContractConfig(),          // %[8]s
+		testSchemaTemplateVrfContractConfig(),       // %[9]s
+		msoSchemaTemplateContractName,               // %[10]s
+		msoSchemaTemplateBdName,                     // %[11]s
+		msoSchemaSiteResourceLabel1,                 // %[12]s
+		msoSchemaSiteContractServiceGraphDeviceDn,   // %[13]s
 	)
 }
 
