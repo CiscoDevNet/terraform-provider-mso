@@ -21,7 +21,7 @@ func TestAccMSOSchemaSiteServiceGraphResource(t *testing.T) {
 	resourceRef := "mso_schema_site_service_graph." + msoSchemaTemplateServiceGraphName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSOSchemaSiteServiceGraphDestroy,
 		Steps: []resource.TestStep{
@@ -142,7 +142,7 @@ resource "mso_schema_template_service_graph" "%[2]s" {
     type = "firewall"
   }
 }
-`, testSchemaWithAnsibleTestTenantAndSingleSiteConfig(), msoSchemaTemplateServiceGraphName, msoSchemaName, msoSchemaTemplateName)
+`, testSchemaWithSingleSiteAssociationConfig(), msoSchemaTemplateServiceGraphName, msoSchemaName, msoSchemaTemplateName)
 }
 
 func testAccMSOSchemaSiteServiceGraphConfigCreate() string {

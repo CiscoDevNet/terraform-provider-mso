@@ -39,7 +39,7 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 	resourceRef := "mso_schema_site_contract_service_graph." + msoSchemaTemplateContractName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSOSchemaSiteContractServiceGraphDestroy,
 		Steps: []resource.TestStep{
@@ -97,9 +97,9 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.#", "1"),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_cluster_interface", msoSchemaSiteContractServiceGraphConsumerClusterInterface),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_cluster_interface", msoSchemaSiteContractServiceGraphProviderClusterInterface),
-					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_redirect_policy_tenant", msoSchemaSiteContractServiceGraphProviderRedirectPolicyTenant),
+					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_redirect_policy_tenant", msoTenantName),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.provider_connector_redirect_policy", msoSchemaSiteContractServiceGraphProviderRedirectPolicy),
-					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_redirect_policy_tenant", msoSchemaSiteContractServiceGraphConsumerRedirectPolicyTenant),
+					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_redirect_policy_tenant", msoTenantName2),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_connector_redirect_policy", msoSchemaSiteContractServiceGraphConsumerRedirectPolicy),
 					resource.TestCheckResourceAttr(resourceRef, "node_relationship.0.consumer_subnet_ips.#", "0"),
 				),
@@ -213,13 +213,20 @@ func testAccMSOSchemaSiteContractServiceGraphImportStateId(resourceRef string) r
 
 // testAccMSOSchemaSiteContractServiceGraphPrereqConfig builds the full
 // prerequisite stack needed by both the create and update configs:
-//   - schema + site association (ansible_test tenant, one site)
+//   - schema + site association (msoTenantName, one site)
 //   - template service graph (1 firewall node)
 //   - VRF, BD, filter entry, contract, VRF contract provider
+//
+// testAccMSOSchemaSiteContractServiceGraphPrereqConfig builds the self-contained
+// prerequisite stack for both resource and datasource tests:
+//   - schema + tenant (msoTenantName) + consumer tenant (for cross-tenant redirect policy)
+//   - template service graph (firewall node)
+//   - VRF, BD, filter, contract, VRF-contract binding
 //   - template contract service graph (BD connector for provider and consumer)
 //   - site service graph (assigns the firewall device to the site-level node)
 func testAccMSOSchemaSiteContractServiceGraphPrereqConfig() string {
 	return fmt.Sprintf(`%[1]s
+%[14]s
 resource "mso_schema_template_service_graph" "%[2]s" {
   schema_id          = mso_schema.%[3]s.id
   template_name      = "%[4]s"
@@ -257,19 +264,20 @@ resource "mso_schema_site_service_graph" "%[2]s" {
   depends_on = [mso_schema_template_service_graph.%[2]s]
 }
 `,
-		testSchemaWithAnsibleTestTenantAndSingleSiteConfig(), // %[1]s
-		msoSchemaTemplateServiceGraphName,                    // %[2]s
-		msoSchemaName,                                        // %[3]s
-		msoSchemaTemplateName,                                // %[4]s
-		testSchemaTemplateVrfConfig(),                        // %[5]s
-		testSchemaTemplateBdConfig(),                         // %[6]s
-		testSchemaTemplateFilterEntryConfig(),                // %[7]s
-		testSchemaTemplateContractConfig(),                   // %[8]s
-		testSchemaTemplateVrfContractConfig(),                // %[9]s
-		msoSchemaTemplateContractName,                        // %[10]s
-		msoSchemaTemplateBdName,                              // %[11]s
-		msoSchemaSiteResourceLabel1,                          // %[12]s
-		msoSchemaSiteContractServiceGraphDeviceDn,            // %[13]s
+		testSchemaWithSingleSiteAssociationConfig(), // %[1]s
+		msoSchemaTemplateServiceGraphName,           // %[2]s
+		msoSchemaName,                               // %[3]s
+		msoSchemaTemplateName,                       // %[4]s
+		testSchemaTemplateVrfConfig(),               // %[5]s
+		testSchemaTemplateBdConfig(),                // %[6]s
+		testSchemaTemplateFilterEntryConfig(),       // %[7]s
+		testSchemaTemplateContractConfig(),          // %[8]s
+		testSchemaTemplateVrfContractConfig(),       // %[9]s
+		msoSchemaTemplateContractName,               // %[10]s
+		msoSchemaTemplateBdName,                     // %[11]s
+		msoSchemaSiteResourceLabel1,                 // %[12]s
+		msoSchemaSiteContractServiceGraphDeviceDn,   // %[13]s
+		testTenantConfigOneSite(msoTenantName2),     // %[14]s
 	)
 }
 
@@ -318,18 +326,18 @@ resource "mso_schema_site_contract_service_graph" "%[2]s" {
   }
 }
 `,
-		testAccMSOSchemaSiteContractServiceGraphPrereqConfig(),        // %[1]s
-		msoSchemaTemplateContractName,                                 // %[2]s
-		msoSchemaName,                                                 // %[3]s
-		msoSchemaSiteResourceLabel1,                                   // %[4]s
-		msoSchemaTemplateName,                                         // %[5]s
-		msoSchemaTemplateServiceGraphName,                             // %[6]s
-		msoSchemaSiteContractServiceGraphConsumerClusterInterface,     // %[7]s
-		msoSchemaSiteContractServiceGraphProviderClusterInterface,     // %[8]s
-		msoSchemaSiteContractServiceGraphProviderRedirectPolicyTenant, // %[9]s
-		msoSchemaSiteContractServiceGraphProviderRedirectPolicy,       // %[10]s
-		msoSchemaSiteContractServiceGraphConsumerRedirectPolicyTenant, // %[11]s
-		msoSchemaSiteContractServiceGraphConsumerRedirectPolicy,       // %[12]s
+		testAccMSOSchemaSiteContractServiceGraphPrereqConfig(),    // %[1]s
+		msoSchemaTemplateContractName,                             // %[2]s
+		msoSchemaName,                                             // %[3]s
+		msoSchemaSiteResourceLabel1,                               // %[4]s
+		msoSchemaTemplateName,                                     // %[5]s
+		msoSchemaTemplateServiceGraphName,                         // %[6]s
+		msoSchemaSiteContractServiceGraphConsumerClusterInterface, // %[7]s
+		msoSchemaSiteContractServiceGraphProviderClusterInterface, // %[8]s
+		msoTenantName,                                             // %[9]s
+		msoSchemaSiteContractServiceGraphProviderRedirectPolicy,   // %[10]s
+		msoTenantName2,                                            // %[11]s
+		msoSchemaSiteContractServiceGraphConsumerRedirectPolicy,   // %[12]s
 	)
 }
 
