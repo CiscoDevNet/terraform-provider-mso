@@ -245,7 +245,10 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 						match = false
 						break
 					}
-				} else {
+				} else if expectedVal != "" {
+					// SDKv2 omits zero-value Optional fields (empty string, false) from
+					// TypeSet element flat state. Treat an absent key as matching only
+					// when the expected value is also the zero value ("").
 					match = false
 					break
 				}
@@ -255,7 +258,7 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 				return nil
 			}
 		}
-		return fmt.Errorf("No element in set '%s' found with the following attributes: %v", setName, attrsToCheck)
+		return fmt.Errorf("No element in set '%s' found with the following attributes: %v\nResolved to: %v\nState attributes for resource: %v", setName, attrsToCheck, resolvedAttrs, rs.Primary.Attributes)
 	}
 }
 

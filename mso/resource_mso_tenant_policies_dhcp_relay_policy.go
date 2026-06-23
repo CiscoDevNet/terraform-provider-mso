@@ -62,6 +62,7 @@ func resourceMSOTenantPoliciesDHCPRelayPolicy() *schema.Resource {
 						"dhcp_server_vrf_preference": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
