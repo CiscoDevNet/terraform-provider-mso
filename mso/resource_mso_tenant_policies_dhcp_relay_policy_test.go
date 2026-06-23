@@ -18,7 +18,7 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Create DHCP Relay Policy without dhcp_relay_providers") },
 				Config:      testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreateErrorWithoutProviders(name),
-				ExpectError: regexp.MustCompile(`config is invalid: "dhcp_relay_providers": required field is not set`),
+				ExpectError: regexp.MustCompile(`Insufficient dhcp_relay_providers blocks`),
 			},
 			{
 				PreConfig:                 func() { fmt.Println("Test: Create DHCP Relay Policy with invalid dhcp_relay_providers") },
