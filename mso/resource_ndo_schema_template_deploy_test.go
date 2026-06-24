@@ -201,12 +201,11 @@ func testAccSingleTenantConfig() string {
     %s
     resource "mso_tenant" "%s" {
         name = "%s"
-        display_name = "%s"
         site_associations { 
             site_id = data.mso_site.%s.id 
         }
     }
-    `, testSiteConfigAnsibleTest(), msoTfTenantName, msoTfTenantName, msoTfTenantName, msoTemplateSiteName1)
+    `, testSiteConfigAnsibleTest(), msoTfTenantName, msoTfTenantName, msoTemplateSiteName1)
 }
 
 func testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig() string {

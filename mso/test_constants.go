@@ -487,8 +487,7 @@ resource "mso_schema_template_external_epg_subnet" "%[1]s_subnet" {
 func testTenantConfigTwoSites() string {
 	return fmt.Sprintf(`
 resource "mso_tenant" "%[1]s" {
-	name         = "%[1]s"
-	display_name = "%[1]s"
+	name = "%[1]s"
 	site_associations {
 		site_id = data.mso_site.%[2]s.id
 	}
@@ -504,8 +503,7 @@ resource "mso_tenant" "%[1]s" {
 func testTenantConfigOneSite(tenantName string) string {
 	return fmt.Sprintf(`
 resource "mso_tenant" "%[1]s" {
-	name         = "%[1]s"
-	display_name = "%[1]s"
+	name = "%[1]s"
 	site_associations {
 		site_id = data.mso_site.%[2]s.id
 	}
