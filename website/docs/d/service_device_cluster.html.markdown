@@ -23,8 +23,8 @@ For ND 3.2:
 
 ```hcl
 data "mso_service_device_cluster" "cluster" {
-  template_id = "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-  name        = "my-firewall-cluster"
+  template_id = mso_template.device_template.id
+  name        = mso_service_device_cluster.cluster.name
 }
 ```
 
