@@ -284,7 +284,6 @@ func testAccTenantConfig() string {
 	%s%s
 	resource "mso_tenant" "%s" {
 		name = "%s"
-		display_name = "%s"
 		site_associations { 
 			site_id = data.mso_site.%s.id 
 		}
@@ -292,7 +291,7 @@ func testAccTenantConfig() string {
 			site_id = data.mso_site.%s.id 
 		}
 	}
-	`, testSiteConfigAnsibleTest(), testSiteConfigAnsibleTest2(), msoTemplateTenantName, msoTemplateTenantName, msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
+	`, testSiteConfigAnsibleTest(), testSiteConfigAnsibleTest2(), msoTemplateTenantName, msoTemplateTenantName, msoTemplateSiteName1, msoTemplateSiteName2)
 }
 
 func testAccMSOTemplateResourceTenantConfigNoSites() string {
