@@ -114,7 +114,8 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 						"load_balance_hashing": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Default:  "sourceDestinationAndProtocol",
+							Computed: true,
+							// Default:  "sourceDestinationAndProtocol",
 							ValidateFunc: validation.StringInSlice([]string{
 								"sourceDestinationAndProtocol", "sourceIP", "destinationIP",
 							}, false),
@@ -149,7 +150,8 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 						"threshold_down_action": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Default:  "deny",
+							Computed: true,
+							// Default:  "deny",
 							ValidateFunc: validation.StringInSlice([]string{
 								"permit", "deny", "bypass",
 							}, false),
