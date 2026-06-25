@@ -203,6 +203,9 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 		if v, ok := iface["qos_policy_uuid"].(string); ok {
 			advancedConfig["qosPolicyRef"] = v
 		}
+		if v, ok := iface["load_balance_hashing"].(string); ok && v != "" {
+			advancedConfig["loadBalanceHashing"] = v
+		}
 
 		interfacePayload := map[string]interface{}{
 			"name": iface["name"].(string),
@@ -235,10 +238,6 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 			if v, ok := iface["pod_aware_redirection"]; ok {
 				advancedConfig["podAwareRedirection"] = v.(bool)
 			}
-			if v, ok := iface["load_balance_hashing"].(string); ok {
-				advancedConfig["loadBalanceHashing"] = v
-			}
-
 			thresholdConfig := make(map[string]interface{})
 			if v, ok := iface["min_threshold"].(int); ok && v >= 0 {
 				thresholdConfig["minThreshold"] = v
