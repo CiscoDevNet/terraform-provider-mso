@@ -197,6 +197,9 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 		if v, ok := iface["preferred_group"]; ok {
 			advancedConfig["preferredGroup"] = v.(bool)
 		}
+		if v, ok := iface["anycast"]; ok {
+			advancedConfig["anycast"] = v.(bool)
+		}
 		if v, ok := iface["qos_policy_uuid"].(string); ok {
 			advancedConfig["qosPolicyRef"] = v
 		}
@@ -207,6 +210,9 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 
 		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok {
 			interfacePayload["ipslaMonitoringRef"] = v
+		}
+		if anycast, _ := iface["anycast"].(bool); anycast {
+			interfacePayload["redirect"] = true
 		}
 		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok && v != "" {
 			interfacePayload["redirect"] = true
@@ -225,9 +231,6 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 			}
 			if v, ok := iface["rewrite_source_mac"]; ok {
 				advancedConfig["rewriteSourceMac"] = v.(bool)
-			}
-			if v, ok := iface["anycast"]; ok {
-				advancedConfig["anycast"] = v.(bool)
 			}
 			if v, ok := iface["pod_aware_redirection"]; ok {
 				advancedConfig["podAwareRedirection"] = v.(bool)
