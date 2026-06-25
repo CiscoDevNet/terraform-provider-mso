@@ -237,6 +237,28 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 			}
 		}
 
+		// Numeric path segments in expected keys (e.g. "pbr_destination.0.ip")
+		// are treated as wildcards so the same expected key can match a nested
+		// TypeSet whose real index is a hash. Keys without numeric segments
+		// keep the original exact-match lookup.
+		keyMatchers := make(map[string]*regexp.Regexp, len(resolvedAttrs))
+		for expectedKey := range resolvedAttrs {
+			parts := strings.Split(expectedKey, ".")
+			patternParts := make([]string, len(parts))
+			hasNumericSegment := false
+			for i, p := range parts {
+				if _, err := strconv.Atoi(p); err == nil {
+					patternParts[i] = `\d+`
+					hasNumericSegment = true
+				} else {
+					patternParts[i] = regexp.QuoteMeta(p)
+				}
+			}
+			if hasNumericSegment {
+				keyMatchers[expectedKey] = regexp.MustCompile("^" + strings.Join(patternParts, `\.`) + "$")
+			}
+		}
+
 		for _, elemAttrs := range groupedAttrs {
 			match := true
 			for expectedKey, expectedVal := range resolvedAttrs {
@@ -245,6 +267,7 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 						match = false
 						break
 					}
+					continue
 				} else if expectedVal != "" {
 					// SDKv2 omits zero-value Optional fields (empty string, false) from
 					// TypeSet element flat state. Treat an absent key as matching only
@@ -252,6 +275,22 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 					match = false
 					break
 				}
+				if matcher, ok := keyMatchers[expectedKey]; ok {
+					found := false
+					for k, v := range elemAttrs {
+						if matcher.MatchString(k) && fmt.Sprintf("%v", v) == expectedVal {
+							found = true
+							break
+						}
+					}
+					if !found {
+						match = false
+						break
+					}
+					continue
+				}
+				match = false
+				break
 			}
 
 			if match {
@@ -273,6 +312,85 @@ func testAccVersionCheck(t *testing.T, minVersion string) {
 	}
 	if result > 0 {
 		t.Skipf("Skipping: requires NDO >= %s", minVersion)
+	}
+}
+
+// CustomTestCheckTypeSetElemAttrsByKeys locates the TypeSet element whose
+// attributes match every key/value pair in matchAttrs and compares every key
+// in attrsToCheck against the value stored in state, producing a
+// per-attribute diff. Unlike CustomTestCheckTypeSetElemAttrs, which only
+// reports "no element matched the whole map", this helper pinpoints exactly
+// which attribute(s) differ — useful when an upstream server silently coerces
+// a subset of fields and the test just needs to see which ones. Both
+// matchAttrs values and attrsToCheck values are resolved through
+// resolveStateReference so they can refer to other resources in state.
+func CustomTestCheckTypeSetElemAttrsByKeys(resourceName, setName string, matchAttrs, attrsToCheck map[string]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource not found: %s", resourceName)
+		}
+		if len(matchAttrs) == 0 {
+			return fmt.Errorf("matchAttrs must contain at least one key/value pair")
+		}
+
+		resolvedMatch := make(map[string]string, len(matchAttrs))
+		for k, v := range matchAttrs {
+			resolvedMatch[k] = resolveStateReference(s, v)
+		}
+		resolvedAttrs := make(map[string]string, len(attrsToCheck))
+		for k, v := range attrsToCheck {
+			resolvedAttrs[k] = resolveStateReference(s, v)
+		}
+
+		groupedAttrs := make(map[string]map[string]string)
+		re := regexp.MustCompile(fmt.Sprintf(`^%s\.(\d+)\.(.*)$`, regexp.QuoteMeta(setName)))
+		for key, val := range rs.Primary.Attributes {
+			if m := re.FindStringSubmatch(key); len(m) == 3 {
+				hash := m[1]
+				if _, ok := groupedAttrs[hash]; !ok {
+					groupedAttrs[hash] = make(map[string]string)
+				}
+				groupedAttrs[hash][m[2]] = val
+			}
+		}
+
+		var matchingHashes []string
+		for hash, elemAttrs := range groupedAttrs {
+			allMatch := true
+			for mk, mv := range resolvedMatch {
+				if av, ok := elemAttrs[mk]; !ok || av != mv {
+					allMatch = false
+					break
+				}
+			}
+			if allMatch {
+				matchingHashes = append(matchingHashes, hash)
+			}
+		}
+
+		if len(matchingHashes) == 0 {
+			return fmt.Errorf("%s element matching %v not found in state", setName, resolvedMatch)
+		}
+		if len(matchingHashes) > 1 {
+			return fmt.Errorf("%s element match %v is ambiguous: %d elements matched, refine matchAttrs", setName, resolvedMatch, len(matchingHashes))
+		}
+
+		elemAttrs := groupedAttrs[matchingHashes[0]]
+		var diffs []string
+		for ek, ev := range resolvedAttrs {
+			av, present := elemAttrs[ek]
+			switch {
+			case !present:
+				diffs = append(diffs, fmt.Sprintf("%s: expected %q, missing in state", ek, ev))
+			case av != ev:
+				diffs = append(diffs, fmt.Sprintf("%s: expected %q, got %q", ek, ev, av))
+			}
+		}
+		if len(diffs) > 0 {
+			return fmt.Errorf("%s element %v mismatches:\n  %s", setName, resolvedMatch, strings.Join(diffs, "\n  "))
+		}
+		return nil
 	}
 }
 
