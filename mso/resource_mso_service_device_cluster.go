@@ -58,7 +58,7 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 				}, false),
 			},
 			"interface_properties": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -69,12 +69,10 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 						"bd_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
 						},
 						"external_epg_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
 						},
 						"ipsla_monitoring_policy_uuid": {
 							Type:     schema.TypeString,
@@ -165,9 +163,13 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 			if !ok {
 				return nil
 			}
-			set := interfaceValue.(*schema.Set)
-			for _, raw := range set.List() {
+			for i, raw := range interfaceValue.([]interface{}) {
 				listItem := raw.(map[string]interface{})
+				bdKey := fmt.Sprintf("interface_properties.%d.bd_uuid", i)
+				extKey := fmt.Sprintf("interface_properties.%d.external_epg_uuid", i)
+				if !d.NewValueKnown(bdKey) || !d.NewValueKnown(extKey) {
+					continue
+				}
 				count := 0
 				if bdUUID, _ := listItem["bd_uuid"].(string); bdUUID != "" {
 					count++
@@ -185,8 +187,7 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 }
 
 func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[string]interface{} {
-	interfacesSet := d.Get("interface_properties").(*schema.Set)
-	interfaces := interfacesSet.List()
+	interfaces := d.Get("interface_properties").([]interface{})
 
 	payload := make([]map[string]interface{}, len(interfaces))
 
