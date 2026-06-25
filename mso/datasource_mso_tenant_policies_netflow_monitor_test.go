@@ -9,7 +9,7 @@ import (
 
 func TestAccMSOTenantPoliciesNetflowMonitorDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{

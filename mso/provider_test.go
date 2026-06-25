@@ -263,6 +263,20 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 	}
 }
 
+// testAccVersionCheck skips the test if the NDO version is older than minVersion.
+// Must be called after testAccPreCheck in the same PreCheck function.
+// minVersion should be a version string like "5.1" or "4.0.0.0".
+func testAccVersionCheck(t *testing.T, minVersion string) {
+	t.Helper()
+	result, err := msoClientTest.CompareVersion(minVersion)
+	if err != nil {
+		t.Skipf("Skipping: could not determine NDO version: %s", err)
+	}
+	if result > 0 {
+		t.Skipf("Skipping: requires NDO >= %s", minVersion)
+	}
+}
+
 func setupTestLogCapture(t *testing.T, logLevel string) string {
 	logFile, err := os.CreateTemp("", "tf-acc-test-*.log")
 	if err != nil {
