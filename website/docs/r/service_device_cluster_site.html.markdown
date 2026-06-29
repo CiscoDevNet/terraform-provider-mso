@@ -83,7 +83,7 @@ resource "mso_service_device_cluster_site" "cluster_site" {
 * `promiscuous_mode` - (Optional) Whether promiscuous mode is enabled on the Service Device Cluster on the site.
 * `trunking_port` - (Optional) Whether the Service Device Cluster on the site uses a trunking port.
 
-* `interfaces` - (Required) A list of interface blocks describing the per-site configuration of every cluster interface. Must contain at least one entry, and the `name` values must match the interfaces declared in `mso_service_device_cluster.interface_properties`.
+* `interfaces` - (Required) An ordered list of interface blocks describing the per-site configuration of every cluster interface. Must contain at least one entry, and the `name` values must match the interfaces declared in `mso_service_device_cluster.interface_properties`. The list is `ForceNew`: any change — including reordering blocks while keeping the same `name` set — destroys and recreates the site-bucket device entry on NDO. Keep entries in a stable order across applies to avoid unnecessary recreates.
   * `name` - (Required) The name of the interface.
   * `vlan` - (Optional) The VLAN ID of the interface. Valid range: 1-4094. Must not be set when the matching cluster `interface_properties` binds to an `external_epg_uuid` (L3out interface); NDO rejects a VLAN on L3out interfaces.
   * `fabric_to_device_connectivity` - (Optional) A set of fabric-to-device connectivity paths for the interface. Allowed only when the device uses a physical domain. Mutually exclusive with `vm_information`.

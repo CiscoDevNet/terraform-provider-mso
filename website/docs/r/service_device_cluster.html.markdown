@@ -96,7 +96,7 @@ resource "mso_service_device_cluster" "cluster" {
 * `description` - (Optional) A description for the Service Device Cluster.
 * `device_mode` - (Required) Specifies the operational mode of the device. Allowed values are layer1, layer2, layer3.
 * `device_type` - (Required) Defines the type of device being configured. Allowed values are firewall, load_balancer, other.
-* `interface_properties` - (Required) A set of interface properties blocks. The order of these blocks does not matter.
+* `interface_properties` - (Required) An ordered list of interface configuration blocks. Order is significant within this resource: each block maps to a positional slot in NDO, so reordering two blocks plans as in-place attribute updates on the affected positions rather than a no-op. Keep entries in a stable order across applies. The set of `name` values must match the entries in `mso_service_device_cluster_site.interfaces`, but the ordering between the two resources is independent because bindings on the site are resolved by `name`.
   * `name` - (Required) The name of the interface. This must be unique within the cluster.
   * `bd_uuid` - (Optional) The NDO UUID of the Bridge Domain (BD) to associate with this interface. Conflicts with external_epg_uuid.
   * `external_epg_uuid` - (Optional) The NDO UUID of the External EPG to associate with this interface. Conflicts with bd_uuid.
