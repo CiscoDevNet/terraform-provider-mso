@@ -194,29 +194,45 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 	for i, val := range interfaces {
 		iface := val.(map[string]interface{})
 
-		advancedConfig := make(map[string]interface{})
-		if v, ok := iface["preferred_group"]; ok {
-			advancedConfig["preferredGroup"] = v.(bool)
-		}
-		if v, ok := iface["anycast"]; ok {
-			advancedConfig["anycast"] = v.(bool)
-		}
-		if v, ok := iface["qos_policy_uuid"].(string); ok {
-			advancedConfig["qosPolicyRef"] = v
-		}
-		if v, ok := iface["load_balance_hashing"].(string); ok && v != "" {
-			advancedConfig["loadBalanceHashing"] = v
-		}
-
 		interfacePayload := map[string]interface{}{
 			"name": iface["name"].(string),
 		}
 
+		advancedConfig := make(map[string]interface{})
+		if v, ok := iface["preferred_group"]; ok {
+			advancedConfig["preferredGroup"] = v.(bool)
+		}
+		if v, ok := iface["pod_aware_redirection"]; ok {
+			podAwareRedirection := v.(bool)
+			advancedConfig["podAwareRedirection"] = podAwareRedirection
+			if podAwareRedirection {
+				interfacePayload["redirect"] = true
+			}
+		}
+		if v, ok := iface["anycast"]; ok {
+			anycast := v.(bool)
+			advancedConfig["anycast"] = anycast
+			if anycast {
+				interfacePayload["redirect"] = true
+			}
+		}
+		if v, ok := iface["rewrite_source_mac"]; ok {
+			rewriteSourceMac := v.(bool)
+			advancedConfig["rewriteSourceMac"] = rewriteSourceMac
+			if rewriteSourceMac {
+				interfacePayload["redirect"] = true
+			}
+		}
+		if v, ok := iface["qos_policy_uuid"].(string); ok {
+			advancedConfig["qosPolicyRef"] = v
+		}
+
+		if v, ok := iface["load_balance_hashing"].(string); ok && v != "" {
+			advancedConfig["loadBalanceHashing"] = v
+			interfacePayload["redirect"] = true
+		}
 		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok {
 			interfacePayload["ipslaMonitoringRef"] = v
-		}
-		if anycast, _ := iface["anycast"].(bool); anycast {
-			interfacePayload["redirect"] = true
 		}
 		if v, ok := iface["ipsla_monitoring_policy_uuid"].(string); ok && v != "" {
 			interfacePayload["redirect"] = true
@@ -232,12 +248,6 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 			}
 			if v, ok := iface["tag_based_sorting"]; ok {
 				advancedConfig["tag"] = v.(bool)
-			}
-			if v, ok := iface["rewrite_source_mac"]; ok {
-				advancedConfig["rewriteSourceMac"] = v.(bool)
-			}
-			if v, ok := iface["pod_aware_redirection"]; ok {
-				advancedConfig["podAwareRedirection"] = v.(bool)
 			}
 			thresholdConfig := make(map[string]interface{})
 			if v, ok := iface["min_threshold"].(int); ok && v >= 0 {
