@@ -12,11 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// Coverage note: qos_policy_uuid is the only interface_properties attribute
-// not yet exercised here (no step sets it, no datasource asserts it). Every
-// other attribute is covered across the create, in-place update, expand and
-// shrink steps below.
-
 // Captured from the create step's Check so the drift-recovery PreConfig can
 // delete the cluster directly via the NDO API without re-parsing state.
 var (
@@ -185,6 +180,54 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 					}, map[string]string{
 						"bd_uuid": "mso_schema_template_bd.bd2.uuid",
 					}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update Service Device Cluster reset thresholds to 0 and set QoS policy") },
+				Config:    testAccMSOServiceDeviceClusterConfigUpdateThresholdsToZeroAndSetQoS(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
+					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+						"name": "interface1",
+					}, map[string]string{
+						"min_threshold":                "0",
+						"max_threshold":                "0",
+						"qos_policy_uuid":              "mso_tenant_policies_custom_qos_policy.qos1.uuid",
+						"ipsla_monitoring_policy_uuid": "mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid",
+					}),
+					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+						"name": "interface3",
+					}, nil),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update Service Device Cluster clear IPSLA monitoring policy") },
+				Config:    testAccMSOServiceDeviceClusterConfigClearIpslaPolicy(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
+					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+						"name": "interface1",
+					}, map[string]string{
+						"qos_policy_uuid": "mso_tenant_policies_custom_qos_policy.qos1.uuid",
+					}),
+					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+						"name": "interface3",
+					}, nil),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update Service Device Cluster clear QoS policy") },
+				Config:    testAccMSOServiceDeviceClusterConfigClearQosPolicy(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
+					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+						"name": "interface1",
+					}, map[string]string{
+						"load_balance_hashing": "sourceIP",
+					}),
+					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+						"name": "interface3",
+					}, nil),
 				),
 			},
 			{
@@ -412,6 +455,11 @@ func testAccMSOServiceDeviceClusterDependencies() string {
         name        = "test_ipsla_for_device"
         sla_type    = "icmp"
     }
+
+    resource "mso_tenant_policies_custom_qos_policy" "qos1" {
+        template_id = mso_template.tenant_template.id
+        name        = "test_qos_for_device"
+    }
 `, testAccTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
 
@@ -548,6 +596,68 @@ func testAccMSOServiceDeviceClusterConfigUpdateTwoInterfacesAttrs() string {
         interface_properties {
             name                         = "interface3"
             bd_uuid                      = mso_schema_template_bd.bd2.uuid
+        }
+    }`, testAccMSOServiceDeviceClusterDependencies())
+}
+
+func testAccMSOServiceDeviceClusterConfigUpdateThresholdsToZeroAndSetQoS() string {
+	return fmt.Sprintf(`%s
+    resource "mso_service_device_cluster" "cluster" {
+        template_id = mso_template.device_template.id
+        name        = "test_device_cluster"
+        device_mode = "layer3"
+        device_type = "firewall"
+        interface_properties {
+            name                         = "interface1"
+            external_epg_uuid            = mso_schema_template_external_epg.epg1.uuid
+            ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid
+            qos_policy_uuid              = mso_tenant_policies_custom_qos_policy.qos1.uuid
+            load_balance_hashing         = "sourceIP"
+            min_threshold                = 0
+            max_threshold                = 0
+        }
+        interface_properties {
+            name                         = "interface3"
+            bd_uuid                      = mso_schema_template_bd.bd2.uuid
+        }
+    }`, testAccMSOServiceDeviceClusterDependencies())
+}
+
+func testAccMSOServiceDeviceClusterConfigClearIpslaPolicy() string {
+	return fmt.Sprintf(`%s
+    resource "mso_service_device_cluster" "cluster" {
+        template_id = mso_template.device_template.id
+        name        = "test_device_cluster"
+        device_mode = "layer3"
+        device_type = "firewall"
+        interface_properties {
+            name                    = "interface1"
+            external_epg_uuid       = mso_schema_template_external_epg.epg1.uuid
+            qos_policy_uuid         = mso_tenant_policies_custom_qos_policy.qos1.uuid
+            load_balance_hashing    = "sourceIP"
+        }
+        interface_properties {
+            name                    = "interface3"
+            bd_uuid                 = mso_schema_template_bd.bd2.uuid
+        }
+    }`, testAccMSOServiceDeviceClusterDependencies())
+}
+
+func testAccMSOServiceDeviceClusterConfigClearQosPolicy() string {
+	return fmt.Sprintf(`%s
+    resource "mso_service_device_cluster" "cluster" {
+        template_id = mso_template.device_template.id
+        name        = "test_device_cluster"
+        device_mode = "layer3"
+        device_type = "firewall"
+        interface_properties {
+            name                    = "interface1"
+            external_epg_uuid       = mso_schema_template_external_epg.epg1.uuid
+            load_balance_hashing    = "sourceIP"
+        }
+        interface_properties {
+            name                    = "interface3"
+            bd_uuid                 = mso_schema_template_bd.bd2.uuid
         }
     }`, testAccMSOServiceDeviceClusterDependencies())
 }
