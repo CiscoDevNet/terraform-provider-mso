@@ -18,6 +18,7 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"testing"
+	"time"
 )
 
 const (
@@ -101,6 +102,71 @@ func (c *apicTestClient) post(path string, body interface{}) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("APIC returned HTTP %d for %s: %s", resp.StatusCode, path, string(body))
+	}
+	return nil
+}
+
+// get sends a GET request to the given APIC path and returns the response body.
+func (c *apicTestClient) get(path string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, c.baseURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("executing request to %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("APIC returned HTTP %d for %s: %s", resp.StatusCode, path, string(body))
+	}
+	return body, nil
+}
+
+// waitForAPICMO polls APIC every 2 seconds until every DN in dns is present
+// (totalCount > 0) on APIC, or the timeout elapses. NDO's deploy task reports
+// "Complete" when it dispatches a template to APIC, NOT when APIC has finished
+// applying it, so acceptance steps that reference deployed-by-name objects
+// (e.g. a physical_domain or PC/VPC policy group referenced from a service
+// device cluster site) can race APIC and fail with "X does not exist on the
+// fabric Y". Use this in a post-deploy Check to gate the next apply step on
+// APIC convergence. A single APIC login is reused for all polls.
+//
+// Each DN is polled to completion in order; the overall timeout applies to
+// the whole batch. The loop sleeps 2s between attempts on the currently
+// outstanding DN.
+func waitForAPICMO(timeout time.Duration, dns ...string) error {
+	if len(dns) == 0 {
+		return fmt.Errorf("waitForAPICMO: no DNs supplied")
+	}
+	c, err := newAPICTestClient()
+	if err != nil {
+		return fmt.Errorf("APIC client: %w", err)
+	}
+	deadline := time.Now().Add(timeout)
+	for _, dn := range dns {
+		path := fmt.Sprintf("/api/node/mo/%s.json?query-target=self", dn)
+		var lastErr error
+		for {
+			body, err := c.get(path)
+			if err == nil {
+				var parsed struct {
+					TotalCount string `json:"totalCount"`
+				}
+				if jerr := json.Unmarshal(body, &parsed); jerr == nil && parsed.TotalCount != "" && parsed.TotalCount != "0" {
+					log.Printf("[APIC] MO %s present (totalCount=%s)", dn, parsed.TotalCount)
+					break
+				}
+				lastErr = fmt.Errorf("MO %s not yet present (totalCount=%q)", dn, parsed.TotalCount)
+			} else {
+				lastErr = err
+			}
+			if !time.Now().Before(deadline) {
+				return fmt.Errorf("timeout waiting for APIC MO %s: %w", dn, lastErr)
+			}
+			time.Sleep(2 * time.Second)
+		}
 	}
 	return nil
 }
