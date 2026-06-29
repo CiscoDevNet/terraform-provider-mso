@@ -124,7 +124,7 @@ func (c *apicTestClient) get(path string) ([]byte, error) {
 	return body, nil
 }
 
-// waitForAPICMO polls APIC every 2 seconds until every DN in dns is present
+// waitForAPICMOs polls APIC every 2 seconds until every DN in dns is present
 // (totalCount > 0) on APIC, or the timeout elapses. NDO's deploy task reports
 // "Complete" when it dispatches a template to APIC, NOT when APIC has finished
 // applying it, so acceptance steps that reference deployed-by-name objects
@@ -136,9 +136,9 @@ func (c *apicTestClient) get(path string) ([]byte, error) {
 // Each DN is polled to completion in order; the overall timeout applies to
 // the whole batch. The loop sleeps 2s between attempts on the currently
 // outstanding DN.
-func waitForAPICMO(timeout time.Duration, dns ...string) error {
+func waitForAPICMOs(timeout time.Duration, dns ...string) error {
 	if len(dns) == 0 {
-		return fmt.Errorf("waitForAPICMO: no DNs supplied")
+		return fmt.Errorf("waitForAPICMOs: no DNs supplied")
 	}
 	c, err := newAPICTestClient()
 	if err != nil {

@@ -131,7 +131,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			// The deps-only intermediate step below uses waitForAPICMO
+			// The deps-only intermediate step below uses waitForAPICMOs
 			// (apic_test_helper_test.go) to gate the cluster_site apply on APIC
 			// convergence, so the APIC env vars are required for this test.
 			for _, env := range []string{envAPICURL, envAPICUsername, envAPICPassword} {
@@ -170,7 +170,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config: testAccMSOServiceDeviceClusterSiteDependencies(testServiceDeviceClusterSiteClusterName, []siteClusterInterface{siteClusterRichInterface1}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					func(s *terraform.State) error {
-						return waitForAPICMO(
+						return waitForAPICMOs(
 							2*time.Minute,
 							"uni/phys-test_physical_domain_for_device",
 							"uni/infra/funcprof/accbundle-test_dpc_for_device",
