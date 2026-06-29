@@ -24,7 +24,7 @@ For ND 3.2:
 ```hcl
 data "mso_service_device_cluster" "cluster" {
   template_id = mso_template.device_template.id
-  name        = mso_service_device_cluster.cluster.name
+  name        = "my-firewall-cluster"
 }
 ```
 
