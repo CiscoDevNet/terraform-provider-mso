@@ -402,6 +402,34 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Apply the same two-interface set in swapped HCL order while leaving
+			// the cluster's interface_properties order unchanged. The outer
+			// interfaces block is ForceNew so this triggers a destroy+recreate of
+			// the site bucket; if the site-to-cluster wiring were positional
+			// instead of name-based the create PATCH would either be rejected by
+			// NDO cross-validation or bind the rich PBR/IPSLA settings to the
+			// wrong cluster interface_properties entry.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Swap interfaces order in site config (name-based binding)")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesSwapped(testServiceDeviceClusterSiteClusterNameRenamed),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterSiteClusterNameRenamed),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
+					// Positional state checks: HCL position 0 is the bare
+					// external_epg-bound interface3, HCL position 1 is the rich
+					// PBR/IPSLA interface1. The cluster's interface_properties
+					// stay in [interface1, interface3] order.
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.name", "interface3"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.path", "eth1/12"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.pbr_destinations.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.name", "interface1"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.vlan", "215"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.fabric_to_device_connectivity.0.path", "eth1/10"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.pbr_destinations.0.ip", "10.10.10.10"),
+				),
+			},
 		},
 	})
 }
@@ -1124,6 +1152,54 @@ func testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesAttrs(clusterName stri
                 node_id   = ["101"]
                 path      = "eth1/32"
                 port_type = "port"
+            }
+        }
+    }
+`, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{
+		siteClusterRichInterface1,
+		{Name: "interface3", WithExternalEPG: true},
+	}), msoTemplateSiteName1)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesSwapped emits the
+// same interface set as testAccMSOServiceDeviceClusterSiteConfigTwoInterfaces
+// but with the HCL interface blocks in [interface3, interface1] order while
+// the cluster's interface_properties stay in [interface1, interface3] order.
+// Used by the post-import step to verify that site-to-cluster wiring is
+// name-based rather than positional.
+func testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesSwapped(clusterName string) string {
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster_site" "cluster_site" {
+        template_id = mso_template.device_template.id
+        site_id     = data.mso_site.%[2]s.id
+        name        = mso_service_device_cluster.cluster.name
+        domain_type = "physicalDomain"
+        domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "interface3"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/12"
+                port_type = "port"
+            }
+        }
+        interfaces {
+            name = "interface1"
+            vlan = 215
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/10"
+                port_type = "port"
+            }
+            pbr_destinations {
+                ip                     = "10.10.10.10"
+                mac                    = "00:11:22:33:44:55"
+                pod_id                 = "1"
+                additional_tracking_ip = "10.10.10.11"
+                weight                 = 5
+                tag                    = "10"
             }
         }
     }
