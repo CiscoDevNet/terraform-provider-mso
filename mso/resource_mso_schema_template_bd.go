@@ -836,7 +836,10 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if d.HasChange("virtual_mac_address") {
-		err := addPatchPayloadToContainer(payloadCon, "replace", fmt.Sprintf("%s/vmac", basePath), d.Get("virtual_mac_address").(string))
+		// "add" is used instead of "replace" because vmac is omitted from the Create payload when empty.
+		// On NDO < 5.1, the field is absent from the stored document until first set,
+		// so "replace" (RFC 6902) would fail with "doc is missing key". "add" creates or replaces safely.
+		err := addPatchPayloadToContainer(payloadCon, "add", fmt.Sprintf("%s/vmac", basePath), d.Get("virtual_mac_address").(string))
 		if err != nil {
 			return err
 		}
