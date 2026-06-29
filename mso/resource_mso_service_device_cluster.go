@@ -77,12 +77,12 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 						"ipsla_monitoring_policy_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							// Computed: true,
 						},
 						"qos_policy_uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							// Computed: true,
 						},
 						"preferred_group": {
 							Type:     schema.TypeBool,
