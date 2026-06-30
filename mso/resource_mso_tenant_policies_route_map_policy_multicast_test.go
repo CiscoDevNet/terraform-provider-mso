@@ -38,7 +38,7 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 				Config:                    testAccMSOTenantPoliciesMcastRouteMapPolicyConfigCreateWithInvalidOrder(),
 				Destroy:                   false,
 				PreventPostDestroyRefresh: true,
-				ExpectError:               regexp.MustCompile(`config is invalid: expected route_map_multicast_entries\.0\.order to be in the range \(0 - 65535\), got 65536`),
+				ExpectError:               regexp.MustCompile(`expected route_map_multicast_entries\.0\.order to be in the range \(0 - 65535\), got 65536`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Update Route Map Policy for Multicast adding extra entry") },
