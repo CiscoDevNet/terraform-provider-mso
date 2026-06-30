@@ -112,11 +112,12 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 			"high_availability_mode": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 				Default:  "notAvailable",
 				ValidateFunc: validation.StringInSlice([]string{
 					"activeActive", "activeStandby", "notAvailable",
 				}, false),
-				Description: "The high availability mode of the Service Device Cluster on the site.",
+				Description: "The high availability mode of the Service Device Cluster on the site. Changing this forces the Service Device Cluster on the site to be destroyed and re-created, since transitioning between `activeActive` (per-interface domains) and the other modes (device-level domain) is a structural change to the device entry.",
 			},
 			"promiscuous_mode": {
 				Type:        schema.TypeBool,
@@ -130,21 +131,27 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 				Computed:    true,
 				Description: "Whether the Service Device Cluster on the site uses a trunking port.",
 			},
+			"vlan": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validation.IntBetween(1, 4094),
+				Description:  "The VLAN ID on the Service Device Cluster on the site. Set at the device level only when `high_availability_mode` is `activeStandby`; for other modes use the interface-level `vlan` (regular L3 devices) or the per-path `vlan` inside `fabric_to_device_connectivity` (`activeActive`).",
+			},
 
 			"interfaces": {
 				Type:     schema.TypeList,
 				ForceNew: true,
 				Required: true,
 				MinItems: 1,
-				// ForceNew on the outer block is load-bearing for two
-				// reasons: NDO server-side validation rejects most in-place
-				// reshapes of the interface array (the device entry must
-				// be torn down and rebuilt to safely change interface
-				// identity), and ForceNew also makes the Optional+Computed
-				// attributes inside the block safe — every change goes
-				// through Destroy+Create+Read so the prior state can never
-				// leak into a new slot's Apply input the way it did on the
-				// in-place mso_service_device_cluster TypeList.
+				// ForceNew on the outer TypeList[Resource] only triggers on count
+				// changes (SDK v1 does not propagate ForceNew from the outer block
+				// into inner attributes when Elem is a *Resource). Keeping it here
+				// forces Destroy+Create when the interface set is reshaped
+				// (add/remove/rename), which NDO server-side validation requires
+				// for interface-identity changes. Content-only changes within an
+				// existing interface (vlan, fabric paths, pbr_destinations, etc.)
+				// flow through the Update path, which emits a wholesale
+				// /interfaces replace patch.
 				Description: "The list of interfaces of the Service Device Cluster on the site.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -159,6 +166,39 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 							Optional:     true,
 							ValidateFunc: validation.IntBetween(1, 4094),
 							Description:  "The VLAN ID of the interface. Must not be set when the matching cluster `interface_properties` binds to an `external_epg_uuid` (L3out interface); NDO rejects a VLAN on L3out interfaces.",
+						},
+
+						"domain_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"vmmDomain", "physicalDomain",
+							}, false),
+							Description: "The type of domain associated with the interface. Must be used together with `domain_name` and cannot be combined with `domain_dn`. Only valid when `high_availability_mode` is `activeActive`; in that mode every interface must configure its own domain (the device-level domain attributes are derived from the first interface and any device-level values in config are ignored).",
+						},
+						"vmm_domain_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"VMware", "Microsoft", "Redhat",
+							}, false),
+							Description: "The VMM domain provider type for the interface. Required when interface `domain_type` is `vmmDomain` and must not be set when interface `domain_type` is `physicalDomain`. Only valid when `high_availability_mode` is `activeActive`.",
+						},
+						"domain_name": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Description:  "The name of the domain associated with the interface. Must be used together with `domain_type` and cannot be combined with `domain_dn`. Only valid when `high_availability_mode` is `activeActive`.",
+						},
+						"domain_dn": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringLenBetween(1, 1000),
+							Description:  "The distinguished name of the domain associated with the interface. Must start with `uni/phys-` or `uni/vmmp-`. Cannot be combined with `domain_type`, `vmm_domain_type`, or `domain_name`. Only valid when `high_availability_mode` is `activeActive`.",
 						},
 
 						"fabric_to_device_connectivity": {
@@ -193,6 +233,17 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										}, false),
 										Description: "The type of port used for the fabric path.",
 									},
+									"tag": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "The tag of the fabric path.",
+									},
+									"vlan": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntBetween(1, 4094),
+										Description:  "The VLAN ID carried on this fabric path. Used when `high_availability_mode` is `activeActive`, where each fabric path carries its own access VLAN.",
+									},
 								},
 							},
 						},
@@ -221,7 +272,7 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
-							Description: "The UUID of the enhanced LAG policy associated with the interface. Only valid when the device uses a VMM domain.",
+							Description: "The name of the enhanced LAG policy associated with the interface. Only valid when the device uses a VMM domain.",
 						},
 
 						"pbr_destinations": {
@@ -232,45 +283,43 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"ip": {
 										Type:         schema.TypeString,
-										Required:     true,
+										Optional:     true,
 										ValidateFunc: validation.IsIPAddress,
-										Description:  "The IP address of the PBR destination.",
+										Description:  "The IP address of the PBR destination. Required for L3 device clusters; omit for L1 clusters with `high_availability_mode` `activeActive` or `activeStandby`, which carry only `mac` and `tag`.",
 									},
 									"mac": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Computed:    true,
 										Description: "The MAC address of the PBR destination.",
 									},
 									"pod_id": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Computed:    true,
 										Description: "The pod ID of the PBR destination.",
 									},
 									"additional_tracking_ip": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Computed:    true,
-										Description: "The additional IP address used for tracking the PBR destination.",
+										Type:     schema.TypeString,
+										Optional: true,
+										DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+											// NDO injects "0.0.0.0" for L3 PBR destinations that omitted this field; treat that default as equivalent to unset.
+											return new == "" && old == "0.0.0.0"
+										},
+										Description: "The additional IP address used for tracking the PBR destination. NDO defaults this to `0.0.0.0` for L3 PBR destinations when omitted, and the provider treats that default as equivalent to leaving the attribute unset.",
 									},
 									"weight": {
 										Type:         schema.TypeInt,
 										Optional:     true,
-										Computed:     true,
 										ValidateFunc: validation.IntBetween(1, 10),
 										Description:  "The weight of the PBR destination.",
 									},
 									"is_backup": {
 										Type:        schema.TypeBool,
 										Optional:    true,
-										Computed:    true,
 										Description: "Whether the PBR destination is a backup destination.",
 									},
 									"tag": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Computed:    true,
 										Description: "The tag of the PBR destination.",
 									},
 								},
@@ -454,28 +503,21 @@ func resourceMSOServiceDeviceClusterSiteDelete(d *schema.ResourceData, m interfa
 }
 
 func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ interface{}) error {
-	domainType := d.Get("domain_type").(string)
-	domainDN := d.Get("domain_dn").(string)
-	vmmDomainType := d.Get("vmm_domain_type").(string)
+	ha := d.Get("high_availability_mode").(string)
 
-	if domainType == "" && domainDN == "" {
-		return fmt.Errorf("one of domain_type or domain_dn must be set")
-	}
-
-	switch domainType {
-	case "vmmDomain":
-		if vmmDomainType == "" {
-			return fmt.Errorf("vmm_domain_type is required when domain_type is \"vmmDomain\"")
+	var deviceFamily string
+	if ha != "activeActive" {
+		family, err := validateDomainAttributes(
+			"",
+			d.Get("domain_type").(string),
+			d.Get("vmm_domain_type").(string),
+			d.Get("domain_name").(string),
+			d.Get("domain_dn").(string),
+		)
+		if err != nil {
+			return err
 		}
-	case "physicalDomain":
-		if vmmDomainType != "" {
-			return fmt.Errorf("vmm_domain_type must not be set when domain_type is \"physicalDomain\"")
-		}
-	}
-
-	family := resolveDomainFamily(domainType, domainDN)
-	if family == "" {
-		return fmt.Errorf("domain_dn %q must start with %q or %q", domainDN, "uni/phys-", "uni/vmmp-")
+		deviceFamily = family
 	}
 
 	interfacesRaw, ok := d.GetOk("interfaces")
@@ -485,6 +527,27 @@ func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ 
 	for _, rawInterface := range interfacesRaw.([]interface{}) {
 		interfaceData := rawInterface.(map[string]interface{})
 		name, _ := interfaceData["name"].(string)
+
+		effectiveFamily := deviceFamily
+		familyScope := "device"
+		if ha == "activeActive" {
+			ifaceDomainType, _ := interfaceData["domain_type"].(string)
+			ifaceVmmDomainType, _ := interfaceData["vmm_domain_type"].(string)
+			ifaceDomainName, _ := interfaceData["domain_name"].(string)
+			ifaceDomainDN, _ := interfaceData["domain_dn"].(string)
+			if ifaceDomainType == "" && ifaceVmmDomainType == "" && ifaceDomainName == "" && ifaceDomainDN == "" {
+				return fmt.Errorf("interface %q: domain must be configured on every interface when high_availability_mode is \"activeActive\" (set one of domain_type/domain_name or domain_dn)", name)
+			}
+			family, err := validateDomainAttributes(
+				fmt.Sprintf("interface %q: ", name),
+				ifaceDomainType, ifaceVmmDomainType, ifaceDomainName, ifaceDomainDN,
+			)
+			if err != nil {
+				return err
+			}
+			effectiveFamily = family
+			familyScope = "interface"
+		}
 
 		hasFabric := collectionHasItems(interfaceData["fabric_to_device_connectivity"])
 		hasVMM := collectionHasItems(interfaceData["vm_information"])
@@ -496,17 +559,17 @@ func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ 
 			return fmt.Errorf("interface %q: one of fabric_to_device_connectivity or vm_information must be set", name)
 		}
 
-		switch family {
+		switch effectiveFamily {
 		case "physical":
 			if hasVMM {
-				return fmt.Errorf("interface %q: vm_information is not allowed when the device uses a physicalDomain", name)
+				return fmt.Errorf("interface %q: vm_information is not allowed when the %s uses a physicalDomain", name, familyScope)
 			}
 			if enhancedLagPolicy, _ := interfaceData["enhanced_lag_policy"].(string); enhancedLagPolicy != "" {
-				return fmt.Errorf("interface %q: enhanced_lag_policy is not allowed when the device uses a physicalDomain", name)
+				return fmt.Errorf("interface %q: enhanced_lag_policy is not allowed when the %s uses a physicalDomain", name, familyScope)
 			}
 		case "vmm":
 			if hasFabric {
-				return fmt.Errorf("interface %q: fabric_to_device_connectivity is not allowed when the device uses a vmmDomain", name)
+				return fmt.Errorf("interface %q: fabric_to_device_connectivity is not allowed when the %s uses a vmmDomain", name, familyScope)
 			}
 		}
 
@@ -610,27 +673,127 @@ func resolveDomainFamily(domainType, domainDN string) string {
 	return ""
 }
 
-func buildServiceDeviceClusterSitePayload(d *schema.ResourceData) map[string]interface{} {
-	domainType := d.Get("domain_type").(string)
-	vmmDomainType := d.Get("vmm_domain_type").(string)
-	domainName := d.Get("domain_name").(string)
-	domainDN := d.Get("domain_dn").(string)
-
-	family := resolveDomainFamily(domainType, domainDN)
-	resolvedDomainDN := domainDN
-	if resolvedDomainDN == "" {
-		resolvedDomainDN = composeDomainDn(domainType, vmmDomainType, domainName)
+// validateDomainAttributes runs the positive validation rules shared by the device-
+// level domain attribute group and the per-interface domain attribute group. scope
+// is prefixed onto error messages (use "" for device-level, "interface \"name\": "
+// for per-interface). Returns the resolved family ("physical"/"vmm") on success.
+//
+// Some of these rules are also enforced at the device level by the schema's
+// RequiredWith/ConflictsWith; we re-state them here so the per-interface attribute
+// group (where the SDK ignores RequiredWith/ConflictsWith inside nested blocks)
+// gets the same enforcement.
+func validateDomainAttributes(scope, domainType, vmmDomainType, domainName, domainDN string) (string, error) {
+	if domainDN != "" && (domainType != "" || vmmDomainType != "" || domainName != "") {
+		// Schema ConflictsWith blocks user-supplied conflicts at the device level.
+		// Here we tolerate the redundant set when both forms resolve to the same
+		// DN, which happens after Read populates both the literal DN and the
+		// decomposed triple and the prior state propagates back through Computed
+		// on the next plan.
+		if composeDomainDn(domainType, vmmDomainType, domainName) != domainDN {
+			return "", fmt.Errorf("%sdomain_dn is mutually exclusive with domain_type, vmm_domain_type, and domain_name", scope)
+		}
 	}
+	if domainName != "" && domainType == "" {
+		return "", fmt.Errorf("%sdomain_name requires domain_type to be set", scope)
+	}
+	if vmmDomainType != "" && domainType == "physicalDomain" {
+		return "", fmt.Errorf("%svmm_domain_type must not be set when domain_type is %q", scope, "physicalDomain")
+	}
+	if vmmDomainType != "" && domainType != "vmmDomain" {
+		return "", fmt.Errorf("%svmm_domain_type requires domain_type to be set to %q", scope, "vmmDomain")
+	}
+	switch domainType {
+	case "vmmDomain":
+		if vmmDomainType == "" {
+			return "", fmt.Errorf("%svmm_domain_type is required when domain_type is %q", scope, "vmmDomain")
+		}
+		if domainName == "" {
+			return "", fmt.Errorf("%sdomain_name is required when domain_type is set", scope)
+		}
+	case "physicalDomain":
+		if domainName == "" {
+			return "", fmt.Errorf("%sdomain_name is required when domain_type is set", scope)
+		}
+	}
+	if domainType == "" && domainDN == "" {
+		return "", fmt.Errorf("%sone of domain_type or domain_dn must be set", scope)
+	}
+	family := resolveDomainFamily(domainType, domainDN)
+	if family == "" {
+		return "", fmt.Errorf("%sdomain_dn %q must start with %q or %q", scope, domainDN, "uni/phys-", "uni/vmmp-")
+	}
+	return family, nil
+}
 
-	return map[string]interface{}{
+// domainSource is the minimal subset of *schema.ResourceData / *schema.ResourceDiff
+// needed by the HA-aware domain resolver, so it can be reused from CustomizeDiff,
+// payload builders, and the patch emitter.
+type domainSource interface {
+	Get(key string) interface{}
+}
+
+// resolveDomainFromValues applies the prefer-literal-DN-else-compose rule and
+// returns (resolvedDomainDN, family). The composition rule reflects how NDO
+// stores `domainDn` in JSON: callers may supply either a literal DN or the
+// type/name/vmm triple, and we always submit the literal DN form.
+func resolveDomainFromValues(domainType, vmmDomainType, domainName, domainDN string) (string, string) {
+	if domainDN == "" {
+		domainDN = composeDomainDn(domainType, vmmDomainType, domainName)
+	}
+	return domainDN, resolveDomainFamily(domainType, domainDN)
+}
+
+// resolveInterfaceDomain returns (resolvedDomainDN, family) for one interface map.
+func resolveInterfaceDomain(interfaceData map[string]interface{}) (string, string) {
+	domainType, _ := interfaceData["domain_type"].(string)
+	vmmDomainType, _ := interfaceData["vmm_domain_type"].(string)
+	domainName, _ := interfaceData["domain_name"].(string)
+	domainDN, _ := interfaceData["domain_dn"].(string)
+	return resolveDomainFromValues(domainType, vmmDomainType, domainName, domainDN)
+}
+
+// resolveDeviceLevelDomain returns (resolvedDomainDN, family) to send to NDO at the
+// device level. In activeActive HA mode the device-level domain is derived from the
+// first interface's domain because the user supplies per-interface domains only;
+// any device-level inputs in config are ignored. In every other HA mode the
+// device-level domain is taken directly from the top-level inputs.
+func resolveDeviceLevelDomain(d domainSource) (string, string) {
+	if d.Get("high_availability_mode").(string) == "activeActive" {
+		interfaces, _ := d.Get("interfaces").([]interface{})
+		if len(interfaces) > 0 {
+			if first, ok := interfaces[0].(map[string]interface{}); ok {
+				return resolveInterfaceDomain(first)
+			}
+		}
+		return "", ""
+	}
+	return resolveDomainFromValues(
+		d.Get("domain_type").(string),
+		d.Get("vmm_domain_type").(string),
+		d.Get("domain_name").(string),
+		d.Get("domain_dn").(string),
+	)
+}
+
+func buildServiceDeviceClusterSitePayload(d *schema.ResourceData) map[string]interface{} {
+	payload := map[string]interface{}{
 		"name":                 d.Get("name").(string),
-		"isPhysicalDomain":     familyToIsPhysicalDomain[family],
-		"domainDn":             resolvedDomainDN,
 		"highAvailabilityMode": d.Get("high_availability_mode").(string),
 		"promiscuousMode":      d.Get("promiscuous_mode").(bool),
 		"trunkingPort":         d.Get("trunking_port").(bool),
 		"interfaces":           buildServiceDeviceClusterSiteInterfacesPayload(d),
 	}
+	// Only emit domainDn/isPhysicalDomain when we actually resolved a DN. In
+	// activeActive HA mode the device-level DN is derived from interfaces[0]; if
+	// the user hasn't configured a per-interface domain there is nothing to send.
+	if resolvedDomainDN, family := resolveDeviceLevelDomain(d); resolvedDomainDN != "" {
+		payload["isPhysicalDomain"] = familyToIsPhysicalDomain[family]
+		payload["domainDn"] = resolvedDomainDN
+	}
+	if vlan, ok := d.GetOk("vlan"); ok {
+		payload["vlan"] = vlan.(int)
+	}
+	return payload
 }
 
 func buildServiceDeviceClusterSiteInterfacesPayload(d *schema.ResourceData) []map[string]interface{} {
@@ -638,6 +801,7 @@ func buildServiceDeviceClusterSiteInterfacesPayload(d *schema.ResourceData) []ma
 	if !ok {
 		return []map[string]interface{}{}
 	}
+	haIsActiveActive := d.Get("high_availability_mode").(string) == "activeActive"
 	payload := make([]map[string]interface{}, 0, len(interfaces))
 	for _, rawInterface := range interfaces {
 		interfaceData := rawInterface.(map[string]interface{})
@@ -648,8 +812,16 @@ func buildServiceDeviceClusterSiteInterfacesPayload(d *schema.ResourceData) []ma
 		if vlan > 0 {
 			entry["vlan"] = vlan
 		}
+		// Per-interface domainDn is only emitted in activeActive HA mode. In other
+		// modes, per-interface domain attrs in config are ignored so the device-level
+		// domain remains the single source of truth.
+		if haIsActiveActive {
+			if ifaceDomainDN, _ := resolveInterfaceDomain(interfaceData); ifaceDomainDN != "" {
+				entry["domainDn"] = ifaceDomainDN
+			}
+		}
 		if fabricList, ok := interfaceData["fabric_to_device_connectivity"].([]interface{}); ok && len(fabricList) > 0 {
-			entry["fabricToDeviceConnectivity"] = buildFabricToDeviceConnectivityPayload(fabricList, vlan)
+			entry["fabricToDeviceConnectivity"] = buildFabricToDeviceConnectivityPayload(fabricList)
 		}
 		if vmSet, ok := interfaceData["vm_information"].(*schema.Set); ok && vmSet.Len() > 0 {
 			entry["vmmIntfInfo"] = buildVMMIntfInfoPayload(vmSet)
@@ -665,7 +837,7 @@ func buildServiceDeviceClusterSiteInterfacesPayload(d *schema.ResourceData) []ma
 	return payload
 }
 
-func buildFabricToDeviceConnectivityPayload(fabricPaths []interface{}, vlan int) []map[string]interface{} {
+func buildFabricToDeviceConnectivityPayload(fabricPaths []interface{}) []map[string]interface{} {
 	payload := make([]map[string]interface{}, 0, len(fabricPaths))
 	for _, rawFabricPath := range fabricPaths {
 		fabricPathData := rawFabricPath.(map[string]interface{})
@@ -674,13 +846,20 @@ func buildFabricToDeviceConnectivityPayload(fabricPaths []interface{}, vlan int)
 		path := fabricPathData["path"].(string)
 		portType := fabricPathData["port_type"].(string)
 		interfaceDn := composeFabricInterfaceDn(podID, nodeIDs, path, portType)
-		payload = append(payload, map[string]interface{}{
+		entry := map[string]interface{}{
 			"podID":       podID,
 			"nodeID":      strings.Join(nodeIDs, ","),
 			"path":        interfaceDn,
 			"portType":    portType,
 			"interfaceDn": interfaceDn,
-		})
+		}
+		if tag, _ := fabricPathData["tag"].(string); tag != "" {
+			entry["tag"] = tag
+		}
+		if pathVlan, ok := fabricPathData["vlan"].(int); ok && pathVlan > 0 {
+			entry["vlan"] = pathVlan
+		}
+		payload = append(payload, entry)
 	}
 	return payload
 }
@@ -703,10 +882,12 @@ func buildPbrDestinationsPayload(destinations []interface{}) []map[string]interf
 	for _, rawDestination := range destinations {
 		destinationData := rawDestination.(map[string]interface{})
 		entry := map[string]interface{}{
-			"ip": destinationData["ip"].(string),
-			// TODO: derive isAdvancedConfigSet from advanced fields (mac, additionalTrackingIP, weight, isBackUp, tag).
+			// TODO: derive isAdvancedConfigSet from advanced fields (ip, mac, additionalTrackingIP, weight, isBackUp, tag).
 			//       For now always false until the NDO UI / API behaviour for this flag is confirmed.
 			"isAdvancedConfigSet": false,
+		}
+		if ip, _ := destinationData["ip"].(string); ip != "" {
+			entry["ip"] = ip
 		}
 		if mac, _ := destinationData["mac"].(string); mac != "" {
 			entry["mac"] = mac
@@ -732,26 +913,27 @@ func buildPbrDestinationsPayload(destinations []interface{}) []map[string]interf
 }
 
 // appendServiceDeviceClusterSiteReplacePatches emits one JSON-patch "replace" op per
-// owned field. When forceAll is true every field is emitted (used by Create when an
-// existing device entry is found and must be fully overwritten). When forceAll is false
-// only fields with d.HasChange are emitted (used by Update).
+// owned field. forceAll=true emits every field (used by Create when overwriting an
+// existing device entry); forceAll=false emits only fields with d.HasChange (Update).
+//
+// `high_availability_mode` is ForceNew, so any HA-mode change triggers
+// Destroy+Create and never reaches this Update path — /highAvailabilityMode is
+// therefore only emitted in the forceAll case. `interfaces` is also marked
+// ForceNew on the outer block, but SDK v1 only propagates that to the
+// interfaces.# count diff; content-only changes within an existing interface
+// (vlan, fabric paths, pbr_destinations, per-interface domain, etc.) reach this
+// Update path, so /interfaces is replaced wholesale whenever d.HasChange("interfaces")
+// is true.
 func appendServiceDeviceClusterSiteReplacePatches(payloadCont *container.Container, updatePath string, d *schema.ResourceData, forceAll bool) {
-	domainGroupChanged := forceAll || d.HasChange("domain_type") || d.HasChange("vmm_domain_type") || d.HasChange("domain_name") || d.HasChange("domain_dn")
+	domainGroupChanged := forceAll ||
+		d.HasChange("domain_type") || d.HasChange("vmm_domain_type") || d.HasChange("domain_name") || d.HasChange("domain_dn")
 	if domainGroupChanged {
-		domainType := d.Get("domain_type").(string)
-		vmmDomainType := d.Get("vmm_domain_type").(string)
-		domainName := d.Get("domain_name").(string)
-		domainDN := d.Get("domain_dn").(string)
-
-		family := resolveDomainFamily(domainType, domainDN)
-		resolvedDomainDN := domainDN
-		if resolvedDomainDN == "" {
-			resolvedDomainDN = composeDomainDn(domainType, vmmDomainType, domainName)
+		if resolvedDomainDN, family := resolveDeviceLevelDomain(d); resolvedDomainDN != "" {
+			addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/isPhysicalDomain", updatePath), familyToIsPhysicalDomain[family])
+			addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/domainDn", updatePath), resolvedDomainDN)
 		}
-		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/isPhysicalDomain", updatePath), familyToIsPhysicalDomain[family])
-		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/domainDn", updatePath), resolvedDomainDN)
 	}
-	if forceAll || d.HasChange("high_availability_mode") {
+	if forceAll {
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/highAvailabilityMode", updatePath), d.Get("high_availability_mode").(string))
 	}
 	if forceAll || d.HasChange("promiscuous_mode") {
@@ -759,6 +941,9 @@ func appendServiceDeviceClusterSiteReplacePatches(payloadCont *container.Contain
 	}
 	if forceAll || d.HasChange("trunking_port") {
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/trunkingPort", updatePath), d.Get("trunking_port").(bool))
+	}
+	if forceAll || d.HasChange("vlan") {
+		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/vlan", updatePath), d.Get("vlan").(int))
 	}
 	if forceAll || d.HasChange("interfaces") {
 		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/interfaces", updatePath), buildServiceDeviceClusterSiteInterfacesPayload(d))
@@ -799,6 +984,11 @@ func setServiceDeviceClusterSiteData(d *schema.ResourceData, deviceCont *contain
 			d.Set("trunking_port", v)
 		}
 	}
+	if deviceCont.Exists("vlan") {
+		if v, ok := deviceCont.S("vlan").Data().(float64); ok {
+			d.Set("vlan", int(v))
+		}
+	}
 
 	interfaceConts, err := deviceCont.S("interfaces").Children()
 	if err != nil {
@@ -814,6 +1004,17 @@ func setServiceDeviceClusterSiteData(d *schema.ResourceData, deviceCont *contain
 			if vlan, ok := interfaceCont.S("vlan").Data().(float64); ok {
 				entry["vlan"] = int(vlan)
 			}
+		}
+		if interfaceCont.Exists("domainDn") {
+			ifaceDomainDn := models.StripQuotes(interfaceCont.S("domainDn").String())
+			if ifaceDomainDn == "{}" {
+				ifaceDomainDn = ""
+			}
+			entry["domain_dn"] = ifaceDomainDn
+			ifaceDomainType, ifaceVmmDomainType, ifaceDomainName := decomposeDomainDn(ifaceDomainDn)
+			entry["domain_type"] = ifaceDomainType
+			entry["vmm_domain_type"] = ifaceVmmDomainType
+			entry["domain_name"] = ifaceDomainName
 		}
 		if interfaceCont.Exists("enhancedLagPolicy") {
 			enhancedLagPolicy := models.StripQuotes(interfaceCont.S("enhancedLagPolicy").String())
@@ -853,6 +1054,14 @@ func setServiceDeviceClusterSiteData(d *schema.ResourceData, deviceCont *contain
 					}
 					if fabricPathCont.Exists("portType") {
 						fabricPathData["port_type"] = models.StripQuotes(fabricPathCont.S("portType").String())
+					}
+					if fabricPathCont.Exists("tag") {
+						fabricPathData["tag"] = models.StripQuotes(fabricPathCont.S("tag").String())
+					}
+					if fabricPathCont.Exists("vlan") {
+						if pathVlan, ok := fabricPathCont.S("vlan").Data().(float64); ok {
+							fabricPathData["vlan"] = int(pathVlan)
+						}
 					}
 					fabricPaths = append(fabricPaths, fabricPathData)
 				}
