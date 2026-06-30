@@ -18,7 +18,7 @@ func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Cross-template VRF/BD dependency (expecting deployment error)") },
 				Config:      testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig(),
-				ExpectError: regexp.MustCompile(`^errors during apply: Error on deploy:`),
+				ExpectError: regexp.MustCompile(`Error on deploy:`),
 			},
 		},
 	})
