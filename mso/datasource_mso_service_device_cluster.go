@@ -90,6 +90,10 @@ func datasourceMSOServiceDeviceCluster() *schema.Resource {
 							Type:     schema.TypeBool,
 							Computed: true,
 						},
+						"redirect": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
 						"resilient_hashing": {
 							Type:     schema.TypeBool,
 							Computed: true,
