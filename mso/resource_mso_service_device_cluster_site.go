@@ -288,8 +288,14 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										Description:  "The IP address of the PBR destination. Required for L3 device clusters; omit for L1 clusters with `high_availability_mode` `activeActive` or `activeStandby`, which carry only `mac` and `tag`.",
 									},
 									"mac": {
-										Type:        schema.TypeString,
-										Optional:    true,
+										Type:     schema.TypeString,
+										Optional: true,
+										DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+											// Newer NDO releases echo the MAC back in upper case; a
+											// case-only difference between HCL and what NDO returned
+											// is not a real diff.
+											return strings.EqualFold(old, new)
+										},
 										Description: "The MAC address of the PBR destination.",
 									},
 									"pod_id": {

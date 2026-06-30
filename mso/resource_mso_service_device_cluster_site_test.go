@@ -489,13 +489,15 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.path", "eth1/1"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.vlan", "210"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.tag", "aaa"),
-					resource.TestCheckResourceAttr(resourceName, "interfaces.0.pbr_destinations.0.mac", "aa:bb:ee:cc:aa:dd"),
+					// Newer NDO releases echo the MAC back in upper case; match
+					// case-insensitively so the assertion is stable across versions.
+					resource.TestMatchResourceAttr(resourceName, "interfaces.0.pbr_destinations.0.mac", regexp.MustCompile(`(?i)^aa:bb:ee:cc:aa:dd$`)),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.pbr_destinations.0.tag", "aaa"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.1.name", "External"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.1.domain_dn", "uni/phys-test_physical_domain_for_device"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.1.fabric_to_device_connectivity.0.path", "eth1/2"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.1.fabric_to_device_connectivity.0.vlan", "220"),
-					resource.TestCheckResourceAttr(resourceName, "interfaces.1.pbr_destinations.0.mac", "cc:aa:cc:aa:cc:aa"),
+					resource.TestMatchResourceAttr(resourceName, "interfaces.1.pbr_destinations.0.mac", regexp.MustCompile(`(?i)^cc:aa:cc:aa:cc:aa$`)),
 				),
 			},
 			// Flip the bucket into activeStandby. Domain returns to device
