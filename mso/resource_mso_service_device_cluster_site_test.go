@@ -1058,7 +1058,13 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
     # tests. Internal/External interfaces are bd1-bound with
     # redirect = true set directly so NDO accepts the matching site-bucket
     # pbr_destinations. device_type = "other" mirrors the JSON sample's
-    # deviceType "other" on L1 HA devices.
+    # deviceType "other" on L1 HA devices. The explicit dep on
+    # mso_service_device_cluster.cluster serialises the two
+    # /deviceTemplate/template/devices/- "add" PATCHes against the same
+    # template; running them in parallel races on NDO and intermittently
+    # drops one of the device entries, which surfaces downstream as
+    # "device not found on site" when a cluster_site (or its datasource)
+    # references the lost cluster by name.
     resource "mso_service_device_cluster" "cluster_ha" {
         template_id = mso_template.device_template.id
         name        = "%[6]s"
@@ -1069,6 +1075,7 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_schema_template_bd.bd2,
             mso_schema_template_external_epg.epg1,
             mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_service_device_cluster.cluster,
         ]
     }
 `, testAccTenantConfig(), msoTemplateSiteName1, msoTemplateTenantName,
