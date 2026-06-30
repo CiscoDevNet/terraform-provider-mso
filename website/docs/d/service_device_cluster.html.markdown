@@ -53,6 +53,7 @@ data "mso_service_device_cluster" "cluster" {
   * `is_backup_redirect_ip` - (Read-Only) Whether this is a backup redirect IP.
   * `load_balance_hashing` - (Read-Only) The load balancing hashing method used.
   * `pod_aware_redirection` - (Read-Only) Whether pod-aware redirection is enabled.
+  * `redirect` - (Read-Only) Whether the interface-level redirect flag is enabled.
   * `resilient_hashing` - (Read-Only) Whether resilient hashing is enabled.
   * `tag_based_sorting` - (Read-Only) Whether tag-based sorting is enabled.
   * `min_threshold` - (Read-Only) The minimum threshold value for redirect.

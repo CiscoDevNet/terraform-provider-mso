@@ -109,6 +109,7 @@ resource "mso_service_device_cluster" "cluster" {
   * `is_backup_redirect_ip` - (Optional) Indicates if this is a backup redirect IP. Defaults to false.
   * `load_balance_hashing` - (Optional) The load balancing hashing method. Allowed values are sourceDestinationAndProtocol, sourceIP, destinationIP. Defaults to sourceDestinationAndProtocol.
   * `pod_aware_redirection` - (Optional) Indicates if pod-aware redirection is enabled. Defaults to false.
+  * `redirect` - (Optional) Enables the interface-level redirect flag. Defaults to false, but is auto-upgraded to true whenever a side-effect attribute requires it (`anycast`, `rewrite_source_mac`, `pod_aware_redirection`, `load_balance_hashing` or `ipsla_monitoring_policy_uuid`). Set this explicitly when none of those attributes are configured but NDO still requires redirect for a matching `mso_service_device_cluster_site` `pbr_destinations` block on the same interface (for example, layer-1 activeStandby clusters where NDO rejects `pod_aware_redirection`).
   * `resilient_hashing` - (Optional) Indicates if resilient hashing is enabled. Defaults to false.
   * `tag_based_sorting` - (Optional) Indicates if tag-based sorting is enabled. Defaults to false.
   * `min_threshold` - (Optional) The minimum threshold value for redirect. Valid range: 0-100.

@@ -129,6 +129,26 @@ func resourceMSOServiceDeviceCluster() *schema.Resource {
 							Optional: true,
 							// Computed: true,
 						},
+						"redirect": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+							// Direct control over the NDO interface-level
+							// `redirect` flag. Initial value is taken from
+							// this attribute (`false` when omitted), then
+							// auto-upgraded to true if any side-effect attr
+							// requires it (anycast, rewrite_source_mac,
+							// pod_aware_redirection, load_balance_hashing,
+							// ipsla_monitoring_policy_uuid). This preserves
+							// NDO's invariant that those side-effects require
+							// redirect=true, while still letting the user
+							// enable redirect explicitly when no side-effect
+							// attr is set — required for cases where NDO
+							// rejects the auto-derivation shim (e.g. L1
+							// activeStandby rejects podAwareRedirection but
+							// still needs redirect=true on the interface
+							// to bind pbr_destinations on the site bucket).
+						},
 						"resilient_hashing": {
 							Type:     schema.TypeBool,
 							Optional: true,
@@ -207,6 +227,16 @@ func buildServiceDeviceClusterInterfacesPayload(d *schema.ResourceData) []map[st
 
 		interfacePayload := map[string]interface{}{
 			"name": iface["name"].(string),
+		}
+
+		// `redirect` is set first from the user value (or the TypeBool
+		// zero value when omitted). The auto-derivation branches below
+		// only ever flip it to true — never back to false — so a
+		// side-effect attr like anycast=true with redirect=false in HCL
+		// is auto-upgraded to true, preserving NDO's invariant that
+		// those flags require redirect=true.
+		if v, ok := iface["redirect"]; ok {
+			interfacePayload["redirect"] = v.(bool)
 		}
 
 		advancedConfig := make(map[string]interface{})
@@ -365,6 +395,7 @@ func setServiceDeviceClusterData(d *schema.ResourceData, response *container.Con
 				redirectEnabled = v
 			}
 		}
+		prop["redirect"] = redirectEnabled
 
 		if iface.Exists("advancedIntfConfig") {
 			advancedConfig := iface.S("advancedIntfConfig")
