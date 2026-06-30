@@ -65,6 +65,11 @@ func datasourceMSOServiceDeviceClusterSite() *schema.Resource {
 				Computed:    true,
 				Description: "Whether the Service Device Cluster on the site uses a trunking port.",
 			},
+			"vlan": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The VLAN ID on the Service Device Cluster on the site. Populated at the device level when `high_availability_mode` is `activeStandby`.",
+			},
 
 			"interfaces": {
 				Type:        schema.TypeList,
@@ -81,6 +86,26 @@ func datasourceMSOServiceDeviceClusterSite() *schema.Resource {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "The VLAN ID of the interface.",
+						},
+						"domain_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type of domain associated with the interface, populated in `activeActive` high availability mode.",
+						},
+						"vmm_domain_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The VMM domain provider type for the interface, populated in `activeActive` high availability mode when the interface uses a VMM domain.",
+						},
+						"domain_name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the domain associated with the interface, populated in `activeActive` high availability mode.",
+						},
+						"domain_dn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The distinguished name of the domain associated with the interface, populated in `activeActive` high availability mode.",
 						},
 						"fabric_to_device_connectivity": {
 							Type:        schema.TypeList,
@@ -108,6 +133,16 @@ func datasourceMSOServiceDeviceClusterSite() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The type of port used for the fabric path.",
+									},
+									"tag": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The tag of the fabric path.",
+									},
+									"vlan": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The VLAN ID carried on this fabric path. Populated when `high_availability_mode` is `activeActive`.",
 									},
 								},
 							},
