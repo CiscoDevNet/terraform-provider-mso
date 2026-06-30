@@ -293,9 +293,13 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										Description: "The MAC address of the PBR destination.",
 									},
 									"pod_id": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The pod ID of the PBR destination.",
+										Type:     schema.TypeString,
+										Optional: true,
+										DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+											// NDO injects "1" for PBR destinations that omitted this field; treat that default as equivalent to unset.
+											return new == "" && old == "1"
+										},
+										Description: "The pod ID of the PBR destination. NDO defaults this to `1` when omitted, and the provider treats that default as equivalent to leaving the attribute unset.",
 									},
 									"additional_tracking_ip": {
 										Type:     schema.TypeString,
@@ -507,13 +511,8 @@ func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ 
 
 	var deviceFamily string
 	if ha != "activeActive" {
-		family, err := validateDomainAttributes(
-			"",
-			d.Get("domain_type").(string),
-			d.Get("vmm_domain_type").(string),
-			d.Get("domain_name").(string),
-			d.Get("domain_dn").(string),
-		)
+		domainType, vmmDomainType, domainName, domainDN := readDeviceLevelDomainAttrs(d)
+		family, err := validateDomainAttributes("", domainType, vmmDomainType, domainName, domainDN)
 		if err != nil {
 			return err
 		}
@@ -730,6 +729,38 @@ func validateDomainAttributes(scope, domainType, vmmDomainType, domainName, doma
 // payload builders, and the patch emitter.
 type domainSource interface {
 	Get(key string) interface{}
+	HasChange(key string) bool
+}
+
+// readDeviceLevelDomainAttrs returns the four device-level domain attribute
+// values to feed into validateDomainAttributes / resolveDomainFromValues, with
+// stale Computed back-fills filtered out.
+//
+// All four attrs are Optional+Computed and Read writes them every refresh, so
+// on an update the side the user did NOT supply in config back-fills from
+// prior state. When the user switches the domain via only one form
+// (e.g. drops the type/name pair and sets a fresh domain_dn, or vice versa)
+// the stale Computed back-fill from the other form still points at the
+// previous domain. Without filtering, validateDomainAttributes' mutual-
+// exclusion check trips on a value the user did not write, and
+// resolveDomainFromValues' "literal DN wins" rule submits the stale DN.
+//
+// The filter keys off d.HasChange: if only one form changed in this plan,
+// the other form's d.Get value is the stale back-fill and is zeroed out.
+func readDeviceLevelDomainAttrs(d domainSource) (domainType, vmmDomainType, domainName, domainDN string) {
+	domainType = d.Get("domain_type").(string)
+	vmmDomainType = d.Get("vmm_domain_type").(string)
+	domainName = d.Get("domain_name").(string)
+	domainDN = d.Get("domain_dn").(string)
+	dnChanged := d.HasChange("domain_dn")
+	tripleChanged := d.HasChange("domain_type") || d.HasChange("vmm_domain_type") || d.HasChange("domain_name")
+	switch {
+	case dnChanged && !tripleChanged:
+		domainType, vmmDomainType, domainName = "", "", ""
+	case tripleChanged && !dnChanged:
+		domainDN = ""
+	}
+	return
 }
 
 // resolveDomainFromValues applies the prefer-literal-DN-else-compose rule and
@@ -756,7 +787,8 @@ func resolveInterfaceDomain(interfaceData map[string]interface{}) (string, strin
 // device level. In activeActive HA mode the device-level domain is derived from the
 // first interface's domain because the user supplies per-interface domains only;
 // any device-level inputs in config are ignored. In every other HA mode the
-// device-level domain is taken directly from the top-level inputs.
+// device-level domain is taken directly from the top-level inputs, with stale
+// Computed back-fills filtered (see readDeviceLevelDomainAttrs).
 func resolveDeviceLevelDomain(d domainSource) (string, string) {
 	if d.Get("high_availability_mode").(string) == "activeActive" {
 		interfaces, _ := d.Get("interfaces").([]interface{})
@@ -767,12 +799,8 @@ func resolveDeviceLevelDomain(d domainSource) (string, string) {
 		}
 		return "", ""
 	}
-	return resolveDomainFromValues(
-		d.Get("domain_type").(string),
-		d.Get("vmm_domain_type").(string),
-		d.Get("domain_name").(string),
-		d.Get("domain_dn").(string),
-	)
+	domainType, vmmDomainType, domainName, domainDN := readDeviceLevelDomainAttrs(d)
+	return resolveDomainFromValues(domainType, vmmDomainType, domainName, domainDN)
 }
 
 func buildServiceDeviceClusterSitePayload(d *schema.ResourceData) map[string]interface{} {
@@ -783,12 +811,19 @@ func buildServiceDeviceClusterSitePayload(d *schema.ResourceData) map[string]int
 		"trunkingPort":         d.Get("trunking_port").(bool),
 		"interfaces":           buildServiceDeviceClusterSiteInterfacesPayload(d),
 	}
-	// Only emit domainDn/isPhysicalDomain when we actually resolved a DN. In
-	// activeActive HA mode the device-level DN is derived from interfaces[0]; if
-	// the user hasn't configured a per-interface domain there is nothing to send.
+	// Domain emission at device scope:
+	//   * non-activeActive HA: emit both `isPhysicalDomain` and `domainDn`.
+	//   * activeActive HA: NDO requires the domain in INTERFACE scope only;
+	//     emitting `domainDn` at device scope fails server-side validation with
+	//     "Physical Domain in device scope is not supported for L1 in
+	//     Active/Active HA Mode. Instead, a domain in interface scope needs to
+	//     be configured." Emit only `isPhysicalDomain` (derived from
+	//     interfaces[0]'s family so the device-level flag stays consistent).
 	if resolvedDomainDN, family := resolveDeviceLevelDomain(d); resolvedDomainDN != "" {
 		payload["isPhysicalDomain"] = familyToIsPhysicalDomain[family]
-		payload["domainDn"] = resolvedDomainDN
+		if d.Get("high_availability_mode").(string) != "activeActive" {
+			payload["domainDn"] = resolvedDomainDN
+		}
 	}
 	if vlan, ok := d.GetOk("vlan"); ok {
 		payload["vlan"] = vlan.(int)
@@ -930,7 +965,13 @@ func appendServiceDeviceClusterSiteReplacePatches(payloadCont *container.Contain
 	if domainGroupChanged {
 		if resolvedDomainDN, family := resolveDeviceLevelDomain(d); resolvedDomainDN != "" {
 			addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/isPhysicalDomain", updatePath), familyToIsPhysicalDomain[family])
-			addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/domainDn", updatePath), resolvedDomainDN)
+			// activeActive HA: NDO rejects /domainDn at device scope (must be
+			// per-interface). Mirror the Create-side rule and skip the device-
+			// scope /domainDn patch; per-interface domainDn flows through the
+			// /interfaces wholesale replace below.
+			if d.Get("high_availability_mode").(string) != "activeActive" {
+				addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/domainDn", updatePath), resolvedDomainDN)
+			}
 		}
 	}
 	if forceAll {

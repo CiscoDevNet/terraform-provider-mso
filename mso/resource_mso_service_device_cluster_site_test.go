@@ -157,6 +157,9 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 			//     physical_domain referenced by the cluster_site's domain_name
 			//     (used by every step, including the create step that runs
 			//     right after this one).
+			//   - uni/phys-test_physical_domain_for_device_alt — the second
+			//     physical_domain referenced by the later "switch physical
+			//     domain via domain_dn" step.
 			//   - uni/infra/funcprof/accbundle-test_dpc_for_device — the PC
 			//     policy group referenced by the dpc fabric_to_device_connectivity
 			//     entry that the update step adds.
@@ -173,6 +176,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						return waitForAPICMOs(
 							2*time.Minute,
 							"uni/phys-test_physical_domain_for_device",
+							"uni/phys-test_physical_domain_for_device_alt",
 							"uni/infra/funcprof/accbundle-test_dpc_for_device",
 							"uni/infra/funcprof/accbundle-test_vpc_for_device",
 						)
@@ -430,6 +434,94 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "interfaces.1.pbr_destinations.0.ip", "10.10.10.10"),
 				),
 			},
+			// Switch the site-bucket domain reference from the (type, name)
+			// pair to a literal domain_dn pointing at the alternate physical
+			// domain. The site bucket's domain_type / domain_name attributes
+			// are Computed, so NDO's response back-fills them from the DN;
+			// asserting all three confirms the bucket landed on the alt
+			// domain via every accessor.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Switch physical domain via domain_dn input")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigSwitchDomainViaDN(testServiceDeviceClusterSiteClusterNameRenamed),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterSiteClusterNameRenamed),
+					resource.TestCheckResourceAttr(resourceName, "domain_dn", "uni/phys-test_physical_domain_for_device_alt"),
+					resource.TestCheckResourceAttr(resourceName, "domain_type", "physicalDomain"),
+					resource.TestCheckResourceAttr(resourceName, "domain_name", "test_physical_domain_for_device_alt"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
+				),
+			},
+			// Swap back to (type, name) on the primary physical domain.
+			// domain_dn is Computed and back-filled by NDO, so we assert the
+			// full triple is consistent with the primary domain.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Switch physical domain back via domain_type + domain_name input")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigSwitchDomainBackViaTypeName(testServiceDeviceClusterSiteClusterNameRenamed),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterSiteClusterNameRenamed),
+					resource.TestCheckResourceAttr(resourceName, "domain_type", "physicalDomain"),
+					resource.TestCheckResourceAttr(resourceName, "domain_name", "test_physical_domain_for_device"),
+					resource.TestCheckResourceAttr(resourceName, "domain_dn", "uni/phys-test_physical_domain_for_device"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
+				),
+			},
+			// Switch the cluster_site `name` to the layer-1 HA cluster and
+			// flip the bucket into activeActive mode. Domain moves to
+			// interface scope, so we assert each interface carries its own
+			// domain attrs along with the pbr_destination mac/tag from the
+			// JSON sample.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: activeActive HA mode with per-interface domain and pbr_destination")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigActiveActive(testServiceDeviceClusterSiteClusterNameRenamed),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterSiteHaClusterName),
+					resource.TestCheckResourceAttr(resourceName, "high_availability_mode", "activeActive"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.name", "Internal"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.domain_type", "physicalDomain"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.domain_name", "test_physical_domain_for_device"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.path", "eth1/1"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.vlan", "210"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.tag", "aaa"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.pbr_destinations.0.mac", "aa:bb:ee:cc:aa:dd"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.pbr_destinations.0.tag", "aaa"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.name", "External"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.domain_dn", "uni/phys-test_physical_domain_for_device"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.fabric_to_device_connectivity.0.path", "eth1/2"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.fabric_to_device_connectivity.0.vlan", "220"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.pbr_destinations.0.mac", "cc:aa:cc:aa:cc:aa"),
+				),
+			},
+			// Flip the bucket into activeStandby. Domain returns to device
+			// scope (top-level domain_type + domain_name + vlan) and each
+			// interface carries two fabric_to_device_connectivity entries
+			// and two pbr_destinations (one per tag).
+			{
+				PreConfig: func() {
+					fmt.Println("Test: activeStandby HA mode with device-level domain and per-tag interface entries")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigActiveStandby(testServiceDeviceClusterSiteClusterNameRenamed),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterSiteHaClusterName),
+					resource.TestCheckResourceAttr(resourceName, "high_availability_mode", "activeStandby"),
+					resource.TestCheckResourceAttr(resourceName, "vlan", "230"),
+					resource.TestCheckResourceAttr(resourceName, "domain_type", "physicalDomain"),
+					resource.TestCheckResourceAttr(resourceName, "domain_name", "test_physical_domain_for_device"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.name", "Internal"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.0.pbr_destinations.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.name", "External"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.fabric_to_device_connectivity.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "interfaces.1.pbr_destinations.#", "2"),
+				),
+			},
 		},
 	})
 }
@@ -474,6 +566,26 @@ func TestAccMSOServiceDeviceClusterSiteResourceErrors(t *testing.T) {
 				PreConfig:   func() { fmt.Println("Test: name longer than 64 characters is rejected") },
 				Config:      testAccMSOServiceDeviceClusterSiteConfigErrNameTooLong(),
 				ExpectError: regexp.MustCompile(`expected length of name to be in the range \(1 - 64\)`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: invalid domain_type enum value is rejected") },
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInvalidDomainType(),
+				ExpectError: regexp.MustCompile(`expected domain_type to be one of`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: invalid vmm_domain_type enum value is rejected") },
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInvalidVmmDomainType(),
+				ExpectError: regexp.MustCompile(`expected vmm_domain_type to be one of`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: pbr_destination weight out of range is rejected") },
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrPbrWeightOutOfRange(),
+				ExpectError: regexp.MustCompile(`expected interfaces\.\d+\.pbr_destinations\.\d+\.weight to be in the range \(1 - 10\)`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: fabric_to_device_connectivity vlan out of range is rejected") },
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrFabricPathVlanOutOfRange(),
+				ExpectError: regexp.MustCompile(`expected interfaces\.\d+\.fabric_to_device_connectivity\.\d+\.vlan to be in the range \(1 - 4094\)`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: site without domain_type or domain_dn is rejected") },
@@ -530,6 +642,39 @@ func TestAccMSOServiceDeviceClusterSiteResourceErrors(t *testing.T) {
 				Config:      testAccMSOServiceDeviceClusterSiteConfigErrPortWithVpcStyleNode(),
 				ExpectError: regexp.MustCompile(`port_type "port" requires exactly one node_id entry`),
 			},
+			{
+				PreConfig:   func() { fmt.Println("Test: dpc port_type with two node_id entries is rejected") },
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrDpcWithTwoNodes(),
+				ExpectError: regexp.MustCompile(`port_type "dpc" requires exactly one node_id entry`),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: activeActive without per-interface domain is rejected")
+				},
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrActiveActiveMissingInterfaceDomain(),
+				ExpectError: regexp.MustCompile(`domain must be configured on every interface when high_availability_mode is "activeActive"`),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: activeActive interface-scoped physicalDomain with vm_information is rejected")
+				},
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithVm(),
+				ExpectError: regexp.MustCompile(`vm_information is not allowed when the interface uses a physicalDomain`),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: activeActive interface-scoped physicalDomain with enhanced_lag_policy is rejected")
+				},
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithEnhancedLag(),
+				ExpectError: regexp.MustCompile(`enhanced_lag_policy is not allowed when the interface uses a physicalDomain`),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: activeActive interface-scoped vmmDomain with fabric_to_device_connectivity is rejected")
+				},
+				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedVmmWithFabric(),
+				ExpectError: regexp.MustCompile(`fabric_to_device_connectivity is not allowed when the interface uses a vmmDomain`),
+			},
 		},
 	})
 }
@@ -581,6 +726,64 @@ type siteClusterInterface struct {
 	ResilientHashing    bool
 	TagBasedSorting     bool
 	WithExternalEPG     bool
+	// WithRedirect emits `redirect = true` on the cluster interface_properties
+	// block, setting NDO's interface-level redirect flag directly. NDO
+	// requires this before it accepts a matching site-bucket
+	// pbr_destination on the same interface. Used by the layer-1 HA cluster
+	// (cluster_ha) for activeActive / activeStandby site tests where the
+	// cluster has no other signal that would auto-derive redirect.
+	WithRedirect bool
+}
+
+// renderClusterInterfaceProperties returns the interface_properties HCL
+// blocks for one mso_service_device_cluster resource, applying the same
+// opt-in emission rules as the inline loop it replaces. Used twice in
+// testAccMSOServiceDeviceClusterSiteDependencies: once for the layer-3
+// `cluster` (parameterised per step) and once for the layer-1 HA
+// `cluster_ha` (fixed Internal/External shape from siteClusterHaInterfaces).
+func renderClusterInterfaceProperties(interfaces []siteClusterInterface) string {
+	var b strings.Builder
+	for _, iface := range interfaces {
+		fmt.Fprintf(&b, "        interface_properties {\n")
+		fmt.Fprintf(&b, "            name    = %q\n", iface.Name)
+		if iface.WithExternalEPG {
+			fmt.Fprintf(&b, "            external_epg_uuid = mso_schema_template_external_epg.epg1.uuid\n")
+		} else {
+			fmt.Fprintf(&b, "            bd_uuid = mso_schema_template_bd.bd1.uuid\n")
+		}
+		if iface.WithIPSLA {
+			fmt.Fprintf(&b, "            ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid\n")
+		}
+		if iface.LoadBalanceHashing != "" {
+			fmt.Fprintf(&b, "            load_balance_hashing = %q\n", iface.LoadBalanceHashing)
+		}
+		if iface.MinThreshold != 0 {
+			fmt.Fprintf(&b, "            min_threshold = %d\n", iface.MinThreshold)
+		}
+		if iface.MaxThreshold != 0 {
+			fmt.Fprintf(&b, "            max_threshold = %d\n", iface.MaxThreshold)
+		}
+		if iface.ThresholdDownAction != "" {
+			fmt.Fprintf(&b, "            threshold_down_action = %q\n", iface.ThresholdDownAction)
+		}
+		if iface.ConfigStaticMAC {
+			fmt.Fprintf(&b, "            config_static_mac = true\n")
+		}
+		if iface.IsBackupRedirectIP {
+			fmt.Fprintf(&b, "            is_backup_redirect_ip = true\n")
+		}
+		if iface.ResilientHashing {
+			fmt.Fprintf(&b, "            resilient_hashing = true\n")
+		}
+		if iface.TagBasedSorting {
+			fmt.Fprintf(&b, "            tag_based_sorting = true\n")
+		}
+		if iface.WithRedirect {
+			fmt.Fprintf(&b, "            redirect = true\n")
+		}
+		fmt.Fprintf(&b, "        }\n")
+	}
+	return b.String()
 }
 
 // siteClusterRichInterface1 is the canonical "primary" cluster interface
@@ -606,6 +809,25 @@ var siteClusterRichInterface1 = siteClusterInterface{
 	TagBasedSorting:     true,
 }
 
+// testServiceDeviceClusterSiteHaClusterName is the name of the layer-1 HA
+// cluster (cluster_ha) provisioned unconditionally by
+// testAccMSOServiceDeviceClusterSiteDependencies. The activeActive and
+// activeStandby site-bucket steps switch the cluster_site `name` from the
+// layer-3 `cluster` to this layer-1 cluster.
+const testServiceDeviceClusterSiteHaClusterName = "test_device_cluster_ha"
+
+// siteClusterHaInterfaces is the fixed interface_properties shape on the
+// layer-1 HA cluster (cluster_ha) used by the activeActive and
+// activeStandby site-bucket steps. Names "Internal" and "External" match
+// the JSON sample's device interfaces. WithRedirect sets `redirect = true`
+// on each cluster interface_properties block, which NDO requires before
+// it accepts the matching site-bucket pbr_destinations carried by those
+// HA steps.
+var siteClusterHaInterfaces = []siteClusterInterface{
+	{Name: "Internal", WithRedirect: true},
+	{Name: "External", WithRedirect: true},
+}
+
 // testAccMSOServiceDeviceClusterSiteDependencies is the self-contained
 // prerequisite stack for the site-bucket tests.
 //
@@ -629,44 +851,8 @@ var siteClusterRichInterface1 = siteClusterInterface{
 // cluster acceptance test, which provisions its own service-device template
 // against the same shared tenant.
 func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfaces []siteClusterInterface) string {
-	var interfaceAttributes strings.Builder
-	for _, iface := range interfaces {
-		fmt.Fprintf(&interfaceAttributes, "        interface_properties {\n")
-		fmt.Fprintf(&interfaceAttributes, "            name    = %q\n", iface.Name)
-		if iface.WithExternalEPG {
-			fmt.Fprintf(&interfaceAttributes, "            external_epg_uuid = mso_schema_template_external_epg.epg1.uuid\n")
-		} else {
-			fmt.Fprintf(&interfaceAttributes, "            bd_uuid = mso_schema_template_bd.bd1.uuid\n")
-		}
-		if iface.WithIPSLA {
-			fmt.Fprintf(&interfaceAttributes, "            ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid\n")
-		}
-		if iface.LoadBalanceHashing != "" {
-			fmt.Fprintf(&interfaceAttributes, "            load_balance_hashing = %q\n", iface.LoadBalanceHashing)
-		}
-		if iface.MinThreshold != 0 {
-			fmt.Fprintf(&interfaceAttributes, "            min_threshold = %d\n", iface.MinThreshold)
-		}
-		if iface.MaxThreshold != 0 {
-			fmt.Fprintf(&interfaceAttributes, "            max_threshold = %d\n", iface.MaxThreshold)
-		}
-		if iface.ThresholdDownAction != "" {
-			fmt.Fprintf(&interfaceAttributes, "            threshold_down_action = %q\n", iface.ThresholdDownAction)
-		}
-		if iface.ConfigStaticMAC {
-			fmt.Fprintf(&interfaceAttributes, "            config_static_mac = true\n")
-		}
-		if iface.IsBackupRedirectIP {
-			fmt.Fprintf(&interfaceAttributes, "            is_backup_redirect_ip = true\n")
-		}
-		if iface.ResilientHashing {
-			fmt.Fprintf(&interfaceAttributes, "            resilient_hashing = true\n")
-		}
-		if iface.TagBasedSorting {
-			fmt.Fprintf(&interfaceAttributes, "            tag_based_sorting = true\n")
-		}
-		fmt.Fprintf(&interfaceAttributes, "        }\n")
-	}
+	interfaceAttributes := renderClusterInterfaceProperties(interfaces)
+	haInterfaceAttributes := renderClusterInterfaceProperties(siteClusterHaInterfaces)
 
 	return fmt.Sprintf(`%[1]s
     resource "mso_template" "fabric_policy_template" {
@@ -776,6 +962,16 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         vlan_pool_uuid = mso_fabric_policies_vlan_pool.vlan_pool.uuid
     }
 
+    # Second physical domain used by the "switch physical domain" test
+    # steps. Shares the existing vlan pool. The site-bucket steps reach
+    # this domain via either the type/name pair or the literal domain_dn
+    # "uni/phys-test_physical_domain_for_device_alt".
+    resource "mso_fabric_policies_physical_domain" "physical_domain_alt" {
+        template_id    = mso_template.fabric_policy_template.id
+        name           = "test_physical_domain_for_device_alt"
+        vlan_pool_uuid = mso_fabric_policies_vlan_pool.vlan_pool.uuid
+    }
+
     resource "mso_fabric_policies_interface_setting" "portchannel_setting" {
         template_id = mso_template.fabric_policy_template.id
         name        = "test_portchannel_setting_for_device"
@@ -819,7 +1015,10 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         template_type       = "fabric_policy"
         force_apply         = ""
         undeploy_on_destroy = true
-        depends_on          = [mso_fabric_policies_interface_setting.portchannel_setting]
+        depends_on          = [
+            mso_fabric_policies_interface_setting.portchannel_setting,
+            mso_fabric_policies_physical_domain.physical_domain_alt,
+        ]
     }
 
     resource "mso_schema_template_deploy_ndo" "fabric_resource_deploy" {
@@ -854,7 +1053,28 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_schema_template_deploy_ndo.tenant_template_deploy,
         ]
     }
-`, testAccTenantConfig(), msoTemplateSiteName1, msoTemplateTenantName, clusterName, interfaceAttributes.String())
+
+    # Layer-1 HA cluster used by the activeActive and activeStandby site
+    # tests. Internal/External interfaces are bd1-bound with
+    # redirect = true set directly so NDO accepts the matching site-bucket
+    # pbr_destinations. device_type = "other" mirrors the JSON sample's
+    # deviceType "other" on L1 HA devices.
+    resource "mso_service_device_cluster" "cluster_ha" {
+        template_id = mso_template.device_template.id
+        name        = "%[6]s"
+        device_mode = "layer1"
+        device_type = "other"
+%[7]s
+        depends_on = [
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+        ]
+    }
+`, testAccTenantConfig(), msoTemplateSiteName1, msoTemplateTenantName,
+		clusterName, interfaceAttributes,
+		testServiceDeviceClusterSiteHaClusterName, haInterfaceAttributes,
+	)
 }
 
 // testAccMSOServiceDeviceClusterSiteConfigOneInterface creates a single-
@@ -1207,6 +1427,223 @@ func testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesSwapped(clusterName st
 		siteClusterRichInterface1,
 		{Name: "interface3", WithExternalEPG: true},
 	}), msoTemplateSiteName1)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigSwitchDomainViaDN swaps the
+// site-bucket domain reference from the (type, name) pair used by every
+// preceding step to a literal domain_dn pointing at the alternate physical
+// domain provisioned by the dependencies stack. Same two-interface set as
+// the swap step (rich PBR/IPSLA on interface1 + bare external_epg-bound
+// interface3) so this exercises only the domain-attr surface.
+func testAccMSOServiceDeviceClusterSiteConfigSwitchDomainViaDN(clusterName string) string {
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster_site" "cluster_site" {
+        template_id = mso_template.device_template.id
+        site_id     = data.mso_site.%[2]s.id
+        name        = mso_service_device_cluster.cluster.name
+        domain_dn   = "uni/phys-${mso_fabric_policies_physical_domain.physical_domain_alt.name}"
+        interfaces {
+            name = "interface3"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/12"
+                port_type = "port"
+            }
+        }
+        interfaces {
+            name = "interface1"
+            vlan = 215
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/10"
+                port_type = "port"
+            }
+            pbr_destinations {
+                ip                     = "10.10.10.10"
+                mac                    = "00:11:22:33:44:55"
+                pod_id                 = "1"
+                additional_tracking_ip = "10.10.10.11"
+                weight                 = 5
+                tag                    = "10"
+            }
+        }
+    }
+`, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{
+		siteClusterRichInterface1,
+		{Name: "interface3", WithExternalEPG: true},
+	}), msoTemplateSiteName1)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigSwitchDomainBackViaTypeName flips
+// the site-bucket back to the original (domain_type, domain_name) pair
+// pointing at the primary physical domain. Matches the domain attrs of the
+// swap step so the only diff from the preceding step is the domain.
+func testAccMSOServiceDeviceClusterSiteConfigSwitchDomainBackViaTypeName(clusterName string) string {
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster_site" "cluster_site" {
+        template_id = mso_template.device_template.id
+        site_id     = data.mso_site.%[2]s.id
+        name        = mso_service_device_cluster.cluster.name
+        domain_type = "physicalDomain"
+        domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "interface3"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/12"
+                port_type = "port"
+            }
+        }
+        interfaces {
+            name = "interface1"
+            vlan = 215
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/10"
+                port_type = "port"
+            }
+            pbr_destinations {
+                ip                     = "10.10.10.10"
+                mac                    = "00:11:22:33:44:55"
+                pod_id                 = "1"
+                additional_tracking_ip = "10.10.10.11"
+                weight                 = 5
+                tag                    = "10"
+            }
+        }
+    }
+`, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{
+		siteClusterRichInterface1,
+		{Name: "interface3", WithExternalEPG: true},
+	}), msoTemplateSiteName1)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigActiveActive switches the
+// cluster_site to the layer-1 HA cluster (cluster_ha) and configures
+// high_availability_mode = "activeActive". activeActive moves the domain
+// down to interface scope (no top-level domain attrs allowed), so each of
+// the two interfaces ("Internal" and "External") carries its own domain
+// reference. The cluster's Internal/External interface_properties already
+// have redirect = true set directly so NDO accepts the per-interface
+// pbr_destination. mac/tag values mirror the JSON sample for the
+// "ActiveActive" template.
+func testAccMSOServiceDeviceClusterSiteConfigActiveActive(clusterName string) string {
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster_site" "cluster_site" {
+        template_id            = mso_template.device_template.id
+        site_id                = data.mso_site.%[2]s.id
+        name                   = mso_service_device_cluster.cluster_ha.name
+        high_availability_mode = "activeActive"
+        interfaces {
+            name        = "Internal"
+            domain_type = "physicalDomain"
+            domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/1"
+                port_type = "port"
+                vlan      = 210
+                tag       = "aaa"
+            }
+            pbr_destinations {
+                mac = "aa:bb:ee:cc:aa:dd"
+                tag = "aaa"
+            }
+        }
+        interfaces {
+            name      = "External"
+            domain_dn = "uni/phys-${mso_fabric_policies_physical_domain.physical_domain.name}"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/2"
+                port_type = "port"
+                vlan      = 220
+                tag       = "aaa"
+            }
+            pbr_destinations {
+                mac = "cc:aa:cc:aa:cc:aa"
+                tag = "aaa"
+            }
+        }
+    }
+`, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{siteClusterRichInterface1}), msoTemplateSiteName1)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigActiveStandby switches the
+// cluster_site to the layer-1 HA cluster with
+// high_availability_mode = "activeStandby". activeStandby keeps the domain
+// at device scope (top-level domain_type/domain_name + vlan) and each
+// interface carries multiple fabric_to_device_connectivity entries (one per
+// tag) plus the matching pbr_destinations. mac/tag/path values mirror the
+// JSON sample for the "activeStandby" template.
+func testAccMSOServiceDeviceClusterSiteConfigActiveStandby(clusterName string) string {
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster_site" "cluster_site" {
+        template_id            = mso_template.device_template.id
+        site_id                = data.mso_site.%[2]s.id
+        name                   = mso_service_device_cluster.cluster_ha.name
+        high_availability_mode = "activeStandby"
+        vlan                   = 230
+        domain_type            = "physicalDomain"
+        domain_name            = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "Internal"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/1"
+                port_type = "port"
+                tag       = "www"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/2"
+                port_type = "port"
+                tag       = "aaa"
+            }
+            pbr_destinations {
+                mac = "aa:bb:cc:dd:ee:ff"
+                tag = "www"
+            }
+            pbr_destinations {
+                mac = "aa:bb:ee:cc:aa:dd"
+                tag = "aaa"
+            }
+        }
+        interfaces {
+            name = "External"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/3"
+                port_type = "port"
+                tag       = "www"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/4"
+                port_type = "port"
+                tag       = "aaa"
+            }
+            pbr_destinations {
+                mac = "bb:cc:dd:ee:ff:aa"
+                tag = "www"
+            }
+            pbr_destinations {
+                mac = "cc:aa:cc:aa:cc:aa"
+                tag = "aaa"
+            }
+        }
+    }
+`, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{siteClusterRichInterface1}), msoTemplateSiteName1)
 }
 
 // The ExpectError configurations below use literal placeholder values for
@@ -1564,4 +2001,230 @@ resource "mso_service_device_cluster_site" "cluster_site" {
     }
 }
 `, strings.Repeat("a", 65))
+}
+
+// Invalid value for the top-level domain_type enum. The SDK schema
+// StringInSlice validator rejects this at plan time.
+func testAccMSOServiceDeviceClusterSiteConfigErrInvalidDomainType() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id = "00000000-0000-0000-0000-000000000000"
+    site_id     = "site-placeholder"
+    name        = "err_cluster_site"
+    domain_type = "bogusDomain"
+    domain_name = "some_domain"
+    interfaces {
+        name = "interface1"
+        vlan = 100
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101"]
+            path      = "eth1/1"
+            port_type = "port"
+        }
+    }
+}
+`
+}
+
+// Invalid value for vmm_domain_type. Paired with domain_type "vmmDomain"
+// so the StringInSlice validator on vmm_domain_type fires (and not the
+// physicalDomain conflict).
+func testAccMSOServiceDeviceClusterSiteConfigErrInvalidVmmDomainType() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id     = "00000000-0000-0000-0000-000000000000"
+    site_id         = "site-placeholder"
+    name            = "err_cluster_site"
+    domain_type     = "vmmDomain"
+    vmm_domain_type = "VirtualBox"
+    domain_name     = "some_vmm_domain"
+    interfaces {
+        name = "interface1"
+        vlan = 100
+        vm_information {
+            vm_name   = "vm1"
+            vnic_name = "vnic1"
+        }
+    }
+}
+`
+}
+
+// pbr_destinations.weight out of the IntBetween(1, 10) range; rejected at
+// plan time by the SDK schema validator.
+func testAccMSOServiceDeviceClusterSiteConfigErrPbrWeightOutOfRange() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id = "00000000-0000-0000-0000-000000000000"
+    site_id     = "site-placeholder"
+    name        = "err_cluster_site"
+    domain_type = "physicalDomain"
+    domain_name = "some_phys_domain"
+    interfaces {
+        name = "interface1"
+        vlan = 100
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101"]
+            path      = "eth1/1"
+            port_type = "port"
+        }
+        pbr_destinations {
+            ip     = "10.10.10.10"
+            mac    = "00:11:22:33:44:55"
+            weight = 99
+        }
+    }
+}
+`
+}
+
+// fabric_to_device_connectivity.vlan out of the IntBetween(1, 4094) range;
+// distinct from the top-level interface vlan check. Rejected at plan time
+// by the SDK schema validator.
+func testAccMSOServiceDeviceClusterSiteConfigErrFabricPathVlanOutOfRange() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id = "00000000-0000-0000-0000-000000000000"
+    site_id     = "site-placeholder"
+    name        = "err_cluster_site"
+    domain_type = "physicalDomain"
+    domain_name = "some_phys_domain"
+    interfaces {
+        name = "interface1"
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101"]
+            path      = "eth1/1"
+            port_type = "port"
+            vlan      = 5000
+        }
+    }
+}
+`
+}
+
+// port_type "dpc" with two node_id entries violates the CustomizeDiff rule
+// that port and dpc require exactly one node_id.
+func testAccMSOServiceDeviceClusterSiteConfigErrDpcWithTwoNodes() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id = "00000000-0000-0000-0000-000000000000"
+    site_id     = "site-placeholder"
+    name        = "err_cluster_site"
+    domain_type = "physicalDomain"
+    domain_name = "some_phys_domain"
+    interfaces {
+        name = "interface1"
+        vlan = 100
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101", "102"]
+            path      = "test_dpc_for_device"
+            port_type = "dpc"
+        }
+    }
+}
+`
+}
+
+// activeActive moves domain configuration to interface scope; an interface
+// without any of domain_type / vmm_domain_type / domain_name / domain_dn
+// trips the dedicated CustomizeDiff branch.
+func testAccMSOServiceDeviceClusterSiteConfigErrActiveActiveMissingInterfaceDomain() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id            = "00000000-0000-0000-0000-000000000000"
+    site_id                = "site-placeholder"
+    name                   = "err_cluster_site"
+    high_availability_mode = "activeActive"
+    interfaces {
+        name = "interface1"
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101"]
+            path      = "eth1/1"
+            port_type = "port"
+        }
+    }
+}
+`
+}
+
+// activeActive interface-scoped physicalDomain paired with vm_information
+// trips the per-interface familyScope = "interface" branch. The wording
+// uses "interface" instead of "device", so we assert against that to make
+// sure the activeActive branch (not the device-scope branch) fired.
+func testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithVm() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id            = "00000000-0000-0000-0000-000000000000"
+    site_id                = "site-placeholder"
+    name                   = "err_cluster_site"
+    high_availability_mode = "activeActive"
+    interfaces {
+        name        = "interface1"
+        domain_type = "physicalDomain"
+        domain_name = "some_phys_domain"
+        vm_information {
+            vm_name   = "vm1"
+            vnic_name = "vnic1"
+        }
+    }
+}
+`
+}
+
+// activeActive interface-scoped physicalDomain paired with
+// enhanced_lag_policy and fabric_to_device_connectivity (to keep the
+// "neither fabric nor vm" check from firing first) trips the per-interface
+// familyScope branch for enhanced_lag_policy.
+func testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithEnhancedLag() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id            = "00000000-0000-0000-0000-000000000000"
+    site_id                = "site-placeholder"
+    name                   = "err_cluster_site"
+    high_availability_mode = "activeActive"
+    interfaces {
+        name                = "interface1"
+        domain_type         = "physicalDomain"
+        domain_name         = "some_phys_domain"
+        enhanced_lag_policy = "some-uuid"
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101"]
+            path      = "eth1/1"
+            port_type = "port"
+        }
+    }
+}
+`
+}
+
+// activeActive interface-scoped vmmDomain paired with
+// fabric_to_device_connectivity trips the per-interface familyScope branch
+// for the vmm-with-fabric check.
+func testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedVmmWithFabric() string {
+	return `
+resource "mso_service_device_cluster_site" "cluster_site" {
+    template_id            = "00000000-0000-0000-0000-000000000000"
+    site_id                = "site-placeholder"
+    name                   = "err_cluster_site"
+    high_availability_mode = "activeActive"
+    interfaces {
+        name            = "interface1"
+        domain_type     = "vmmDomain"
+        vmm_domain_type = "VMware"
+        domain_name     = "some_vmm_domain"
+        fabric_to_device_connectivity {
+            pod_id    = "1"
+            node_id   = ["101"]
+            path      = "eth1/1"
+            port_type = "port"
+        }
+    }
+}
+`
 }
