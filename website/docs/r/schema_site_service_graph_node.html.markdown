@@ -8,10 +8,9 @@ description: |-
 
 # mso_schema_site_service_graph_node #
 
-Manages MSO Schema Site Level Service Graph Node.
+!> **Deprecated** This resource is deprecated: use [`mso_schema_site_service_graph`](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/resources/schema_site_service_graph) instead.
 
-# **DEPRECATED** # 
-"This resource (mso_schema_site_service_graph_node) is **deprecated**. Use mso_schema_site_service_graph resource instead."
+Manages MSO Schema Site Level Service Graph Node.
 
 ## Example Usage ##
 
