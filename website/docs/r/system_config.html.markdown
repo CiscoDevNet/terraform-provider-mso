@@ -6,7 +6,7 @@ description: |-
   Manages MSO System Configuration.
 ---
 
-# mso_schema_site_vrf_region #
+# mso_system_config #
 
 !> **Deprecated** This resource is deprecated: no longer functional on Nexus Dashboard (ND) 4.0+ / NDO 5.0+ and will be removed once ND 3.x / NDO 4.x is no longer supported.
 
