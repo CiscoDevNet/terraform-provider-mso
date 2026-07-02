@@ -79,7 +79,7 @@ func resourceMSOSchemaSiteServiceGraphNode() *schema.Resource {
 				},
 			},
 		}),
-		DeprecationMessage: "This resource is deprecated. Use mso_schema_site_service_graph resource instead",
+		DeprecationMessage: "mso_schema_site_service_graph_node is deprecated: use mso_schema_site_service_graph instead.",
 	}
 }
 
