@@ -8,9 +8,9 @@ description: |-
 
 # mso_schema_template_deploy #
 
-Manages deploy/undeploy operations for schema template on sites.
+!> **Deprecated** This resource is deprecated: use [`mso_schema_template_deploy_ndo`](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/resources/schema_template_deploy_ndo) instead for ND-based NDO.
 
-This resource is deprecated for NDO v4.1 and later. Use resource mso_schema_template_deploy_ndo instead. 
+Manages deploy/undeploy operations for schema template on sites.
 
 ## Example Usage ##
 
