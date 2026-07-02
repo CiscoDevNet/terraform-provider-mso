@@ -8,6 +8,8 @@ description: |-
 
 # mso_schema_site_vrf_region #
 
+!> **Deprecated** This resource is deprecated: no longer functional on Nexus Dashboard (ND) 4.0+ / NDO 5.0+ and will be removed once ND 3.x / NDO 4.x is no longer supported.
+
 Manages MSO System Configuration.
 
 Note: System configuration is already existing on MSO, thus a `terraform apply` command will always replace the current configuration. A `terraform destroy` command will remove the configuration from state but will not remove or update any current configuration on MSO. 

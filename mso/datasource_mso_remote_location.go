@@ -49,6 +49,7 @@ func datasourceMSORemoteLocation() *schema.Resource {
 				Computed: true,
 			},
 		}),
+		DeprecationMessage: nd4DeprecationMessage("mso_remote_location"),
 	}
 }
 

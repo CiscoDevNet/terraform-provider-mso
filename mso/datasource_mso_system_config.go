@@ -44,6 +44,7 @@ func dataSourceMSOSystemConfig() *schema.Resource {
 				// Expected keys: "workflow" (string: "enabled"/"disabled"), "number_of_approvers" (integer ≥ 1). Validation skipped - resource is deprecated.
 			},
 		}),
+		DeprecationMessage: nd4DeprecationMessage("mso_system_config"),
 	}
 }
 
