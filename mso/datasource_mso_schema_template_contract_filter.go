@@ -72,6 +72,7 @@ func dataSourceMSOTemplateContractFilter() *schema.Resource {
 				Computed: true,
 			},
 		}),
+		DeprecationMessage: "mso_schema_template_contract_filter is deprecated: use the filter_relationship attribute on mso_schema_template_contract instead.",
 	}
 }
 

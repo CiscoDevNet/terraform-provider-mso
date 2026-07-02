@@ -8,6 +8,8 @@ description: |-
 
 # mso_schema_template_contract-filter #
 
+!> **Deprecated** This data source is deprecated: use the `filter_relationship` attribute on [`mso_schema_template_contract`](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/data-sources/schema_template_contract) instead.
+
 Data source for MSO Schema Template Contract Filter.
 
 ## Example Usage ##

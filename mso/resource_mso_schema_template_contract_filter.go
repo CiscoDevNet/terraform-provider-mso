@@ -13,10 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-// This resource could be deprecated because a contract must always be associated with at least one filter.
-// Since mso_schema_template_contract cannot be created without a filter_relationship, this resource cannot be used
-// independently without conflicting with the inline filter_relationship attribute of mso_schema_template_contract.
-// Currently keeping the resource because there is a warning in the resource documentation
+// Deprecated: a contract must always be associated with at least one filter, and mso_schema_template_contract
+// cannot be created without a filter_relationship, so this resource conflicts with the inline filter_relationship
+// attribute of mso_schema_template_contract. Use that block instead.
 
 func resourceMSOTemplateContractFilter() *schema.Resource {
 	return &schema.Resource{
@@ -114,6 +113,7 @@ func resourceMSOTemplateContractFilter() *schema.Resource {
 				}, false),
 			},
 		}),
+		DeprecationMessage: "mso_schema_template_contract_filter is deprecated: use the filter_relationship block on mso_schema_template_contract instead.",
 	}
 }
 
