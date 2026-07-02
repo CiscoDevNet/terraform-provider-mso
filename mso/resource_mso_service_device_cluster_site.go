@@ -264,6 +264,32 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										Required:    true,
 										Description: "The name of the vNIC on the VM.",
 									},
+									"pod_id": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "The pod ID of the fabric path the VM interface attaches to. Must be set together with `node_id`, `path`, and `port_type`.",
+									},
+									"node_id": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										MinItems:    1,
+										MaxItems:    2,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`, and two elements for `port_type` `vpc`. Must be set together with `pod_id`, `path`, and `port_type`.",
+									},
+									"path": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name. Must be set together with `pod_id`, `node_id`, and `port_type`.",
+									},
+									"port_type": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ValidateFunc: validation.StringInSlice([]string{
+											"port", "vpc", "dpc",
+										}, false),
+										Description: "The type of port used for the VM interface's fabric path. Allowed values are `port`, `vpc`, `dpc`. Must be set together with `pod_id`, `node_id`, and `path`.",
+									},
 								},
 							},
 						},
@@ -583,17 +609,45 @@ func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ 
 				fabricPathData := rawFabricPath.(map[string]interface{})
 				portType, _ := fabricPathData["port_type"].(string)
 				nodeIDs := nodeIDsFromAttr(fabricPathData["node_id"])
-				switch portType {
-				case "vpc":
-					if len(nodeIDs) != 2 {
-						return fmt.Errorf("interface %q: port_type \"vpc\" requires exactly two node_id entries, got %d", name, len(nodeIDs))
+				if err := validateFabricPortTypeNodeCount(name, portType, nodeIDs); err != nil {
+					return err
+				}
+			}
+		}
+		if hasVMM {
+			for _, rawVM := range interfaceData["vm_information"].(*schema.Set).List() {
+				vmData := rawVM.(map[string]interface{})
+				podID, _ := vmData["pod_id"].(string)
+				path, _ := vmData["path"].(string)
+				portType, _ := vmData["port_type"].(string)
+				nodeIDs := nodeIDsFromAttr(vmData["node_id"])
+				if podID != "" || path != "" || portType != "" || len(nodeIDs) > 0 {
+					if podID == "" || path == "" || portType == "" || len(nodeIDs) == 0 {
+						return fmt.Errorf("interface %q: vm_information pod_id, node_id, path, and port_type must all be set together (or all left unset)", name)
 					}
-				case "port", "dpc":
-					if len(nodeIDs) != 1 {
-						return fmt.Errorf("interface %q: port_type %q requires exactly one node_id entry, got %d", name, portType, len(nodeIDs))
+					if err := validateFabricPortTypeNodeCount(name, portType, nodeIDs); err != nil {
+						return err
 					}
 				}
 			}
+		}
+	}
+	return nil
+}
+
+// validateFabricPortTypeNodeCount enforces the node_id list length that NDO
+// requires for each port_type on a fabric attach point. Shared by
+// fabric_to_device_connectivity and vm_information because both blocks
+// carry the same port_type / node_id shape.
+func validateFabricPortTypeNodeCount(interfaceName, portType string, nodeIDs []string) error {
+	switch portType {
+	case "vpc":
+		if len(nodeIDs) != 2 {
+			return fmt.Errorf("interface %q: port_type \"vpc\" requires exactly two node_id entries, got %d", interfaceName, len(nodeIDs))
+		}
+	case "port", "dpc":
+		if len(nodeIDs) != 1 {
+			return fmt.Errorf("interface %q: port_type %q requires exactly one node_id entry, got %d", interfaceName, portType, len(nodeIDs))
 		}
 	}
 	return nil
@@ -910,10 +964,26 @@ func buildVMMIntfInfoPayload(vmSet *schema.Set) []map[string]interface{} {
 	payload := make([]map[string]interface{}, 0, len(vms))
 	for _, rawVM := range vms {
 		vmData := rawVM.(map[string]interface{})
-		payload = append(payload, map[string]interface{}{
+		entry := map[string]interface{}{
 			"vmName":   vmData["vm_name"].(string),
 			"vNicName": vmData["vnic_name"].(string),
-		})
+		}
+		// Fabric attach point on the VMM interface. CustomizeDiff guarantees
+		// these four fields are all set or all unset; only emit them when
+		// port_type is populated so bare {vm_name, vnic_name} entries stay
+		// backwards-compatible.
+		if portType, _ := vmData["port_type"].(string); portType != "" {
+			podID, _ := vmData["pod_id"].(string)
+			nodeIDs := nodeIDsFromAttr(vmData["node_id"])
+			path, _ := vmData["path"].(string)
+			interfaceDn := composeFabricInterfaceDn(podID, nodeIDs, path, portType)
+			entry["podID"] = podID
+			entry["nodeID"] = strings.Join(nodeIDs, ",")
+			entry["path"] = interfaceDn
+			entry["portType"] = portType
+			entry["interfaceDn"] = interfaceDn
+		}
+		payload = append(payload, entry)
 	}
 	return payload
 }
@@ -1125,6 +1195,32 @@ func setServiceDeviceClusterSiteData(d *schema.ResourceData, deviceCont *contain
 					}
 					if vmCont.Exists("vNicName") {
 						vmData["vnic_name"] = models.StripQuotes(vmCont.S("vNicName").String())
+					}
+					if vmCont.Exists("podID") {
+						vmData["pod_id"] = models.StripQuotes(vmCont.S("podID").String())
+					}
+					if vmCont.Exists("nodeID") {
+						// Same encoding as fabricToDeviceConnectivity: comma-separated in JSON
+						// ("101,102" for vpc), hyphen-separated in the corresponding URL path.
+						rawNodeID := models.StripQuotes(vmCont.S("nodeID").String())
+						var nodeIDs []interface{}
+						if rawNodeID != "" && rawNodeID != "{}" {
+							for _, n := range strings.Split(rawNodeID, ",") {
+								nodeIDs = append(nodeIDs, n)
+							}
+						}
+						vmData["node_id"] = nodeIDs
+					}
+					if vmCont.Exists("path") {
+						rawPath := models.StripQuotes(vmCont.S("path").String())
+						if matches := pathepBracketRe.FindStringSubmatch(rawPath); len(matches) >= 2 {
+							vmData["path"] = matches[1]
+						} else {
+							vmData["path"] = rawPath
+						}
+					}
+					if vmCont.Exists("portType") {
+						vmData["port_type"] = models.StripQuotes(vmCont.S("portType").String())
 					}
 					vms = append(vms, vmData)
 				}

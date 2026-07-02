@@ -91,24 +91,28 @@ resource "mso_service_device_cluster_site" "cluster_site" {
   * `domain_name` - (Optional) The name of the domain associated with the interface. Must be used together with `domain_type` and cannot be combined with `domain_dn`. Only valid when `high_availability_mode` is `activeActive`.
   * `domain_dn` - (Optional) The distinguished name of the domain associated with the interface. Must start with `uni/phys-` or `uni/vmmp-`. Cannot be combined with `domain_type`, `vmm_domain_type`, or `domain_name`. Only valid when `high_availability_mode` is `activeActive`.
   * `fabric_to_device_connectivity` - (Optional) A list of fabric-to-device connectivity paths for the interface. Allowed only when the device uses a physical domain. Mutually exclusive with `vm_information`.
-    * `pod_id` - (Required) The pod ID of the fabric path.
-    * `node_id` - (Required) The node ID(s) of the fabric path, as a list of strings. Provide a single element for `port_type` `port` and `dpc`. Provide exactly two elements for `port_type` `vpc`.
-    * `path` - (Required) The path on the node. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name.
-    * `port_type` - (Required) The type of port used for the fabric path. Allowed values are `port`, `vpc`, `dpc`.
-    * `tag` - (Optional) The tag of the fabric path.
-    * `vlan` - (Optional) The VLAN ID carried on this fabric path. Valid range: 1-4094. Used when `high_availability_mode` is `activeActive`, where each fabric path carries its own access VLAN.
+      * `pod_id` - (Required) The pod ID of the fabric path.
+      * `node_id` - (Required) The node ID(s) of the fabric path, as a list of strings. Provide a single element for `port_type` `port` and `dpc`. Provide exactly two elements for `port_type` `vpc`.
+      * `path` - (Required) The path on the node. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name.
+      * `port_type` - (Required) The type of port used for the fabric path. Allowed values are `port`, `vpc`, `dpc`.
+      * `tag` - (Optional) The tag of the fabric path.
+      * `vlan` - (Optional) The VLAN ID carried on this fabric path. Valid range: 1-4094. Used when `high_availability_mode` is `activeActive`, where each fabric path carries its own access VLAN.
   * `vm_information` - (Optional) A set of VM information entries for the interface. Allowed only when the device uses a VMM domain. Mutually exclusive with `fabric_to_device_connectivity`.
-    * `vm_name` - (Required) The name of the VM.
-    * `vnic_name` - (Required) The name of the vNIC on the VM.
+      * `vm_name` - (Required) The name of the VM.
+      * `vnic_name` - (Required) The name of the vNIC on the VM.
+      * `pod_id` - (Optional) The pod ID of the fabric path the VM interface attaches to. Must be set together with `node_id`, `path`, and `port_type`.
+      * `node_id` - (Optional) The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`. Provide exactly two elements for `port_type` `vpc`. Must be set together with `pod_id`, `path`, and `port_type`.
+      * `path` - (Optional) The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name. Must be set together with `pod_id`, `node_id`, and `port_type`.
+      * `port_type` - (Optional) The type of port used for the VM interface's fabric path. Allowed values are `port`, `vpc`, `dpc`. Must be set together with `pod_id`, `node_id`, and `path`.
   * `enhanced_lag_policy` - (Optional) The name of the enhanced LAG policy associated with the interface. Only valid when the device uses a VMM domain.
   * `pbr_destinations` - (Optional) A list of policy-based redirect (PBR) destinations for the interface.
-    * `ip` - (Optional) The IP address of the PBR destination. Required for L3 device clusters; omit for L1 clusters with `high_availability_mode` `activeActive` or `activeStandby`, which carry only `mac` and `tag`.
-    * `mac` - (Optional) The MAC address of the PBR destination.
-    * `pod_id` - (Optional) The pod ID of the PBR destination.
-    * `additional_tracking_ip` - (Optional) The additional IP address used for tracking the PBR destination. NDO defaults this to `0.0.0.0` for L3 PBR destinations when omitted, and the provider treats that default as equivalent to leaving the attribute unset (no drift).
-    * `weight` - (Optional) The weight of the PBR destination. Valid range: 1-10.
-    * `is_backup` - (Optional) Whether the PBR destination is a backup destination.
-    * `tag` - (Optional) The tag of the PBR destination.
+      * `ip` - (Optional) The IP address of the PBR destination. Required for L3 device clusters; omit for L1 clusters with `high_availability_mode` `activeActive` or `activeStandby`, which carry only `mac` and `tag`.
+      * `mac` - (Optional) The MAC address of the PBR destination.
+      * `pod_id` - (Optional) The pod ID of the PBR destination.
+      * `additional_tracking_ip` - (Optional) The additional IP address used for tracking the PBR destination. NDO defaults this to `0.0.0.0` for L3 PBR destinations when omitted, and the provider treats that default as equivalent to leaving the attribute unset (no drift).
+      * `weight` - (Optional) The weight of the PBR destination. Valid range: 1-10.
+      * `is_backup` - (Optional) Whether the PBR destination is a backup destination.
+      * `tag` - (Optional) The tag of the PBR destination.
 
 
 ## Attribute Reference ##
