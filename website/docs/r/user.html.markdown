@@ -8,10 +8,10 @@ description: |-
 
 # mso_user #
 
+!> **Deprecated** This resource is deprecated: no longer functional on Nexus Dashboard (ND) 3.2+ / NDO 4.2+ and will be removed in the next major release. Use the [ND provider](https://registry.terraform.io/providers/CiscoDevNet/nd/latest) for managing users on ND-based MSO/NDO.
+
 Manages MSO User.
 
-The mso_user resources is deprecated on ND-based MSO/NDO.
-Use ND provider for manipulating users on ND-based MSO/NDO.
 
 ## Example Usage ##
 

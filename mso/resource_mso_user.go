@@ -78,6 +78,7 @@ func resourceMSOUser() *schema.Resource {
 				Required: true,
 			},
 		}),
+		DeprecationMessage: nd32DeprecationMessage("mso_user"),
 	}
 }
 

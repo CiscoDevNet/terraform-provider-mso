@@ -42,6 +42,7 @@ func datasourceMSORole() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		}),
+		DeprecationMessage: nd32DeprecationMessage("mso_role"),
 	}
 }
 

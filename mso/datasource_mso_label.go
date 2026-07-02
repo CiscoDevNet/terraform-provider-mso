@@ -26,6 +26,7 @@ func datasourceMSOLabel() *schema.Resource {
 				Computed: true,
 			},
 		}),
+		DeprecationMessage: nd32DeprecationMessage("mso_label"),
 	}
 }
 
