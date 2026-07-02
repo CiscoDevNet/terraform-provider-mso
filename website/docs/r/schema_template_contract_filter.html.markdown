@@ -8,9 +8,9 @@ description: |-
 
 # mso_schema_template_contract_filter #
 
-Manages MSO Schema Template Contract Filter.
+!> **Deprecated** This resource is deprecated: use the `filter_relationship` block on [`mso_schema_template_contract`](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/resources/schema_template_contract) instead. A contract always requires at least one filter, and mixing this resource with `mso_schema_template_contract` will cause conflicts.
 
-!> Do not use this resource together with resource [mso_schema_template_contract](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/resources/schema_template_contract).
+Manages MSO Schema Template Contract Filter.
 
 ## Example Usage ##
 
