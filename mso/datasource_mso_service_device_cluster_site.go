@@ -163,6 +163,27 @@ func datasourceMSOServiceDeviceClusterSite() *schema.Resource {
 										Computed:    true,
 										Description: "The name of the vNIC on the VM.",
 									},
+									"pod_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The pod ID of the fabric path the VM interface attaches to.",
+									},
+									"node_id": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "The node ID(s) of the fabric path the VM interface attaches to.",
+									},
+									"path": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The path on the node the VM interface attaches to.",
+									},
+									"port_type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type of port used for the VM interface's fabric path.",
+									},
 								},
 							},
 						},

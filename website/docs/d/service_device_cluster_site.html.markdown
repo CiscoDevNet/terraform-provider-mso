@@ -59,21 +59,25 @@ data "mso_service_device_cluster_site" "cluster_site" {
   * `domain_name` - (Read-Only) The name of the domain associated with the interface.
   * `domain_dn` - (Read-Only) The distinguished name of the domain associated with the interface.
   * `fabric_to_device_connectivity` - (Read-Only) A list of fabric-to-device connectivity paths for the interface. Each element has the following attributes:
-    * `pod_id` - (Read-Only) The pod ID of the fabric path.
-    * `node_id` - (Read-Only) The node ID(s) of the fabric path, as a list of strings. A single element for `port_type` `port` and `dpc`, two elements for `port_type` `vpc`.
-    * `path` - (Read-Only) The path on the node.
-    * `port_type` - (Read-Only) The type of port used for the fabric path.
-    * `tag` - (Read-Only) The tag of the fabric path.
-    * `vlan` - (Read-Only) The VLAN ID carried on this fabric path (used when `high_availability_mode` is `activeActive`).
+      * `pod_id` - (Read-Only) The pod ID of the fabric path.
+      * `node_id` - (Read-Only) The node ID(s) of the fabric path, as a list of strings. A single element for `port_type` `port` and `dpc`, two elements for `port_type` `vpc`.
+      * `path` - (Read-Only) The path on the node.
+      * `port_type` - (Read-Only) The type of port used for the fabric path.
+      * `tag` - (Read-Only) The tag of the fabric path.
+      * `vlan` - (Read-Only) The VLAN ID carried on this fabric path (used when `high_availability_mode` is `activeActive`).
   * `vm_information` - (Read-Only) A list of VM information entries for the interface. Each element has the following attributes:
-    * `vm_name` - (Read-Only) The name of the VM.
-    * `vnic_name` - (Read-Only) The name of the vNIC on the VM.
+      * `vm_name` - (Read-Only) The name of the VM.
+      * `vnic_name` - (Read-Only) The name of the vNIC on the VM.
+      * `pod_id` - (Read-Only) The pod ID of the fabric path the VM interface attaches to.
+      * `node_id` - (Read-Only) The node ID(s) of the fabric path the VM interface attaches to.
+      * `path` - (Read-Only) The path on the node the VM interface attaches to.
+      * `port_type` - (Read-Only) The type of port used for the VM interface's fabric path.
   * `enhanced_lag_policy` - (Read-Only) The name of the enhanced LAG policy associated with the interface.
   * `pbr_destinations` - (Read-Only) A list of policy-based redirect (PBR) destinations for the interface. Each element has the following attributes:
-    * `ip` - (Read-Only) The IP address of the PBR destination.
-    * `mac` - (Read-Only) The MAC address of the PBR destination.
-    * `pod_id` - (Read-Only) The pod ID of the PBR destination.
-    * `additional_tracking_ip` - (Read-Only) The additional IP address used for tracking the PBR destination.
-    * `weight` - (Read-Only) The weight of the PBR destination.
-    * `is_backup` - (Read-Only) Whether the PBR destination is a backup destination.
-    * `tag` - (Read-Only) The tag of the PBR destination.
+      * `ip` - (Read-Only) The IP address of the PBR destination.
+      * `mac` - (Read-Only) The MAC address of the PBR destination.
+      * `pod_id` - (Read-Only) The pod ID of the PBR destination.
+      * `additional_tracking_ip` - (Read-Only) The additional IP address used for tracking the PBR destination.
+      * `weight` - (Read-Only) The weight of the PBR destination.
+      * `is_backup` - (Read-Only) Whether the PBR destination is a backup destination.
+      * `tag` - (Read-Only) The tag of the PBR destination.
