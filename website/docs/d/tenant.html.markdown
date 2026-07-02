@@ -8,6 +8,8 @@ description: |-
 
 # mso_tenant #
 
+!> **Deprecated** This data source is deprecated as of Nexus Dashboard (ND) 4.3 / NDO 5.3: no longer functional on ND 4.4+ / NDO 5.4+ and will be removed once ND 4.3 / NDO 5.3 is no longer supported.
+
 Data source for MSO Tenant.
 
 ## Example Usage ##
