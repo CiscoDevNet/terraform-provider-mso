@@ -54,6 +54,7 @@ func dataSourceMSOSystemConfig() *schema.Resource {
 				},
 			},
 		}),
+		DeprecationMessage: nd4DeprecationMessage("mso_system_config"),
 	}
 }
 

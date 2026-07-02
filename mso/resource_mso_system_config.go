@@ -109,6 +109,7 @@ func resourceMSOSystemConfig() *schema.Resource {
 			}
 			return nil
 		},
+		DeprecationMessage: nd4DeprecationMessage("mso_system_config"),
 	}
 }
 

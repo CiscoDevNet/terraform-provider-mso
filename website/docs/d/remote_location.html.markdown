@@ -8,6 +8,8 @@ description: |-
 
 # mso_user #
 
+!> **Deprecated** This data source is deprecated: no longer functional on Nexus Dashboard (ND) 4.0+ / NDO 5.0+ and will be removed once ND 3.x / NDO 4.x is no longer supported.
+
 Data source for MSO Remote Location.
 
 ## Example Usage ##

@@ -97,6 +97,7 @@ func resourceMSORemoteLocation() *schema.Resource {
 			}
 			return nil
 		},
+		DeprecationMessage: nd4DeprecationMessage("mso_remote_location"),
 	}
 }
 
