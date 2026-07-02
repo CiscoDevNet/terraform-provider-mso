@@ -100,10 +100,10 @@ resource "mso_service_device_cluster_site" "cluster_site" {
   * `vm_information` - (Optional) A set of VM information entries for the interface. Allowed only when the device uses a VMM domain. Mutually exclusive with `fabric_to_device_connectivity`.
       * `vm_name` - (Required) The name of the VM.
       * `vnic_name` - (Required) The name of the vNIC on the VM.
-      * `pod_id` - (Optional) The pod ID of the fabric path the VM interface attaches to. Must be set together with `node_id`, `path`, and `port_type`.
-      * `node_id` - (Optional) The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`. Provide exactly two elements for `port_type` `vpc`. Must be set together with `pod_id`, `path`, and `port_type`.
-      * `path` - (Optional) The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name. Must be set together with `pod_id`, `node_id`, and `port_type`.
-      * `port_type` - (Optional) The type of port used for the VM interface's fabric path. Allowed values are `port`, `vpc`, `dpc`. Must be set together with `pod_id`, `node_id`, and `path`.
+      * `pod_id` - (Optional) The pod ID of the fabric path the VM interface attaches to.
+      * `node_id` - (Optional) The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`. Provide exactly two elements for `port_type` `vpc`.
+      * `path` - (Optional) The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name.
+      * `port_type` - (Optional) The type of port used for the VM interface's fabric path. Allowed values are `port`, `vpc`, `dpc`.
   * `enhanced_lag_policy` - (Optional) The name of the enhanced LAG policy associated with the interface. Only valid when the device uses a VMM domain.
   * `pbr_destinations` - (Optional) A list of policy-based redirect (PBR) destinations for the interface.
       * `ip` - (Optional) The IP address of the PBR destination. Required for L3 device clusters; omit for L1 clusters with `high_availability_mode` `activeActive` or `activeStandby`, which carry only `mac` and `tag`.

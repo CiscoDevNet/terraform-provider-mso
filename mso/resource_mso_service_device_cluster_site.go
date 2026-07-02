@@ -267,7 +267,7 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 									"pod_id": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Description: "The pod ID of the fabric path the VM interface attaches to. Must be set together with `node_id`, `path`, and `port_type`.",
+										Description: "The pod ID of the fabric path the VM interface attaches to.",
 									},
 									"node_id": {
 										Type:        schema.TypeList,
@@ -275,12 +275,12 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										MinItems:    1,
 										MaxItems:    2,
 										Elem:        &schema.Schema{Type: schema.TypeString},
-										Description: "The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`, and two elements for `port_type` `vpc`. Must be set together with `pod_id`, `path`, and `port_type`.",
+										Description: "The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`, and two elements for `port_type` `vpc`.",
 									},
 									"path": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Description: "The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name. Must be set together with `pod_id`, `node_id`, and `port_type`.",
+										Description: "The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name.",
 									},
 									"port_type": {
 										Type:     schema.TypeString,
@@ -288,7 +288,7 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										ValidateFunc: validation.StringInSlice([]string{
 											"port", "vpc", "dpc",
 										}, false),
-										Description: "The type of port used for the VM interface's fabric path. Allowed values are `port`, `vpc`, `dpc`. Must be set together with `pod_id`, `node_id`, and `path`.",
+										Description: "The type of port used for the VM interface's fabric path. Allowed values are `port`, `vpc`, `dpc`.",
 									},
 								},
 							},
@@ -614,31 +614,12 @@ func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ 
 				}
 			}
 		}
-		if hasVMM {
-			for _, rawVM := range interfaceData["vm_information"].(*schema.Set).List() {
-				vmData := rawVM.(map[string]interface{})
-				podID, _ := vmData["pod_id"].(string)
-				path, _ := vmData["path"].(string)
-				portType, _ := vmData["port_type"].(string)
-				nodeIDs := nodeIDsFromAttr(vmData["node_id"])
-				if podID != "" || path != "" || portType != "" || len(nodeIDs) > 0 {
-					if podID == "" || path == "" || portType == "" || len(nodeIDs) == 0 {
-						return fmt.Errorf("interface %q: vm_information pod_id, node_id, path, and port_type must all be set together (or all left unset)", name)
-					}
-					if err := validateFabricPortTypeNodeCount(name, portType, nodeIDs); err != nil {
-						return err
-					}
-				}
-			}
-		}
 	}
 	return nil
 }
 
 // validateFabricPortTypeNodeCount enforces the node_id list length that NDO
-// requires for each port_type on a fabric attach point. Shared by
-// fabric_to_device_connectivity and vm_information because both blocks
-// carry the same port_type / node_id shape.
+// requires for each port_type on a fabric_to_device_connectivity entry.
 func validateFabricPortTypeNodeCount(interfaceName, portType string, nodeIDs []string) error {
 	switch portType {
 	case "vpc":
@@ -968,14 +949,15 @@ func buildVMMIntfInfoPayload(vmSet *schema.Set) []map[string]interface{} {
 			"vmName":   vmData["vm_name"].(string),
 			"vNicName": vmData["vnic_name"].(string),
 		}
-		// Fabric attach point on the VMM interface. CustomizeDiff guarantees
-		// these four fields are all set or all unset; only emit them when
-		// port_type is populated so bare {vm_name, vnic_name} entries stay
+		// Fabric attach point on the VMM interface. Emit whenever any field is
+		// set so partial configs surface as NDO server-side errors rather than
+		// being silently dropped; bare {vm_name, vnic_name} entries stay
 		// backwards-compatible.
-		if portType, _ := vmData["port_type"].(string); portType != "" {
-			podID, _ := vmData["pod_id"].(string)
-			nodeIDs := nodeIDsFromAttr(vmData["node_id"])
-			path, _ := vmData["path"].(string)
+		podID, _ := vmData["pod_id"].(string)
+		nodeIDs := nodeIDsFromAttr(vmData["node_id"])
+		path, _ := vmData["path"].(string)
+		portType, _ := vmData["port_type"].(string)
+		if podID != "" || len(nodeIDs) > 0 || path != "" || portType != "" {
 			interfaceDn := composeFabricInterfaceDn(podID, nodeIDs, path, portType)
 			entry["podID"] = podID
 			entry["nodeID"] = strings.Join(nodeIDs, ",")
