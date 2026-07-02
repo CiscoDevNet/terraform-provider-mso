@@ -34,6 +34,7 @@ func resourceMSOLabel() *schema.Resource {
 				ForceNew: true,
 			},
 		}),
+		DeprecationMessage: nd32DeprecationMessage("mso_label"),
 	}
 }
 

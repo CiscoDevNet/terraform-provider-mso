@@ -83,6 +83,7 @@ func datasourceMSOUser() *schema.Resource {
 				Computed: true,
 			},
 		}),
+		DeprecationMessage: nd32DeprecationMessage("mso_user"),
 	}
 }
 

@@ -8,7 +8,9 @@ description: |-
 
 # mso_role #
 
-Data source for MSO Role. Not supported on ND-based MSO/NDO.
+!> **Deprecated** This data source is deprecated: no longer functional on Nexus Dashboard (ND) 3.2+ / NDO 4.2+ and will be removed in the next major release.
+
+Data source for MSO Role.
 
 ## Example Usage ##
 
