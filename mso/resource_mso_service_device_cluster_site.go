@@ -272,7 +272,7 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 									"node_id": {
 										Type:        schema.TypeList,
 										Optional:    true,
-										MinItems:    1,
+										MinItems:    0,
 										MaxItems:    2,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`, and two elements for `port_type` `vpc`.",
