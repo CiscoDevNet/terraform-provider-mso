@@ -278,8 +278,21 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 										Description: "The node ID(s) of the fabric path the VM interface attaches to, as a list of strings. Provide a single element for `port_type` `port` and `dpc`, and two elements for `port_type` `vpc`.",
 									},
 									"path": {
-										Type:        schema.TypeString,
-										Optional:    true,
+										Type:     schema.TypeString,
+										Optional: true,
+										// NDO server-defaults the VM interface path to a
+										// DN with empty segments (e.g.
+										// "topology/pod-/paths-/pathep-[]") when the caller
+										// omits the pod/node/path/port_type fields. The
+										// Read regex only extracts non-empty pathep-[...]
+										// contents, so the raw defaulted DN leaks into
+										// state and diffs against an unset HCL value on
+										// every plan. Suppress the cosmetic diff when HCL
+										// leaves path unset and state holds an empty
+										// pathep-[] DN.
+										DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+											return new == "" && strings.HasSuffix(old, "pathep-[]")
+										},
 										Description: "The path on the node the VM interface attaches to. For `port_type` `port` this is the interface (e.g. `eth1/1`). For `port_type` `dpc` and `vpc` this is the policy group name.",
 									},
 									"port_type": {
