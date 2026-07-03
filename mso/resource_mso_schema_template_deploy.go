@@ -53,7 +53,7 @@ func resourceMSOSchemaTemplateDeploy() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 		}),
-		DeprecationMessage: "mso_schema_template_deploy is deprecated: use mso_schema_template_deploy_ndo instead for ND-based NDO.",
+		DeprecationMessage: "mso_schema_template_deploy is deprecated: use mso_schema_template_deploy_ndo instead for ND-based NDO (NDO 3.2+).",
 	}
 }
 
