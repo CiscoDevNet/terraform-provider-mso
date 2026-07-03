@@ -97,7 +97,7 @@ resource "mso_service_device_cluster_site" "cluster_site" {
       * `port_type` - (Required) The type of port used for the fabric path. Allowed values are `port`, `vpc`, `dpc`.
       * `tag` - (Optional) The tag of the fabric path.
       * `vlan` - (Optional) The VLAN ID carried on this fabric path. Valid range: 1-4094. Used when `high_availability_mode` is `activeActive`, where each fabric path carries its own access VLAN.
-  * `vm_information` - (Optional) A set of VM information entries for the interface. Allowed only when the device uses a VMM domain. Mutually exclusive with `fabric_to_device_connectivity`.
+  * `vm_information` - (Optional) A list of VM information entries for the interface. Allowed only when the device uses a VMM domain. Mutually exclusive with `fabric_to_device_connectivity`.
       * `vm_name` - (Required) The name of the VM.
       * `vnic_name` - (Required) The name of the vNIC on the VM.
       * `pod_id` - (Optional) The pod ID of the fabric path the VM interface attaches to.
