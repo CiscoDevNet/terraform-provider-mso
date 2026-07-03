@@ -249,9 +249,9 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 						},
 
 						"vm_information": {
-							Type:        schema.TypeSet,
+							Type:        schema.TypeList,
 							Optional:    true,
-							Description: "The set of VM information entries for the interface. Allowed only when the device uses a VMM domain. Mutually exclusive with `fabric_to_device_connectivity`.",
+							Description: "The list of VM information entries for the interface. Allowed only when the device uses a VMM domain. Mutually exclusive with `fabric_to_device_connectivity`.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"vm_name": {
@@ -912,8 +912,8 @@ func buildServiceDeviceClusterSiteInterfacesPayload(d *schema.ResourceData) []ma
 		if fabricList, ok := interfaceData["fabric_to_device_connectivity"].([]interface{}); ok && len(fabricList) > 0 {
 			entry["fabricToDeviceConnectivity"] = buildFabricToDeviceConnectivityPayload(fabricList)
 		}
-		if vmSet, ok := interfaceData["vm_information"].(*schema.Set); ok && vmSet.Len() > 0 {
-			entry["vmmIntfInfo"] = buildVMMIntfInfoPayload(vmSet)
+		if vmList, ok := interfaceData["vm_information"].([]interface{}); ok && len(vmList) > 0 {
+			entry["vmmIntfInfo"] = buildVMMIntfInfoPayload(vmList)
 		}
 		if pbrList, ok := interfaceData["pbr_destinations"].([]interface{}); ok && len(pbrList) > 0 {
 			entry["pbrDestinations"] = buildPbrDestinationsPayload(pbrList)
@@ -953,8 +953,7 @@ func buildFabricToDeviceConnectivityPayload(fabricPaths []interface{}) []map[str
 	return payload
 }
 
-func buildVMMIntfInfoPayload(vmSet *schema.Set) []map[string]interface{} {
-	vms := vmSet.List()
+func buildVMMIntfInfoPayload(vms []interface{}) []map[string]interface{} {
 	payload := make([]map[string]interface{}, 0, len(vms))
 	for _, rawVM := range vms {
 		vmData := rawVM.(map[string]interface{})
