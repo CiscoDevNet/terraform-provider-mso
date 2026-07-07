@@ -10,8 +10,8 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // Scope of the Service Device Cluster Site acceptance tests in this file.
@@ -90,43 +90,6 @@ const (
 )
 
 func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
-	// Several steps in this test grow/shrink the cluster interface list or
-	// rename the cluster, which fans out into two NDO calls in a single apply:
-	// Destroy/Update on mso_service_device_cluster_site (the per-site bucket)
-	// and Update on mso_service_device_cluster (the cluster-template scope).
-	// NDO cross-validates the interface counts between those two scopes and
-	// returns 400 "Mismatch in number of interfaces" if it sees them while
-	// they disagree.
-	//
-	// Modern Terraform CLI (>= 0.13) adds DestroyEdgeTransformer2 which
-	// inserts a stored-dependency edge so Destroy(cluster_site) is ordered
-	// strictly before Update(cluster). A real `terraform apply` against this
-	// configuration is therefore race-free.
-	//
-	// The vendored terraform-plugin-sdk v1 in-process driver predates that
-	// transformer and walks the graph in parallel by default (Parallelism=10),
-	// racing the two NDO calls and intermittently producing the 400 above.
-	//
-	// Workaround: a small LOCAL PATCH in
-	// vendor/github.com/hashicorp/terraform-plugin-sdk/helper/resource/testing.go
-	// LOCAL PATCH (not upstream): honor TF_ACC_PARALLELISM so a test can force
-	// the in-process graph walker to run serially (=1). Used to work around
-	// the SDK v1 missing DestroyEdgeTransformer2 race in mso_service_device_*.
-	//
-	//  if v := os.Getenv("TF_ACC_PARALLELISM"); v != "" {
-	// 	    if p, perr := strconv.Atoi(v); perr == nil && p > 0 {
-	// 		    opts.Parallelism = p
-	// 	    }
-	//  }
-	//
-	// honours TF_ACC_PARALLELISM so this test can pin the walker to 1. Run with:
-	//
-	//   TF_ACC=1 TF_ACC_PARALLELISM=1 \
-	//     go test -run TestAccMSOServiceDeviceClusterSiteResource ./mso
-	//
-	// Without TF_ACC_PARALLELISM=1 the test is racy and will flake on the
-	// interface-count grow/shrink/rename steps.
-
 	resourceName := "mso_service_device_cluster_site.cluster_site"
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -263,9 +226,8 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 			},
 			// This step grows the interface list, which is ForceNew on the site
 			// resource and an in-place Update on the cluster in the same apply.
-			// See the comment at the top of this function for why TF_ACC_PARALLELISM=1
-			// is required to avoid the SDK v1 in-process walker racing the two NDO
-			// calls on this step.
+			// The SDKv2 acceptance driver uses Terraform CLI's dependency graph to
+			// order the resulting NDO operations.
 			{
 				PreConfig: func() { fmt.Println("Test: Expand Service Device Cluster Site to three interfaces") },
 				Config:    testAccMSOServiceDeviceClusterSiteConfigThreeInterfaces(testServiceDeviceClusterSiteClusterName),
@@ -531,14 +493,11 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 // TestAccMSOServiceDeviceClusterSiteResourceErrors exercises every
 // input-validation path on the site resource. The step order is deliberate:
 // SDK schema validation failures (StringInSlice / IntBetween / IsIPAddress /
-// StringLenBetween) come first, and CustomizeDiff failures come last.
-// terraform-plugin-sdk v1's post-test destroy step always re-runs
-// ctx.Validate() against the last step's config (vendored
-// helper/resource/testing.go around the destroy step block), so the last
-// config must pass SDK schema validation; otherwise the destroy walk errors
-// with "Error destroying resource ... config is invalid". CustomizeDiff
-// failure configs have HCL that validates cleanly, so they are safe
-// terminators.
+// StringLenBetween) come first, and CustomizeDiff failures come last. The
+// acceptance-test destroy step revalidates the last step's configuration, so
+// that configuration must pass SDK schema validation; otherwise the destroy
+// walk reports an invalid configuration. CustomizeDiff failure configs have
+// HCL that validates cleanly, so they are safe terminators.
 func TestAccMSOServiceDeviceClusterSiteResourceErrors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -972,6 +931,9 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         template_id    = mso_template.fabric_policy_template.id
         name           = "test_physical_domain_for_device_alt"
         vlan_pool_uuid = mso_fabric_policies_vlan_pool.vlan_pool.uuid
+        # Serialize deletion of the two entries in the template's domains
+        # array: destroy this index-1 entry before the primary index-0 entry.
+        depends_on = [mso_fabric_policies_physical_domain.physical_domain]
     }
 
     resource "mso_fabric_policies_interface_setting" "portchannel_setting" {

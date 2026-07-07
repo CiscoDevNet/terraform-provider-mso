@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,8 +10,8 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
@@ -551,7 +552,7 @@ func resourceMSOServiceDeviceClusterSiteDelete(d *schema.ResourceData, m interfa
 	return nil
 }
 
-func resourceMSOServiceDeviceClusterSiteCustomizeDiff(d *schema.ResourceDiff, _ interface{}) error {
+func resourceMSOServiceDeviceClusterSiteCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	ha := d.Get("high_availability_mode").(string)
 
 	var deviceFamily string

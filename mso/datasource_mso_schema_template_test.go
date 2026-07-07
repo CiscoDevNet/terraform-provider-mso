@@ -4,7 +4,7 @@ package mso
 // See resource_mso_schema_template_test.go for details.
 
 // Data source tests require a two-step approach (create resource, then add data source) because
-// terraform-plugin-sdk v1 reads data sources during the refresh walk before resources are applied.
+// data sources whose inputs are already known can be read before resources are applied.
 // - Without depends_on: config values are wholly known so ReadDataSource is called immediately,
 //   but the resource doesn't exist in the API yet, causing a "not found" error.
 // - With depends_on: ForcePlanRead defers the read, but RemovePlannedResourceInstanceObjects
