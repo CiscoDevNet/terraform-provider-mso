@@ -8,8 +8,8 @@ import (
 
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // Captured from the create step's Check so the drift-recovery PreConfig can
@@ -274,11 +274,10 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 // TestAccMSOServiceDeviceClusterResourceErrors exercises every input-validation
 // path on the resource. The step order is deliberate: SDK schema validation
 // failures (ValidateFunc / StringLenBetween / StringInSlice / IntBetween) come
-// first, and CustomizeDiff failures come last. terraform-plugin-sdk v1's
-// post-test destroy step always re-runs ctx.Validate() against the last
-// step's config (vendored helper/resource/testing.go around the destroy step
-// block), so the last config must pass SDK schema validation; otherwise the
-// destroy walk errors with "Error destroying resource ... config is invalid".
+// first, and CustomizeDiff failures come last. The acceptance-test destroy
+// step revalidates the last step's configuration, so that configuration must
+// pass SDK schema validation; otherwise the destroy walk reports an invalid
+// configuration.
 // Both CustomizeDiff steps below have HCL that validates cleanly, so they are
 // safe terminators.
 func TestAccMSOServiceDeviceClusterResourceErrors(t *testing.T) {

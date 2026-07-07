@@ -135,9 +135,10 @@ data "mso_site" "%[1]s" {
 func testSiteConfigAnsibleTest2() string {
 	return fmt.Sprintf(`
 data "mso_site" "%[1]s" {
-	name = "%[1]s"
+	name       = "%[1]s"
+	depends_on = [data.mso_site.%[2]s]
 }
-`, msoTemplateSiteName2)
+`, msoTemplateSiteName2, msoTemplateSiteName1)
 }
 
 func testTenantConfig() string {
