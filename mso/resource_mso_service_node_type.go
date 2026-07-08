@@ -22,6 +22,8 @@ func resourceMSOServiceNodeType() *schema.Resource {
 
 		SchemaVersion: version,
 
+		DeprecationMessage: "mso_service_node_type is deprecated and will be removed in the next major release.",
+
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:         schema.TypeString,

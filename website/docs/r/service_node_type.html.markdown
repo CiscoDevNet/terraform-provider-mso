@@ -8,6 +8,8 @@ description: |-
 
 # mso_service_node_type #
 
+!> **Deprecated** This resource is deprecated and will be removed in the next major release.
+
 Manages MSO Service Node Type
 
 ## Example Usage ##
