@@ -8,6 +8,8 @@ description: |-
 
 # mso_service_node_type #
 
+!> **Deprecated** This data source is deprecated and will be removed in the next major release.
+
 Data Source for MSO Service Node Type.
 
 ## Example Usage ##
