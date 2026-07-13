@@ -37,6 +37,15 @@ import (
 //     declares interface_properties names that match the site's interface
 //     blocks 1:1, because NDO silently drops the site-bucket device-add
 //     when the name sets differ.
+//   - The aci_multi_site schema template that owns bd1/bd2/l3out1/extEPG
+//     is deployed to the site via mso_schema_template_deploy_ndo.schema_deploy
+//     in the dependencies stack, so the corresponding APIC MOs (fvBD
+//     test_bd_1/test_bd_2 and l3extInstP test_extepg_for_site_device)
+//     actually land on the fabric. The intermediate waitForAPICMOs step
+//     gates on those DNs before the cluster_site apply fires. Cluster
+//     interfaces still reference bd_uuid / external_epg_uuid which
+//     resolve from the template regardless of deploy state; the schema
+//     deploy is additive end-to-end coverage, not an NDO requirement.
 //   - Cluster-level PBR/IPSLA wiring on the primary interface (entry 0,
 //     "interface1") in every live step. Each step pairs a cluster
 //     interface that has ipsla_monitoring_policy_uuid / thresholds /
@@ -129,6 +138,14 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 			//   - uni/infra/funcprof/accbundle-test_vpc_for_device — the VPC
 			//     policy group referenced by the vpc fabric_to_device_connectivity
 			//     entry that the update step adds.
+			//   - uni/tn-<tenant>/BD-test_bd_1 and BD-test_bd_2 — the two
+			//     BDs owned by the aci_multi_site schema template deployed by
+			//     mso_schema_template_deploy_ndo.schema_deploy. bd1 backs the
+			//     bd_uuid binding on interface1/interface2, bd2 is a peer BD
+			//     that the cluster resource explicitly depends on.
+			//   - uni/tn-<tenant>/out-test_l3out_for_site_device/instP-test_extepg_for_site_device
+			//     — the external EPG backing the external_epg_uuid binding
+			//     on interface3 (its parent l3extOut is transitively covered).
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Apply prerequisites and wait for APIC deployed MOs to settle")
@@ -142,6 +159,9 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 							"uni/phys-test_physical_domain_for_device_alt",
 							"uni/infra/funcprof/accbundle-test_dpc_for_device",
 							"uni/infra/funcprof/accbundle-test_vpc_for_device",
+							"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_1",
+							"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_2",
+							"uni/tn-"+msoTemplateTenantName+"/out-test_l3out_for_site_device/instP-test_extepg_for_site_device",
 						)
 					},
 				),
@@ -793,7 +813,9 @@ var siteClusterHaInterfaces = []siteClusterInterface{
 //     extEPG share the template VRF; any siteClusterInterface entry
 //     flagged with WithExternalEPG binds to extEPG.uuid instead of
 //     bd1.uuid)
-//   - service_device template, schema_site, three sequential deploys
+//   - service_device template, schema_site, four sequential deploys
+//     (fabric_policy, fabric_resource, tenant, and the aci_multi_site
+//     schema template that owns bd1/bd2/l3out1/extEPG)
 //   - mso_service_device_cluster.cluster with interface_properties built
 //     from the interfaces []siteClusterInterface argument; each entry
 //     binds to bd1.uuid by default (or to extEPG.uuid when
@@ -997,6 +1019,31 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         depends_on          = [mso_schema_template_deploy_ndo.fabric_resource_deploy]
     }
 
+    # Deploy the schema template that owns bd1/bd2/l3out1/extEPG so the
+    # matching APIC MOs (fvBD, l3extOut, l3extInstP) actually land on the
+    # fabric. Cluster interfaces reference bd_uuid / external_epg_uuid,
+    # which resolve from the template regardless of deploy state, so this
+    # is not required by NDO server-side validation — it adds end-to-end
+    # APIC coverage and lets the intermediate waitForAPICMOs step gate on
+    # the deployed MOs before the cluster_site apply fires.
+    #
+    # depends_on is minimal: schema_site transitively pulls in schema +
+    # vrf + bd1, epg1 transitively pulls in l3out1, and only bd2 is not
+    # reachable via another edge. tenant_template_deploy is listed for
+    # serialisation with the other deploys, matching the pattern above.
+    resource "mso_schema_template_deploy_ndo" "schema_deploy" {
+        schema_id           = mso_schema.schema_blocks.id
+        template_name       = tolist(mso_schema.schema_blocks.template)[0].name
+        force_apply         = ""
+        undeploy_on_destroy = true
+        depends_on          = [
+            mso_schema_site.schema_site,
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+        ]
+    }
+
     resource "mso_service_device_cluster" "cluster" {
         template_id = mso_template.device_template.id
         name        = "%[4]s"
@@ -1007,6 +1054,7 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_schema_template_bd.bd2,
             mso_schema_template_external_epg.epg1,
             mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
         ]
     }
 
@@ -1031,6 +1079,7 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_schema_template_bd.bd2,
             mso_schema_template_external_epg.epg1,
             mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
             mso_service_device_cluster.cluster,
         ]
     }
