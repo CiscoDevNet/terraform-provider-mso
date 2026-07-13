@@ -78,6 +78,26 @@ import (
 //   - Lifecycle: create, in-place update (attributes + pbr_destination),
 //     expand to three interfaces, shrink to two, ForceNew rename of the
 //     cluster, drift recovery after manual NDO-side deletion, and import.
+//   - Scenario sequence appended after activeStandby: each
+//     scenario provisions its own descriptively-named
+//     mso_service_device_cluster + cluster_site + service_device deploy on
+//     top of testAccMSOServiceDeviceClusterSiteSharedDeps and waits for
+//     the L4-L7 device (uni/tn-<tenant>/lDevVip-<name>) on APIC to confirm
+//     the deploy reached the fabric. A prelude cleanup step drops the
+//     classic cluster / cluster_ha / cluster_site so each scenario starts
+//     from an empty shared device_template. undeploy_on_destroy = true on
+//     the per-scenario deploy makes NDO undeploy before destroy, so the
+//     next scenario's apply (or the final destroy) cleans up automatically.
+//     An additional sharedDeps-only "cleanup between scenarios" step is
+//     inserted between every adjacent pair of scenarios so each scenario's
+//     destroy runs in isolation; without it, terraform's default
+//     parallelism can race the previous scenario's deploy_ndo destroy
+//     (which pre-checks DEPLOYMENT_SUCCESSFUL in undeployTemplate) against
+//     the next scenario's cluster create (patches template to EDIT_CONFIG),
+//     producing spurious pre-check failures on inter-scenario transitions.
+//     Current scenarios: layer3_firewall_bd_dual_vpc_pbr,
+//     load_balancer_l3out_vpc_port, layer2_activestandby_bd_pbr,
+//     layer1_activestandby_bd_pbr, layer1_activeactive_bd_pbr.
 //
 // What is NOT exercised (intentionally skipped — needs separate scenarios):
 //   - domain_type = "vmmDomain" plus vmm_domain_type and vm_information /
@@ -138,6 +158,11 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 			//   - uni/infra/funcprof/accbundle-test_vpc_for_device — the VPC
 			//     policy group referenced by the vpc fabric_to_device_connectivity
 			//     entry that the update step adds.
+			//   - uni/infra/funcprof/accbundle-test_vpc_for_device_2 — the
+			//     second VPC policy group referenced by the
+			//     layer3_firewall_bd_dual_vpc_pbr scenario at the tail of this
+			//     TestCase (paired with test_vpc_for_device on a single
+			//     interface to exercise two distinct VPC pathep names).
 			//   - uni/tn-<tenant>/BD-test_bd_1 and BD-test_bd_2 — the two
 			//     BDs owned by the aci_multi_site schema template deployed by
 			//     mso_schema_template_deploy_ndo.schema_deploy. bd1 backs the
@@ -159,6 +184,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 							"uni/phys-test_physical_domain_for_device_alt",
 							"uni/infra/funcprof/accbundle-test_dpc_for_device",
 							"uni/infra/funcprof/accbundle-test_vpc_for_device",
+							"uni/infra/funcprof/accbundle-test_vpc_for_device_2",
 							"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_1",
 							"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_2",
 							"uni/tn-"+msoTemplateTenantName+"/out-test_l3out_for_site_device/instP-test_extepg_for_site_device",
@@ -505,6 +531,392 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "interfaces.1.pbr_destinations.#", "2"),
 				),
 			},
+			// Verify that supplying pbr_destinations.mac in uppercase does not
+			// produce plan drift after apply. The provider schema wires a
+			// DiffSuppressFunc using strings.EqualFold on the mac attr; the
+			// SDK acceptance framework auto-re-plans after apply and errors
+			// on any non-empty plan, so this step's success is the semantic-
+			// equality assertion. The TestMatchResourceAttr check uses a
+			// case-insensitive regex to tolerate whatever case NDO echoed
+			// back into state.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Uppercase pbr_destinations.mac roundtrips without drift (DiffSuppressFunc)")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesUpperMac(testServiceDeviceClusterSiteClusterNameRenamed),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
+					resource.TestMatchResourceAttr(resourceName, "interfaces.0.pbr_destinations.0.mac", regexp.MustCompile(`(?i)^aa:bb:cc:dd:ee:ff$`)),
+				),
+			},
+			// Clean the shared device template before the scenario sequence so
+			// each per-scenario step below starts from an empty template.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Clean shared device template before scenarios")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteSharedDeps(),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Scenario deploy - layer3 firewall, dual BD-bound VPC interfaces, multi PBR destinations")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigLayer3FwBdDualVpcPbr(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
+						"name",
+						testServiceDeviceClusterSiteL3FwBdDualVpcPbrClusterName,
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
+						"domain_type", "physicalDomain",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
+						"domain_name", "test_physical_domain_for_device",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
+						"interfaces.#", "2",
+					),
+					// bd-int-rich: two vpc fabric paths and two pbr_destinations,
+					// tagged "lala" and "qqq".
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-rich"},
+						map[string]string{
+							"vlan":                                      "240",
+							"fabric_to_device_connectivity.#":           "2",
+							"fabric_to_device_connectivity.0.pod_id":    "1",
+							"fabric_to_device_connectivity.0.node_id.#": "2",
+							"fabric_to_device_connectivity.0.node_id.0": "101",
+							"fabric_to_device_connectivity.0.node_id.1": "102",
+							"fabric_to_device_connectivity.0.path":      "test_vpc_for_device",
+							"fabric_to_device_connectivity.0.port_type": "vpc",
+							"fabric_to_device_connectivity.1.pod_id":    "1",
+							"fabric_to_device_connectivity.1.node_id.#": "2",
+							"fabric_to_device_connectivity.1.node_id.0": "101",
+							"fabric_to_device_connectivity.1.node_id.1": "102",
+							"fabric_to_device_connectivity.1.path":      "test_vpc_for_device_2",
+							"fabric_to_device_connectivity.1.port_type": "vpc",
+							"pbr_destinations.#":                        "2",
+						},
+					),
+					// bd-int-bare: bare, single vpc fabric path, no PBR.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-bare"},
+						map[string]string{
+							"vlan":                                      "245",
+							"fabric_to_device_connectivity.#":           "1",
+							"fabric_to_device_connectivity.0.pod_id":    "1",
+							"fabric_to_device_connectivity.0.node_id.#": "2",
+							"fabric_to_device_connectivity.0.node_id.0": "101",
+							"fabric_to_device_connectivity.0.node_id.1": "102",
+							"fabric_to_device_connectivity.0.path":      "test_vpc_for_device_2",
+							"fabric_to_device_connectivity.0.port_type": "vpc",
+							"pbr_destinations.#":                        "0",
+						},
+					),
+					// Confirm the per-scenario deploy actually pushed the
+					// L4-L7 device to APIC (vnsLDevVip MO). Named after the
+					// cluster's `name` attribute, under the shared tenant.
+					func(s *terraform.State) error {
+						return waitForAPICMOs(
+							2*time.Minute,
+							"uni/tn-"+msoTemplateTenantName+
+								"/lDevVip-"+testServiceDeviceClusterSiteL3FwBdDualVpcPbrClusterName,
+						)
+					},
+				),
+			},
+			// Explicit sharedDeps-only step between scenarios so the previous
+			// scenario's destroy runs in isolation. Without this, terraform's
+			// default parallelism can race the previous scenario's deploy_ndo
+			// destroy (calls undeployTemplate, which pre-checks that the
+			// template is in DEPLOYMENT_SUCCESSFUL status) against the next
+			// scenario's cluster create (patches the template to EDIT_CONFIG),
+			// producing spurious "template is not in DEPLOYMENT_SUCCESSFUL
+			// status (current: EDIT_CONFIG)" errors on inter-scenario
+			// transitions.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Cleanup between scenarios")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteSharedDeps(),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Scenario deploy - load balancer, L3out interfaces on mixed vpc/port paths")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigLbL3outVpcPort(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
+						"name",
+						testServiceDeviceClusterSiteLbL3outVpcPortClusterName,
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
+						"domain_type", "physicalDomain",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
+						"domain_name", "test_physical_domain_for_device",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
+						"interfaces.#", "2",
+					),
+					// l3out-rich: single vpc fabric path, no PBR, no vlan (l3out).
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
+						"interfaces",
+						map[string]string{"name": "l3out-rich"},
+						map[string]string{
+							"fabric_to_device_connectivity.#":           "1",
+							"fabric_to_device_connectivity.0.pod_id":    "1",
+							"fabric_to_device_connectivity.0.node_id.#": "2",
+							"fabric_to_device_connectivity.0.node_id.0": "101",
+							"fabric_to_device_connectivity.0.node_id.1": "102",
+							"fabric_to_device_connectivity.0.path":      "test_vpc_for_device_2",
+							"fabric_to_device_connectivity.0.port_type": "vpc",
+							"pbr_destinations.#":                        "0",
+						},
+					),
+					// l3out-bare: single port fabric path, no PBR, no vlan (l3out).
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
+						"interfaces",
+						map[string]string{"name": "l3out-bare"},
+						map[string]string{
+							"fabric_to_device_connectivity.#":           "1",
+							"fabric_to_device_connectivity.0.pod_id":    "1",
+							"fabric_to_device_connectivity.0.node_id.#": "1",
+							"fabric_to_device_connectivity.0.node_id.0": "101",
+							"fabric_to_device_connectivity.0.path":      "eth1/20",
+							"fabric_to_device_connectivity.0.port_type": "port",
+							"pbr_destinations.#":                        "0",
+						},
+					),
+					func(s *terraform.State) error {
+						return waitForAPICMOs(
+							2*time.Minute,
+							"uni/tn-"+msoTemplateTenantName+
+								"/lDevVip-"+testServiceDeviceClusterSiteLbL3outVpcPortClusterName,
+						)
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Cleanup between scenarios")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteSharedDeps(),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Scenario deploy - layer2 other in activeStandby, BD-bound interfaces with tag-linked PBR")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigL2AsBdPbr(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"name",
+						testServiceDeviceClusterSiteL2AsBdPbrClusterName,
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"high_availability_mode", "activeStandby",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"domain_type", "physicalDomain",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"domain_name", "test_physical_domain_for_device",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"interfaces.#", "2",
+					),
+					// bd-int-bare: mixed port+vpc fabric paths, both tag-linked
+					// to the two pbr_destinations.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-bare"},
+						map[string]string{
+							"vlan":                            "225",
+							"fabric_to_device_connectivity.#": "2",
+							"pbr_destinations.#":              "2",
+						},
+					),
+					// bd-int-rich: rich cluster shape, two port fabric paths
+					// (eth1/24 + eth1/25), both tag-linked to pbr_destinations
+					// with per-entry weight.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-rich"},
+						map[string]string{
+							"vlan":                            "224",
+							"fabric_to_device_connectivity.#": "2",
+							"pbr_destinations.#":              "2",
+						},
+					),
+					func(s *terraform.State) error {
+						return waitForAPICMOs(
+							2*time.Minute,
+							"uni/tn-"+msoTemplateTenantName+
+								"/lDevVip-"+testServiceDeviceClusterSiteL2AsBdPbrClusterName,
+						)
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Cleanup between scenarios")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteSharedDeps(),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Scenario deploy - layer1 other in activeStandby, BD-bound interfaces with tag-linked PBR")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigL1AsBdPbr(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"name",
+						testServiceDeviceClusterSiteL1AsBdPbrClusterName,
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"high_availability_mode", "activeStandby",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"vlan", "222",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"domain_type", "physicalDomain",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"domain_name", "test_physical_domain_for_device",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"interfaces.#", "2",
+					),
+					// bd-int-bare: mixed port+vpc fabric paths, both tag-linked
+					// to the two pbr_destinations.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-bare"},
+						map[string]string{
+							"fabric_to_device_connectivity.#": "2",
+							"pbr_destinations.#":              "2",
+						},
+					),
+					// bd-int-rich: rich cluster shape, two port fabric paths
+					// (eth1/26 + eth1/27), both tag-linked to pbr_destinations
+					// with per-entry weight.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-rich"},
+						map[string]string{
+							"fabric_to_device_connectivity.#": "2",
+							"pbr_destinations.#":              "2",
+						},
+					),
+					func(s *terraform.State) error {
+						return waitForAPICMOs(
+							2*time.Minute,
+							"uni/tn-"+msoTemplateTenantName+
+								"/lDevVip-"+testServiceDeviceClusterSiteL1AsBdPbrClusterName,
+						)
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Cleanup between scenarios")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteSharedDeps(),
+			},
+			// Scenario 5 — layer1 activeActive with tag-paired multi-path
+			// and multi-PBR. One structural deviation from the source
+			// config: bd-int-bare's second fabric path is a plain port
+			// instead of the original vpc entry. NDO accepts vpc-in-
+			// L1-activeActive at site-PATCH time but hard-fails the
+			// subsequent deploy with the generic "Internal error execution
+			// aborted", so scenario 5 sticks to port paths on both
+			// interfaces. See the function-level comment on
+			// testAccMSOServiceDeviceClusterSiteConfigL1AaBdPbr for
+			// the full bisection history and the NDO-side validation
+			// dependencies (weight↔advancedTrackingOptions↔IPSLA,
+			// mac↔configStaticMac) that this scenario also exercises.
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Scenario deploy - layer1 other in activeActive, BD-bound interfaces with tag-linked PBR and per-entry vlan")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteConfigL1AaBdPbr(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
+						"name",
+						testServiceDeviceClusterSiteL1AaBdPbrClusterName,
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
+						"high_availability_mode", "activeActive",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
+						"interfaces.#", "2",
+					),
+					// bd-int-bare: two port paths, per-tag vlans (229, 249),
+					// tag-linked to two pbr_destinations. Interface-scoped domain.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-bare"},
+						map[string]string{
+							"domain_name":                     "test_physical_domain_for_device",
+							"fabric_to_device_connectivity.#": "2",
+							"pbr_destinations.#":              "2",
+						},
+					),
+					// bd-int-rich: two port entries with per-tag vlans (227,
+					// 228), tag-linked to two pbr_destinations with weights.
+					CustomTestCheckTypeSetElemAttrsByKeys(
+						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
+						"interfaces",
+						map[string]string{"name": "bd-int-rich"},
+						map[string]string{
+							"domain_name":                     "test_physical_domain_for_device",
+							"fabric_to_device_connectivity.#": "2",
+							"pbr_destinations.#":              "2",
+						},
+					),
+					func(s *terraform.State) error {
+						return waitForAPICMOs(
+							2*time.Minute,
+							"uni/tn-"+msoTemplateTenantName+
+								"/lDevVip-"+testServiceDeviceClusterSiteL1AaBdPbrClusterName,
+						)
+					},
+				),
+			},
 		},
 	})
 }
@@ -706,6 +1118,21 @@ type siteClusterInterface struct {
 	// (cluster_ha) for activeActive / activeStandby site tests where the
 	// cluster has no other signal that would auto-derive redirect.
 	WithRedirect bool
+	// PreferredGroup, RewriteSourceMAC and PodAwareRedirection map to the
+	// eponymous bool attrs on the cluster interface_properties block.
+	// Setting rewrite_source_mac, pod_aware_redirection or a
+	// load_balance_hashing value auto-upgrades `redirect` to true per the
+	// resource schema comment, so WithRedirect is typically unnecessary
+	// when any of these are set.
+	PreferredGroup      bool
+	RewriteSourceMAC    bool
+	PodAwareRedirection bool
+	// WithIPSLAL2 is the layer1/layer2 counterpart to WithIPSLA: it emits
+	// ipsla_monitoring_policy_uuid pointing at mso_tenant_policies_ipsla_monitoring_policy.ipsla_l2ping
+	// (sla_type = "l2ping") instead of ipsla1 ("icmp"). NDO rejects icmp
+	// SLA policies attached to layer1/layer2 devices. Mutually exclusive
+	// with WithIPSLA; setting both is a caller bug (only one will emit).
+	WithIPSLAL2 bool
 }
 
 // renderClusterInterfaceProperties returns the interface_properties HCL
@@ -726,6 +1153,8 @@ func renderClusterInterfaceProperties(interfaces []siteClusterInterface) string 
 		}
 		if iface.WithIPSLA {
 			fmt.Fprintf(&b, "            ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid\n")
+		} else if iface.WithIPSLAL2 {
+			fmt.Fprintf(&b, "            ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.ipsla_l2ping.uuid\n")
 		}
 		if iface.LoadBalanceHashing != "" {
 			fmt.Fprintf(&b, "            load_balance_hashing = %q\n", iface.LoadBalanceHashing)
@@ -753,6 +1182,15 @@ func renderClusterInterfaceProperties(interfaces []siteClusterInterface) string 
 		}
 		if iface.WithRedirect {
 			fmt.Fprintf(&b, "            redirect = true\n")
+		}
+		if iface.PreferredGroup {
+			fmt.Fprintf(&b, "            preferred_group = true\n")
+		}
+		if iface.RewriteSourceMAC {
+			fmt.Fprintf(&b, "            rewrite_source_mac = true\n")
+		}
+		if iface.PodAwareRedirection {
+			fmt.Fprintf(&b, "            pod_aware_redirection = true\n")
 		}
 		fmt.Fprintf(&b, "        }\n")
 	}
@@ -801,34 +1239,17 @@ var siteClusterHaInterfaces = []siteClusterInterface{
 	{Name: "External", WithRedirect: true},
 }
 
-// testAccMSOServiceDeviceClusterSiteDependencies is the self-contained
-// prerequisite stack for the site-bucket tests.
+// testAccMSOServiceDeviceClusterSiteSharedDeps renders every prerequisite
+// resource needed by the site-bucket tests EXCEPT the two
+// mso_service_device_cluster resources. Split out so both the legacy
+// dependencies wrapper (which appends cluster + cluster_ha) and the
+// scenario test sequence at the tail of TestAccMSOServiceDeviceClusterSiteResource
+// (which builds its own scenario-specific cluster + cluster_site + deploy on
+// top of these shared deps) can call it.
 //
-// The stack provisioned here covers a physicalDomain site with both
-// bd_uuid- and external_epg_uuid-bound cluster interfaces:
-//   - tenant (via testAccTenantConfig)
-//   - fabric_policy_template + vlan_pool + physical_domain
-//   - tenant_template + ipsla monitoring policy
-//   - schema with vrf, bd1, bd2, l3out and external_epg (the L3Out and
-//     extEPG share the template VRF; any siteClusterInterface entry
-//     flagged with WithExternalEPG binds to extEPG.uuid instead of
-//     bd1.uuid)
-//   - service_device template, schema_site, four sequential deploys
-//     (fabric_policy, fabric_resource, tenant, and the aci_multi_site
-//     schema template that owns bd1/bd2/l3out1/extEPG)
-//   - mso_service_device_cluster.cluster with interface_properties built
-//     from the interfaces []siteClusterInterface argument; each entry
-//     binds to bd1.uuid by default (or to extEPG.uuid when
-//     WithExternalEPG is set) and any opt-in PBR/IPSLA fields are
-//     emitted unconditionally.
-//
-// Every NDO-named object uses a "_site" suffix to avoid colliding with the
-// cluster acceptance test, which provisions its own service-device template
-// against the same shared tenant.
-func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfaces []siteClusterInterface) string {
-	interfaceAttributes := renderClusterInterfaceProperties(interfaces)
-	haInterfaceAttributes := renderClusterInterfaceProperties(siteClusterHaInterfaces)
-
+// See testAccMSOServiceDeviceClusterSiteDependencies for the composition of
+// this stack.
+func testAccMSOServiceDeviceClusterSiteSharedDeps() string {
 	return fmt.Sprintf(`%[1]s
     resource "mso_template" "fabric_policy_template" {
         template_name = "test_fabric_policy_for_site_device"
@@ -922,6 +1343,24 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         sla_type    = "icmp"
     }
 
+    # Second IPSLA policy for L1/L2 device scenarios. NDO requires
+    # sla_type = "l2ping" on IPSLA policies attached to layer1 / layer2
+    # devices, so the layer2 / layer1 scenarios reference this policy
+    # via WithIPSLAL2 on siteClusterInterface. Kept alongside ipsla1
+    # (icmp) so layer3 scenarios can continue to use the L3 flavour.
+    resource "mso_tenant_policies_ipsla_monitoring_policy" "ipsla_l2ping" {
+        template_id = mso_template.tenant_template.id
+        name        = "test_ipsla_l2_for_site_device"
+        sla_type    = "l2ping"
+        # Serialize deletion of the two entries in the template's
+        # ipslaMonitoringPolicies array: destroy this index-1 entry before
+        # the primary index-0 entry (same fix used for physical_domain_alt
+        # and vpc_interface_2). Without this, terraform's parallel destroys
+        # can send a remove PATCH for index 1 after index 0 has already
+        # shifted the array, producing "Unable to access invalid index: 1".
+        depends_on = [mso_tenant_policies_ipsla_monitoring_policy.ipsla1]
+    }
+
     resource "mso_fabric_policies_vlan_pool" "vlan_pool" {
         template_id = mso_template.fabric_policy_template.id
         name        = "test_vlan_pool_for_device"
@@ -981,6 +1420,25 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         interface_policy_group_uuid = mso_fabric_policies_interface_setting.portchannel_setting.uuid
     }
 
+    # Second VPC policy group on the fabric_resource template. Scenarios
+    # (e.g. the layer3_firewall_bd_dual_vpc_pbr test at the tail of
+    # TestAccMSOServiceDeviceClusterSiteResource) need two distinct VPC
+    # policy groups so a single interface can pair two vpc-type
+    # fabric_to_device_connectivity entries with different pathep names.
+    resource "mso_fabric_resource_policies_virtual_port_channel_interface" "vpc_interface_2" {
+        template_id                 = mso_template.fabric_resource_template.id
+        name                        = "test_vpc_for_device_2"
+        node_1                      = "101"
+        node_2                      = "102"
+        node_1_interfaces           = ["1/18"]
+        node_2_interfaces           = ["1/18"]
+        interface_policy_group_uuid = mso_fabric_policies_interface_setting.portchannel_setting.uuid
+        # Serialize deletion of the two entries in the template's
+        # virtualPortChannels array: destroy this index-1 entry before the
+        # primary index-0 entry (same fix used for physical_domain_alt).
+        depends_on = [mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface]
+    }
+
     resource "mso_schema_site" "schema_site" {
         schema_id           = mso_schema.schema_blocks.id
         template_name       = mso_schema_template_bd.bd1.template_name
@@ -1008,6 +1466,7 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_schema_template_deploy_ndo.fabric_policy_deploy,
             mso_fabric_resource_policies_port_channel_interface.pc_interface,
             mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface,
+            mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface_2,
         ]
     }
 
@@ -1016,7 +1475,10 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
         template_type       = "tenant"
         force_apply         = ""
         undeploy_on_destroy = true
-        depends_on          = [mso_schema_template_deploy_ndo.fabric_resource_deploy]
+        depends_on          = [
+            mso_schema_template_deploy_ndo.fabric_resource_deploy,
+            mso_tenant_policies_ipsla_monitoring_policy.ipsla_l2ping,
+        ]
     }
 
     # Deploy the schema template that owns bd1/bd2/l3out1/extEPG so the
@@ -1043,13 +1505,44 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_schema_template_deploy_ndo.tenant_template_deploy,
         ]
     }
+`, testAccTenantConfig(), msoTemplateSiteName1, msoTemplateTenantName)
+}
 
+// testAccMSOServiceDeviceClusterSiteDependencies is the self-contained
+// prerequisite stack for the site-bucket tests.
+//
+// The stack provisioned here covers a physicalDomain site with both
+// bd_uuid- and external_epg_uuid-bound cluster interfaces:
+//   - tenant (via testAccTenantConfig)
+//   - fabric_policy_template + vlan_pool + physical_domain
+//   - tenant_template + ipsla monitoring policy
+//   - schema with vrf, bd1, bd2, l3out and external_epg (the L3Out and
+//     extEPG share the template VRF; any siteClusterInterface entry
+//     flagged with WithExternalEPG binds to extEPG.uuid instead of
+//     bd1.uuid)
+//   - service_device template, schema_site, four sequential deploys
+//     (fabric_policy, fabric_resource, tenant, and the aci_multi_site
+//     schema template that owns bd1/bd2/l3out1/extEPG)
+//   - mso_service_device_cluster.cluster with interface_properties built
+//     from the interfaces []siteClusterInterface argument; each entry
+//     binds to bd1.uuid by default (or to extEPG.uuid when
+//     WithExternalEPG is set) and any opt-in PBR/IPSLA fields are
+//     emitted unconditionally.
+//
+// Every NDO-named object uses a "_site" suffix to avoid colliding with the
+// cluster acceptance test, which provisions its own service-device template
+// against the same shared tenant.
+func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfaces []siteClusterInterface) string {
+	interfaceAttributes := renderClusterInterfaceProperties(interfaces)
+	haInterfaceAttributes := renderClusterInterfaceProperties(siteClusterHaInterfaces)
+
+	return fmt.Sprintf(`%[1]s
     resource "mso_service_device_cluster" "cluster" {
         template_id = mso_template.device_template.id
-        name        = "%[4]s"
+        name        = "%[2]s"
         device_mode = "layer3"
         device_type = "firewall"
-%[5]s
+%[3]s
         depends_on = [
             mso_schema_template_bd.bd2,
             mso_schema_template_external_epg.epg1,
@@ -1071,10 +1564,10 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
     # references the lost cluster by name.
     resource "mso_service_device_cluster" "cluster_ha" {
         template_id = mso_template.device_template.id
-        name        = "%[6]s"
+        name        = "%[4]s"
         device_mode = "layer1"
         device_type = "other"
-%[7]s
+%[5]s
         depends_on = [
             mso_schema_template_bd.bd2,
             mso_schema_template_external_epg.epg1,
@@ -1083,7 +1576,7 @@ func testAccMSOServiceDeviceClusterSiteDependencies(clusterName string, interfac
             mso_service_device_cluster.cluster,
         ]
     }
-`, testAccTenantConfig(), msoTemplateSiteName1, msoTemplateTenantName,
+`, testAccMSOServiceDeviceClusterSiteSharedDeps(),
 		clusterName, interfaceAttributes,
 		testServiceDeviceClusterSiteHaClusterName, haInterfaceAttributes,
 	)
@@ -1655,6 +2148,641 @@ func testAccMSOServiceDeviceClusterSiteConfigActiveStandby(clusterName string) s
         }
     }
 `, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{siteClusterRichInterface1}), msoTemplateSiteName1)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesUpperMac mirrors
+// testAccMSOServiceDeviceClusterSiteConfigTwoInterfaces but writes the
+// pbr_destination MAC in uppercase. The pbr_destinations.mac schema has
+// a DiffSuppressFunc using strings.EqualFold, so a case-only difference
+// between the user-supplied value and whatever NDO echoes back must not
+// produce a diff. The step's implicit post-apply re-plan (SDK acceptance
+// framework default) enforces zero drift, which is the semantic-equality
+// assertion.
+func testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesUpperMac(clusterName string) string {
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster_site" "cluster_site" {
+        template_id = mso_template.device_template.id
+        site_id     = data.mso_site.%[2]s.id
+        name        = mso_service_device_cluster.cluster.name
+        domain_type = "physicalDomain"
+        domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "interface1"
+            vlan = 215
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/10"
+                port_type = "port"
+            }
+            pbr_destinations {
+                ip                     = "10.10.10.10"
+                mac                    = "AA:BB:CC:DD:EE:FF"
+                pod_id                 = "1"
+                additional_tracking_ip = "10.10.10.11"
+                weight                 = 5
+                tag                    = "10"
+            }
+        }
+        interfaces {
+            name = "interface3"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/12"
+                port_type = "port"
+            }
+        }
+    }
+`, testAccMSOServiceDeviceClusterSiteDependencies(clusterName, []siteClusterInterface{
+		siteClusterRichInterface1,
+		{Name: "interface3", WithExternalEPG: true},
+	}), msoTemplateSiteName1)
+}
+
+const testServiceDeviceClusterSiteL3FwBdDualVpcPbrClusterName = "test_device_cluster_l3fw_bd_dual_vpc_pbr"
+const testServiceDeviceClusterSiteLbL3outVpcPortClusterName = "test_device_cluster_lb_l3out_vpc_port"
+const testServiceDeviceClusterSiteL2AsBdPbrClusterName = "test_device_cluster_l2_as_bd_pbr"
+const testServiceDeviceClusterSiteL1AsBdPbrClusterName = "test_device_cluster_l1_as_bd_pbr"
+const testServiceDeviceClusterSiteL1AaBdPbrClusterName = "test_device_cluster_l1_aa_bd_pbr"
+
+// testAccMSOServiceDeviceClusterSiteConfigLayer3FwBdDualVpcPbr covers a
+// layer-3 firewall with two BD-bound interfaces: bd-int-rich carries the
+// full IPSLA / thresholds / PBR-toggles shape plus two vpc fabric paths
+// and two pbr_destinations; bd-int-bare is a plain single-vpc interface.
+// Own deploy_ndo pushes the device to APIC and undeploys on destroy.
+func testAccMSOServiceDeviceClusterSiteConfigLayer3FwBdDualVpcPbr() string {
+	interfaceAttributes := renderClusterInterfaceProperties([]siteClusterInterface{
+		{
+			Name:                "bd-int-rich",
+			WithIPSLA:           true,
+			LoadBalanceHashing:  "sourceIP",
+			MinThreshold:        10,
+			MaxThreshold:        90,
+			ThresholdDownAction: "deny",
+			ConfigStaticMAC:     true,
+			IsBackupRedirectIP:  true,
+			ResilientHashing:    true,
+			TagBasedSorting:     true,
+			PreferredGroup:      true,
+			RewriteSourceMAC:    true,
+			PodAwareRedirection: true,
+		},
+		{Name: "bd-int-bare"},
+	})
+
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster" "layer3_firewall_bd_dual_vpc_pbr" {
+        template_id = mso_template.device_template.id
+        name        = "%[3]s"
+        device_mode = "layer3"
+        device_type = "firewall"
+%[4]s
+        depends_on = [
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
+        ]
+    }
+
+    resource "mso_service_device_cluster_site" "layer3_firewall_bd_dual_vpc_pbr" {
+        template_id = mso_template.device_template.id
+        site_id     = data.mso_site.%[2]s.id
+        name        = mso_service_device_cluster.layer3_firewall_bd_dual_vpc_pbr.name
+        domain_type = "physicalDomain"
+        domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "bd-int-rich"
+            vlan = 240
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101", "102"]
+                path      = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface.name
+                port_type = "vpc"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101", "102"]
+                path      = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface_2.name
+                port_type = "vpc"
+            }
+            pbr_destinations {
+                ip     = "10.10.10.10"
+                mac    = "aa:bb:cc:dd:ee:aa"
+                pod_id = "2"
+                weight = 3
+                tag    = "lala"
+            }
+            pbr_destinations {
+                ip  = "12.12.12.12"
+                mac = "aa:bb:cc:dd:ee:af"
+                tag = "qqq"
+            }
+        }
+        interfaces {
+            name = "bd-int-bare"
+            vlan = 245
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101", "102"]
+                path      = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface_2.name
+                port_type = "vpc"
+            }
+        }
+    }
+
+    resource "mso_schema_template_deploy_ndo" "layer3_firewall_bd_dual_vpc_pbr_deploy" {
+        template_id         = mso_template.device_template.id
+        template_type       = "service_device"
+        force_apply         = ""
+        undeploy_on_destroy = true
+        depends_on = [
+            mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr,
+        ]
+    }
+`, testAccMSOServiceDeviceClusterSiteSharedDeps(), msoTemplateSiteName1,
+		testServiceDeviceClusterSiteL3FwBdDualVpcPbrClusterName, interfaceAttributes,
+	)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigLbL3outVpcPort covers a
+// layer-3 load balancer whose two interfaces are both bound to the
+// external EPG (l3out). l3out-rich carries preferred_group and a vpc
+// fabric path; l3out-bare is bare with a single port fabric path. l3out
+// interfaces don't take a site-bucket vlan. No PBR/IPSLA.
+func testAccMSOServiceDeviceClusterSiteConfigLbL3outVpcPort() string {
+	interfaceAttributes := renderClusterInterfaceProperties([]siteClusterInterface{
+		{
+			Name:            "l3out-rich",
+			WithExternalEPG: true,
+			PreferredGroup:  true,
+		},
+		{
+			Name:            "l3out-bare",
+			WithExternalEPG: true,
+		},
+	})
+
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster" "load_balancer_l3out_vpc_port" {
+        template_id = mso_template.device_template.id
+        name        = "%[3]s"
+        device_mode = "layer3"
+        device_type = "load_balancer"
+%[4]s
+        depends_on = [
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
+        ]
+    }
+
+    resource "mso_service_device_cluster_site" "load_balancer_l3out_vpc_port" {
+        template_id = mso_template.device_template.id
+        site_id     = data.mso_site.%[2]s.id
+        name        = mso_service_device_cluster.load_balancer_l3out_vpc_port.name
+        domain_type = "physicalDomain"
+        domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "l3out-rich"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101", "102"]
+                path      = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface_2.name
+                port_type = "vpc"
+            }
+        }
+        interfaces {
+            name = "l3out-bare"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/20"
+                port_type = "port"
+            }
+        }
+    }
+
+    resource "mso_schema_template_deploy_ndo" "load_balancer_l3out_vpc_port_deploy" {
+        template_id         = mso_template.device_template.id
+        template_type       = "service_device"
+        force_apply         = ""
+        undeploy_on_destroy = true
+        depends_on = [
+            mso_service_device_cluster_site.load_balancer_l3out_vpc_port,
+        ]
+    }
+`, testAccMSOServiceDeviceClusterSiteSharedDeps(), msoTemplateSiteName1,
+		testServiceDeviceClusterSiteLbL3outVpcPortClusterName, interfaceAttributes,
+	)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigL2AsBdPbr covers a layer-2
+// "other" device in activeStandby HA mode with two BD-bound interfaces.
+// bd-int-bare is bare aside from an explicit redirect=true (required for
+// NDO to accept the site-bucket pbr_destinations, and not auto-upgraded
+// since no IPSLA / load_balance_hashing / rewrite_source_mac attrs are
+// set). bd-int-rich carries the IPSLA (l2ping) / load_balance_hashing /
+// PBR-toggles shape. thresholds (min/max/down_action) and
+// is_backup_redirect_ip are NOT set: NDO rejects both on L1/L2 devices in
+// activeStandby mode as "Threshold for Redirect Destination is enabled.
+// Not supported in Layer 1 or Layer 2 device mode with HA Mode
+// Active/Standby". Each interface has two tag-linked
+// fabric_to_device_connectivity entries and two tag-linked
+// pbr_destinations (tags "primary" / "secondary"), exercising the
+// activeStandby tag-pairing convention (same pattern as the existing
+// activeStandby step, but with layer2 + bd_uuid instead of layer1 HA
+// cluster).
+func testAccMSOServiceDeviceClusterSiteConfigL2AsBdPbr() string {
+	interfaceAttributes := renderClusterInterfaceProperties([]siteClusterInterface{
+		{
+			Name:         "bd-int-bare",
+			WithRedirect: true,
+		},
+		{
+			Name:               "bd-int-rich",
+			WithIPSLAL2:        true,
+			LoadBalanceHashing: "sourceIP",
+			ConfigStaticMAC:    true,
+			TagBasedSorting:    true,
+			PreferredGroup:     true,
+			RewriteSourceMAC:   true,
+		},
+	})
+
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster" "layer2_activestandby_bd_pbr" {
+        template_id = mso_template.device_template.id
+        name        = "%[3]s"
+        device_mode = "layer2"
+        device_type = "other"
+%[4]s
+        depends_on = [
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
+        ]
+    }
+
+    resource "mso_service_device_cluster_site" "layer2_activestandby_bd_pbr" {
+        template_id            = mso_template.device_template.id
+        site_id                = data.mso_site.%[2]s.id
+        name                   = mso_service_device_cluster.layer2_activestandby_bd_pbr.name
+        high_availability_mode = "activeStandby"
+        domain_type            = "physicalDomain"
+        domain_name            = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "bd-int-bare"
+            vlan = 225
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/24"
+                port_type = "port"
+                tag       = "primary"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101", "102"]
+                path      = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface.name
+                port_type = "vpc"
+                tag       = "secondary"
+            }
+            pbr_destinations {
+                mac = "aa:bb:aa:bb:aa:cc"
+                tag = "primary"
+            }
+            pbr_destinations {
+                mac = "dd:aa:aa:aa:aa:aa"
+                tag = "secondary"
+            }
+        }
+        interfaces {
+            name = "bd-int-rich"
+            vlan = 224
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/24"
+                port_type = "port"
+                tag       = "primary"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/25"
+                port_type = "port"
+                tag       = "secondary"
+            }
+            pbr_destinations {
+                mac    = "aa:bb:cc:dd:ee:aa"
+                weight = 3
+                tag    = "primary"
+            }
+            pbr_destinations {
+                mac    = "aa:bb:cc:dd:ee:a1"
+                weight = 2
+                tag    = "secondary"
+            }
+        }
+    }
+
+    resource "mso_schema_template_deploy_ndo" "layer2_activestandby_bd_pbr_deploy" {
+        template_id         = mso_template.device_template.id
+        template_type       = "service_device"
+        force_apply         = ""
+        undeploy_on_destroy = true
+        depends_on = [
+            mso_service_device_cluster_site.layer2_activestandby_bd_pbr,
+        ]
+    }
+`, testAccMSOServiceDeviceClusterSiteSharedDeps(), msoTemplateSiteName1,
+		testServiceDeviceClusterSiteL2AsBdPbrClusterName, interfaceAttributes,
+	)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigL1AsBdPbr covers a layer-1
+// "other" device in activeStandby HA mode with two BD-bound interfaces.
+// bd-int-bare carries only the required explicit redirect=true (L1
+// activeStandby rejects the auto-derivation shim, so redirect must be
+// set on the cluster interface for NDO to accept the site-bucket
+// pbr_destinations). bd-int-rich adds the full IPSLA / PBR-toggles shape.
+// Domain and vlan are at device scope (top-level domain_type/domain_name/
+// vlan on the cluster_site); each interface carries two tag-linked
+// fabric_to_device_connectivity entries and two tag-linked
+// pbr_destinations, matching the activeStandby tag-pairing convention.
+func testAccMSOServiceDeviceClusterSiteConfigL1AsBdPbr() string {
+	interfaceAttributes := renderClusterInterfaceProperties([]siteClusterInterface{
+		{
+			Name:         "bd-int-bare",
+			WithRedirect: true,
+		},
+		{
+			Name:               "bd-int-rich",
+			WithRedirect:       true,
+			WithIPSLAL2:        true,
+			LoadBalanceHashing: "sourceIP",
+			ConfigStaticMAC:    true,
+			TagBasedSorting:    true,
+			PreferredGroup:     true,
+			RewriteSourceMAC:   true,
+		},
+	})
+
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster" "layer1_activestandby_bd_pbr" {
+        template_id = mso_template.device_template.id
+        name        = "%[3]s"
+        device_mode = "layer1"
+        device_type = "other"
+%[4]s
+        depends_on = [
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
+        ]
+    }
+
+    resource "mso_service_device_cluster_site" "layer1_activestandby_bd_pbr" {
+        template_id            = mso_template.device_template.id
+        site_id                = data.mso_site.%[2]s.id
+        name                   = mso_service_device_cluster.layer1_activestandby_bd_pbr.name
+        high_availability_mode = "activeStandby"
+        vlan                   = 222
+        domain_type            = "physicalDomain"
+        domain_name            = mso_fabric_policies_physical_domain.physical_domain.name
+        interfaces {
+            name = "bd-int-bare"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/34"
+                port_type = "port"
+                tag       = "primary"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101", "102"]
+                path      = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_interface.name
+                port_type = "vpc"
+                tag       = "secondary"
+            }
+            pbr_destinations {
+                mac = "aa:bb:aa:bb:aa:cc"
+                tag = "primary"
+            }
+            pbr_destinations {
+                mac = "dd:aa:aa:aa:aa:aa"
+                tag = "secondary"
+            }
+        }
+        interfaces {
+            name = "bd-int-rich"
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/26"
+                port_type = "port"
+                tag       = "primary"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/27"
+                port_type = "port"
+                tag       = "secondary"
+            }
+            pbr_destinations {
+                mac    = "aa:bb:cc:dd:ee:aa"
+                weight = 3
+                tag    = "primary"
+            }
+            pbr_destinations {
+                mac    = "aa:bb:cc:dd:ee:a1"
+                weight = 2
+                tag    = "secondary"
+            }
+        }
+    }
+
+    resource "mso_schema_template_deploy_ndo" "layer1_activestandby_bd_pbr_deploy" {
+        template_id         = mso_template.device_template.id
+        template_type       = "service_device"
+        force_apply         = ""
+        undeploy_on_destroy = true
+        depends_on = [
+            mso_service_device_cluster_site.layer1_activestandby_bd_pbr,
+        ]
+    }
+`, testAccMSOServiceDeviceClusterSiteSharedDeps(), msoTemplateSiteName1,
+		testServiceDeviceClusterSiteL1AsBdPbrClusterName, interfaceAttributes,
+	)
+}
+
+// testAccMSOServiceDeviceClusterSiteConfigL1AaBdPbr covers a layer-1
+// "other" device in activeActive HA mode with two BD-bound interfaces.
+// activeActive moves domain to interface scope (no top-level domain
+// attrs on the cluster_site) and pushes vlan down to each
+// fabric_to_device_connectivity entry (per-tag vlan).
+//
+// Interface order matches the source config: the rich MAX interface
+// (IPSLA + advanced attrs + weighted PBR) is index 0, the bare MIN
+// interface (redirect only, two port paths) is index 1. Provider derives
+// the device-level isPhysicalDomain from interfaces[0] in activeActive
+// HA mode, so order affects the emitted payload even when both
+// interfaces resolve to the same physical domain.
+//
+// Deviation from the source config: bd-int-bare's second fabric path
+// was originally a vpc entry (channel ogorczow-others-1). NDO accepts
+// the vpc-in-L1-activeActive combination at site-bucket PATCH
+// time (template version is stored, config is valid to server-side
+// validation) but hard-fails the subsequent deploy task with the
+// generic "Internal error execution aborted" — no more specific reason
+// is exposed on the /versions/status or /deployments/templates/<id>/status
+// endpoints. Bisection confirmed the vpc entry is the sole trigger:
+// reducing bd-int-bare's second path from vpc to a plain port (eth1/35)
+// is the only change that flips the deploy from failing to succeeding,
+// with the entire rest of the payload (rich attrs on bd-int-rich,
+// per-tag vlans, multi-path per interface, tag-paired multi-PBR,
+// weighted PBR) left intact. This is an NDO-side limitation on L1
+// activeActive devices, not a provider or test bug, so scenario 5
+// covers the port+port shape and leaves vpc-in-L1-activeActive out of
+// scope.
+//
+// The rich attrs on bd-int-rich are required by NDO's site-PATCH
+// validation given this PBR shape (weight + mac): the site PATCH
+// otherwise fails with "weight requires advanced tracking" and
+// "static MAC requires configStaticMac" errors. WithIPSLAL2 unlocks
+// advancedTrackingOptions (auto-derived by the provider from a
+// populated ipsla_monitoring_policy_uuid) and ConfigStaticMAC is
+// required directly by the mac field on the pbr_destinations.
+// LoadBalanceHashing / TagBasedSorting / PreferredGroup /
+// RewriteSourceMAC are the remaining "MAX" attrs; they are not
+// strictly required by NDO validation but round out the rich shape to
+// match the source config.
+func testAccMSOServiceDeviceClusterSiteConfigL1AaBdPbr() string {
+	interfaceAttributes := renderClusterInterfaceProperties([]siteClusterInterface{
+		{
+			Name:               "bd-int-rich",
+			WithRedirect:       true,
+			WithIPSLAL2:        true,
+			LoadBalanceHashing: "sourceIP",
+			ConfigStaticMAC:    true,
+			TagBasedSorting:    true,
+			PreferredGroup:     true,
+			RewriteSourceMAC:   true,
+		},
+		{
+			Name:         "bd-int-bare",
+			WithRedirect: true,
+		},
+	})
+
+	return fmt.Sprintf(`%[1]s
+    resource "mso_service_device_cluster" "layer1_activeactive_bd_pbr" {
+        template_id = mso_template.device_template.id
+        name        = "%[3]s"
+        device_mode = "layer1"
+        device_type = "other"
+%[4]s
+        depends_on = [
+            mso_schema_template_bd.bd2,
+            mso_schema_template_external_epg.epg1,
+            mso_schema_template_deploy_ndo.tenant_template_deploy,
+            mso_schema_template_deploy_ndo.schema_deploy,
+        ]
+    }
+
+    resource "mso_service_device_cluster_site" "layer1_activeactive_bd_pbr" {
+        template_id            = mso_template.device_template.id
+        site_id                = data.mso_site.%[2]s.id
+        name                   = mso_service_device_cluster.layer1_activeactive_bd_pbr.name
+        high_availability_mode = "activeActive"
+        interfaces {
+            name        = "bd-int-rich"
+            domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/26"
+                port_type = "port"
+                vlan      = 227
+                tag       = "primary"
+            }
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/27"
+                port_type = "port"
+                vlan      = 228
+                tag       = "secondary"
+            }
+            pbr_destinations {
+                mac    = "aa:bb:cc:dd:ee:aa"
+                weight = 3
+                tag    = "primary"
+            }
+            pbr_destinations {
+                mac    = "aa:bb:cc:dd:ee:a1"
+                weight = 2
+                tag    = "secondary"
+            }
+        }
+        interfaces {
+            name        = "bd-int-bare"
+            domain_name = mso_fabric_policies_physical_domain.physical_domain.name
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/34"
+                port_type = "port"
+                vlan      = 229
+                tag       = "primary"
+            }
+            # Original source config used a vpc entry here (channel
+            # ogorczow-others-1). NDO accepts vpc-in-L1-activeActive at
+            # site-PATCH time but fails the deploy with the generic
+            # "Internal error execution aborted"; see the function-level
+            # comment above for details. Kept as a second plain port so
+            # scenario 5 still exercises the multi-path shape while
+            # staying deploy-clean. A standalone reproducer that still
+            # uses the failing vpc form lives at
+            # ccne-testing/tf-test/test/mso/scenario5_l1_activeactive_vpc_deploy_fail/main.tf.
+            fabric_to_device_connectivity {
+                pod_id    = "1"
+                node_id   = ["101"]
+                path      = "eth1/35"
+                port_type = "port"
+                vlan      = 249
+                tag       = "secondary"
+            }
+            pbr_destinations {
+                mac = "aa:bb:aa:bb:aa:cc"
+                tag = "primary"
+            }
+            pbr_destinations {
+                mac = "dd:aa:aa:aa:aa:aa"
+                tag = "secondary"
+            }
+        }
+    }
+
+    resource "mso_schema_template_deploy_ndo" "layer1_activeactive_bd_pbr_deploy" {
+        template_id         = mso_template.device_template.id
+        template_type       = "service_device"
+        force_apply         = ""
+        undeploy_on_destroy = true
+        depends_on = [
+            mso_service_device_cluster_site.layer1_activeactive_bd_pbr,
+        ]
+    }
+`, testAccMSOServiceDeviceClusterSiteSharedDeps(), msoTemplateSiteName1,
+		testServiceDeviceClusterSiteL1AaBdPbrClusterName, interfaceAttributes,
+	)
 }
 
 // The ExpectError configurations below use literal placeholder values for
