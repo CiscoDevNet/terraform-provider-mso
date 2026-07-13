@@ -446,7 +446,6 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "high_availability_mode", "activeActive"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.name", "Internal"),
-					resource.TestCheckResourceAttr(resourceName, "interfaces.0.domain_type", "physicalDomain"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.domain_name", "test_physical_domain_for_device"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.path", "eth1/1"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.0.fabric_to_device_connectivity.0.vlan", "210"),
@@ -628,13 +627,6 @@ func TestAccMSOServiceDeviceClusterSiteResourceErrors(t *testing.T) {
 				},
 				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithEnhancedLag(),
 				ExpectError: regexp.MustCompile(`enhanced_lag_policy is not allowed when the interface uses a physicalDomain`),
-			},
-			{
-				PreConfig: func() {
-					fmt.Println("Test: activeActive interface-scoped vmmDomain with fabric_to_device_connectivity is rejected")
-				},
-				Config:      testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedVmmWithFabric(),
-				ExpectError: regexp.MustCompile(`fabric_to_device_connectivity is not allowed when the interface uses a vmmDomain`),
 			},
 		},
 	})
@@ -1511,7 +1503,6 @@ func testAccMSOServiceDeviceClusterSiteConfigActiveActive(clusterName string) st
         high_availability_mode = "activeActive"
         interfaces {
             name        = "Internal"
-            domain_type = "physicalDomain"
             domain_name = mso_fabric_policies_physical_domain.physical_domain.name
             fabric_to_device_connectivity {
                 pod_id    = "1"
@@ -2101,8 +2092,8 @@ resource "mso_service_device_cluster_site" "cluster_site" {
 }
 
 // activeActive moves domain configuration to interface scope; an interface
-// without any of domain_type / vmm_domain_type / domain_name / domain_dn
-// trips the dedicated CustomizeDiff branch.
+// without either domain_name or domain_dn trips the dedicated CustomizeDiff
+// branch.
 func testAccMSOServiceDeviceClusterSiteConfigErrActiveActiveMissingInterfaceDomain() string {
 	return `
 resource "mso_service_device_cluster_site" "cluster_site" {
@@ -2123,10 +2114,11 @@ resource "mso_service_device_cluster_site" "cluster_site" {
 `
 }
 
-// activeActive interface-scoped physicalDomain paired with vm_information
-// trips the per-interface familyScope = "interface" branch. The wording
-// uses "interface" instead of "device", so we assert against that to make
-// sure the activeActive branch (not the device-scope branch) fired.
+// activeActive interface-scoped physicalDomain (the only kind supported
+// per-interface) paired with vm_information trips the per-interface
+// familyScope = "interface" branch. The wording uses "interface" instead of
+// "device", so we assert against that to make sure the activeActive branch
+// (not the device-scope branch) fired.
 func testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithVm() string {
 	return `
 resource "mso_service_device_cluster_site" "cluster_site" {
@@ -2136,7 +2128,6 @@ resource "mso_service_device_cluster_site" "cluster_site" {
     high_availability_mode = "activeActive"
     interfaces {
         name        = "interface1"
-        domain_type = "physicalDomain"
         domain_name = "some_phys_domain"
         vm_information {
             vm_name   = "vm1"
@@ -2147,10 +2138,11 @@ resource "mso_service_device_cluster_site" "cluster_site" {
 `
 }
 
-// activeActive interface-scoped physicalDomain paired with
-// enhanced_lag_policy and fabric_to_device_connectivity (to keep the
-// "neither fabric nor vm" check from firing first) trips the per-interface
-// familyScope branch for enhanced_lag_policy.
+// activeActive interface-scoped physicalDomain (the only kind supported
+// per-interface) paired with enhanced_lag_policy and
+// fabric_to_device_connectivity (to keep the "neither fabric nor vm" check
+// from firing first) trips the per-interface familyScope branch for
+// enhanced_lag_policy.
 func testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedPhysicalWithEnhancedLag() string {
 	return `
 resource "mso_service_device_cluster_site" "cluster_site" {
@@ -2160,35 +2152,8 @@ resource "mso_service_device_cluster_site" "cluster_site" {
     high_availability_mode = "activeActive"
     interfaces {
         name                = "interface1"
-        domain_type         = "physicalDomain"
         domain_name         = "some_phys_domain"
         enhanced_lag_policy = "some-uuid"
-        fabric_to_device_connectivity {
-            pod_id    = "1"
-            node_id   = ["101"]
-            path      = "eth1/1"
-            port_type = "port"
-        }
-    }
-}
-`
-}
-
-// activeActive interface-scoped vmmDomain paired with
-// fabric_to_device_connectivity trips the per-interface familyScope branch
-// for the vmm-with-fabric check.
-func testAccMSOServiceDeviceClusterSiteConfigErrInterfaceScopedVmmWithFabric() string {
-	return `
-resource "mso_service_device_cluster_site" "cluster_site" {
-    template_id            = "00000000-0000-0000-0000-000000000000"
-    site_id                = "site-placeholder"
-    name                   = "err_cluster_site"
-    high_availability_mode = "activeActive"
-    interfaces {
-        name            = "interface1"
-        domain_type     = "vmmDomain"
-        vmm_domain_type = "VMware"
-        domain_name     = "some_vmm_domain"
         fabric_to_device_connectivity {
             pod_id    = "1"
             node_id   = ["101"]
