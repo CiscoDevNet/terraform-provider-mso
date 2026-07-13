@@ -87,25 +87,15 @@ func datasourceMSOServiceDeviceClusterSite() *schema.Resource {
 							Computed:    true,
 							Description: "The VLAN ID of the interface.",
 						},
-						"domain_type": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The type of domain associated with the interface, populated in `activeActive` high availability mode.",
-						},
-						"vmm_domain_type": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The VMM domain provider type for the interface, populated in `activeActive` high availability mode when the interface uses a VMM domain.",
-						},
 						"domain_name": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The name of the domain associated with the interface, populated in `activeActive` high availability mode.",
+							Description: "The name of the physical domain associated with the interface, populated in `activeActive` high availability mode. Only physical domains are supported at interface scope.",
 						},
 						"domain_dn": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The distinguished name of the domain associated with the interface, populated in `activeActive` high availability mode.",
+							Description: "The distinguished name of the physical domain associated with the interface, populated in `activeActive` high availability mode.",
 						},
 						"fabric_to_device_connectivity": {
 							Type:        schema.TypeList,

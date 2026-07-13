@@ -54,10 +54,8 @@ data "mso_service_device_cluster_site" "cluster_site" {
 * `interfaces` - (Read-Only) A list of interface entries describing the per-site configuration of every cluster interface. Each element has the following attributes:
   * `name` - (Read-Only) The name of the interface.
   * `vlan` - (Read-Only) The VLAN ID of the interface.
-  * `domain_type` - (Read-Only) The type of domain associated with the interface (populated when `high_availability_mode` is `activeActive`).
-  * `vmm_domain_type` - (Read-Only) The VMM domain provider type for the interface when interface `domain_type` is `vmmDomain`.
-  * `domain_name` - (Read-Only) The name of the domain associated with the interface.
-  * `domain_dn` - (Read-Only) The distinguished name of the domain associated with the interface.
+  * `domain_name` - (Read-Only) The name of the physical domain associated with the interface (populated when `high_availability_mode` is `activeActive`; only physical domains are supported at interface scope).
+  * `domain_dn` - (Read-Only) The distinguished name of the physical domain associated with the interface (populated when `high_availability_mode` is `activeActive`).
   * `fabric_to_device_connectivity` - (Read-Only) A list of fabric-to-device connectivity paths for the interface. Each element has the following attributes:
       * `pod_id` - (Read-Only) The pod ID of the fabric path.
       * `node_id` - (Read-Only) The node ID(s) of the fabric path, as a list of strings. A single element for `port_type` `port` and `dpc`, two elements for `port_type` `vpc`.

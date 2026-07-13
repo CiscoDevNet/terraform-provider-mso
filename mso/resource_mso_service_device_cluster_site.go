@@ -169,37 +169,28 @@ func resourceMSOServiceDeviceClusterSite() *schema.Resource {
 							Description:  "The VLAN ID of the interface. Must not be set when the matching cluster `interface_properties` binds to an `external_epg_uuid` (L3out interface); NDO rejects a VLAN on L3out interfaces.",
 						},
 
-						"domain_type": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"vmmDomain", "physicalDomain",
-							}, false),
-							Description: "The type of domain associated with the interface. Must be used together with `domain_name` and cannot be combined with `domain_dn`. Only valid when `high_availability_mode` is `activeActive`; in that mode every interface must configure its own domain (the device-level domain attributes are derived from the first interface and any device-level values in config are ignored).",
-						},
-						"vmm_domain_type": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-							ValidateFunc: validation.StringInSlice([]string{
-								"VMware", "Microsoft", "Redhat",
-							}, false),
-							Description: "The VMM domain provider type for the interface. Required when interface `domain_type` is `vmmDomain` and must not be set when interface `domain_type` is `physicalDomain`. Only valid when `high_availability_mode` is `activeActive`.",
-						},
+						// Per-interface domain is used only for L1 device clusters in
+						// activeActive HA mode, where NDO requires each interface to
+						// carry its own physical domain. VMM domains are never valid
+						// at interface scope, so the interface schema exposes only
+						// domain_name (physical domain name; provider composes
+						// "uni/phys-<name>") or domain_dn (literal DN, must start with
+						// "uni/phys-"). Mutual exclusion and prefix validation are
+						// enforced in CustomizeDiff because SDK v2 ignores
+						// RequiredWith/ConflictsWith inside nested blocks.
 						"domain_name": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
-							Description:  "The name of the domain associated with the interface. Must be used together with `domain_type` and cannot be combined with `domain_dn`. Only valid when `high_availability_mode` is `activeActive`.",
+							Description:  "The name of the physical domain associated with the interface. Mutually exclusive with `domain_dn`. Only valid when `high_availability_mode` is `activeActive`; in that mode every interface must configure its own physical domain (the device-level domain attributes are derived from the first interface and any device-level values in config are ignored).",
 						},
 						"domain_dn": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.StringLenBetween(1, 1000),
-							Description:  "The distinguished name of the domain associated with the interface. Must start with `uni/phys-` or `uni/vmmp-`. Cannot be combined with `domain_type`, `vmm_domain_type`, or `domain_name`. Only valid when `high_availability_mode` is `activeActive`.",
+							Description:  "The distinguished name of the physical domain associated with the interface. Must start with `uni/phys-`. Mutually exclusive with `domain_name`. Only valid when `high_availability_mode` is `activeActive`.",
 						},
 
 						"fabric_to_device_connectivity": {
@@ -573,24 +564,22 @@ func resourceMSOServiceDeviceClusterSiteCustomizeDiff(_ context.Context, d *sche
 		interfaceData := rawInterface.(map[string]interface{})
 		name, _ := interfaceData["name"].(string)
 
+		// activeActive HA pins the interface family to physical (VMM domains
+		// are not valid at interface scope), so effectiveFamily and
+		// familyScope are constants in that branch. In every other HA mode
+		// the interface inherits the device-level domain family.
 		effectiveFamily := deviceFamily
 		familyScope := "device"
 		if ha == "activeActive" {
-			ifaceDomainType, _ := interfaceData["domain_type"].(string)
-			ifaceVmmDomainType, _ := interfaceData["vmm_domain_type"].(string)
 			ifaceDomainName, _ := interfaceData["domain_name"].(string)
 			ifaceDomainDN, _ := interfaceData["domain_dn"].(string)
-			if ifaceDomainType == "" && ifaceVmmDomainType == "" && ifaceDomainName == "" && ifaceDomainDN == "" {
-				return fmt.Errorf("interface %q: domain must be configured on every interface when high_availability_mode is \"activeActive\" (set one of domain_type/domain_name or domain_dn)", name)
+			if ifaceDomainName == "" && ifaceDomainDN == "" {
+				return fmt.Errorf("interface %q: domain must be configured on every interface when high_availability_mode is \"activeActive\" (set domain_name or domain_dn)", name)
 			}
-			family, err := validateDomainAttributes(
-				fmt.Sprintf("interface %q: ", name),
-				ifaceDomainType, ifaceVmmDomainType, ifaceDomainName, ifaceDomainDN,
-			)
-			if err != nil {
+			if err := validateInterfaceDomainAttributes(name, ifaceDomainName, ifaceDomainDN); err != nil {
 				return err
 			}
-			effectiveFamily = family
+			effectiveFamily = "physical"
 			familyScope = "interface"
 		}
 
@@ -829,27 +818,57 @@ func resolveDomainFromValues(domainType, vmmDomainType, domainName, domainDN str
 	return domainDN, resolveDomainFamily(domainType, domainDN)
 }
 
-// resolveInterfaceDomain returns (resolvedDomainDN, family) for one interface map.
-func resolveInterfaceDomain(interfaceData map[string]interface{}) (string, string) {
-	domainType, _ := interfaceData["domain_type"].(string)
-	vmmDomainType, _ := interfaceData["vmm_domain_type"].(string)
+// resolveInterfaceDomain returns the resolved domain DN for one interface
+// map. Interface-scoped domains are only ever physical (activeActive HA / L1),
+// so the caller can assume family = "physical" and this helper deals only
+// with the literal-DN-else-compose rule.
+func resolveInterfaceDomain(interfaceData map[string]interface{}) string {
 	domainName, _ := interfaceData["domain_name"].(string)
 	domainDN, _ := interfaceData["domain_dn"].(string)
-	return resolveDomainFromValues(domainType, vmmDomainType, domainName, domainDN)
+	if domainDN != "" {
+		return domainDN
+	}
+	if domainName != "" {
+		return fmt.Sprintf("uni/phys-%s", domainName)
+	}
+	return ""
+}
+
+// validateInterfaceDomainAttributes enforces mutual exclusion between
+// domain_name and domain_dn and the "uni/phys-" prefix on domain_dn. Called
+// only in activeActive HA mode where per-interface domain applies.
+func validateInterfaceDomainAttributes(interfaceName, domainName, domainDN string) error {
+	if domainName != "" && domainDN != "" {
+		// Tolerate the redundant set when both forms resolve to the same DN;
+		// this can happen after Read populates both the literal DN and the
+		// name, and the prior state propagates back through Computed on the
+		// next plan.
+		if fmt.Sprintf("uni/phys-%s", domainName) != domainDN {
+			return fmt.Errorf("interface %q: domain_name and domain_dn are mutually exclusive", interfaceName)
+		}
+	}
+	if domainDN != "" && !strings.HasPrefix(domainDN, "uni/phys-") {
+		return fmt.Errorf("interface %q: domain_dn %q must start with %q (only physical domains are supported per-interface)", interfaceName, domainDN, "uni/phys-")
+	}
+	return nil
 }
 
 // resolveDeviceLevelDomain returns (resolvedDomainDN, family) to send to NDO at the
 // device level. In activeActive HA mode the device-level domain is derived from the
 // first interface's domain because the user supplies per-interface domains only;
-// any device-level inputs in config are ignored. In every other HA mode the
-// device-level domain is taken directly from the top-level inputs, with stale
-// Computed back-fills filtered (see readDeviceLevelDomainAttrs).
+// any device-level inputs in config are ignored. Interface-scoped domains are
+// always physical, so the family is a constant "physical" in that branch. In
+// every other HA mode the device-level domain is taken directly from the
+// top-level inputs, with stale Computed back-fills filtered (see
+// readDeviceLevelDomainAttrs).
 func resolveDeviceLevelDomain(d domainSource) (string, string) {
 	if d.Get("high_availability_mode").(string) == "activeActive" {
 		interfaces, _ := d.Get("interfaces").([]interface{})
 		if len(interfaces) > 0 {
 			if first, ok := interfaces[0].(map[string]interface{}); ok {
-				return resolveInterfaceDomain(first)
+				if dn := resolveInterfaceDomain(first); dn != "" {
+					return dn, "physical"
+				}
 			}
 		}
 		return "", ""
@@ -906,7 +925,7 @@ func buildServiceDeviceClusterSiteInterfacesPayload(d *schema.ResourceData) []ma
 		// modes, per-interface domain attrs in config are ignored so the device-level
 		// domain remains the single source of truth.
 		if haIsActiveActive {
-			if ifaceDomainDN, _ := resolveInterfaceDomain(interfaceData); ifaceDomainDN != "" {
+			if ifaceDomainDN := resolveInterfaceDomain(interfaceData); ifaceDomainDN != "" {
 				entry["domainDn"] = ifaceDomainDN
 			}
 		}
@@ -1123,10 +1142,14 @@ func setServiceDeviceClusterSiteData(d *schema.ResourceData, deviceCont *contain
 				ifaceDomainDn = ""
 			}
 			entry["domain_dn"] = ifaceDomainDn
-			ifaceDomainType, ifaceVmmDomainType, ifaceDomainName := decomposeDomainDn(ifaceDomainDn)
-			entry["domain_type"] = ifaceDomainType
-			entry["vmm_domain_type"] = ifaceVmmDomainType
-			entry["domain_name"] = ifaceDomainName
+			// Interface-scoped domains are always physical (activeActive HA),
+			// so decomposing the DN reduces to stripping the "uni/phys-" prefix.
+			// A non-conforming DN cannot round-trip and leaves domain_name empty.
+			if strings.HasPrefix(ifaceDomainDn, "uni/phys-") {
+				entry["domain_name"] = strings.TrimPrefix(ifaceDomainDn, "uni/phys-")
+			} else {
+				entry["domain_name"] = ""
+			}
 		}
 		if interfaceCont.Exists("enhancedLagPolicy") {
 			enhancedLagPolicy := models.StripQuotes(interfaceCont.S("enhancedLagPolicy").String())
