@@ -57,6 +57,9 @@ resource "mso_fabric_policies_macsec_policy" "macsec_policy" {
   * `macsec_keys.key_name` - (Required) The name of the MACsec Key. Key Name should contain hexadecimal characters [0-9a-fA-F].
   * `macsec_keys.psk` - (Required) The Pre-Shared Key (PSK) for the MACsec Key. PSK should contain hexadecimal characters [0-9a-fA-F]. PSK should be 64 characters long if cipher suite is `256GcmAes` or `256GcmAesXpn`. PSK should be 32 characters long if cipher suite is `128GcmAes` or `128GcmAesXpn`. This value is marked sensitive and will not be displayed in plan output.
   * `macsec_keys.start_time` - (Optional) The start time for the MACsec Key. Allowed values are of the following format `YYYY-MM-DD HH:MM:SS` or `now`. The start time for each Key should be unique.
+
+    ~> Using `now` will cause Terraform to detect a change on every plan/apply since the value is re-evaluated each run; use a specific timestamp for idempotent behavior.
+
   * `macsec_keys.end_time` - (Optional) The end time for the MACsec Key. Allowed values are of the following format `YYYY-MM-DD HH:MM:SS` or `infinite`.
 
 ## Attribute Reference ##
