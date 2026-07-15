@@ -40,7 +40,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
 					resource.TestCheckResourceAttrSet(resourceName, "template_id"),
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "1"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":         "sourceIP",
@@ -68,7 +68,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "description", "updated device cluster description"),
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "1"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":  "destinationIP",
@@ -91,7 +91,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterName),
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "3"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":  "sourceIP",
@@ -99,14 +99,14 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 						"threshold_down_action": "permit",
 						"external_epg_uuid":     "mso_schema_template_external_epg.epg1.uuid",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface2",
 					}, map[string]string{
 						"load_balance_hashing":         "destinationIP",
 						"bd_uuid":                      "mso_schema_template_bd.bd1.uuid",
 						"ipsla_monitoring_policy_uuid": "mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"bd_uuid": "mso_schema_template_bd.bd2.uuid",
@@ -121,7 +121,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Config: testAccMSOServiceDeviceClusterConfigUpdateThreeInterfacesAttrs(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "3"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":  "destinationIP",
@@ -129,12 +129,12 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 						"max_threshold":         "75",
 						"threshold_down_action": "deny",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface2",
 					}, map[string]string{
 						"load_balance_hashing": "sourceDestinationAndProtocol",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"bd_uuid": "mso_schema_template_bd.bd2.uuid",
@@ -148,14 +148,14 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", testServiceDeviceClusterName),
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":  "sourceIP",
 						"min_threshold":         "10",
 						"threshold_down_action": "permit",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, nil),
 				),
@@ -167,7 +167,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Config: testAccMSOServiceDeviceClusterConfigUpdateTwoInterfacesAttrs(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":  "destinationIP",
@@ -175,7 +175,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 						"max_threshold":         "65",
 						"threshold_down_action": "deny",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"bd_uuid": "mso_schema_template_bd.bd2.uuid",
@@ -187,7 +187,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Config:    testAccMSOServiceDeviceClusterConfigUpdateThresholdsToZeroAndSetQoS(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"min_threshold":                "0",
@@ -195,7 +195,7 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 						"qos_policy_uuid":              "mso_tenant_policies_custom_qos_policy.qos1.uuid",
 						"ipsla_monitoring_policy_uuid": "mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, nil),
 				),
@@ -205,12 +205,12 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Config:    testAccMSOServiceDeviceClusterConfigClearIpslaPolicy(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"qos_policy_uuid": "mso_tenant_policies_custom_qos_policy.qos1.uuid",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, nil),
 				),
@@ -220,12 +220,12 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 				Config:    testAccMSOServiceDeviceClusterConfigClearQosPolicy(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interface_properties.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing": "sourceIP",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, nil),
 				),

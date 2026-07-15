@@ -31,7 +31,7 @@ func TestAccMSOServiceDeviceClusterSiteDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceName, "domain_type", "physicalDomain"),
 					resource.TestCheckResourceAttr(dataSourceName, "domain_name", "test_physical_domain_for_device"),
 					resource.TestCheckResourceAttr(dataSourceName, "interfaces.#", "1"),
-					CustomTestCheckTypeSetElemAttrsByKeys(dataSourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(dataSourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                      "210",
