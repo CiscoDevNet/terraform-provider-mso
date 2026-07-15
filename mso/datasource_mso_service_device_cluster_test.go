@@ -31,7 +31,7 @@ func TestAccMSOServiceDeviceClusterDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceName, "template_id"),
 					resource.TestCheckResourceAttrSet(dataSourceName, "uuid"),
 					resource.TestCheckResourceAttr(dataSourceName, "interface_properties.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(dataSourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(dataSourceName, "interface_properties", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"load_balance_hashing":         "sourceIP",
@@ -41,7 +41,7 @@ func TestAccMSOServiceDeviceClusterDataSource(t *testing.T) {
 						"external_epg_uuid":            "mso_schema_template_external_epg.epg1.uuid",
 						"ipsla_monitoring_policy_uuid": "mso_tenant_policies_ipsla_monitoring_policy.ipsla1.uuid",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(dataSourceName, "interface_properties", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(dataSourceName, "interface_properties", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"bd_uuid": "mso_schema_template_bd.bd2.uuid",

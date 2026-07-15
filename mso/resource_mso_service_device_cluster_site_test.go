@@ -202,7 +202,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "domain_type", "physicalDomain"),
 					resource.TestCheckResourceAttr(resourceName, "domain_name", "test_physical_domain_for_device"),
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "1"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                      "210",
@@ -239,7 +239,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config:    testAccMSOServiceDeviceClusterSiteConfigUpdateAttributes(testServiceDeviceClusterSiteClusterName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "1"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                      "215",
@@ -279,7 +279,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config:    testAccMSOServiceDeviceClusterSiteConfigThreeInterfaces(testServiceDeviceClusterSiteClusterName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "3"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                 "215",
@@ -288,14 +288,14 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						"pbr_destinations.0.ip":                     "10.10.10.10",
 						"pbr_destinations.0.weight":                 "5",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface2",
 					}, map[string]string{
 						"vlan":                                 "216",
 						"fabric_to_device_connectivity.0.path": "eth1/11",
 						"fabric_to_device_connectivity.0.port_type": "port",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"fabric_to_device_connectivity.0.path":      "eth1/12",
@@ -310,7 +310,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config: testAccMSOServiceDeviceClusterSiteConfigThreeInterfacesAttrs(testServiceDeviceClusterSiteClusterName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "3"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                      "220",
@@ -319,13 +319,13 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						"pbr_destinations.0.tag":                    "20",
 						"pbr_destinations.0.additional_tracking_ip": "10.10.10.12",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface2",
 					}, map[string]string{
 						"vlan":                                 "226",
 						"fabric_to_device_connectivity.0.path": "eth1/21",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"fabric_to_device_connectivity.0.path": "eth1/22",
@@ -337,14 +337,14 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config:    testAccMSOServiceDeviceClusterSiteConfigTwoInterfaces(testServiceDeviceClusterSiteClusterName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                 "215",
 						"fabric_to_device_connectivity.0.path": "eth1/10",
 						"pbr_destinations.0.ip":                "10.10.10.10",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"fabric_to_device_connectivity.0.path": "eth1/12",
@@ -358,7 +358,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config: testAccMSOServiceDeviceClusterSiteConfigTwoInterfacesAttrs(testServiceDeviceClusterSiteClusterName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "interfaces.#", "2"),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface1",
 					}, map[string]string{
 						"vlan":                                 "230",
@@ -366,7 +366,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						"pbr_destinations.0.mac":               "00:11:22:33:44:66",
 						"pbr_destinations.0.weight":            "3",
 					}),
-					CustomTestCheckTypeSetElemAttrsByKeys(resourceName, "interfaces", map[string]string{
+					CustomTestCheckCollectionElemAttrsByKeys(resourceName, "interfaces", map[string]string{
 						"name": "interface3",
 					}, map[string]string{
 						"fabric_to_device_connectivity.0.path": "eth1/32",
@@ -582,7 +582,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					),
 					// bd-int-rich: two vpc fabric paths and two pbr_destinations,
 					// tagged "lala" and "qqq".
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-rich"},
@@ -605,7 +605,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						},
 					),
 					// bd-int-bare: bare, single vpc fabric path, no PBR.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer3_firewall_bd_dual_vpc_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-bare"},
@@ -672,7 +672,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						"interfaces.#", "2",
 					),
 					// l3out-rich: single vpc fabric path, no PBR, no vlan (l3out).
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
 						"interfaces",
 						map[string]string{"name": "l3out-rich"},
@@ -688,7 +688,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 						},
 					),
 					// l3out-bare: single port fabric path, no PBR, no vlan (l3out).
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.load_balancer_l3out_vpc_port",
 						"interfaces",
 						map[string]string{"name": "l3out-bare"},
@@ -746,7 +746,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					),
 					// bd-int-bare: mixed port+vpc fabric paths, both tag-linked
 					// to the two pbr_destinations.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-bare"},
@@ -759,7 +759,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					// bd-int-rich: rich cluster shape, two port fabric paths
 					// (eth1/24 + eth1/25), both tag-linked to pbr_destinations
 					// with per-entry weight.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer2_activestandby_bd_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-rich"},
@@ -817,7 +817,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					),
 					// bd-int-bare: mixed port+vpc fabric paths, both tag-linked
 					// to the two pbr_destinations.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-bare"},
@@ -829,7 +829,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					// bd-int-rich: rich cluster shape, two port fabric paths
 					// (eth1/26 + eth1/27), both tag-linked to pbr_destinations
 					// with per-entry weight.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer1_activestandby_bd_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-rich"},
@@ -886,7 +886,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					),
 					// bd-int-bare: two port paths, per-tag vlans (229, 249),
 					// tag-linked to two pbr_destinations. Interface-scoped domain.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-bare"},
@@ -898,7 +898,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 					),
 					// bd-int-rich: two port entries with per-tag vlans (227,
 					// 228), tag-linked to two pbr_destinations with weights.
-					CustomTestCheckTypeSetElemAttrsByKeys(
+					CustomTestCheckCollectionElemAttrsByKeys(
 						"mso_service_device_cluster_site.layer1_activeactive_bd_pbr",
 						"interfaces",
 						map[string]string{"name": "bd-int-rich"},

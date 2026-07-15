@@ -315,7 +315,7 @@ func testAccVersionCheck(t *testing.T, minVersion string) {
 	}
 }
 
-// CustomTestCheckTypeSetElemAttrsByKeys locates the TypeSet element whose
+// CustomTestCheckCollectionElemAttrsByKeys locates the TypeSet element whose
 // attributes match every key/value pair in matchAttrs and compares every key
 // in attrsToCheck against the value stored in state, producing a
 // per-attribute diff. Unlike CustomTestCheckTypeSetElemAttrs, which only
@@ -324,7 +324,7 @@ func testAccVersionCheck(t *testing.T, minVersion string) {
 // a subset of fields and the test just needs to see which ones. Both
 // matchAttrs values and attrsToCheck values are resolved through
 // resolveStateReference so they can refer to other resources in state.
-func CustomTestCheckTypeSetElemAttrsByKeys(resourceName, setName string, matchAttrs, attrsToCheck map[string]string) resource.TestCheckFunc {
+func CustomTestCheckCollectionElemAttrsByKeys(resourceName, setName string, matchAttrs, attrsToCheck map[string]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
