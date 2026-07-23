@@ -2,7 +2,7 @@ module github.com/CiscoDevNet/terraform-provider-mso
 
 go 1.25.8
 
-require github.com/ciscoecosystem/mso-go-client v1.34.0
+require github.com/ciscoecosystem/mso-go-client v1.35.0
 
 require (
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
