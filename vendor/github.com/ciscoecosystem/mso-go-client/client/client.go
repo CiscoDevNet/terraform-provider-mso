@@ -513,6 +513,13 @@ func (c *Client) DoWithRetryFunc(req *http.Request, retryFunc CallbackRetryFunc)
 			}
 		}
 
+		// Retry HTTP 400 responses containing, "save post processing in progress, please retry".
+		// This works around an ND 3.2.2m issue affecting fabric policies:
+		// https://github.com/CiscoDevNet/terraform-provider-mso/issues/532
+		if resp.StatusCode == 400 && strings.Contains(bodyStr, "save post processing in progress, please retry") {
+			retry = true
+		}
+
 		// Attempt retry for the following error codes:
 		//  429 Too Many Requests
 		//  503 Service Unavailable
