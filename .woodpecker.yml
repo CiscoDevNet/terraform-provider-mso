@@ -1,0 +1,52 @@
+when:
+  event:
+    - manual
+    - cron
+
+variables:
+  - &go_image "10.15.39.22:5000/ci-terraform:alpine-go1.25.8-tf1.9.0"
+
+matrix:
+  include:
+    - ND_NAME: "ND 3.2"
+      ND_URL: "https://10.15.0.127/"
+      APIC_URL: "https://10.15.39.241/"
+    - ND_NAME: "ND 4.1"
+      ND_URL: "https://10.15.0.126/"
+      APIC_URL: "https://10.15.38.241/"
+    - ND_NAME: "ND 4.2"
+      ND_URL: "https://10.15.0.128/"
+      APIC_URL: "https://10.15.38.243/" 
+
+steps:
+
+  acceptance_test:
+    image: *go_image
+    when:
+      event: [manual, cron]
+    environment:
+      TF_ACC: "1"
+      MSO_USERNAME:
+        from_secret: MSO_USERNAME
+      MSO_PASSWORD:
+        from_secret: MSO_PASSWORD
+      APIC_USERNAME:
+        from_secret: APIC_USERNAME
+      APIC_PASSWORD:
+        from_secret: APIC_PASSWORD
+
+    commands:
+      - |
+        ACC_TEST_REGEX="$${ACC_TEST_REGEX:-$${CI_BUILD_PARAM_ACC_TEST_REGEX:-$${CI_PIPELINE_PARAM_ACC_TEST_REGEX:-.*}}}"
+        ACC_TIMEOUT="$${ACC_TIMEOUT:-$${CI_BUILD_PARAM_ACC_TIMEOUT:-$${CI_PIPELINE_PARAM_ACC_TIMEOUT:-600m}}}"
+
+        echo "Running acceptance tests for ${ND_NAME} (${ND_URL}) (regex $${ACC_TEST_REGEX}, timeout $${ACC_TIMEOUT})"
+
+        TF_LOG="$${TF_LOG:-$${CI_BUILD_PARAM_TF_LOG:-$${CI_PIPELINE_PARAM_TF_LOG:-}}}" \
+        MSO_URL="${ND_URL}" \
+        MSO_PLATFORM="$${MSO_PLATFORM:-$${CI_BUILD_PARAM_MSO_PLATFORM:-$${CI_PIPELINE_PARAM_MSO_PLATFORM:-nd}}}" \
+        APIC_URL="${APIC_URL}" \
+        go test -v ./mso/... -mod=vendor -run "$${ACC_TEST_REGEX}" -count=1 -timeout "$${ACC_TIMEOUT}"
+
+labels:
+  platform: linux/amd64
