@@ -2,6 +2,94 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.1.0 (July 27, 2026)
+
+DEPRECATIONS:
+- Mso_schema_template_service_graph: fix bugs and remove deprecated service_node_type
+ - fix mso_schema_template_service_graph update silently reverting to a single service node when description or other attributes changed.
+ - fix mso_schema_template_service_graph datasource missing description in read response.
+ - fix mso_schema_template_service_graph to allow description to be cleared by omitting or setting description to an empty string.
+ - fix mso_schema_template_service_graph service_node type validation to allow custom node types created via mso_service_node_type.
+ - remove deprecated service_node_type attribute from mso_schema_template_service_graph resource and datasource.
+- Add deprecation warning for cloud resources and datasources
+- Add nd 4.2 deprecation warning to display_name attribute and change to be a optional attribute in resource mso_tenant
+- Deprecate mso_schema_template_deploy resource in favor of mso_schema_template_deploy_ndo for nd-based ndo
+- Deprecate mso_schema_template_contract_filter resource and datasource in favor of mso_schema_template_contract.filter_relationship
+- Deprecate mso_label, mso_role, and mso_user resources and datasources for nexus dashboard 3.2+
+- Deprecate mso_site, mso_remote_location, and mso_system_config resources and datasources for nexus dashboard 4.x (ndo 5.x)+
+- Deprecate mso_tenant resource and datasource as of nexus dashboard 4.3 for removal on 4.4+
+
+IMPROVEMENTS:
+- Upgrade go version to 1.25
+- Addition of resource and data source for tenant_policies_igmp_interface_policy
+- Add mso_fabric_policies_ptp_policy resource and datasource.
+- Add mso_fabric_policies_ptp_policy_profile resource and datasource.
+- Add mso_fabric_policies_node_settings resource and datasource.
+- Add mso_tenant_policies_endpoint_mac_tag_policy resource and datasource
+- Add mso_tenant_policies_netflow_exporter resource and datasource.
+- Add mso_tenant_policies_netflow_record resource and datasource.
+- Add mso_tenant_policies_netflow_monitor resource and datasource.
+- Add mso_fabric_resource_policies_port_channel_interface resource and datasource
+- Add mso_fabric_resource_policies_virtual_port_channel_interface resource and datasource.
+- Add fabric_resource_policies_physical_interface resource and datasource
+- Add resource and datasource for resource_mso_service_device_cluster_site
+- Upgrade mso-go-client to v1.35.0
+
+BUG FIXES:
+- Fix update of resource_mso_schema_template_anp_epg_subnet to only patch attributes that are changed
+- Fix to select the correct contract based on all identifier attributes
+- Error when vrf with mso_schema_template_vrf datasource is not found
+- Allow description to be set to empty string in the mso_schema_template_l3out resource
+- Allow description to be set to empty string in the mso_schema_template_filter_entry resource
+- Fix interface conversion nil error when no templates are found in mso_schema_template datasource
+- Fix recreate on update of mso_schema_template resource after manual delete
+- Allow description to be set to empty string in the mso_schema_template_contract resource
+- Allow update of target_dscp in the mso_schema_template_contract resource
+- Change ndo 4.2(2) note to tf registry format.
+- Allow description and vmac to be set to empty string in the mso_schema_template_bd resource
+- Fix to remove aggregate configuration on resource_mso_schema_template_external_epg_subnet
+- Fix to select the correct contract based on all identifier attributes for external epg contracts
+- Allow description to be set to empty string in the mso_schema_template_anp_epg_useg_attr resource
+- Reset optional attributes to empty on mso_schema_template_anp_epg_useg_attr
+
+remove `computed: true` from `operator` and `category` so removing them
+from configuration produces a plan and resets the value, matching the
+behavior already in place for `description`.
+
+align the create/update payload with ndo 4.x semantics so the api
+accepts the request and the response matches state:
+- `operator` is forwarded only when explicitly set by the user; ndo does
+  not store an operator for `ip`/`mac`/`dns` types unless one is sent.
+- `category` and `description` are sent only when non-empty.
+- `fvsubnet` is sent only when `useg_type = ip` and `useg_subnet = true`.
+
+refactor the resource and datasource onto three shared helpers
+(getusegattrpayload, findusegattrcontainer, setusegattrattributes) so
+both code paths use the same traversal and state-writing logic, and
+move the shared useg_attr test fixtures into test_constants.go.
+
+extend the resource acceptance test with coverage for all 11 useg_types
+and document the server-side uppercasing observed for `vm-name`, `dns`,
+`hv`, `guest-os`, and `vnic` values.
+- Allow l3out_name to be set to empty string in the mso_schema_site_external_epg resource
+- Fix mso_fabric_policies_macsec_policy. the psk attribute is now sensitive and interface_type can be updated.
+- Fix typo in read of deploy_immediacy
+- Fix port_type being incorrect in mso_schema_site_anp_epg_static_port.
+- Fix service chaining resource to handle recreate on update when manually deleted
+- Fix datasource_mso_schema_site_service_graph to return an error when resource is not found.
+- Fix schema_site_contract_service_graph resource create/update when manually deleted.
+- Remove load_balance_hashing and threshold_down_action defaults in interface configuration which are not always set and may cause plan changes
+- Enable redirect on service_device_cluster interface when anycast is set so anycast can be configured without ipsla monitoring policy
+- Persist load_balance_hashing on service_device_cluster interface regardless of redirect/ipsla configuration
+- Change service_device_cluster interface_properties from typeset to typelist to preserve positional identity and surface in-place attribute changes
+- Allow ipsla_monitoring_policy_uuid and qos_policy_uuid to be cleared in the mso_service_device_cluster resource
+- Set redirect attribute for non-ipsla dependent interface attributes in the mso_service_device_cluster resource
+- Stop persisting ndo-defaulted load_balance_hashing and threshold_down_action on bare service_device_cluster interfaces
+
+ndo server-defaults loadbalancehashing="sourcedestinationandprotocol" and thresholddownaction="deny" on every interface, even when redirect is off. the previous schema marked these (and the rest of the interface_properties attributes) optional+computed, which the legacy sdk v1 typelist walker treated as license to carry the prior slot's state value into the new slot's apply after a typelist shrink. on shrink from three to two interfaces the renamed slot then sent redirect=true to ndo, and ndo rejected the cluster when the matching site bucket had no pbr_destination on that name.
+
+drop computed on every optional attribute inside interface_properties, gate the loadbalancehashing and thresholdforredirect reads on the ndo interface-level redirect flag so bare interfaces stay bare in state, and add diffsuppressfunc on load_balance_hashing and threshold_down_action so the cosmetic empty-vs-ndo-default diff stays out of the plan when the user enables redirect via anycast/pod_aware_redirection/ipsla without explicitly setting the hash mode or down action.
+
 ## 2.0.0 (April 17, 2026)
 
 This release introduces breaking attribute behavior changes. The provider is moving towards allowing users to configure attributes
