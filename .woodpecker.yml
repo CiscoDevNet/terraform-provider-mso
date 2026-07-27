@@ -8,13 +8,13 @@ variables:
 
 matrix:
   include:
-    - ND_NAME: "ND 3.2"
+    - ND_NAME: "ND32"
       ND_URL: "https://10.15.0.127/"
       APIC_URL: "https://10.15.39.241/"
-    - ND_NAME: "ND 4.1"
+    - ND_NAME: "ND41"
       ND_URL: "https://10.15.0.126/"
       APIC_URL: "https://10.15.38.241/"
-    - ND_NAME: "ND 4.2"
+    - ND_NAME: "ND42"
       ND_URL: "https://10.15.0.128/"
       APIC_URL: "https://10.15.38.243/" 
 
@@ -39,6 +39,12 @@ steps:
       - |
         ACC_TEST_REGEX="$${ACC_TEST_REGEX:-$${CI_BUILD_PARAM_ACC_TEST_REGEX:-$${CI_PIPELINE_PARAM_ACC_TEST_REGEX:-.*}}}"
         ACC_TIMEOUT="$${ACC_TIMEOUT:-$${CI_BUILD_PARAM_ACC_TIMEOUT:-$${CI_PIPELINE_PARAM_ACC_TIMEOUT:-600m}}}"
+        ND_FILTER="$${ND_FILTER:-$${CI_BUILD_PARAM_ND_FILTER:-$${CI_PIPELINE_PARAM_ND_FILTER:-all}}}"
+
+        if [ "$${ND_FILTER}" != "all" ] && ! echo ",$${ND_FILTER}," | grep -q ",$${ND_NAME},"; then
+          echo "Skipping $${ND_NAME} due to ND_FILTER=$${ND_FILTER}"
+          exit 0
+        fi
 
         echo "Running acceptance tests for ${ND_NAME} (${ND_URL}) (regex $${ACC_TEST_REGEX}, timeout $${ACC_TIMEOUT})"
 
