@@ -21,10 +21,13 @@ import (
 //   - create the site BD and verify host_route/svi_mac defaults
 //   - update host_route + svi_mac (in-place update path)
 //   - update svi_mac only
+//   - drop svi_mac from config and flip host_route off, before any L3Out is
+//     attached (see step comment)
 //   - attach an mso_schema_site_bd_l3out child resource
 //   - update the BD (svi_mac) while the L3Out is still attached and verify
 //     the BD's l3Outs array on the API is not wiped by the BD PATCH
-//   - drop svi_mac from config and flip host_route off
+//   - drop the mso_schema_site_bd_l3out and mso_schema_template_l3out
+//     resources from config, in their own step (see step comment)
 //   - change bd_name to a second template BD; because bd_name is
 //     ForceNew, this exercises destroy+recreate (and verifies the new
 //     bdRef resolves on the NDO side)
@@ -97,6 +100,25 @@ func TestAccMSOSchemaSiteBdResource(t *testing.T) {
 				),
 			},
 			{
+				// mso_schema_template_l3out (attached below) has no
+				// reference to mso_schema_site_bd, so Terraform doesn't
+				// order them. Flipping host_route in the same apply as an
+				// L3Out create/destroy lets their PATCHes race against the
+				// same schema document -- keep this step L3Out-free.
+				PreConfig: func() { fmt.Println("Test: Flip host_route=false and drop svi_mac from config") },
+				Config:    testAccMSOSchemaSiteBdConfigHostRouteFalse(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(siteBdResource, "bd_name", msoSchemaTemplateBdName),
+					resource.TestCheckResourceAttr(siteBdResource, "host_route", "false"),
+					// svi_mac is Optional + Computed and the Update path is
+					// gated on d.HasChange("svi_mac"). Dropping the attribute
+					// from config does not trigger a diff (the SDK keeps the
+					// previously applied value), so no `mac` PATCH is emitted
+					// and the API still holds the value set in the prior step.
+					resource.TestCheckResourceAttr(siteBdResource, "svi_mac", "00:00:5E:00:01:03"),
+				),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Attach mso_schema_site_bd_l3out child resource") },
 				Config:    testAccMSOSchemaSiteBdConfigWithL3Out(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -114,7 +136,7 @@ func TestAccMSOSchemaSiteBdResource(t *testing.T) {
 				Config: testAccMSOSchemaSiteBdConfigWithL3OutBdUpdated(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(siteBdResource, "svi_mac", "00:00:5E:00:01:04"),
-					resource.TestCheckResourceAttr(siteBdResource, "host_route", "true"),
+					resource.TestCheckResourceAttr(siteBdResource, "host_route", "false"),
 					resource.TestCheckResourceAttr(siteBdL3outResource, "l3out_name", msoSchemaTemplateL3outName),
 					// Regression check: the BD Update PATCH must leave the
 					// BD's l3Outs array intact -- this walks the schema on
@@ -123,16 +145,17 @@ func TestAccMSOSchemaSiteBdResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Flip host_route=false and drop svi_mac from config") },
-				Config:    testAccMSOSchemaSiteBdConfigHostRouteFalse(),
+				// Isolated from the BD update above and the rename below:
+				// mso_schema_template_l3out has no reference to
+				// mso_schema_site_bd, so removing it alongside a BD
+				// create/update/destroy can race against the same schema
+				// document. BD attributes are unchanged here, so this step
+				// only tears down the L3Out resources.
+				PreConfig: func() { fmt.Println("Test: Drop L3Out and template L3Out from config (BD unchanged)") },
+				Config:    testAccMSOSchemaSiteBdConfigWithL3OutBdUpdated_L3OutRemoved(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(siteBdResource, "bd_name", msoSchemaTemplateBdName),
 					resource.TestCheckResourceAttr(siteBdResource, "host_route", "false"),
-					// svi_mac is Optional + Computed and the Update path is
-					// gated on d.HasChange("svi_mac"). Dropping the attribute
-					// from config does not trigger a diff (the SDK keeps the
-					// previously applied value), so no `mac` PATCH is emitted
-					// and the API still holds the value set in the prior step.
 					resource.TestCheckResourceAttr(siteBdResource, "svi_mac", "00:00:5E:00:01:04"),
 				),
 			},
@@ -326,9 +349,9 @@ func testAccMSOSchemaSiteBdL3OutPrerequisiteConfig() string {
 	)
 }
 
-// testAccMSOSchemaSiteBdConfigWithL3Out keeps the BD at host_route=true,
-// svi_mac=:03 (matching the prior step) and attaches an
-// mso_schema_site_bd_l3out child resource referencing the template L3Out.
+// testAccMSOSchemaSiteBdConfigWithL3Out attaches an mso_schema_site_bd_l3out
+// child resource. BD attributes match the prior step so its Update PATCH is
+// an idempotent no-op alongside the L3Out create.
 func testAccMSOSchemaSiteBdConfigWithL3Out() string {
 	return fmt.Sprintf(`%[1]s
 	resource "mso_schema_site_bd" "%[2]s" {
@@ -336,7 +359,7 @@ func testAccMSOSchemaSiteBdConfigWithL3Out() string {
 		site_id       = mso_schema_site.%[4]s.site_id
 		template_name = "%[5]s"
 		bd_name       = mso_schema_template_bd.%[2]s.name
-		host_route    = true
+		host_route    = false
 		svi_mac       = "00:00:5E:00:01:03"
 	}
 
@@ -368,7 +391,7 @@ func testAccMSOSchemaSiteBdConfigWithL3OutBdUpdated() string {
 		site_id       = mso_schema_site.%[4]s.site_id
 		template_name = "%[5]s"
 		bd_name       = mso_schema_template_bd.%[2]s.name
-		host_route    = true
+		host_route    = false
 		svi_mac       = "00:00:5E:00:01:04"
 	}
 
@@ -385,6 +408,27 @@ func testAccMSOSchemaSiteBdConfigWithL3OutBdUpdated() string {
 		msoSchemaSiteResourceLabel1,
 		msoSchemaTemplateName,
 		msoSchemaTemplateL3outName,
+	)
+}
+
+// testAccMSOSchemaSiteBdConfigWithL3OutBdUpdated_L3OutRemoved drops the
+// L3Out resources while keeping the BD unchanged, so the apply issues no
+// BD PATCH -- see the step comment in TestAccMSOSchemaSiteBdResource.
+func testAccMSOSchemaSiteBdConfigWithL3OutBdUpdated_L3OutRemoved() string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_site_bd" "%[2]s" {
+		schema_id     = mso_schema.%[3]s.id
+		site_id       = mso_schema_site.%[4]s.site_id
+		template_name = "%[5]s"
+		bd_name       = mso_schema_template_bd.%[2]s.name
+		host_route    = false
+		svi_mac       = "00:00:5E:00:01:04"
+	}`,
+		testAccMSOSchemaSiteBdPrerequisiteConfig(),
+		msoSchemaTemplateBdName,
+		msoSchemaName,
+		msoSchemaSiteResourceLabel1,
+		msoSchemaTemplateName,
 	)
 }
 
