@@ -268,12 +268,6 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 						break
 					}
 					continue
-				} else if expectedVal != "" {
-					// SDKv2 omits zero-value Optional fields (empty string, false) from
-					// TypeSet element flat state. Treat an absent key as matching only
-					// when the expected value is also the zero value ("").
-					match = false
-					break
 				}
 				if matcher, ok := keyMatchers[expectedKey]; ok {
 					found := false
@@ -287,6 +281,12 @@ func CustomTestCheckTypeSetElemAttrs(resourceName, setName string, attrsToCheck 
 						match = false
 						break
 					}
+					continue
+				}
+				if expectedVal == "" {
+					// SDKv2 omits zero-value Optional fields (empty string, false) from
+					// TypeSet element flat state. An absent key matches only when the
+					// expected value is also the zero value ("").
 					continue
 				}
 				match = false
