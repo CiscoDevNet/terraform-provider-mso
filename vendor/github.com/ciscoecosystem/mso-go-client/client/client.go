@@ -520,6 +520,15 @@ func (c *Client) DoWithRetryFunc(req *http.Request, retryFunc CallbackRetryFunc)
 			retry = true
 		}
 
+		// Retry HTTP 400 responses containing, "config in progress".
+		// This works around an intermittent ND 3.2 issue affecting deploy
+		// task creation for templates (e.g. fabric_policy) that are still
+		// being saved by a previous request:
+		// https://github.com/CiscoDevNet/terraform-provider-mso/issues/536
+		if resp.StatusCode == 400 && strings.Contains(bodyStr, "config in progress") {
+			retry = true
+		}
+
 		// Attempt retry for the following error codes:
 		//  429 Too Many Requests
 		//  503 Service Unavailable
