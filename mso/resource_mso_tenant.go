@@ -71,6 +71,11 @@ func resourceMSOTenant() *schema.Resource {
 				},
 				Optional: true,
 				Computed: true,
+				Deprecated: "On Nexus Dashboard 4.2+ user associations are automatically " +
+					"derived from Tenant Domain membership and are immutable via the tenants " +
+					"endpoint. The API may return additional users (for example, all-tenants-domain) " +
+					"and reject updates that remove them, causing perpetual drift. Do not set " +
+					"user_associations on ND 4.2+.",
 			},
 
 			"site_associations": &schema.Schema{
@@ -354,21 +359,13 @@ func resourceMSOTenantImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		site_associations = append(site_associations, mapSite)
 	}
 	d.Set("site_associations", site_associations)
-	count2, _ := con.ArrayCount("userAssociations")
+	userAssociations, err := tenantUserAssociationsFromContainer(con)
 	if err != nil {
-		d.Set("user_assocoations", make([]interface{}, 0))
+		return nil, err
 	}
-	user_associations := make([]interface{}, 0)
-	for i := 0; i < count2; i++ {
-		usersCont, err := con.ArrayElement(i, "userAssociations")
-		if err != nil {
-			return nil, fmt.Errorf("Unable to parse the user associations list")
-		}
-		mapUser := make(map[string]interface{})
-		mapUser["user_id"] = models.StripQuotes(usersCont.S("userId").String())
-		user_associations = append(user_associations, mapUser)
+	if err := d.Set("user_associations", userAssociations); err != nil {
+		return nil, err
 	}
-	d.Set("user_associations", user_associations)
 	log.Printf("[DEBUG] %s: Tenant Import finished successfully", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -551,8 +548,8 @@ func resourceMSOTenantCreate(d *schema.ResourceData, m interface{}) error {
 			inner := val.(map[string]interface{})
 			if inner["user_id"] != "" {
 				mapUser["userId"] = fmt.Sprintf("%v", inner["user_id"])
+				user_associations = append(user_associations, mapUser)
 			}
-			user_associations = append(user_associations, mapUser)
 		}
 	}
 	tenantAttr.Users = user_associations
@@ -748,8 +745,8 @@ func resourceMSOTenantUpdate(d *schema.ResourceData, m interface{}) error {
 			inner := val.(map[string]interface{})
 			if inner["user_id"] != "" {
 				mapUser["userId"] = fmt.Sprintf("%v", inner["user_id"])
+				user_associations = append(user_associations, mapUser)
 			}
-			user_associations = append(user_associations, mapUser)
 		}
 	}
 	tenantAttr.Users = user_associations
@@ -773,6 +770,31 @@ func setCloudAccountInfo(accInfo string, mapSite map[string]interface{}) {
 		mapSite["azure_access_type"] = "shared"
 		mapSite["azure_shared_account_id"] = accInfo[strings.Index(accInfo, "[")+1 : strings.Index(accInfo, "]")]
 	}
+}
+
+func tenantUserAssociationsFromContainer(con *container.Container) ([]interface{}, error) {
+	userAssociations := make([]interface{}, 0)
+	count, err := con.ArrayCount("userAssociations")
+	if err != nil {
+		return userAssociations, nil
+	}
+
+	for i := 0; i < count; i++ {
+		usersCont, err := con.ArrayElement(i, "userAssociations")
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse the user associations list")
+		}
+
+		mapUser := make(map[string]interface{})
+		userID := models.StripQuotes(usersCont.S("userId").String())
+		if userID == "" {
+			continue
+		}
+		mapUser["user_id"] = userID
+		userAssociations = append(userAssociations, mapUser)
+	}
+
+	return userAssociations, nil
 }
 
 func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
@@ -818,25 +840,13 @@ func resourceMSOTenantRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.Set("site_associations", site_associations)
-
-	count2, _ := con.ArrayCount("userAssociations")
+	userAssociations, err := tenantUserAssociationsFromContainer(con)
 	if err != nil {
-		d.Set("user_assocoations", make([]interface{}, 0))
+		return err
 	}
-
-	user_associations := make([]interface{}, 0)
-	for i := 0; i < count2; i++ {
-		usersCont, err := con.ArrayElement(i, "userAssociations")
-		if err != nil {
-			return fmt.Errorf("Unable to parse the user associations list")
-		}
-
-		mapUser := make(map[string]interface{})
-		mapUser["user_id"] = models.StripQuotes(usersCont.S("userId").String())
-		user_associations = append(user_associations, mapUser)
+	if err := d.Set("user_associations", userAssociations); err != nil {
+		return err
 	}
-
-	d.Set("user_associations", user_associations)
 
 	log.Printf("[DEBUG] %s: Read finished successfully", d.Id())
 	return nil

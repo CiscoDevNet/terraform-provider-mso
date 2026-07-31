@@ -1,8 +1,9 @@
 package mso
 
-// Note: User association tests are skipped because the mso_user data source uses
-// api/v1/users (or api/v2/users on ND), which no longer works on ND 4.1+ where
-// the endpoint changed to /api/v1/infra/aaa/localUsers.
+// Note: user_associations is only round-trip tested on platforms where the
+// legacy tenant API preserves explicit associations. ND 4.2+ back-fills
+// Tenant-domain users into userAssociations and rejects their removal, so that
+// behavior is intentionally skipped here.
 //
 // Note: Cloud site association tests (AWS/Azure/GCP) are skipped because they
 // require real cloud account credentials and vendor-specific configuration that
@@ -10,15 +11,19 @@ package mso
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // msoTenantId is used to capture the tenant ID from the first test step for use in the manual delete/recreate step.
 var msoTenantId string
+var msoTenantNameUserAssociations = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 func TestAccMSOTenantResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -122,6 +127,55 @@ func TestAccMSOTenantResource(t *testing.T) {
 	})
 }
 
+func TestAccMSOTenantResourceUserAssociations(t *testing.T) {
+	resourceRef := "mso_tenant.tenant_user_associations"
+
+	msoClient := testAccPreCheck(t)
+	userID, err := testAccMSOTenantLookupUserID(msoClient, os.Getenv("MSO_USERNAME"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t); testAccVersionLessThanCheck(t, "5.2.0.0") },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckMsoTenantDestroy,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Create Tenant with user association") },
+				Config:    testAccMSOTenantConfigUserAssociations("Terraform test tenant user association", userID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceRef, "name", msoTenantNameUserAssociations),
+					resource.TestCheckResourceAttr(resourceRef, "display_name", msoTenantNameUserAssociations),
+					resource.TestCheckResourceAttr(resourceRef, "description", "Terraform test tenant user association"),
+					CustomTestCheckTypeSetElemAttrs(resourceRef, "user_associations", map[string]string{
+						"user_id": userID,
+					}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update Tenant with same user association") },
+				Config:    testAccMSOTenantConfigUserAssociations("Terraform test tenant user association updated", userID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceRef, "description", "Terraform test tenant user association updated"),
+					CustomTestCheckTypeSetElemAttrs(resourceRef, "user_associations", map[string]string{
+						"user_id": userID,
+					}),
+				),
+			},
+			{
+				PreConfig:         func() { fmt.Println("Test: Import Tenant with user association") },
+				ResourceName:      resourceRef,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"orchestrator_only",
+				},
+			},
+		},
+	})
+}
+
 func testAccMSOTenantConfigCreate() string {
 	return fmt.Sprintf(`
 	resource "mso_tenant" "tenant" {
@@ -184,6 +238,19 @@ func testAccMSOTenantConfigRemoveSiteAssociation() string {
 	}`, testSiteConfigAnsibleTest(), msoTenantName, msoTenantName, msoTemplateSiteName1)
 }
 
+func testAccMSOTenantConfigUserAssociations(description, userID string) string {
+	return fmt.Sprintf(`
+	resource "mso_tenant" "tenant_user_associations" {
+		name         = "%s"
+		display_name = "%s"
+		description  = "%s"
+
+		user_associations {
+			user_id = "%s"
+		}
+	}`, msoTenantNameUserAssociations, msoTenantNameUserAssociations, description, userID)
+}
+
 // testAccCheckMsoTenantDestroy verifies that the tenant is deleted from MSO.
 // The generic testCheckResourceDestroyPolicy helpers cannot be used here because
 // they query the policy/template API (api/v1/templates/objects), whereas tenants
@@ -203,6 +270,75 @@ func testAccCheckMsoTenantDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+func testAccMSOTenantLookupUserID(msoClient *client.Client, username string) (string, error) {
+	paths := []string{"api/v1/users"}
+	if msoClient.GetPlatform() == "nd" {
+		paths = append(paths, "api/v2/users")
+	}
+
+	var lastErr error
+	for _, path := range paths {
+		con, err := msoClient.GetViaURL(path)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		if userID, ok := testAccMSOTenantFindUserIDInContainer(con, username); ok {
+			return userID, nil
+		}
+	}
+
+	if lastErr != nil {
+		return "", fmt.Errorf("failed to look up user %q for tenant user_associations test: %w", username, lastErr)
+	}
+	return "", fmt.Errorf("user %q not found for tenant user_associations test", username)
+}
+
+func testAccMSOTenantFindUserIDInContainer(con *container.Container, username string) (string, bool) {
+	if users, ok := con.Data().([]interface{}); ok {
+		for _, user := range users {
+			userMap, ok := user.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if userID, ok := testAccMSOTenantMatchUserMap(userMap, username); ok {
+				return userID, true
+			}
+		}
+	}
+
+	if users, ok := con.S("users").Data().([]interface{}); ok {
+		for _, user := range users {
+			userMap, ok := user.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if userID, ok := testAccMSOTenantMatchUserMap(userMap, username); ok {
+				return userID, true
+			}
+		}
+	}
+
+	return "", false
+}
+
+func testAccMSOTenantMatchUserMap(userMap map[string]interface{}, username string) (string, bool) {
+	for _, key := range []string{"loginID", "username"} {
+		if fmt.Sprintf("%v", userMap[key]) != username {
+			continue
+		}
+
+		for _, idKey := range []string{"userID", "id"} {
+			if userID := fmt.Sprintf("%v", userMap[idKey]); userID != "" && userID != "<nil>" {
+				return userID, true
+			}
+		}
+	}
+
+	return "", false
 }
 
 // TestAccMSOTenantResourceDisplayNameDefault validates that display_name is

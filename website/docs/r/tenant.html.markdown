@@ -105,8 +105,11 @@ resource "mso_tenant" "tenant4" {
 
 * `description` - (Optional) The description for this tenant.
 * `orchestrator_only` - (Optional) Option to delete this tenant only from orchestrator or not. Default value is "false".
-* `user_associations` - (Optional) A list of associated users for this tenant.
-* `user_associations.user_id` - (Optional) Id of user to be associated to this tenant.
+* `user_associations` - (Optional) **Deprecated** A list of associated users for this tenant.
+
+  !> **Deprecated Warning:** On Nexus Dashboard 4.2+ user associations are derived from Tenant Domain membership and are immutable via the tenants endpoint. The API can return additional users (for example, from `all-tenants-domain`) and reject updates that remove them, causing perpetual drift. Do not set `user_associations` on ND 4.2+.
+
+* `user_associations.user_id` - (Optional) **Deprecated** Id of user to be associated to this tenant.
 * `site_association` - (Optional) A list of associated sites for this tenant.
 * `site_association.site_id` - (Optional) Id of site to associate with this Tenant.
 * `site_association.security_domains` - (Optional) Security domains to associate with this Site.

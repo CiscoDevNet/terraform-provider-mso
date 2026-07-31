@@ -315,6 +315,21 @@ func testAccVersionCheck(t *testing.T, minVersion string) {
 	}
 }
 
+// testAccVersionLessThanCheck skips the test unless the controller version
+// reported by CompareVersion is less than maxVersionExclusive.
+// Must be called after testAccPreCheck in the same PreCheck function.
+func testAccVersionLessThanCheck(t *testing.T, maxVersionExclusive string) {
+	t.Helper()
+	result, err := msoClientTest.CompareVersion(maxVersionExclusive)
+	if err != nil {
+		t.Skipf("Skipping: could not determine NDO version: %s", err)
+	}
+
+	if result <= 0 {
+		t.Skipf("Skipping: requires NDO version < %s", maxVersionExclusive)
+	}
+}
+
 // CustomTestCheckCollectionElemAttrsByKeys locates the TypeSet element whose
 // attributes match every key/value pair in matchAttrs and compares every key
 // in attrsToCheck against the value stored in state, producing a
