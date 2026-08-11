@@ -2,13 +2,30 @@ package mso
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 )
 
-const msoTemplateSiteName1 = "ansible_test"
-const msoTemplateSiteName2 = "ansible_test_2"
+// msoTemplateSiteName1/2 identify the two sites that must be onboarded in the
+// lab used for acceptance testing. They default to "ansible_test" and
+// "ansible_test_2", but can be overridden via the MSO_SITE_NAME1 /
+// MSO_SITE_NAME2 environment variables. This is needed because some ND
+// versions (e.g. ND 4.3+) no longer allow underscores in site names, so labs
+// running those versions must set the env vars to the dashed variants (e.g.
+// "ansible-test" / "ansible-test-2").
+var msoTemplateSiteName1 = getEnvWithDefault("MSO_SITE_NAME1", "ansible_test")
+var msoTemplateSiteName2 = getEnvWithDefault("MSO_SITE_NAME2", "ansible_test_2")
+
+// getEnvWithDefault returns the value of the environment variable if set and
+// non-empty, otherwise it returns the provided default value.
+func getEnvWithDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 // msoSchemaSiteResourceLabel1/2 are the Terraform resource block labels used
 // for the two mso_schema_site resources in shared schema_site test

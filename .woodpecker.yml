@@ -17,6 +17,11 @@ matrix:
     - ND_NAME: "ND42"
       ND_URL: "https://10.15.0.128/"
       APIC_URL: "https://10.15.38.243/" 
+    - ND_NAME: "ND43"
+      ND_URL: "https://10.15.39.129/"
+      APIC_URL: "https://10.15.39.243/"
+      MSO_SITE_NAME1: "ansible-test"
+      MSO_SITE_NAME2: "ansible-test-2"
 
 steps:
 
@@ -26,6 +31,8 @@ steps:
       event: [manual, cron]
     environment:
       TF_ACC: "1"
+      MSO_SITE_NAME1: "${MSO_SITE_NAME1}"
+      MSO_SITE_NAME2: "${MSO_SITE_NAME2}"
       MSO_USERNAME:
         from_secret: MSO_USERNAME
       MSO_PASSWORD:
