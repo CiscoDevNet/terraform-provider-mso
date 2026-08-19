@@ -14,6 +14,10 @@ func nd4DeprecationMessage(resourceName string) string {
 	return fmt.Sprintf("%s is deprecated: no longer functional on Nexus Dashboard (ND) 4.0+ / NDO 5.0+ and will be removed once ND 3.x / NDO 4.x is no longer supported.", resourceName)
 }
 
+func nd4FunctionalDataSourceDeprecationMessage(dataSourceName string) string {
+	return fmt.Sprintf("%s data source is deprecated: it remains functional on Nexus Dashboard (ND) 4.0+ / NDO 5.0+, but the corresponding %s resource is no longer functional. The data source will be removed once ND 3.x / NDO 4.x is no longer supported.", dataSourceName, dataSourceName)
+}
+
 var controlMap = map[string]string{
 	"fast_sel_hot_stdby": "fast-sel-hot-stdby",
 	"graceful_conv":      "graceful-conv",
