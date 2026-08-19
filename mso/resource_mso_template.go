@@ -306,9 +306,15 @@ func (ndoTemplate *ndoTemplate) setTemplateId() error {
 		return err
 	}
 
-	templates, err := cont.Children()
-	if err != nil {
-		return err
+	// The API returns a literal JSON null (instead of an empty array) when no
+	// templates exist yet, which cont.Children() cannot parse. Treat that as
+	// zero templates rather than surfacing a raw parsing error.
+	var templates []*container.Container
+	if cont.Data() != nil {
+		templates, err = cont.Children()
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, template := range templates {
