@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteAnpEpgSubnetDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent subnet IP (expect error)")
+					fmt.Println("Test: Lookup non-existent subnet IP (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteAnpEpgSubnetDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`Unable to find subnet entry with ip`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing subnet") },
+				PreConfig: func() { fmt.Println("Test: Read existing subnet") },
 				Config:    testAccMSOSchemaSiteAnpEpgSubnetDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(subnetDatasource, "schema_id", subnetResource, "schema_id"),

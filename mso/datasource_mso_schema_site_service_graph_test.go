@@ -18,13 +18,13 @@ func TestAccMSOSchemaSiteServiceGraphDatasource(t *testing.T) {
 		CheckDestroy: testAccCheckMSOSchemaSiteServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
-				PreConfig:   func() { fmt.Println("DataSource: Lookup non-existing site service graph (expect error)") },
+				PreConfig:   func() { fmt.Println("Test: Lookup non-existing site service graph (expect error)") },
 				Config:      testAccMSOSchemaSiteServiceGraphDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`Unable to find site service graph`),
 			},
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Read existing site service graph and verify attributes match resource")
+					fmt.Println("Test: Read existing site service graph and verify attributes match resource")
 				},
 				Config: testAccMSOSchemaSiteServiceGraphDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(

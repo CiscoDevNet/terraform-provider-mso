@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteBdSubnetDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent site BD subnet IP (expect error)")
+					fmt.Println("Test: Lookup non-existent site BD subnet IP (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteBdSubnetDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`Unable to find BD subnet entry with ip`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing site BD subnet") },
+				PreConfig: func() { fmt.Println("Test: Read existing site BD subnet") },
 				Config:    testAccMSOSchemaSiteBdSubnetDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "schema_id", siteBdSubnetResource, "schema_id"),

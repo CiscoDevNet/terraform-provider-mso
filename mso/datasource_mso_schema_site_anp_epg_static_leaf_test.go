@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteAnpEpgStaticLeafDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent static leaf path (expect error)")
+					fmt.Println("Test: Lookup non-existent static leaf path (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteAnpEpgStaticLeafDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`Unable to find the Site ANP EPG Static Leaf`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing static leaf") },
+				PreConfig: func() { fmt.Println("Test: Read existing static leaf") },
 				Config:    testAccMSOSchemaSiteAnpEpgStaticLeafDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(staticLeafDatasource, "schema_id", staticLeafResource, "schema_id"),
