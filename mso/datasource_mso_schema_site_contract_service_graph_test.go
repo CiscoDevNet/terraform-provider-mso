@@ -30,14 +30,14 @@ func TestAccMSOSchemaSiteContractServiceGraphDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup site contract with no service graph relationship (expect error)")
+					fmt.Println("Test: Lookup site contract with no service graph relationship (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteContractServiceGraphDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`No service graph found`),
 			},
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Read existing site contract service graph and verify attributes match resource")
+					fmt.Println("Test: Read existing site contract service graph and verify attributes match resource")
 				},
 				Config: testAccMSOSchemaSiteContractServiceGraphDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(

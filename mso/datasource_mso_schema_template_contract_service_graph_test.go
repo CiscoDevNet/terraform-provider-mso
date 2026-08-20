@@ -20,12 +20,12 @@ func TestAccMSOSchemaTemplateContractServiceGraphDatasource(t *testing.T) {
 			{
 				// Contract exists but no service graph relationship has been created yet.
 				// This directly tests the new not-found handling in the datasource.
-				PreConfig:   func() { fmt.Println("DataSource: Lookup contract with no service graph relationship (expect error)") },
+				PreConfig:   func() { fmt.Println("Test: Lookup contract with no service graph relationship (expect error)") },
 				Config:      testAccMSOSchemaTemplateContractServiceGraphDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`service graph relationship not found`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing contract service graph") },
+				PreConfig: func() { fmt.Println("Test: Read existing contract service graph") },
 				Config:    testAccMSOSchemaTemplateContractServiceGraphDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(datasourceRef, "schema_id", resourceRef, "schema_id"),
