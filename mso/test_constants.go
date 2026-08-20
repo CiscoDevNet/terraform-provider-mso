@@ -392,6 +392,7 @@ resource "mso_schema_template_filter_entry" "%[1]s" {
 	display_name       = "%[1]s"
 	entry_name         = "%[1]s_entry"
 	entry_display_name = "%[1]s_entry"
+	ether_type         = "ip"
 }
 `, msoSchemaTemplateFilterName, msoSchemaName, msoSchemaTemplateName)
 }
