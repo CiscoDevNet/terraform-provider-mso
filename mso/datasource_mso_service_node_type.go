@@ -17,7 +17,7 @@ func dataSourceMSOServiceNodeType() *schema.Resource {
 
 		SchemaVersion: version,
 
-		DeprecationMessage: "mso_service_node_type is deprecated and will be removed in the next major release.",
+		DeprecationMessage: "mso_service_node_type data source is deprecated: it remains functional on Nexus Dashboard (ND) 4.3+ / NDO 5.3+, but the corresponding mso_service_node_type resource is no longer functional. The data source will be removed once ND 4.2 / NDO 5.2 is no longer supported.",
 
 		Schema: (map[string]*schema.Schema{
 			"name": &schema.Schema{

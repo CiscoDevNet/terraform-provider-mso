@@ -29,7 +29,7 @@ func TestAccMSOSchemaTemplateServiceGraphDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.#", "3"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.0.type", "firewall"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.1.type", "load-balancer"),
-					resource.TestCheckResourceAttr("data.mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.2.type", msoServiceNodeTypeName),
+					resource.TestCheckResourceAttr("data.mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.2.type", "other"),
 				),
 			},
 		},

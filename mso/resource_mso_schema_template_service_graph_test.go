@@ -53,7 +53,7 @@ func TestAccMSOSchemaTemplateServiceGraphResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.#", "3"),
 					resource.TestCheckResourceAttr("mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.0.type", "firewall"),
 					resource.TestCheckResourceAttr("mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.1.type", "load-balancer"),
-					resource.TestCheckResourceAttr("mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.2.type", msoServiceNodeTypeName),
+					resource.TestCheckResourceAttr("mso_schema_template_service_graph."+msoSchemaTemplateServiceGraphName, "service_node.2.type", "other"),
 				),
 			},
 			{
@@ -152,15 +152,11 @@ func testAccMSOSchemaTemplateServiceGraphConfigThreeNodes(description string) st
 	}
 	return fmt.Sprintf(`%s
 
-resource "mso_service_node_type" "%[2]s" {
-  name = "%[2]s"
-}
-
-resource "mso_schema_template_service_graph" "%[3]s" {
-  schema_id          = mso_schema.%[4]s.id
-  template_name      = "%[5]s"
-  service_graph_name = "%[3]s"
-%[6]s
+resource "mso_schema_template_service_graph" "%[2]s" {
+  schema_id          = mso_schema.%[3]s.id
+  template_name      = "%[4]s"
+  service_graph_name = "%[2]s"
+%[5]s
   service_node {
     type = "firewall"
   }
@@ -170,8 +166,8 @@ resource "mso_schema_template_service_graph" "%[3]s" {
   }
 
   service_node {
-    type = mso_service_node_type.%[2]s.name
+    type = "other"
   }
 }
-`, testAccMSOSchemaTemplateServiceGraphDependencies(), msoServiceNodeTypeName, msoSchemaTemplateServiceGraphName, msoSchemaName, msoSchemaTemplateName, descLine)
+`, testAccMSOSchemaTemplateServiceGraphDependencies(), msoSchemaTemplateServiceGraphName, msoSchemaName, msoSchemaTemplateName, descLine)
 }
