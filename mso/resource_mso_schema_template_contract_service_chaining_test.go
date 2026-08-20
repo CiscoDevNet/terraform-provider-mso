@@ -242,14 +242,7 @@ resource "mso_service_device_cluster" "%[11]s" {
 	}
 }
 
-resource "mso_schema_template_filter_entry" "%[12]s" {
-	schema_id          = mso_schema.%[5]s.id
-	template_name      = "%[6]s"
-	name               = "%[12]s"
-	display_name       = "%[12]s"
-	entry_name         = "%[12]s_entry"
-	entry_display_name = "%[12]s_entry"
-}
+%[15]s
 
 resource "mso_schema_template_contract" "%[13]s" {
 	schema_id     = mso_schema.%[5]s.id
@@ -286,20 +279,21 @@ resource "mso_schema_template_external_epg_contract" "%[14]s_provider" {
 	contract_template_name = mso_schema_template_contract.%[13]s.template_name
 }
 `,
-		testSiteConfigAnsibleTest(),   // %[1]s
-		testTenantConfig(),            // %[2]s
-		msoServiceDeviceTemplateName,  // %[3]s
-		msoTenantName,                 // %[4]s
-		msoSchemaName,                 // %[5]s
-		msoSchemaTemplateName,         // %[6]s
-		msoSchemaTemplateVrfName,      // %[7]s
-		msoSchemaTemplateBdName,       // %[8]s
-		msoSchemaTemplateBdName2,      // %[9]s
-		msoServiceDeviceClusterLbName, // %[10]s
-		msoServiceDeviceClusterFwName, // %[11]s
-		msoSchemaTemplateFilterName,   // %[12]s
-		msoSchemaTemplateContractName, // %[13]s
-		msoSchemaTemplateExtEpgName,   // %[14]s
+		testSiteConfigAnsibleTest(),           // %[1]s
+		testTenantConfig(),                    // %[2]s
+		msoServiceDeviceTemplateName,          // %[3]s
+		msoTenantName,                         // %[4]s
+		msoSchemaName,                         // %[5]s
+		msoSchemaTemplateName,                 // %[6]s
+		msoSchemaTemplateVrfName,              // %[7]s
+		msoSchemaTemplateBdName,               // %[8]s
+		msoSchemaTemplateBdName2,              // %[9]s
+		msoServiceDeviceClusterLbName,         // %[10]s
+		msoServiceDeviceClusterFwName,         // %[11]s
+		msoSchemaTemplateFilterName,           // %[12]s
+		msoSchemaTemplateContractName,         // %[13]s
+		msoSchemaTemplateExtEpgName,           // %[14]s
+		testSchemaTemplateFilterEntryConfig(), // %[15]s
 	)
 }
 
