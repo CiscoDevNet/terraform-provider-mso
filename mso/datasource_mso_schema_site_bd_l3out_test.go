@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteBdL3outDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent site BD L3out (expect error)")
+					fmt.Println("Test: Lookup non-existent site BD L3out (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteBdL3outDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`Unable to find the Site BD L3out`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing site BD L3out") },
+				PreConfig: func() { fmt.Println("Test: Read existing site BD L3out") },
 				Config:    testAccMSOSchemaSiteBdL3outDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(siteBdL3outDatasource, "schema_id", siteBdL3outResource, "schema_id"),

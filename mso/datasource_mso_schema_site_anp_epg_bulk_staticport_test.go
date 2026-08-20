@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent EPG (expect error)")
+					fmt.Println("Test: Lookup non-existent EPG (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`EPG .* is not found in Site\.`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing bulk static port") },
+				PreConfig: func() { fmt.Println("Test: Read existing bulk static port") },
 				Config:    testAccMSOSchemaSiteAnpEpgBulkStaticPortDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(bulkStaticPortDatasource, "schema_id", bulkStaticPortResource, "schema_id"),

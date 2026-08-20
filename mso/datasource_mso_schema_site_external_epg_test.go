@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteExternalEpgDataSource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent site external EPG (expect error)")
+					fmt.Println("Test: Lookup non-existent site external EPG (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteExternalEpgDataSourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`External EPG .* is not found in Site`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing site external EPG with template L3Out") },
+				PreConfig: func() { fmt.Println("Test: Read existing site external EPG with template L3Out") },
 				Config:    testAccMSOSchemaSiteExternalEpgDataSourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(siteEpgDataSource, "schema_id", siteEpgResource, "schema_id"),

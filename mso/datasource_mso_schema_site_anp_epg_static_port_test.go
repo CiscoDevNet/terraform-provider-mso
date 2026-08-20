@@ -24,13 +24,13 @@ func TestAccMSOSchemaSiteAnpEpgStaticPortDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("DataSource: Lookup non-existent static port path (expect error)")
+					fmt.Println("Test: Lookup non-existent static port path (expect error)")
 				},
 				Config:      testAccMSOSchemaSiteAnpEpgStaticPortDatasourceNotFoundConfig(),
 				ExpectError: regexp.MustCompile(`Unable to find static port entry`),
 			},
 			{
-				PreConfig: func() { fmt.Println("DataSource: Read existing static port") },
+				PreConfig: func() { fmt.Println("Test: Read existing static port") },
 				Config:    testAccMSOSchemaSiteAnpEpgStaticPortDatasourceReadConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(staticPortDatasource, "schema_id", staticPortResource, "schema_id"),
