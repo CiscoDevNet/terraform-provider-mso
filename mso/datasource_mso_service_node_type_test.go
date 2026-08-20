@@ -22,9 +22,9 @@ func TestAccMSOServiceNodeTypeDataSource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Service Node Type Data Source") },
 				Config:    testAccMSOServiceNodeTypeDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.mso_service_node_type.test", "name", msoServiceNodeTypeName),
-					resource.TestCheckResourceAttr("data.mso_service_node_type.test", "display_name", msoServiceNodeTypeName+" display"),
-					resource.TestCheckResourceAttrPair("data.mso_service_node_type.test", "id", "mso_service_node_type.test", "id"),
+					resource.TestCheckResourceAttr("data.mso_service_node_type.test", "name", "other"),
+					resource.TestCheckResourceAttr("data.mso_service_node_type.test", "display_name", "Other"),
+					resource.TestCheckResourceAttrSet("data.mso_service_node_type.test", "id"),
 				),
 			},
 		},
@@ -32,27 +32,17 @@ func TestAccMSOServiceNodeTypeDataSource(t *testing.T) {
 }
 
 func testAccMSOServiceNodeTypeDataSourceNotFound() string {
-	return fmt.Sprintf(`
-resource "mso_service_node_type" "test" {
-  name         = "%[1]s"
-  display_name = "%[1]s display"
-}
-
+	return `
 data "mso_service_node_type" "test" {
   name = "non_existing_service_node_type"
 }
-`, msoServiceNodeTypeName)
+`
 }
 
 func testAccMSOServiceNodeTypeDataSourceConfig() string {
-	return fmt.Sprintf(`
-resource "mso_service_node_type" "test" {
-  name         = "%[1]s"
-  display_name = "%[1]s display"
-}
-
+	return `
 data "mso_service_node_type" "test" {
-  name = mso_service_node_type.test.name
+  name = "other"
 }
-`, msoServiceNodeTypeName)
+`
 }

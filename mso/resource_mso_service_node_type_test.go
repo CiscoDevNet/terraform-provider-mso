@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -12,9 +13,27 @@ import (
 
 var msoServiceNodeTypeId string
 
+func TestMSOServiceNodeTypeDeprecationMessages(t *testing.T) {
+	resourceMessage := resourceMSOServiceNodeType().DeprecationMessage
+	if !strings.Contains(resourceMessage, "no longer functional on Nexus Dashboard (ND) 4.3+") {
+		t.Fatalf("mso_service_node_type resource deprecation message should state that it is no longer functional, got %q", resourceMessage)
+	}
+
+	dataSourceMessage := dataSourceMSOServiceNodeType().DeprecationMessage
+	if !strings.Contains(dataSourceMessage, "data source is deprecated: it remains functional") {
+		t.Fatalf("mso_service_node_type data source deprecation message should state that it remains functional, got %q", dataSourceMessage)
+	}
+	if !strings.Contains(dataSourceMessage, "mso_service_node_type resource is no longer functional") {
+		t.Fatalf("mso_service_node_type data source deprecation message should identify the unusable resource, got %q", dataSourceMessage)
+	}
+}
+
 func TestAccMSOServiceNodeTypeResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		// Custom service node type creation/deletion (POST/DELETE) is no longer
+		// supported by the platform as of NDO 5.3 (ND 4.3): the API now only
+		// allows GET on api/v1/schemas/service-node-types.
+		PreCheck:     func() { testAccPreCheck(t); testAccVersionLessThanCheck(t, "5.3") },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckMSOServiceNodeTypeDestroy,
 		Steps: []resource.TestStep{

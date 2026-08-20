@@ -8,7 +8,7 @@ description: |-
 
 # mso_service_node_type #
 
-!> **Deprecated** This data source is deprecated and will be removed in the next major release.
+!> **Deprecated** This data source remains functional on Nexus Dashboard (ND) 4.3+ / NDO 5.3+, but the corresponding `mso_service_node_type` resource is no longer functional. The data source will be removed once ND 4.2 / NDO 5.2 is no longer supported.
 
 Data Source for MSO Service Node Type.
 

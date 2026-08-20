@@ -33,10 +33,13 @@ resource "mso_schema_template_service_graph" "test_sg" {
 * `service_graph_name` - (Required) Name of the Service Graph.
 * `description` - (Optional) Description of Service Graph.
 * `service_node` - (Required) List of service nodes attached to the Service Graph. At least one service node is required.
-    * `type` - (Required) The name of the service node type. Built-in values are `firewall`, `load-balancer` and `other`. Custom node types created via `mso_service_node_type` are also supported.
+    * `type` - (Required) The name of the service node type. Built-in values are `firewall`, `load-balancer` and `other`. Custom node types created via `mso_service_node_type` are also supported on Nexus Dashboard (ND) 4.2 / NDO 5.2 and earlier.
 
-## NOTE ##
-The NDO API does not support removing service nodes from an existing Service Graph. To reduce the number of nodes, the Service Graph must be deleted and recreated.
+## Note ##
+
+* The NDO API does not support removing service nodes from an existing Service Graph. To reduce the number of nodes, the Service Graph must be deleted and recreated.
+
+* As of Nexus Dashboard (ND) 4.3 / NDO 5.3, the platform no longer allows creating custom service node types; only the built-in `firewall`, `load-balancer` and `other` types can be used as `service_node.type`. See the `mso_service_node_type` resource documentation for details.
 
 ## Attribute Reference ##
 

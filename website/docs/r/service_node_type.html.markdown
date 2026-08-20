@@ -8,7 +8,7 @@ description: |-
 
 # mso_service_node_type #
 
-!> **Deprecated** This resource is deprecated and will be removed in the next major release.
+!> **Deprecated** This resource is deprecated: no longer functional on Nexus Dashboard (ND) 4.3+ / NDO 5.3+ (the platform only allows GET on service node types) and will be removed once ND 4.2 / NDO 5.2 is no longer supported.
 
 Manages MSO Service Node Type
 
