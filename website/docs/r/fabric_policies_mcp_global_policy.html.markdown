@@ -39,7 +39,7 @@ resource "mso_fabric_policies_mcp_global_policy" "test" {
 * `description` - (Optional) The description of the MCP Global Policy.
 * `admin_state` - (Optional) The administrative state of the MCP Global Policy. Allowed values are `enabled` or `disabled`. Defaults to `disabled` when unset during creation.
 * `enable_mcp_pdu_per_vlan` - (Optional) Enable MCP PDU per VLAN. This enables MCP to send packets on a per-EPG basis. Allowed values are `enabled` or `disabled`. Defaults to `disabled` when unset during creation.
-* `key` - (Optional) The key to uniquely identify the MCP packets within the fabric. This must be provided when `admin_state` is set to `enabled`.
+* `key` - (Optional) The key to uniquely identify the MCP packets within the fabric. This must be provided when `admin_state` is set to `enabled`. This value is marked sensitive and will not be displayed in plan output.
 * `loop_detect_multiplication_factor` - (Optional) The number of MCP packets that will be received by the ACI fabric before the Loop Protection Action occurs. Valid range: 1-255. Defaults to `3` when unset during creation.
 * `port_disable_protection` - (Optional) Enable or disable port disable protection for the MCP Global Policy. Allowed values are `enabled` or `disabled`. Defaults to `enabled` when unset during creation.
 * `initial_delay_time` - (Optional) The time in seconds before MCP starts taking action. During this period, MCP will only generate syslog entries if a loop is detected, without taking protective action. Valid range: 0-1800. Defaults to `180` when unset during creation.
