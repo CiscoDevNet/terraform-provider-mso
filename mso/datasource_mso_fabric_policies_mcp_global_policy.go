@@ -38,8 +38,9 @@ func datasourceMSOMCPGlobalPolicy() *schema.Resource {
 				Computed: true,
 			},
 			"key": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"loop_detect_multiplication_factor": {
 				Type:     schema.TypeInt,

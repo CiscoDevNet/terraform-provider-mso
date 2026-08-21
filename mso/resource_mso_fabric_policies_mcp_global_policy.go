@@ -51,9 +51,10 @@ func resourceMSOMCPGlobalPolicy() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"enabled", "disabled"}, false),
 			},
 			"key": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"loop_detect_multiplication_factor": {
 				Type:         schema.TypeInt,
@@ -102,7 +103,15 @@ func setMCPGlobalPolicyData(d *schema.ResourceData, response *container.Containe
 	d.Set("admin_state", models.StripQuotes(response.S("adminState").String()))
 
 	if response.Exists("key") {
-		d.Set("key", models.StripQuotes(response.S("key").String()))
+		apiKey := models.StripQuotes(response.S("key").String())
+		// The API returns a masked placeholder ("***") instead of the plaintext
+		// value for this sensitive field. Preserve the previously configured
+		// plaintext value from state to avoid perpetual diffs.
+		if apiKey == "***" {
+			d.Set("key", d.Get("key").(string))
+		} else {
+			d.Set("key", apiKey)
+		}
 	} else {
 		d.Set("key", nil)
 	}
