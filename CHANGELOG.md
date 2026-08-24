@@ -2,20 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## 2.1.0 (July 27, 2026)
+## 2.1.0 (August 27, 2026)
 
-This release migrates the provider to the Terraform Plugin SDK v2. Functional and scale testing has been conducted across multiple environments to confirm that existing configurations are not impacted by this change.
+This release migrates the provider to the Terraform Plugin SDK v2. Testing has been conducted across multiple environments to confirm that existing configurations are not impacted by this change.
 
 DEPRECATIONS:
 
 - Remove deprecated `service_node_type` attribute from mso_schema_template_service_graph resource and datasource.
 - Deprecate mso_schema_template_deploy resource: use mso_schema_template_deploy_ndo for Nexus Dashboard-based NDO deployments.
 - Deprecate mso_schema_template_contract_filter resource and datasource: use the `filter_relationship` block on mso_schema_template_contract instead.
-- Deprecate mso_service_node_type resource and datasource: will be removed in the next major release.
+- Deprecate mso_service_node_type resource: no longer functional on Nexus Dashboard 4.3+ (NDO 5.3+) and will be removed once Nexus Dashboard 4.2 (NDO 5.2) is no longer supported.
+- Deprecate mso_service_node_type datasource: remains functional on Nexus Dashboard 4.3+ (NDO 5.3+); expected to be removed in a future major release.
 - Deprecate mso_label resource and datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
 - Deprecate mso_role datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
 - Deprecate mso_user resource and datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
-- Deprecate mso_site resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
+- Deprecate mso_site resource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
+- Deprecate mso_site datasource: remains functional on Nexus Dashboard 4.0+ (NDO 5.0+); expected to be removed in a future major release.
 - Deprecate mso_remote_location resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
 - Deprecate mso_system_config resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
 - Deprecate mso_tenant resource and datasource: deprecated as of Nexus Dashboard 4.3 (NDO 5.3), no longer functional on Nexus Dashboard 4.4+ (NDO 5.4+), and will be removed once Nexus Dashboard 4.3 (NDO 5.3) is no longer supported.
@@ -29,6 +31,7 @@ DEPRECATIONS:
 - Deprecate mso_schema_template_anp_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
 - Deprecate mso_schema_template_external_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
 - Deprecate `display_name` attribute in mso_tenant resource: on Nexus Dashboard 4.2+ (NDO 5.2+) `display_name` must equal `name`; the attribute will be removed in a future release.
+- Deprecate `user_associations` attribute in mso_tenant resource: on Nexus Dashboard 4.2+ (NDO 5.2+) associations are derived from Tenant Domain membership and immutable via the tenants API; the attribute will be removed in a future release.
 
 IMPROVEMENTS:
 
@@ -67,6 +70,7 @@ BUG FIXES:
 - Fix mso_schema_template_filter_entry to use per-field PATCH operations on update, preventing unintentional resets of other attributes.
 - Fix mso_schema_template datasource to return an error instead of a nil conversion when no templates are found.
 - Fix mso_schema_template to avoid resource recreation on update when manually deleted.
+- Fix mso_template resource and datasource to handle the API returning null instead of an empty array when no templates exist.
 - Fix mso_schema_template_contract to allow description to be set to an empty string.
 - Fix mso_schema_template_contract to allow target_dscp to be updated.
 - Fix mso_schema_template_bd to allow description and vmac to be set to an empty string.
@@ -105,6 +109,7 @@ BUG FIXES:
 - Fix mso_service_device_cluster to allow ipsla_monitoring_policy_uuid and qos_policy_uuid to be cleared.
 - Fix mso_service_device_cluster to correctly set redirect attribute for non-IPSLA dependent interface attributes.
 - Fix mso_service_device_cluster to stop persisting NDO-defaulted load_balance_hashing and threshold_down_action on bare interfaces.
+- Fix mso_fabric_policies_mcp_global_policy to mark the key attribute as sensitive and preserve the configured value instead of overwriting it with the API's masked placeholder.
 
 ## 2.0.0 (April 17, 2026)
 
