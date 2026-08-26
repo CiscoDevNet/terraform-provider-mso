@@ -2,25 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
-## 2.1.0 (August 27, 2026)
+## 3.0.0 (September 7, 2026)
 
-This release migrates the provider to the Terraform Plugin SDK v2. Testing has been conducted across multiple environments to confirm that existing configurations are not impacted by this change.
+This release migrates the provider to the Terraform Plugin SDK v2. Testing has been conducted across multiple versions to confirm that existing configurations are not impacted by this change.
+
+BREAKING CHANGES:
+
+- Remove deprecated `service_node_type` attribute from mso_schema_template_service_graph resource and datasource.
 
 DEPRECATIONS:
 
-- Remove deprecated `service_node_type` attribute from mso_schema_template_service_graph resource and datasource.
 - Deprecate mso_schema_template_deploy resource: use mso_schema_template_deploy_ndo for Nexus Dashboard-based NDO deployments.
 - Deprecate mso_schema_template_contract_filter resource and datasource: use the `filter_relationship` block on mso_schema_template_contract instead.
-- Deprecate mso_service_node_type resource: no longer functional on Nexus Dashboard 4.3+ (NDO 5.3+) and will be removed once Nexus Dashboard 4.2 (NDO 5.2) is no longer supported.
+- Deprecate mso_service_node_type resource: no longer functional on Nexus Dashboard 4.3+ (NDO 5.3+) and will be removed once Nexus Dashboard 4.2 (NDO 5.2) reaches its Last Day of Support (LDOS).
 - Deprecate mso_service_node_type datasource: remains functional on Nexus Dashboard 4.3+ (NDO 5.3+); expected to be removed in a future major release.
 - Deprecate mso_label resource and datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
 - Deprecate mso_role datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
 - Deprecate mso_user resource and datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
-- Deprecate mso_site resource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
+- Deprecate mso_site resource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) reaches its LDOS.
 - Deprecate mso_site datasource: remains functional on Nexus Dashboard 4.0+ (NDO 5.0+); expected to be removed in a future major release.
-- Deprecate mso_remote_location resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
-- Deprecate mso_system_config resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
-- Deprecate mso_tenant resource and datasource: deprecated as of Nexus Dashboard 4.3 (NDO 5.3), no longer functional on Nexus Dashboard 4.4+ (NDO 5.4+), and will be removed once Nexus Dashboard 4.3 (NDO 5.3) is no longer supported.
+- Deprecate mso_remote_location resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) reaches its LDOS.
+- Deprecate mso_system_config resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) reaches its LDOS.
+- Deprecate mso_tenant resource and datasource: deprecated as of Nexus Dashboard 4.3 (NDO 5.3), no longer functional on Nexus Dashboard 4.4+ (NDO 5.4+), and will be removed once Nexus Dashboard 4.3 (NDO 5.3) reaches its LDOS.
 - Deprecate mso_schema_site_anp_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
 - Deprecate mso_schema_site_contract_service_graph_listener resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
 - Deprecate mso_schema_site_external_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
