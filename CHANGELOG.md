@@ -2,13 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## 2.1.0 (August 27, 2026)
+## 3.0.0 (September 1, 2026)
 
 This release migrates the provider to the Terraform Plugin SDK v2. Testing has been conducted across multiple environments to confirm that existing configurations are not impacted by this change.
 
-DEPRECATIONS:
+BREAKING CHANGES:
 
 - Remove deprecated `service_node_type` attribute from mso_schema_template_service_graph resource and datasource.
+
+DEPRECATIONS:
+
 - Deprecate mso_schema_template_deploy resource: use mso_schema_template_deploy_ndo for Nexus Dashboard-based NDO deployments.
 - Deprecate mso_schema_template_contract_filter resource and datasource: use the `filter_relationship` block on mso_schema_template_contract instead.
 - Deprecate mso_service_node_type resource: no longer functional on Nexus Dashboard 4.3+ (NDO 5.3+) and will be removed once Nexus Dashboard 4.2 (NDO 5.2) is no longer supported.
