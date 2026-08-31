@@ -2,6 +2,118 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.0.0 (September 1, 2026)
+
+This release migrates the provider to the Terraform Plugin SDK v2. Testing has been conducted across multiple environments to confirm that existing configurations are not impacted by this change.
+
+BREAKING CHANGES:
+
+- Remove deprecated `service_node_type` attribute from mso_schema_template_service_graph resource and datasource.
+
+DEPRECATIONS:
+
+- Deprecate mso_schema_template_deploy resource: use mso_schema_template_deploy_ndo for Nexus Dashboard-based NDO deployments.
+- Deprecate mso_schema_template_contract_filter resource and datasource: use the `filter_relationship` block on mso_schema_template_contract instead.
+- Deprecate mso_service_node_type resource: no longer functional on Nexus Dashboard 4.3+ (NDO 5.3+) and will be removed once Nexus Dashboard 4.2 (NDO 5.2) is no longer supported.
+- Deprecate mso_service_node_type datasource: remains functional on Nexus Dashboard 4.3+ (NDO 5.3+); expected to be removed in a future major release.
+- Deprecate mso_label resource and datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
+- Deprecate mso_role datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
+- Deprecate mso_user resource and datasource: no longer functional on Nexus Dashboard 3.2+ (NDO 4.4+) and will be removed in the next major release.
+- Deprecate mso_site resource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
+- Deprecate mso_site datasource: remains functional on Nexus Dashboard 4.0+ (NDO 5.0+); expected to be removed in a future major release.
+- Deprecate mso_remote_location resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
+- Deprecate mso_system_config resource and datasource: no longer functional on Nexus Dashboard 4.0+ (NDO 5.0+) and will be removed once Nexus Dashboard 3.x (NDO 4.x) is no longer supported.
+- Deprecate mso_tenant resource and datasource: deprecated as of Nexus Dashboard 4.3 (NDO 5.3), no longer functional on Nexus Dashboard 4.4+ (NDO 5.4+), and will be removed once Nexus Dashboard 4.3 (NDO 5.3) is no longer supported.
+- Deprecate mso_schema_site_anp_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_site_contract_service_graph_listener resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_site_external_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_site_vrf_region resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_site_vrf_region_cidr resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_site_vrf_region_cidr_subnet resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_site_vrf_route_leak resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_template_anp_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate mso_schema_template_external_epg_selector resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate `display_name` attribute in mso_tenant resource: on Nexus Dashboard 4.2+ (NDO 5.2+) `display_name` must equal `name`; the attribute will be removed in a future release.
+- Deprecate `user_associations` attribute in mso_tenant resource: on Nexus Dashboard 4.2+ (NDO 5.2+) associations are derived from Tenant Domain membership and immutable via the tenants API; the attribute will be removed in a future release.
+
+IMPROVEMENTS:
+
+- Add mso_tenant_policies_igmp_interface_policy resource and datasource.
+- Add mso_fabric_policies_ptp_policy resource and datasource.
+- Add mso_fabric_policies_ptp_policy_profile resource and datasource.
+- Add mso_fabric_policies_node_settings resource and datasource.
+- Add mso_tenant_policies_endpoint_mac_tag_policy resource and datasource.
+- Add mso_tenant_policies_netflow_exporter resource and datasource.
+- Add mso_tenant_policies_netflow_record resource and datasource.
+- Add mso_tenant_policies_netflow_monitor resource and datasource.
+- Add mso_fabric_resource_policies_port_channel_interface resource and datasource.
+- Add mso_fabric_resource_policies_virtual_port_channel_interface resource and datasource.
+- Add mso_fabric_resource_policies_physical_interface resource and datasource.
+- Add mso_service_device_cluster_site resource and datasource.
+- Add redirect attribute to interface_properties in mso_service_device_cluster resource and datasource.
+- Change `display_name` attribute in mso_tenant resource to be optional and computed; when omitted on create, it now defaults to `name`.
+- Upgrade mso-go-client to v1.35.0 to add retry on HTTP 400 responses containing "save post processing in progress, please retry".
+- Upgrade Go version to 1.25.
+
+BUG FIXES:
+
+- Fix mso_schema_template_service_graph update silently reverting to a single service node when description or other attributes changed.
+- Fix mso_schema_template_service_graph datasource to return description in read response.
+- Fix mso_schema_template_service_graph to allow description to be cleared by omitting or setting description to an empty string.
+- Fix mso_schema_template_service_graph service_node type validation to allow custom node types created via mso_service_node_type.
+- Fix mso_schema_template_service_graph to require at least one service_node, reflecting the API requirement.
+- Fix mso_schema_template_anp_epg_subnet to only PATCH changed attributes on update.
+- Fix mso_schema_template_anp_epg_contract to select the correct contract based on all identifier attributes.
+- Fix mso_schema_template_anp_epg_contract datasource to require relationship_type, preventing incorrect contract selection when the same contract is referenced with different relationship types.
+- Fix mso_schema_template_anp_epg_contract to mark contract_schema_id and contract_template_name as ForceNew, triggering resource recreation when either is changed.
+- Fix mso_schema_template_vrf datasource to return an error when the VRF is not found.
+- Fix mso_schema_template_l3out to allow description to be set to an empty string.
+- Fix mso_schema_template_l3out to use per-field PATCH operations on update, preventing unintentional resets of other attributes.
+- Fix mso_schema_template_filter_entry to allow description to be set to an empty string.
+- Fix mso_schema_template_filter_entry to use per-field PATCH operations on update, preventing unintentional resets of other attributes.
+- Fix mso_schema_template datasource to return an error instead of a nil conversion when no templates are found.
+- Fix mso_schema_template to avoid resource recreation on update when manually deleted.
+- Fix mso_template resource and datasource to handle the API returning null instead of an empty array when no templates exist.
+- Fix mso_schema_template_contract to allow description to be set to an empty string.
+- Fix mso_schema_template_contract to allow target_dscp to be updated.
+- Fix mso_schema_template_bd to allow description and vmac to be set to an empty string.
+- Fix mso_schema_template_bd to use JSON-Patch add instead of replace for virtual_mac_address updates, preventing failures when the field is not yet present.
+- Fix mso_schema_template_external_epg_subnet to remove aggregate configuration when unset.
+- Fix mso_schema_template_external_epg_subnet to avoid a nil pointer panic when scope or aggregate is absent in the API response.
+- Fix mso_schema_template_external_epg_contract to select the correct contract based on all identifier attributes.
+- Fix mso_schema_template_external_epg_contract datasource to require relationship_type, preventing incorrect contract selection when the same contract is referenced with different relationship types.
+- Fix mso_schema_template_anp_epg_useg_attr to allow description to be set to an empty string.
+- Fix mso_schema_template_anp_epg_useg_attr to reset optional attributes to empty when unset.
+- Fix mso_schema_site_external_epg to allow l3out_name to be set to an empty string.
+- Fix mso_schema_site_external_epg to reset l3out_on_apic, l3out_name, l3out_schema_id, and l3out_template_name on read and import, preventing stale values persisting in state.
+- Fix mso_schema_site_bd_l3out datasource to read the l3Outs array format used by newer NDO versions.
+- Fix mso_fabric_policies_macsec_policy to mark the psk attribute as sensitive and correctly handle interface_type changes through resource recreation.
+- Fix mso_fabric_policies_macsec_policy to avoid nil pointer panics when window_size, sak_expire_time, key_server_priority, or confidentiality_offset are absent in the API response.
+- Fix mso_fabric_policies_macsec_policy update to reference the correct field when building the patch payload for macsec_keys changes.
+- Fix mso_schema_site_anp_epg_domain to correctly read deploy_immediacy.
+- Fix mso_schema_site_anp_epg_static_port to correctly set port_type.
+- Fix mso_schema_site_anp_epg_static_port to remove Computed from the fex attribute, preventing perpetual plan diffs.
+- Fix mso_schema_site_anp_epg_bulk_staticport to require leaf, reflecting the underlying API requirement.
+- Fix mso_schema_site_anp_epg_bulk_staticport to require deployment_immediacy, reflecting the underlying API requirement.
+- Fix mso_schema_site_anp_epg_subnet to allow description to be cleared by setting it to an empty string.
+- Fix mso_schema_template_contract_service_chaining to handle resource recreation when manually deleted.
+- Fix mso_schema_template_contract_service_graph datasource to return an error when the service graph is not found.
+- Fix mso_schema_template_contract_service_graph import to return an error when the specified resource does not exist.
+- Fix mso_schema_template_contract_service_graph to read service_graph_schema_id and service_graph_template_name from the API response, preventing stale state values.
+- Fix mso_schema_site_service_graph datasource to return an error when the resource is not found.
+- Fix mso_schema_site_service_graph to validate that the number of service_node blocks matches the referenced template service graph.
+- Fix mso_schema_site_contract_service_graph to handle resource creation and update when manually deleted.
+- Fix mso_schema_site_contract_service_graph datasource to return an error when the service graph is not found.
+- Fix mso_schema_site_contract_service_graph import to return an error when the specified resource does not exist.
+- Fix mso_service_device_cluster interface_properties to change from TypeSet to TypeList to preserve positional identity and surface in-place attribute changes.
+- Fix mso_service_device_cluster interface to persist load_balance_hashing regardless of redirect/IPSLA configuration.
+- Fix mso_service_device_cluster interface to enable redirect when anycast is configured without an IPSLA monitoring policy.
+- Fix mso_service_device_cluster interface to avoid unexpected plan changes for load_balance_hashing and threshold_down_action when not explicitly set.
+- Fix mso_service_device_cluster to allow ipsla_monitoring_policy_uuid and qos_policy_uuid to be cleared.
+- Fix mso_service_device_cluster to correctly set redirect attribute for non-IPSLA dependent interface attributes.
+- Fix mso_service_device_cluster to stop persisting NDO-defaulted load_balance_hashing and threshold_down_action on bare interfaces.
+- Fix mso_fabric_policies_mcp_global_policy to mark the key attribute as sensitive and preserve the configured value instead of overwriting it with the API's masked placeholder.
+
 ## 2.0.0 (April 17, 2026)
 
 This release introduces breaking attribute behavior changes. The provider is moving towards allowing users to configure attributes
