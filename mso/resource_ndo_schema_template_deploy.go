@@ -242,11 +242,7 @@ func resourceNDOSchemaTemplateDeployExecute(d *schema.ResourceData, m interface{
 		taskStatusContainer := cont.S("operDetails", "taskStatus")
 		if taskStatusContainer != nil {
 			if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
-				errorMessage := "Could not determine specific deployment error message."
-				firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0)
-				if message, ok := firstErrorMessageContainer.Data().(string); ok {
-					errorMessage = message
-				}
+				errorMessage := buildTaskErrorMessage(cont, "Could not determine specific deployment error message.")
 				return fmt.Errorf("Error on deploy: %s", errorMessage)
 			}
 		}
@@ -397,11 +393,7 @@ func executeTemplateUndeploy(d *schema.ResourceData, m interface{}) error {
 		taskStatusContainer := cont.S("operDetails", "taskStatus")
 		if taskStatusContainer != nil {
 			if status, ok := taskStatusContainer.Data().(string); ok && status == "Error" {
-				errorMessage := "Could not determine specific undeploy error message."
-				firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0)
-				if message, ok := firstErrorMessageContainer.Data().(string); ok {
-					errorMessage = message
-				}
+				errorMessage := buildTaskErrorMessage(cont, "Could not determine specific undeploy error message.")
 				return fmt.Errorf("error on undeploy: %s", errorMessage)
 			}
 		}
