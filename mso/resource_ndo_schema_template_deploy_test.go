@@ -24,6 +24,28 @@ func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
 	})
 }
 
+// TestAccNdoSchemaTemplateDeploy_OverlappingVlanError reproduces
+// https://github.com/CiscoDevNet/terraform-provider-mso/issues/548: two EPGs
+// statically bound to the same interface/pod/leaf with the same VLAN
+// encapsulation cause the site deployment to fail. Previously the provider
+// surfaced only the generic "all stretch fabrics failed to deploy" message;
+// this test asserts that the underlying APIC validation error (e.g.
+// "Validation failed" / "encapsulation") returned in
+// operDetails.execSiteStatus is now included in the error message.
+func TestAccNdoSchemaTemplateDeploy_OverlappingVlanError(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Overlapping VLAN on two EPGs (expecting detailed deployment error)") },
+				Config:      testAccNdoSchemaTemplateDeployOverlappingVlanConfig(),
+				ExpectError: regexp.MustCompile(`(?i)Error on deploy:.*(validation failed|encapsulation)`),
+			},
+		},
+	})
+}
+
 func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 	logFilePath := setupTestLogCapture(t, "TRACE")
 
@@ -281,6 +303,129 @@ func testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig() string {
         template_name = tolist(mso_schema.schema_blocks.template)[1].name
     }
     `, testAccSingleTenantConfig(), msoTfTenantName, msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
+}
+
+// testAccNdoSchemaTemplateDeployOverlappingVlanConfig builds a single-site
+// schema with a VRF/BD and two EPGs, both statically bound (via
+// mso_schema_site_anp_epg_static_port) to the same pod/leaf/path with the
+// same VLAN. NDO/APIC rejects deploying two EPGs with an identical
+// port+VLAN encapsulation, which is the scenario reported in issue #548.
+func testAccNdoSchemaTemplateDeployOverlappingVlanConfig() string {
+	epgName1 := msoSchemaTemplateAnpEpgName + "1"
+	epgName2 := msoSchemaTemplateAnpEpgName + "2"
+	return fmt.Sprintf(`%[1]s
+    resource "mso_schema_template_anp" "%[2]s" {
+        name          = "%[2]s"
+        display_name  = "%[2]s"
+        schema_id     = mso_schema.%[3]s.id
+        template      = tolist(mso_schema.%[3]s.template)[0].name
+    }
+
+    resource "mso_schema_template_vrf" "%[4]s" {
+        name         = "%[4]s"
+        display_name = "%[4]s"
+        schema_id    = mso_schema.%[3]s.id
+        template     = tolist(mso_schema.%[3]s.template)[0].name
+    }
+
+    resource "mso_schema_template_bd" "%[5]s" {
+        schema_id              = mso_schema.%[3]s.id
+        template_name          = tolist(mso_schema.%[3]s.template)[0].name
+        name                   = "%[5]s"
+        display_name           = "%[5]s"
+        vrf_name               = mso_schema_template_vrf.%[4]s.name
+        vrf_schema_id          = mso_schema.%[3]s.id
+        vrf_template_name      = tolist(mso_schema.%[3]s.template)[0].name
+        layer2_unknown_unicast = "proxy"
+    }
+
+    resource "mso_schema_template_anp_epg" "epg1" {
+        name          = "%[6]s"
+        display_name  = "%[6]s"
+        anp_name      = mso_schema_template_anp.%[2]s.name
+        schema_id     = mso_schema.%[3]s.id
+        template_name = tolist(mso_schema.%[3]s.template)[0].name
+        bd_name       = mso_schema_template_bd.%[5]s.name
+    }
+
+    resource "mso_schema_template_anp_epg" "epg2" {
+        name          = "%[7]s"
+        display_name  = "%[7]s"
+        anp_name      = mso_schema_template_anp.%[2]s.name
+        schema_id     = mso_schema.%[3]s.id
+        template_name = tolist(mso_schema.%[3]s.template)[0].name
+        bd_name       = mso_schema_template_bd.%[5]s.name
+    }
+
+    resource "mso_schema_site_anp_epg" "epg1_site" {
+        schema_id     = mso_schema.%[3]s.id
+        site_id       = mso_schema_site.%[8]s.site_id
+        template_name = tolist(mso_schema.%[3]s.template)[0].name
+        anp_name      = mso_schema_template_anp.%[2]s.name
+        epg_name      = mso_schema_template_anp_epg.epg1.name
+    }
+
+    resource "mso_schema_site_anp_epg" "epg2_site" {
+        schema_id     = mso_schema.%[3]s.id
+        site_id       = mso_schema_site.%[8]s.site_id
+        template_name = tolist(mso_schema.%[3]s.template)[0].name
+        anp_name      = mso_schema_template_anp.%[2]s.name
+        epg_name      = mso_schema_template_anp_epg.epg2.name
+    }
+
+    resource "mso_schema_site_anp_epg_static_port" "epg1_port" {
+        schema_id            = mso_schema.%[3]s.id
+        site_id              = mso_schema_site.%[8]s.site_id
+        template_name        = tolist(mso_schema.%[3]s.template)[0].name
+        anp_name             = mso_schema_template_anp.%[2]s.name
+        epg_name             = mso_schema_site_anp_epg.epg1_site.epg_name
+        path_type            = "port"
+        pod                  = "%[9]s"
+        leaf                 = "%[10]s"
+        path                 = "%[11]s"
+        vlan                 = %[12]d
+        deployment_immediacy = "immediate"
+        mode                 = "regular"
+    }
+
+    resource "mso_schema_site_anp_epg_static_port" "epg2_port" {
+        schema_id            = mso_schema.%[3]s.id
+        site_id              = mso_schema_site.%[8]s.site_id
+        template_name        = tolist(mso_schema.%[3]s.template)[0].name
+        anp_name             = mso_schema_template_anp.%[2]s.name
+        epg_name             = mso_schema_site_anp_epg.epg2_site.epg_name
+        path_type            = "port"
+        pod                  = "%[9]s"
+        leaf                 = "%[10]s"
+        path                 = "%[11]s"
+        vlan                 = %[12]d
+        deployment_immediacy = "immediate"
+        mode                 = "regular"
+    }
+
+    resource "mso_schema_template_deploy_ndo" "deploy_overlap" {
+        schema_id     = mso_schema.%[3]s.id
+        template_name = tolist(mso_schema.%[3]s.template)[0].name
+        force_apply   = ""
+        depends_on = [
+            mso_schema_site_anp_epg_static_port.epg1_port,
+            mso_schema_site_anp_epg_static_port.epg2_port,
+        ]
+    }
+    `,
+		testSchemaWithSingleSiteAssociationConfig(),
+		msoSchemaTemplateAnpName,
+		msoSchemaName,
+		msoSchemaTemplateVrfName,
+		msoSchemaTemplateBdName,
+		epgName1,
+		epgName2,
+		msoSchemaSiteResourceLabel1,
+		msoSchemaSiteAnpEpgStaticPortPod,
+		msoSchemaSiteAnpEpgStaticPortLeaf,
+		msoSchemaSiteAnpEpgStaticPortPath,
+		999,
+	)
 }
 
 func testAccMsoSchemaTemplateVrfAndBdDeployWithRetry() string {

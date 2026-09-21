@@ -415,6 +415,51 @@ func isTaskStatusPending(c *container.Container) bool {
 	return false
 }
 
+// buildTaskErrorMessage constructs a detailed error message for a failed deploy/undeploy task.
+// It combines the generic 'errMessage' from 'operDetails.detailedStatus' with the site specific
+// failure messages found in 'operDetails.execSiteStatus', which contain the actual error returned
+// by the site (e.g. APIC validation errors) and are otherwise silently dropped.
+func buildTaskErrorMessage(cont *container.Container, defaultErrMessage string) string {
+	errorMessage := defaultErrMessage
+	if firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0); firstErrorMessageContainer != nil {
+		if message, ok := firstErrorMessageContainer.Data().(string); ok && message != "" {
+			errorMessage = message
+		}
+	}
+
+	var siteErrorMessages []string
+	if execSiteStatusData, ok := cont.S("operDetails", "execSiteStatus").Data().([]interface{}); ok {
+		for _, execSiteStatus := range execSiteStatusData {
+			execSiteStatusMap, ok := execSiteStatus.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			statusMap, ok := execSiteStatusMap["status"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+			siteStatus, _ := statusMap["siteStatus"].(string)
+			msg, _ := statusMap["msg"].(string)
+			if siteStatus != "Failed" || msg == "" {
+				continue
+			}
+			// Skip messages already present in the base error message (some NDO versions
+			// populate 'errMessage' with the same detailed text as 'execSiteStatus[].status.msg'),
+			// to avoid duplicating the same error text in the final message.
+			if strings.Contains(errorMessage, msg) {
+				continue
+			}
+			siteId, _ := execSiteStatusMap["siteID"].(string)
+			siteErrorMessages = append(siteErrorMessages, fmt.Sprintf("Site %s: %s", siteId, msg))
+		}
+	}
+
+	if len(siteErrorMessages) > 0 {
+		return fmt.Sprintf("%s: %s", errorMessage, strings.Join(siteErrorMessages, "; "))
+	}
+	return errorMessage
+}
+
 func convertValueWithMap(value string, conversionMap map[string]string) string {
 	if mapped, ok := conversionMap[value]; ok {
 		return mapped
