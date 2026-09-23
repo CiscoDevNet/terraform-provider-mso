@@ -28,6 +28,7 @@ func TestAccMSOSchemaTemplateBdSubnetDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "bd_name", msoSchemaTemplateBdName),
 					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip", msoSchemaTemplateBdSubnetIp),
 					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "shared", "false"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "querier", "false"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "no_default_gateway", "false"),

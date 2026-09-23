@@ -14,6 +14,14 @@ import (
 // msoSchemaTemplateBdSubnetSchemaId is set during the first test step's Check to capture the dynamic schema ID for use in the manual deletion PreConfig step.
 var msoSchemaTemplateBdSubnetSchemaId string
 
+const msoSchemaTemplateBdSubnetIPDataPlaneLearningIP = "10.1.1.1/24"
+
+// TestAccMSOSchemaTemplateBdSubnetResource exercises the resource lifecycle,
+// including create, updates, reset to defaults, import, recovery after manual
+// deletion, and IP data plane learning updates from enabled to disabled and
+// back to enabled. The IP data plane learning steps use a stretched parent BD
+// configured with intersite BUM traffic, unknown unicast flooding, and ARP
+// flooding, as required by NDO when IP data plane learning is disabled.
 func TestAccMSOSchemaTemplateBdSubnetResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -28,6 +36,7 @@ func TestAccMSOSchemaTemplateBdSubnetResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "bd_name", msoSchemaTemplateBdName),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip", msoSchemaTemplateBdSubnetIp),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "shared", "false"),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "no_default_gateway", "false"),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "querier", "false"),
@@ -49,6 +58,7 @@ func TestAccMSOSchemaTemplateBdSubnetResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip", msoSchemaTemplateBdSubnetIp),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "scope", "public"),
+					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "shared", "false"),
 				),
 			},
@@ -136,9 +146,56 @@ func TestAccMSOSchemaTemplateBdSubnetResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "scope", "private"),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Recreate BD Subnet with IP data plane learning enabled") },
+				Config:    testAccMSOSchemaTemplateBdSubnetIPDataPlaneLearningConfig("enabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip", msoSchemaTemplateBdSubnetIPDataPlaneLearningIP),
+					resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip_data_plane_learning", "enabled"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Disable BD Subnet IP data plane learning") },
+				Config:    testAccMSOSchemaTemplateBdSubnetIPDataPlaneLearningConfig("disabled"),
+				Check:     resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip_data_plane_learning", "disabled"),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Re-enable BD Subnet IP data plane learning") },
+				Config:    testAccMSOSchemaTemplateBdSubnetIPDataPlaneLearningConfig("enabled"),
+				Check:     resource.TestCheckResourceAttr("mso_schema_template_bd_subnet."+msoSchemaTemplateBdName+"_subnet", "ip_data_plane_learning", "enabled"),
+			},
 		},
 		CheckDestroy: testAccCheckMSOSchemaTemplateBdSubnetDestroy,
 	})
+}
+
+func testAccMSOSchemaTemplateBdSubnetIPDataPlaneLearningConfig(ipDataPlaneLearning string) string {
+	return fmt.Sprintf(`%[1]s
+resource "mso_schema_template_bd_subnet" "%[2]s_subnet" {
+	schema_id              = mso_schema.%[3]s.id
+	template_name          = "%[4]s"
+	bd_name                = mso_schema_template_bd.%[2]s.name
+	ip                     = "%[5]s"
+	scope                  = "private"
+	ip_data_plane_learning = "%[6]s"
+}
+`, testAccMSOSchemaTemplateBdSubnetIPDataPlaneLearningPrerequisiteConfig(), msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIPDataPlaneLearningIP, ipDataPlaneLearning)
+}
+
+func testAccMSOSchemaTemplateBdSubnetIPDataPlaneLearningPrerequisiteConfig() string {
+	return fmt.Sprintf(`%[1]s%[2]s%[3]s%[4]s
+resource "mso_schema_template_bd" "%[5]s" {
+	schema_id              = mso_schema.%[6]s.id
+	template_name          = "%[7]s"
+	name                   = "%[5]s"
+	display_name           = "%[5]s"
+	vrf_name               = mso_schema_template_vrf.%[8]s.name
+	layer2_unknown_unicast = "flood"
+	arp_flooding           = true
+	layer2_stretch         = true
+	intersite_bum_traffic  = true
+}
+`, testSiteConfigAnsibleTest(), testTenantConfig(), testSchemaConfig(), testSchemaTemplateVrfConfig(), msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfName)
 }
 
 func testAccMSOSchemaTemplateBdSubnetPrerequisiteConfig() string {
@@ -157,6 +214,7 @@ resource "mso_schema_template_bd_subnet" "%[2]s_subnet" {
 	bd_name       = mso_schema_template_bd.%[2]s.name
 	ip            = "%[5]s"
 	scope         = "public"
+	ip_data_plane_learning = "enabled"
 	shared        = false
 }`, testAccMSOSchemaTemplateBdSubnetPrerequisiteConfig(), msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIp)
 }
@@ -169,6 +227,7 @@ resource "mso_schema_template_bd_subnet" "%[2]s_subnet" {
 	bd_name       = mso_schema_template_bd.%[2]s.name
 	ip            = "%[5]s"
 	scope         = "public"
+	ip_data_plane_learning = "enabled"
 	shared        = true
 	querier       = true
 }`, testAccMSOSchemaTemplateBdSubnetPrerequisiteConfig(), msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIp)
@@ -182,6 +241,7 @@ resource "mso_schema_template_bd_subnet" "%[2]s_subnet" {
 	bd_name            = mso_schema_template_bd.%[2]s.name
 	ip                 = "%[5]s"
 	scope              = "public"
+	ip_data_plane_learning = "enabled"
 	shared             = true
 	querier            = true
 	no_default_gateway = true
@@ -199,6 +259,7 @@ resource "mso_schema_template_bd_subnet" "%[2]s_subnet" {
 	bd_name            = mso_schema_template_bd.%[2]s.name
 	ip                 = "%[5]s"
 	scope              = "private"
+	ip_data_plane_learning = "enabled"
 	shared             = false
 	querier            = false
 	no_default_gateway = false

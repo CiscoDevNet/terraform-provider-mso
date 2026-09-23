@@ -59,6 +59,15 @@ func resourceMSOTemplateBDSubnet() *schema.Resource {
 					"private",
 				}, false),
 			},
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"disabled",
+					"enabled",
+				}, false),
+			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -103,6 +112,9 @@ func setBDSubnetResourceData(d *schema.ResourceData, schemaId, templateName, bdN
 	d.SetId(idSubnet[0])
 	d.Set("ip", ip)
 	d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+	if subnetCont.Exists("ipDPLearning") {
+		d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
+	}
 	if subnetCont.Exists("description") {
 		d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
 	} else {
@@ -203,6 +215,7 @@ func resourceMSOTemplateBDSubnetCreate(d *schema.ResourceData, m interface{}) er
 
 	IP := d.Get("ip").(string)
 	Scope := d.Get("scope").(string)
+	IPDataPlaneLearning := d.Get("ip_data_plane_learning").(string)
 	Shared := d.Get("shared").(bool)
 	NoDefaultGateway := d.Get("no_default_gateway").(bool)
 	Querier := d.Get("querier").(bool)
@@ -211,7 +224,7 @@ func resourceMSOTemplateBDSubnetCreate(d *schema.ResourceData, m interface{}) er
 	Virtual := d.Get("virtual").(bool)
 
 	path := fmt.Sprintf("/templates/%s/bds/%s/subnets/-", templateName, bdName)
-	bdSubnetStruct := models.NewTemplateBDSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
+	bdSubnetStruct := models.NewTemplateBDSubnet("add", path, IP, Desc, Scope, IPDataPlaneLearning, Shared, NoDefaultGateway, Querier, Primary, Virtual)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), bdSubnetStruct)
 
@@ -348,6 +361,13 @@ func resourceMSOTemplateBDSubnetUpdate(d *schema.ResourceData, m interface{}) er
 
 							if d.HasChange("scope") {
 								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/scope", updatePath), d.Get("scope").(string))
+								if err != nil {
+									return err
+								}
+							}
+
+							if d.HasChange("ip_data_plane_learning") {
+								err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/ipDPLearning", updatePath), d.Get("ip_data_plane_learning").(string))
 								if err != nil {
 									return err
 								}

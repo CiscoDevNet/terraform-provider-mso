@@ -41,6 +41,10 @@ func dataSourceMSOTemplateSubnetBD() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -127,6 +131,9 @@ func dataSourceMSOTemplateSubnetBDRead(d *schema.ResourceData, m interface{}) er
 							d.Set("bd_name", apiBD)
 							d.Set("ip", models.StripQuotes(dataCon.S("ip").String()))
 							d.Set("scope", models.StripQuotes(dataCon.S("scope").String()))
+							if dataCon.Exists("ipDPLearning") {
+								d.Set("ip_data_plane_learning", models.StripQuotes(dataCon.S("ipDPLearning").String()))
+							}
 							d.Set("description", models.StripQuotes(dataCon.S("description").String()))
 							d.Set("shared", dataCon.S("shared").Data().(bool))
 							if dataCon.Exists("noDefaultGateway") {

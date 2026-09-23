@@ -15,17 +15,18 @@ Manages MSO Schema Template Bridge Domain Subnet.
 ```hcl
 
 resource "mso_schema_template_bd_subnet" "bdsub1" {
-  schema_id          = mso_schema.schema1.id
-  template_name      = "Template1"
-  bd_name            = mso_schema_template_bd.bridge_domain.name
-  ip                 = "10.23.13.0/8"
-  scope              = "public"
-  description        = "Description for the subnet"
-  shared             = true
-  no_default_gateway = false
-  querier            = true
-  primary            = false
-  virtual            = false
+  schema_id              = mso_schema.schema1.id
+  template_name          = "Template1"
+  bd_name                = mso_schema_template_bd.bridge_domain.name
+  ip                     = "10.23.13.0/8"
+  scope                  = "public"
+  ip_data_plane_learning = "enabled"
+  description            = "Description for the subnet"
+  shared                 = true
+  no_default_gateway     = false
+  querier                = true
+  primary                = false
+  virtual                = false
 }
 
 ```
@@ -37,6 +38,7 @@ resource "mso_schema_template_bd_subnet" "bdsub1" {
 * `bd_name` - (Required) Name of Bridge Domain.
 * `ip` - (Required) The IP range in CIDR notation.
 * `scope` - (Required) The scope of the subnet. Allowed values are `private` and `public`.
+* `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled for this subnet. Allowed values are `enabled` and `disabled`.
 * `shared` - (Optional) Whether this subnet is shared between VRFs.
 * `description` - (Optional) The description of the subnet.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.

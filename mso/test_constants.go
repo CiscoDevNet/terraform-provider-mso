@@ -298,6 +298,7 @@ resource "mso_schema_template_bd_subnet" "%[1]s_subnet" {
 	bd_name       = mso_schema_template_bd.%[1]s.name
 	ip            = "%[4]s"
 	scope         = "private"
+	ip_data_plane_learning = "enabled"
 	shared        = false
 }
 `, msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdSubnetIp)
