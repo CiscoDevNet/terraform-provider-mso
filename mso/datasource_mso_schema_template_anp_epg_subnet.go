@@ -46,6 +46,10 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -140,6 +144,9 @@ func dataSourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m inter
 
 									if subnetCont.Exists("scope") {
 										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+									}
+									if subnetCont.Exists("ipDPLearning") {
+										d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
 									}
 									if subnetCont.Exists("shared") {
 										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))

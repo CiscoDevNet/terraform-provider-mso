@@ -15,13 +15,14 @@ Manages MSO Schema Template Application Network Profiles Endpoint Groups Subnets
 ```hcl
 
 resource "mso_schema_template_anp_epg_subnet" "subnet1" {
-  schema_id = mso_schema.schema1.id
-  anp_name  = mso_schema_template_anp_epg.anp_epg.anp_name
-  epg_name  = mso_schema_template_anp_epg.anp_epg.name
-  template  = "Template1"
-  ip        = "31.101.102.0/8"
-  scope     = "public"
-  shared    = true
+  schema_id              = mso_schema.schema1.id
+  anp_name               = mso_schema_template_anp_epg.anp_epg.anp_name
+  epg_name               = mso_schema_template_anp_epg.anp_epg.name
+  template               = "Template1"
+  ip                     = "31.101.102.0/8"
+  scope                  = "public"
+  ip_data_plane_learning = "enabled"
+  shared                 = true
 }
 
 ```
@@ -35,6 +36,7 @@ resource "mso_schema_template_anp_epg_subnet" "subnet1" {
 * `ip` - (Required) The IP range in CIDR notation.
 * `description` - (Optional) The description of this subnet.
 * `scope` - (Optional) The scope of the subnet. Allowed values are `private` and `public`.
+* `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled for this subnet. Allowed values are `enabled` and `disabled`.
 * `shared` - (Optional) Whether this subnet is shared between VRFs.
 * `querier` - (Optional) Whether this subnet is an IGMP querier.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.

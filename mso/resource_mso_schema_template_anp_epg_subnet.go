@@ -64,6 +64,15 @@ func resourceMSOSchemaTemplateAnpEpgSubnet() *schema.Resource {
 					"private",
 				}, false),
 			},
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"disabled",
+					"enabled",
+				}, false),
+			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -175,6 +184,9 @@ func resourceMSOSchemaTemplateAnpEpgSubnetImport(d *schema.ResourceData, m inter
 									if subnetCont.Exists("scope") {
 										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
 									}
+									if subnetCont.Exists("ipDPLearning") {
+										d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
+									}
 									if subnetCont.Exists("shared") {
 										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))
 										d.Set("shared", shared)
@@ -261,6 +273,11 @@ func resourceMSOSchemaTemplateAnpEpgSubnetCreate(d *schema.ResourceData, m inter
 		scope = tempVar.(string)
 	}
 
+	var ipDataPlaneLearning string
+	if tempVar, ok := d.GetOk("ip_data_plane_learning"); ok {
+		ipDataPlaneLearning = tempVar.(string)
+	}
+
 	shared := false
 	if tempVar, ok := d.GetOk("shared"); ok {
 		shared = tempVar.(bool)
@@ -281,7 +298,7 @@ func resourceMSOSchemaTemplateAnpEpgSubnetCreate(d *schema.ResourceData, m inter
 		noDefaultGateway = tempVar.(bool)
 	}
 
-	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("add", fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/-", templateName, anpName, epgName), ip, description, scope, shared, noDefaultGateway, querier, primary)
+	schemaTemplateAnpEpgSubnetApp := models.NewSchemaTemplateAnpEpgSubnet("add", fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/subnets/-", templateName, anpName, epgName), ip, description, scope, ipDataPlaneLearning, shared, noDefaultGateway, querier, primary)
 
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), schemaTemplateAnpEpgSubnetApp)
 	if err != nil {
@@ -344,6 +361,13 @@ func resourceMSOSchemaTemplateAnpEpgSubnetUpdate(d *schema.ResourceData, m inter
 			scope = "private"
 		}
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/scope", updatePath), scope)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("ip_data_plane_learning") {
+		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/ipDPLearning", updatePath), d.Get("ip_data_plane_learning").(string))
 		if err != nil {
 			return err
 		}
@@ -460,6 +484,9 @@ func resourceMSOSchemaTemplateAnpEpgSubnetRead(d *schema.ResourceData, m interfa
 									d.Set("description", models.StripQuotes(subnetCont.S("description").String()))
 									if subnetCont.Exists("scope") {
 										d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+									}
+									if subnetCont.Exists("ipDPLearning") {
+										d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
 									}
 									if subnetCont.Exists("shared") {
 										shared, _ := strconv.ParseBool(models.StripQuotes(subnetCont.S("shared").String()))

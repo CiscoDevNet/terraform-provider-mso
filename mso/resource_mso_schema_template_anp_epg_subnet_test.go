@@ -17,6 +17,15 @@ import (
 // msoSchemaTemplateAnpEpgSubnetSchemaId is set during the first test step's Check to capture the dynamic schema ID for use in the manual deletion PreConfig step.
 var msoSchemaTemplateAnpEpgSubnetSchemaId string
 
+const msoSchemaTemplateAnpEpgSubnetIPDataPlaneLearningIP = "10.0.0.10/32"
+
+// TestAccMSOSchemaTemplateAnpEpgSubnetResource exercises the resource
+// lifecycle, including create, updates, reset to defaults, replacement after
+// an IP change, import, recovery after manual deletion, parent EPG updates,
+// and IP data plane learning updates from enabled to disabled and back to
+// enabled. The IP data plane learning steps use a /32 subnet with no default
+// gateway because NDO requires both settings when learning is disabled on an
+// IPv4 host subnet.
 func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -42,6 +51,7 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 					},
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "querier", "false"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "false"),
@@ -55,6 +65,7 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "public"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "shared", "false"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "querier", "false"),
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "false"),
@@ -158,8 +169,42 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_schema_template_anp_epg."+msoSchemaTemplateAnpEpgName, "description", "Updated EPG description with subnet"),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Recreate EPG Subnet with /32 address") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetIPDataPlaneLearningConfig("enabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip", msoSchemaTemplateAnpEpgSubnetIPDataPlaneLearningIP),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "no_default_gateway", "true"),
+					resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip_data_plane_learning", "enabled"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Disable EPG Subnet IP data plane learning") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetIPDataPlaneLearningConfig("disabled"),
+				Check:     resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip_data_plane_learning", "disabled"),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Re-enable EPG Subnet IP data plane learning") },
+				Config:    testAccMSOSchemaTemplateAnpEpgSubnetIPDataPlaneLearningConfig("enabled"),
+				Check:     resource.TestCheckResourceAttr("mso_schema_template_anp_epg_subnet."+msoSchemaTemplateAnpEpgName+"_subnet", "ip_data_plane_learning", "enabled"),
+			},
 		},
 	})
+}
+
+func testAccMSOSchemaTemplateAnpEpgSubnetIPDataPlaneLearningConfig(ipDataPlaneLearning string) string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_template_anp_epg_subnet" "%[2]s_subnet" {
+		schema_id              = mso_schema_template_anp_epg.%[6]s.schema_id
+		template               = "%[4]s"
+		anp_name               = "%[5]s"
+		epg_name               = mso_schema_template_anp_epg.%[6]s.name
+		ip                     = "%[7]s"
+		scope                  = "private"
+		no_default_gateway     = true
+		ip_data_plane_learning = "%[8]s"
+	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIPDataPlaneLearningIP, ipDataPlaneLearning)
 }
 
 func testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig() string {
@@ -183,6 +228,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigCreate() string {
 		anp_name   = "%[5]s"
 		epg_name   = mso_schema_template_anp_epg.%[6]s.name
 		ip         = "%[7]s"
+		ip_data_plane_learning = "enabled"
 	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
 }
 
@@ -195,6 +241,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateScope() string {
 		epg_name   = mso_schema_template_anp_epg.%[6]s.name
 		ip         = "%[7]s"
 		scope      = "public"
+		ip_data_plane_learning = "enabled"
 	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
 }
 
@@ -207,6 +254,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateSharedAndDescription() stri
 		epg_name    = mso_schema_template_anp_epg.%[6]s.name
 		ip          = "%[7]s"
 		scope       = "public"
+		ip_data_plane_learning = "enabled"
 		shared      = true
 		description = "test subnet"
 	}`, testAccMSOSchemaTemplateAnpEpgSubnetPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgSubnetIp)
@@ -221,6 +269,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateAllAttributes() string {
 		epg_name           = mso_schema_template_anp_epg.%[6]s.name
 		ip                 = "%[7]s"
 		scope              = "public"
+		ip_data_plane_learning = "enabled"
 		shared             = true
 		description        = "test subnet"
 		no_default_gateway = true
@@ -236,6 +285,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigResetAttributes() string {
 		epg_name           = mso_schema_template_anp_epg.%[6]s.name
 		ip                 = "%[7]s"
 		scope              = "private"
+		ip_data_plane_learning = "enabled"
 		shared             = false
 		description        = ""
 		querier            = false
@@ -253,6 +303,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateIp() string {
 		epg_name           = mso_schema_template_anp_epg.%[6]s.name
 		ip                 = "%[7]s"
 		scope              = "private"
+		ip_data_plane_learning = "enabled"
 		shared             = false
 		querier            = false
 		no_default_gateway = false
@@ -278,6 +329,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateParentEpg() string {
 		epg_name           = mso_schema_template_anp_epg.%[2]s.name
 		ip                 = "%[7]s"
 		scope              = "private"
+		ip_data_plane_learning = "enabled"
 		shared             = false
 		querier            = false
 		no_default_gateway = false

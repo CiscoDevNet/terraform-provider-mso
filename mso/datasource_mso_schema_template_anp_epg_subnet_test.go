@@ -29,6 +29,7 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetDatasource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "epg_name", msoSchemaTemplateAnpEpgName),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "ip", msoSchemaTemplateAnpEpgSubnetIp),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "scope", "private"),
+					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "shared", "false"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "querier", "false"),
 					resource.TestCheckResourceAttr("data.mso_schema_template_anp_epg_subnet.subnet", "no_default_gateway", "false"),
