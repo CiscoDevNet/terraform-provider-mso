@@ -72,14 +72,13 @@ resource "mso_schema_template_anp_epg" "demo_epg" {
 }
 
 resource "mso_schema_site_anp_epg_subnet" "subnet1" {
-  schema_id          = mso_schema.demo_schema.id
-  site_id            = data.mso_site.demo_site.id
-  template           = one(mso_schema.demo_schema.template).name
-  anp_name           = mso_schema_template_anp.demo_ap.name
-  epg_name           = mso_schema_template_anp_epg.demo_epg.name
-  ip                 = "1.1.1.1/32"
-  scope              = "public"
-  primary            = true
-  no_default_gateway = true
+  schema_id              = mso_schema.demo_schema.id
+  site_id                = mso_schema_site.demo_schema_site.site_id
+  template_name          = one(mso_schema.demo_schema.template).name
+  anp_name               = mso_schema_template_anp.demo_ap.name
+  epg_name               = mso_schema_template_anp_epg.demo_epg.name
+  ip                     = "1.1.1.1/32"
+  scope                  = "public"
+  ip_data_plane_learning = "enabled"
+  no_default_gateway     = true
 }
-

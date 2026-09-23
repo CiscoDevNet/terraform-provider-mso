@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const msoSchemaSiteAnpEpgSubnetIPDataPlaneLearningIP = "10.3.0.10/32"
+
 // TestAccMSOSchemaSiteAnpEpgSubnetResource exercises the lifecycle of
 // mso_schema_site_anp_epg_subnet:
 //   - attempt to create a subnet on a site that has no mso_schema_site
@@ -19,6 +21,9 @@ import (
 //   - create the subnet with all mutable attributes set
 //   - update the subnet including clearing description back to ""
 //   - import the subnet
+//   - recreate the subnet with a /32 address, no default gateway, and IP data
+//     plane learning enabled
+//   - disable and re-enable IP data plane learning
 //
 // primary is intentionally skipped: fabric-local EPGs do
 // not allow subnets to be marked as primary — NDO rejects the PATCH with
@@ -28,7 +33,10 @@ import (
 // subnets — NDO rejects the PATCH with "'Querier' is only supported for
 // Bridge Domain subnets". This attribute is a deprecation candidate.
 //
-// The lab must have the `ansible_test` and `ansible_test_2` sites onboarded.
+// The lab must have the sites selected by MSO_SITE_NAME1 and MSO_SITE_NAME2
+// onboarded. These default to `ansible_test` and `ansible_test_2`; newer NDO
+// labs can override them with dashed names such as `ansible-test` and
+// `ansible-test-2`.
 func TestAccMSOSchemaSiteAnpEpgSubnetResource(t *testing.T) {
 	subnetResource := "mso_schema_site_anp_epg_subnet." + msoSchemaTemplateAnpEpgName
 
@@ -59,6 +67,7 @@ func TestAccMSOSchemaSiteAnpEpgSubnetResource(t *testing.T) {
 					resource.TestCheckResourceAttr(subnetResource, "epg_name", msoSchemaTemplateAnpEpgName),
 					resource.TestCheckResourceAttr(subnetResource, "ip", msoSchemaSiteAnpEpgSubnetIp),
 					resource.TestCheckResourceAttr(subnetResource, "scope", "private"),
+					resource.TestCheckResourceAttr(subnetResource, "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr(subnetResource, "shared", "false"),
 					resource.TestCheckResourceAttr(subnetResource, "no_default_gateway", "false"),
 					resource.TestCheckResourceAttr(subnetResource, "description", "test description"),
@@ -77,6 +86,7 @@ func TestAccMSOSchemaSiteAnpEpgSubnetResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(subnetResource, "ip", msoSchemaSiteAnpEpgSubnetIp),
 					resource.TestCheckResourceAttr(subnetResource, "scope", "public"),
+					resource.TestCheckResourceAttr(subnetResource, "ip_data_plane_learning", "enabled"),
 					resource.TestCheckResourceAttr(subnetResource, "shared", "true"),
 					resource.TestCheckResourceAttr(subnetResource, "no_default_gateway", "true"),
 					resource.TestCheckResourceAttr(subnetResource, "description", ""),
@@ -104,8 +114,43 @@ func TestAccMSOSchemaSiteAnpEpgSubnetResource(t *testing.T) {
 				},
 				ImportStateVerify: true,
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Recreate subnet with /32 address") },
+				Config:    testAccMSOSchemaSiteAnpEpgSubnetIPDataPlaneLearningConfig("enabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(subnetResource, "ip", msoSchemaSiteAnpEpgSubnetIPDataPlaneLearningIP),
+					resource.TestCheckResourceAttr(subnetResource, "scope", "private"),
+					resource.TestCheckResourceAttr(subnetResource, "no_default_gateway", "true"),
+					resource.TestCheckResourceAttr(subnetResource, "ip_data_plane_learning", "enabled"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Disable IP data plane learning") },
+				Config:    testAccMSOSchemaSiteAnpEpgSubnetIPDataPlaneLearningConfig("disabled"),
+				Check:     resource.TestCheckResourceAttr(subnetResource, "ip_data_plane_learning", "disabled"),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Re-enable IP data plane learning") },
+				Config:    testAccMSOSchemaSiteAnpEpgSubnetIPDataPlaneLearningConfig("enabled"),
+				Check:     resource.TestCheckResourceAttr(subnetResource, "ip_data_plane_learning", "enabled"),
+			},
 		},
 	})
+}
+
+func testAccMSOSchemaSiteAnpEpgSubnetIPDataPlaneLearningConfig(ipDataPlaneLearning string) string {
+	return fmt.Sprintf(`%[1]s
+	resource "mso_schema_site_anp_epg_subnet" "%[2]s" {
+		schema_id              = mso_schema.%[3]s.id
+		site_id                = mso_schema_site.%[4]s.site_id
+		template_name          = "%[5]s"
+		anp_name               = mso_schema_template_anp.%[6]s.name
+		epg_name               = mso_schema_site_anp_epg.%[2]s.epg_name
+		ip                     = "%[7]s"
+		scope                  = "private"
+		no_default_gateway     = true
+		ip_data_plane_learning = "%[8]s"
+	}`, testAccMSOSchemaSiteAnpEpgStaticLeafPrerequisiteConfig(), msoSchemaTemplateAnpEpgName, msoSchemaName, msoSchemaSiteResourceLabel1, msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaSiteAnpEpgSubnetIPDataPlaneLearningIP, ipDataPlaneLearning)
 }
 
 func testAccMSOSchemaSiteAnpEpgSubnetConfigCreate() string {
@@ -118,6 +163,7 @@ func testAccMSOSchemaSiteAnpEpgSubnetConfigCreate() string {
 		epg_name            = mso_schema_site_anp_epg.%[2]s.epg_name
 		ip                  = "%[7]s"
 		scope               = "private"
+		ip_data_plane_learning = "enabled"
 		shared              = false
 		no_default_gateway  = false
 		description         = "test description"
@@ -142,6 +188,7 @@ func testAccMSOSchemaSiteAnpEpgSubnetConfigUpdate() string {
 		epg_name            = mso_schema_site_anp_epg.%[2]s.epg_name
 		ip                  = "%[7]s"
 		scope               = "public"
+		ip_data_plane_learning = "enabled"
 		shared              = true
 		no_default_gateway  = true
 		description         = ""

@@ -40,6 +40,7 @@ func TestAccMSOSchemaSiteAnpEpgSubnetDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(subnetDatasource, "epg_name", subnetResource, "epg_name"),
 					resource.TestCheckResourceAttrPair(subnetDatasource, "ip", subnetResource, "ip"),
 					resource.TestCheckResourceAttrPair(subnetDatasource, "scope", subnetResource, "scope"),
+					resource.TestCheckResourceAttrPair(subnetDatasource, "ip_data_plane_learning", subnetResource, "ip_data_plane_learning"),
 					resource.TestCheckResourceAttrPair(subnetDatasource, "shared", subnetResource, "shared"),
 					resource.TestCheckResourceAttrPair(subnetDatasource, "no_default_gateway", subnetResource, "no_default_gateway"),
 					resource.TestCheckResourceAttrPair(subnetDatasource, "querier", subnetResource, "querier"),

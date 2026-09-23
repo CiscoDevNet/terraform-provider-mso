@@ -15,14 +15,15 @@ Manages MSO Schema Site Application Network Profiles Endpoint Groups Subnet.
 ```hcl
 
 resource "mso_schema_site_anp_epg_subnet" "subnet1" {
-  schema_id     = mso_schema.schema1.id
-  site_id       = mso_schema_site.schema_site.site_id
-  template_name = "Template1"
-  anp_name      = mso_schema_site_anp_epg.site_anp_epg.anp_name
-  epg_name      = mso_schema_site_anp_epg.site_anp_epg.epg_name
-  ip            = "10.7.0.1/8"
-  scope         = "public"
-  shared        = true
+  schema_id              = mso_schema.schema1.id
+  site_id                = mso_schema_site.schema_site.site_id
+  template_name          = "Template1"
+  anp_name               = mso_schema_template_anp_epg.anp_epg.anp_name
+  epg_name               = mso_schema_template_anp_epg.anp_epg.name
+  ip                     = "10.7.0.1/8"
+  scope                  = "public"
+  ip_data_plane_learning = "enabled"
+  shared                 = true
 }
 
 ```
@@ -37,6 +38,7 @@ resource "mso_schema_site_anp_epg_subnet" "subnet1" {
 * `ip` - (Required) The IP range in CIDR notation.
 * `description` - (Optional) The description of this subnet.
 * `scope` - (Optional) The scope of the subnet. Allowed values are `private` and `public`.
+* `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled for this subnet. Allowed values are `enabled` and `disabled`.
 * `shared` - (Optional) Whether this subnet is shared between VRFs.
 * `querier` - (Optional) Whether this subnet is an IGMP querier.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
