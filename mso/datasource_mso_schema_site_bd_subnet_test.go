@@ -39,6 +39,7 @@ func TestAccMSOSchemaSiteBdSubnetDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "bd_name", siteBdSubnetResource, "bd_name"),
 					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "ip", siteBdSubnetResource, "ip"),
 					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "scope", siteBdSubnetResource, "scope"),
+					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "ip_data_plane_learning", siteBdSubnetResource, "ip_data_plane_learning"),
 					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "shared", siteBdSubnetResource, "shared"),
 					resource.TestCheckResourceAttrPair(siteBdSubnetDatasource, "no_default_gateway", siteBdSubnetResource, "no_default_gateway"),
 				),

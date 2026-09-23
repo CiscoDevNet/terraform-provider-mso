@@ -104,6 +104,15 @@ func resourceMSOSchemaSiteBdSubnet() *schema.Resource {
 					"private",
 				}, false),
 			},
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"disabled",
+					"enabled",
+				}, false),
+			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -200,6 +209,9 @@ func resourceMSOSchemaSiteBdSubnetImport(d *schema.ResourceData, m interface{}) 
 							if subnetCont.Exists("scope") {
 								d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
 							}
+							if subnetCont.Exists("ipDPLearning") {
+								d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
+							}
 							if subnetCont.Exists("shared") {
 								d.Set("shared", subnetCont.S("shared").Data().(bool))
 							}
@@ -251,6 +263,11 @@ func resourceMSOSchemaSiteBdSubnetCreate(d *schema.ResourceData, m interface{}) 
 		Scope = scope.(string)
 	}
 
+	var IPDataPlaneLearning string
+	if ipDPLearning, ok := d.GetOk("ip_data_plane_learning"); ok {
+		IPDataPlaneLearning = ipDPLearning.(string)
+	}
+
 	var Shared bool
 	if shared, ok := d.GetOk("shared"); ok {
 		Shared = shared.(bool)
@@ -276,7 +293,7 @@ func resourceMSOSchemaSiteBdSubnetCreate(d *schema.ResourceData, m interface{}) 
 	}
 
 	path := fmt.Sprintf("/sites/%s-%s/bds/%s/subnets/-", statesiteId, stateTemplateName, stateBd)
-	BdSubnetStruct := models.NewSchemaSiteBdSubnet("add", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
+	BdSubnetStruct := models.NewSchemaSiteBdSubnet("add", path, IP, Desc, Scope, IPDataPlaneLearning, Shared, NoDefaultGateway, Querier, Primary, Virtual)
 	_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdSubnetStruct)
 	if err != nil {
 		return err
@@ -350,6 +367,9 @@ func resourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) er
 							if subnetCont.Exists("scope") {
 								d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
 							}
+							if subnetCont.Exists("ipDPLearning") {
+								d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
+							}
 							if subnetCont.Exists("shared") {
 								d.Set("shared", subnetCont.S("shared").Data().(bool))
 							}
@@ -400,6 +420,11 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 	Scope := "private"
 	if scope, ok := d.GetOk("scope"); ok {
 		Scope = scope.(string)
+	}
+
+	var IPDataPlaneLearning string
+	if ipDPLearning, ok := d.GetOk("ip_data_plane_learning"); ok {
+		IPDataPlaneLearning = ipDPLearning.(string)
 	}
 
 	var Shared bool
@@ -477,7 +502,7 @@ func resourceMSOSchemaSiteBdSubnetUpdate(d *schema.ResourceData, m interface{}) 
 						if IP == apiIP {
 							index = l
 							path := fmt.Sprintf("/sites/%s-%s/bds/%s/subnets/%v", statesiteId, stateTemplateName, stateBd, index)
-							BdSubnetStruct := models.NewSchemaSiteBdSubnet("replace", path, IP, Desc, Scope, Shared, NoDefaultGateway, Querier, Primary, Virtual)
+							BdSubnetStruct := models.NewSchemaSiteBdSubnet("replace", path, IP, Desc, Scope, IPDataPlaneLearning, Shared, NoDefaultGateway, Querier, Primary, Virtual)
 							_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", schemaId), BdSubnetStruct)
 							if err != nil {
 								return err

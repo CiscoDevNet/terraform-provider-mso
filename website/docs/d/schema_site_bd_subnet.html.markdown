@@ -35,6 +35,7 @@ data "mso_schema_site_bd_subnet" "example" {
 ## Attribute Reference ##
 
 * `scope` - (Read-Only) The scope of the Subnet.
+* `ip_data_plane_learning` - (Read-Only) Whether IP data plane learning is enabled for the subnet.
 * `shared` - (Read-Only) Whether the Subnet is shared between VRFs.
 * `querier` - (Read-Only) Whether the Subnet is an IGMP querier.
 * `no_default_gateway` - (Read-Only) Whether the Subnet has a default gateway.

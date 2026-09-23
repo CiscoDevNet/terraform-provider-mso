@@ -58,20 +58,21 @@ resource "mso_schema_site_bd" "demo_schema_site_bd" {
   schema_id     = mso_schema.demo_schema.id
   bd_name       = mso_schema_template_bd.demo_bd.name
   template_name = one(mso_schema.demo_schema.template).name
-  site_id       = data.mso_site.demo_site.id
+  site_id       = mso_schema_site.demo_schema_site.site_id
   host_route    = false
   svi_mac       = "00:22:BD:F8:19:FF"
 }
 
 resource "mso_schema_site_bd_subnet" "demo_schema_site_bd_subnet" {
-  schema_id          = mso_schema.demo_schema.id
-  template_name      = one(mso_schema.demo_schema.template).name
-  site_id            = data.mso_site.demo_site.id
-  bd_name            = mso_schema_site_bd.demo_schema_site_bd.id
-  ip                 = "200.168.240.1/24"
-  description        = "This is schema site bd subnet."
-  shared             = false
-  scope              = "private"
-  querier            = false
-  no_default_gateway = false
+  schema_id              = mso_schema.demo_schema.id
+  template_name          = one(mso_schema.demo_schema.template).name
+  site_id                = mso_schema_site.demo_schema_site.site_id
+  bd_name                = mso_schema_site_bd.demo_schema_site_bd.bd_name
+  ip                     = "200.168.240.1/24"
+  description            = "This is schema site BD subnet."
+  shared                 = false
+  scope                  = "private"
+  ip_data_plane_learning = "enabled"
+  querier                = false
+  no_default_gateway     = false
 }

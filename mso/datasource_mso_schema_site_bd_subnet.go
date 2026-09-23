@@ -51,6 +51,10 @@ func dataSourceMSOSchemaSiteBdSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"ip_data_plane_learning": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"shared": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -124,6 +128,9 @@ func dataSourceMSOSchemaSiteBdSubnetRead(d *schema.ResourceData, m interface{}) 
 			}
 			if subnetCont.Exists("scope") {
 				d.Set("scope", models.StripQuotes(subnetCont.S("scope").String()))
+			}
+			if subnetCont.Exists("ipDPLearning") {
+				d.Set("ip_data_plane_learning", models.StripQuotes(subnetCont.S("ipDPLearning").String()))
 			}
 			if subnetCont.Exists("shared") {
 				d.Set("shared", subnetCont.S("shared").Data().(bool))

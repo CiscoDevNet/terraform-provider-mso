@@ -15,18 +15,19 @@ Manages MSO Schema Site Bridge Domain(BD) Subnet.
 ```hcl
 
 resource "mso_schema_site_bd_subnet" "sub1" {
-  schema_id          = mso_schema.schema1.id
-  template_name      = "Template1"
-  site_id            = mso_schema_site.schema_site.site_id
-  bd_name            = mso_schema_site_bd.bd1.bd_name
-  ip                 = "200.168.240.1/24"
-  description        = "Subnet 1"
-  shared             = false
-  scope              = "private"
-  querier            = false
-  no_default_gateway = false
-  primary            = false
-  virtual            = false
+  schema_id              = mso_schema.schema1.id
+  template_name          = "Template1"
+  site_id                = mso_schema_site.schema_site.site_id
+  bd_name                = mso_schema_template_bd.bridge_domain.name
+  ip                     = "200.168.240.1/24"
+  description            = "Subnet 1"
+  shared                 = false
+  scope                  = "private"
+  ip_data_plane_learning = "enabled"
+  querier                = false
+  no_default_gateway     = false
+  primary                = false
+  virtual                = false
 }
 
 ```
@@ -39,6 +40,7 @@ resource "mso_schema_site_bd_subnet" "sub1" {
 * `ip` - (Required) The IP of the Subnet.
 * `template_name` - (Required) Template name under which you want to deploy Subnet.
 * `scope` - (Optional) The scope of the subnet. Allowed values are `private` and `public`. The MSO/NDO defaults to `private` when unset during creation.
+* `ip_data_plane_learning` - (Optional) Whether IP data plane learning is enabled for this subnet. Allowed values are `enabled` and `disabled`.
 * `shared` - (Optional) Whether this subnet is shared between VRFs.
 * `querier` - (Optional) Whether this subnet is an IGMP querier.
 * `no_default_gateway` - (Optional) Whether this subnet has a default gateway.
