@@ -6,7 +6,7 @@ type SchemaSiteBdSubnet struct {
 	Value map[string]interface{} `json:",omitempty"`
 }
 
-func NewSchemaSiteBdSubnet(ops, path, ip, desc, scope string, shared, noDefaultGateway, querier, primary, virtual bool) *SchemaSiteBdSubnet {
+func NewSchemaSiteBdSubnet(ops, path, ip, desc, scope, ipDataPlaneLearning string, shared, noDefaultGateway, querier, primary, virtual bool) *SchemaSiteBdSubnet {
 	var bdsubnetMap map[string]interface{}
 	if ops != "remove" {
 		bdsubnetMap = map[string]interface{}{
@@ -18,6 +18,9 @@ func NewSchemaSiteBdSubnet(ops, path, ip, desc, scope string, shared, noDefaultG
 			"querier":          querier,
 			"primary":          primary,
 			"virtual":          virtual,
+		}
+		if ipDataPlaneLearning != "" {
+			bdsubnetMap["ipDPLearning"] = ipDataPlaneLearning
 		}
 	} else {
 		bdsubnetMap = nil
