@@ -300,7 +300,7 @@ func patchNetflowExporterSite(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("site %q is not present in template %q: %v", siteID, templateID, err)
 	}
 
-	exporterIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "uuid", exporterUUID, "tenantPolicyTemplate", "template", "netFlowExporters")
+	_, err = GetPolicyIndexByKeyAndValue(templateCont, "uuid", exporterUUID, "tenantPolicyTemplate", "template", "netFlowExporters")
 	if err != nil {
 		return fmt.Errorf("NetFlow Exporter %q does not exist in template %q: %v", exporterUUID, templateID, err)
 	}
@@ -308,9 +308,9 @@ func patchNetflowExporterSite(d *schema.ResourceData, m interface{}) error {
 	siteCont := templateCont.S("tenantPolicyTemplate", "sites").Index(siteIndex)
 	patchOperation := "add"
 	path := fmt.Sprintf("/tenantPolicyTemplate/sites/%d/netFlowExporters/-", siteIndex)
-	if _, err := GetPolicyIndexByKeyAndValue(siteCont, "ref", exporterUUID, "netFlowExporters"); err == nil {
+	if siteExporterIndex, err := GetPolicyIndexByKeyAndValue(siteCont, "ref", exporterUUID, "netFlowExporters"); err == nil {
 		patchOperation = "replace"
-		path = fmt.Sprintf("/tenantPolicyTemplate/sites/%d/netFlowExporters/%d", siteIndex, exporterIndex)
+		path = fmt.Sprintf("/tenantPolicyTemplate/sites/%d/netFlowExporters/%d", siteIndex, siteExporterIndex)
 	}
 
 	payloadCont := container.New()
