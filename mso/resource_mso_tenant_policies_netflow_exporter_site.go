@@ -251,8 +251,7 @@ func resourceMSONetflowExporterSiteRead(d *schema.ResourceData, m interface{}) e
 
 	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
-		d.SetId("")
-		return nil
+		return err
 	}
 	siteIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "siteId", siteID, "tenantPolicyTemplate", "sites")
 	if err != nil {
