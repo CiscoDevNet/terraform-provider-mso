@@ -99,17 +99,20 @@ func resourceMSONetflowExporterRead(d *schema.ResourceData, m interface{}) error
 
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "NetflowExporter")
 	if err != nil {
-		return err
+		d.SetId("")
+		return nil
 	}
 
 	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "netFlowExporters")
 	if err != nil {
-		return err
+		d.SetId("")
+		return nil
 	}
 
 	err = setNetflowExporterData(d, policy, templateId)
 	if err != nil {
-		return err
+		d.SetId("")
+		return nil
 	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Read Complete: %v", d.Id())
 	return nil
