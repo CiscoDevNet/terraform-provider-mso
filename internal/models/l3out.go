@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	ndoapi "github.com/CiscoDevNet/terraform-provider-mso/internal/ndoapi"
 	"github.com/CiscoDevNet/terraform-provider-mso/internal/tfplugin"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/identityschema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -38,7 +40,8 @@ func NewL3OutPath(uuid, name string) ndoapi.Path {
 	)
 }
 
-// L3OutModel is the aggregate L3Out Terraform model. It represents the base L3Out attributes.
+// L3OutModel is the aggregate L3Out Terraform model. The routing protocol is
+// derived from the OSPF and BGP objects.
 type L3OutModel struct {
 	ID                        types.String `tfsdk:"id"`
 	TemplateID                types.String `tfsdk:"template_id"`
@@ -51,6 +54,7 @@ type L3OutModel struct {
 	PIMEnabled                types.Bool   `tfsdk:"pim_enabled"`
 	ImportRouteControlEnabled types.Bool   `tfsdk:"import_route_control_enabled"`
 	OriginateDefaultRoute     types.String `tfsdk:"originate_default_route"`
+	OSPF                      types.Object `tfsdk:"ospf"`
 }
 
 // L3OutResourceIdentityModel identifies an L3Out within its template.
@@ -99,6 +103,14 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 	if err != nil {
 		return err
 	}
+	routingProtocolValue, _, err := ndoapi.StringField(object, "routingProtocol", ndoapi.OptionalField)
+	if err != nil {
+		return err
+	}
+	routingProtocol, err := newL3OutRoutingProtocolState(routingProtocolValue)
+	if err != nil {
+		return err
+	}
 	data.TemplateID = types.StringValue(templateID)
 	data.UUID = types.StringValue(uuid)
 	identity := L3OutResourceIdentityModel{TemplateID: data.TemplateID, UUID: data.UUID}
@@ -136,6 +148,10 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 		return err
 	}
 	data.OriginateDefaultRoute = defaultRoute.Mode
+	data.OSPF, err = l3OutOSPFObjectFromNDO(object, defaultRoute.Always, routingProtocol.ospf)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -169,8 +185,17 @@ func (data L3OutModel) ToPayload(ctx context.Context, configuration L3OutModel, 
 		payload["importRouteControl"] = *importControl
 	}
 	routingProtocolChange := l3OutRoutingProtocolChange{}
+	ospf, ospfConfigured := l3OutOSPFModelFromTerraform(configuration.OSPF)
+	if ospfConfigured && ospf.Enabled.ValueBool() {
+		ospfEnabled := true
+		routingProtocolChange.ospf = &ospfEnabled
+		maps.Copy(payload, ospf.toPayload())
+	}
 	payload["routingProtocol"] = l3OutRoutingProtocolValue(routingProtocolChange)
 	defaultRoute := L3OutDefaultRouteModel{Mode: configuration.OriginateDefaultRoute}
+	if ospfConfigured && ospf.Enabled.ValueBool() {
+		defaultRoute.Always = ospf.OriginateDefaultRouteAlways
+	}
 	if defaultRouteLeak := defaultRoute.ToPayload(); len(defaultRouteLeak) > 0 {
 		payload["defaultRouteLeak"] = defaultRouteLeak
 	}
@@ -259,6 +284,19 @@ func L3OutResourceSchema() schema.Schema {
 				MarkdownDescription: "Enables import route control on this L3Out.",
 			},
 			"originate_default_route": l3OutDefaultRouteResourceAttribute(),
+			"ospf": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+					tfplugin.UseConfiguredDisabledObject("enabled"),
+				},
+				Validators: []validator.Object{
+					tfplugin.RequireAttributesWhenEnabled("enabled", "area_id", "area_type"),
+				},
+				Attributes:          l3OutOSPFResourceSchema(),
+				MarkdownDescription: "OSPF settings of the L3Out.",
+			},
 		},
 	}
 }
@@ -310,6 +348,11 @@ func L3OutDataSourceSchema() datasourceschema.Schema {
 				MarkdownDescription: "Whether import route control is enabled.",
 			},
 			"originate_default_route": l3OutDefaultRouteDataSourceAttribute(),
+			"ospf": datasourceschema.SingleNestedAttribute{
+				Computed:            true,
+				Attributes:          l3OutOSPFDataSourceSchema(),
+				MarkdownDescription: "OSPF configuration of the L3Out, including its enabled state.",
+			},
 		},
 	}
 }
@@ -331,7 +374,22 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 		operations.Set("importRouteControl", *importControl)
 	}
 	routingProtocolChange := l3OutRoutingProtocolChange{}
+	ospf, ospfConfigured := l3OutOSPFModelFromTerraform(configuration.OSPF)
+	if ospfConfigured {
+		if err := setL3OutOSPFOperations(operations, resolved.Object, ospf); err != nil {
+			diagnostics.AddError("Failed to Read L3Out OSPF", err.Error())
+		}
+		ospfEnabled := ospf.Enabled.ValueBool()
+		routingProtocolChange.ospf = &ospfEnabled
+	}
 	defaultRoute := L3OutDefaultRouteModel{Mode: plan.OriginateDefaultRoute}
+	if ospfConfigured {
+		if !ospf.Enabled.ValueBool() {
+			defaultRoute.Always = types.BoolValue(false)
+		} else {
+			defaultRoute.Always = ospf.OriginateDefaultRouteAlways
+		}
+	}
 	if err := defaultRoute.AddPatchOperations(operations, resolved.Object); err != nil {
 		diagnostics.AddError("Failed to Read L3Out Default Route", err.Error())
 	}
