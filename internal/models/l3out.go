@@ -40,15 +40,16 @@ func NewL3OutPath(uuid, name string) ndoapi.Path {
 
 // L3OutModel is the aggregate L3Out Terraform model. It represents the base L3Out attributes.
 type L3OutModel struct {
-	ID          types.String `tfsdk:"id"`
-	TemplateID  types.String `tfsdk:"template_id"`
-	UUID        types.String `tfsdk:"uuid"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	VRFUUID     types.String `tfsdk:"vrf_uuid"`
-	L3Domain    types.String `tfsdk:"l3_domain"`
-	TargetDSCP  types.String `tfsdk:"target_dscp"`
-	PIMEnabled  types.Bool   `tfsdk:"pim_enabled"`
+	ID                        types.String `tfsdk:"id"`
+	TemplateID                types.String `tfsdk:"template_id"`
+	UUID                      types.String `tfsdk:"uuid"`
+	Name                      types.String `tfsdk:"name"`
+	Description               types.String `tfsdk:"description"`
+	VRFUUID                   types.String `tfsdk:"vrf_uuid"`
+	L3Domain                  types.String `tfsdk:"l3_domain"`
+	TargetDSCP                types.String `tfsdk:"target_dscp"`
+	PIMEnabled                types.Bool   `tfsdk:"pim_enabled"`
+	ImportRouteControlEnabled types.Bool   `tfsdk:"import_route_control_enabled"`
 }
 
 // L3OutResourceIdentityModel identifies an L3Out within its template.
@@ -123,6 +124,11 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 		return err
 	}
 	data.PIMEnabled = tfplugin.BoolOrNull(pim, pimExists)
+	importControl, importControlExists, err := ndoapi.BoolField(object, "importRouteControl", ndoapi.OptionalField)
+	if err != nil {
+		return err
+	}
+	data.ImportRouteControlEnabled = tfplugin.BoolOrNull(importControl, importControlExists)
 	return nil
 }
 
@@ -151,6 +157,9 @@ func (data L3OutModel) ToPayload(ctx context.Context, configuration L3OutModel, 
 	}
 	if pim := tfplugin.KnownBoolPointer(data.PIMEnabled); pim != nil {
 		payload["pim"] = *pim
+	}
+	if importControl := tfplugin.KnownBoolPointer(data.ImportRouteControlEnabled); importControl != nil {
+		payload["importRouteControl"] = *importControl
 	}
 	routingProtocolChange := l3OutRoutingProtocolChange{}
 	payload["routingProtocol"] = l3OutRoutingProtocolValue(routingProtocolChange)
@@ -230,6 +239,14 @@ func L3OutResourceSchema() schema.Schema {
 				},
 				MarkdownDescription: "Whether protocol-independent multicast is enabled on the L3Out.",
 			},
+			"import_route_control_enabled": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseNonNullStateForUnknown(),
+				},
+				MarkdownDescription: "Enables import route control on this L3Out.",
+			},
 		},
 	}
 }
@@ -276,6 +293,10 @@ func L3OutDataSourceSchema() datasourceschema.Schema {
 				Computed:            true,
 				MarkdownDescription: "Whether protocol-independent multicast is enabled.",
 			},
+			"import_route_control_enabled": datasourceschema.BoolAttribute{
+				Computed:            true,
+				MarkdownDescription: "Whether import route control is enabled.",
+			},
 		},
 	}
 }
@@ -292,6 +313,9 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 
 	if pim := tfplugin.KnownBoolPointer(plan.PIMEnabled); pim != nil {
 		operations.Set("pim", *pim)
+	}
+	if importControl := tfplugin.KnownBoolPointer(plan.ImportRouteControlEnabled); importControl != nil {
+		operations.Set("importRouteControl", *importControl)
 	}
 	routingProtocolChange := l3OutRoutingProtocolChange{}
 	if routingProtocolChange.bgp != nil || routingProtocolChange.ospf != nil {
