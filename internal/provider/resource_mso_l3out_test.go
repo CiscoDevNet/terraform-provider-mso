@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/CiscoDevNet/terraform-provider-mso/internal/models"
@@ -797,6 +798,902 @@ resource "mso_l3out" "test" {
 `
 }
 
+func TestAccMSOL3OutAnnotations(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_annotations")
+	var templateID, l3outUUID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out with annotations sharing a value") },
+				Config:    testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "shared", "bar": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Reorder L3Out annotation keys without changing the plan") },
+				Config:    testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "shared", "bar": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update and add L3Out annotations") },
+				Config:    testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "bar": "shared", "baz": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove one L3Out annotation") },
+				Config:    testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "baz": "shared"}),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import L3Out with annotations") },
+				Config:       testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
+				ResourceName: "mso_l3out.test",
+				ImportState:  true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resourceState, ok := state.RootModule().Resources["mso_l3out.test"]
+					if !ok {
+						return "", fmt.Errorf("mso_l3out.test not found in Terraform state")
+					}
+					return fmt.Sprintf("%s/%s", resourceState.Primary.Attributes["template_id"], resourceState.Primary.Attributes["uuid"]), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Omit L3Out annotations and preserve remote values")
+					testAccReplaceL3OutAnnotations(t, templateID, l3outUUID, models.AnnotationsModel{
+						"foo": "updated", "baz": "shared", "external": "shared",
+					})
+				},
+				Config: testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.external", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "baz": "shared", "external": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove all L3Out annotations with an empty map") },
+				Config:    testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "0"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{}),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "initial annotations"
+  annotations = {
+    foo = "shared"
+    bar = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "initial annotations"
+  annotations = {
+    bar = "shared"
+    foo = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "updated annotations"
+  annotations = {
+    bar = "shared"
+    foo = "updated"
+    baz = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "updated annotations"
+  annotations = {
+    foo = "updated"
+    baz = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "annotations omitted"
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "annotations cleared"
+  annotations = {}
+}
+`
+}
+
+func TestAccMSOL3OutInterfaceGroups(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_interface_groups")
+	var templateID string
+	var l3outUUID string
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:        func() { fmt.Println("Test: Create L3Out with four interface groups") },
+				Config:           testAccMSOL3OutInterfaceGroupsCreateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "4"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd.key_id", "20"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key_id", "30"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd.key", "bfd-secret"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key", "multi-hop-secret"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.ospf.key", "ospf-secret"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.ospf.authentication_type", "md5"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.backup.description", "backup group"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.middle.description", "middle group"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.tail.description", "tail group"),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Update interface group attributes while retaining authentication keys") },
+				Config:           testAccMSOL3OutInterfaceGroupsUpdateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd.key_id", "21"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key_id", "31"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd.key", "bfd-secret"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key", "multi-hop-secret"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.ospf.key", "ospf-secret"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.ospf.authentication_type", "simple"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.backup.description", "updated backup"),
+					testAccCheckL3OutInterfaceGroupOrder(&templateID, &l3outUUID, []string{"backup", "edge", "middle", "tail"}),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Update and add interface groups while removing two nonadjacent groups") },
+				Config:           testAccMSOL3OutInterfaceGroupsMixedPatchConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.description", "edge group after mixed patch"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.tail.description", "tail group after mixed patch"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.new.description", "new group"),
+					testAccCheckL3OutInterfaceGroups(&templateID, &l3outUUID, map[string]string{
+						"edge": "edge group after mixed patch",
+						"new":  "new group",
+						"tail": "tail group after mixed patch",
+					}),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Retain one interface group") },
+				Config:           testAccMSOL3OutInterfaceGroupsRemoveOneConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "1"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd.key_id", "21"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key_id", "31"),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Clear all L3Out interface groups") },
+				Config:           testAccMSOL3OutInterfaceGroupsEmptyConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "0"),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Add interface groups after clearing the collection") },
+				Config:           testAccMSOL3OutInterfaceGroupsCreateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "4"),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Omit configured interface groups during an unrelated update") },
+				Config:           testAccMSOL3OutInterfaceGroupsOmittedConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "description", "interface groups omitted"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "4"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key_id", "30"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key", "multi-hop-secret"),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Manage an interface group without optional settings") },
+				Config:           testAccMSOL3OutInterfaceGroupsEmptyGroupConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "1"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.empty.bfd.enabled", "false"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.empty.bfd_multi_hop.enabled", "false"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.empty.ospf.enabled", "false"),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import L3Out with an interface group") },
+				Config:       testAccMSOL3OutInterfaceGroupsEmptyGroupConfig(siteName, l3outName),
+				ResourceName: "mso_l3out.test",
+				ImportState:  true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					l3out, ok := state.RootModule().Resources["mso_l3out.test"]
+					if !ok {
+						return "", fmt.Errorf("mso_l3out.test not found in Terraform state")
+					}
+					return l3out.Primary.Attributes["id"], nil
+				},
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccCheckL3OutInterfaceGroupOrder(templateID, l3outUUID *string, expected []string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		template, err := ndoapi.GetTemplate(testAccAPIClient(), *templateID)
+		if err != nil {
+			return err
+		}
+		l3out, err := template.FindRequired(models.NewL3OutPath(*l3outUUID, ""))
+		if err != nil {
+			return err
+		}
+		groups, _, err := ndoapi.ListField(l3out.Object, "interfaceGroups", ndoapi.RequiredField)
+		if err != nil {
+			return err
+		}
+		if len(groups) != len(expected) {
+			return fmt.Errorf("unexpected number of remote interface groups: got %d, want %d", len(groups), len(expected))
+		}
+		for index, item := range groups {
+			group, ok := item.(map[string]any)
+			if !ok {
+				return fmt.Errorf("NDO interfaceGroups[%d] has unexpected type %T", index, item)
+			}
+			name, _, err := ndoapi.StringField(group, "name", ndoapi.RequiredNonEmptyField)
+			if err != nil {
+				return fmt.Errorf("NDO interfaceGroups[%d]: %w", index, err)
+			}
+			if name != expected[index] {
+				return fmt.Errorf("unexpected remote interface group at index %d: got %q, want %q", index, name, expected[index])
+			}
+		}
+		return nil
+	}
+}
+
+func testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  bgp = {
+    enabled = true
+  }
+  ospf = {
+    enabled   = true
+    area_id   = "0.0.0.7"
+    area_type = "regular"
+  }
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsCreateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  interface_groups = {
+    edge = {
+      description = "edge group"
+      bfd = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 20
+        key                    = "bfd-secret"
+      }
+      bfd_multi_hop = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 30
+        key                    = "multi-hop-secret"
+      }
+      ospf = {
+        enabled             = true
+        authentication_type = "md5"
+        key_id              = 10
+        key                 = "ospf-secret"
+      }
+    }
+    backup = {
+      description = "backup group"
+    }
+    middle = {
+      description = "middle group"
+    }
+    tail = {
+      description = "tail group"
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsUpdateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  interface_groups = {
+    edge = {
+      description = "edge group"
+      bfd = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 21
+        key                    = "bfd-secret"
+      }
+      bfd_multi_hop = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 31
+        key                    = "multi-hop-secret"
+      }
+      ospf = {
+        enabled             = true
+        authentication_type = "simple"
+        key_id              = 10
+        key                 = "ospf-secret"
+      }
+    }
+    backup = {
+      description = "updated backup"
+    }
+    middle = {
+      description = "middle group"
+    }
+    tail = {
+      description = "tail group"
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsMixedPatchConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  interface_groups = {
+    edge = {
+      description = "edge group after mixed patch"
+      bfd = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 21
+        key                    = "bfd-secret"
+      }
+      bfd_multi_hop = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 31
+        key                    = "multi-hop-secret"
+      }
+      ospf = {
+        enabled             = true
+        authentication_type = "simple"
+        key_id              = 10
+        key                 = "ospf-secret"
+      }
+    }
+    new = {
+      description = "new group"
+    }
+    tail = {
+      description = "tail group after mixed patch"
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsRemoveOneConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  interface_groups = {
+    edge = {
+      description = "edge group"
+      bfd = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 21
+        key                    = "bfd-secret"
+      }
+      bfd_multi_hop = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 31
+        key                    = "multi-hop-secret"
+      }
+      ospf = {
+        enabled             = true
+        authentication_type = "simple"
+        key_id              = 10
+        key                 = "ospf-secret"
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsEmptyConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  interface_groups = {}
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsEmptyGroupConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  interface_groups = {
+    empty = {}
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupsOmittedConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupsBaseConfig(siteName, l3outName) + `
+  description = "interface groups omitted"
+}
+`
+}
+
+func TestAccMSOL3OutInterfaceGroupReferences(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_group_refs")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:        func() { fmt.Println("Test: Configure L3Out interface group tenant references and four NetFlow types") },
+				Config:           testAccMSOL3OutInterfaceGroupAllReferencesConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.interface_routing_policy_uuid", "mso_tenant_policies_l3out_interface_routing_policy.routing", "uuid"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.custom_qos_policy_uuid", "mso_tenant_policies_custom_qos_policy.qos", "uuid"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.%", "4"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ipv4", "mso_tenant_policies_netflow_monitor.ipv4", "uuid"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ipv6", "mso_tenant_policies_netflow_monitor.ipv6", "uuid"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ce", "mso_tenant_policies_netflow_monitor.ce", "uuid"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.unspecified", "mso_tenant_policies_netflow_monitor.unspecified", "uuid"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.qos_priority", "level6"),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Replace interface group NetFlow map with two references") },
+				Config:           testAccMSOL3OutInterfaceGroupTwoReferencesConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.%", "2"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ipv4", "mso_tenant_policies_netflow_monitor.ipv4", "uuid"),
+					resource.TestCheckResourceAttrPair("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ce", "mso_tenant_policies_netflow_monitor.ce", "uuid"),
+				),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Clear parent interface group tenant references and NetFlow monitors") },
+				Config:           testAccMSOL3OutInterfaceGroupClearReferencesConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.interface_routing_policy_uuid", ""),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.custom_qos_policy_uuid", ""),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.qos_priority", "unspecified"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutInterfaceGroupReferenceBaseConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + testAccMSOL3OutInterfaceGroupPolicyTenantReferencesConfig() + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  interface_groups = {
+    edge = {
+      interface_routing_policy_uuid = mso_tenant_policies_l3out_interface_routing_policy.routing.uuid
+      custom_qos_policy_uuid        = mso_tenant_policies_custom_qos_policy.qos.uuid
+      qos_priority                  = "level6"
+`
+}
+
+func testAccMSOL3OutInterfaceGroupAllReferencesConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupReferenceBaseConfig(siteName, l3outName) + `
+      netflow_monitor_uuids = {
+        ipv4        = mso_tenant_policies_netflow_monitor.ipv4.uuid
+        ipv6        = mso_tenant_policies_netflow_monitor.ipv6.uuid
+        ce          = mso_tenant_policies_netflow_monitor.ce.uuid
+        unspecified = mso_tenant_policies_netflow_monitor.unspecified.uuid
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupTwoReferencesConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupReferenceBaseConfig(siteName, l3outName) + `
+      netflow_monitor_uuids = {
+        ipv4 = mso_tenant_policies_netflow_monitor.ipv4.uuid
+        ce   = mso_tenant_policies_netflow_monitor.ce.uuid
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupClearReferencesConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + testAccMSOL3OutInterfaceGroupPolicyTenantReferencesConfig() + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  interface_groups = {
+    edge = {
+      interface_routing_policy_uuid = ""
+      custom_qos_policy_uuid        = ""
+      qos_priority                  = "unspecified"
+      netflow_monitor_uuids         = {}
+    }
+  }
+}
+`
+}
+
+func TestAccMSOL3OutInvalid(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_invalid")
+	defaultRouteValidationMessage := `originate_default_route must be one of "only", "in_addition" when ospf.originate_default_route_always is true`
+	defaultRouteValidationError := regexp.MustCompile(strings.ReplaceAll(regexp.QuoteMeta(defaultRouteValidationMessage), " ", `\s+`))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject OSPF always-originate when the default-route mode is omitted") },
+				Config:      testAccMSOL3OutDefaultRouteModeMissingConfig(siteName, l3outName),
+				ExpectError: defaultRouteValidationError,
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject OSPF always-originate with an empty default-route mode") },
+				Config:      testAccMSOL3OutDefaultRouteModeEmptyConfig(siteName, l3outName),
+				ExpectError: defaultRouteValidationError,
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject OSPF settings while disabled") },
+				Config:      testAccMSOL3OutOSPFDisabledWithAreaConfig(siteName, l3outName),
+				ExpectError: regexp.MustCompile(`requires enabled = true`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject enabled OSPF without an area ID") },
+				Config:      testAccMSOL3OutInvalidOSPFWithoutAreaIDConfig(),
+				ExpectError: regexp.MustCompile(`area_id must be configured when enabled is true`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject enabled OSPF without an area type") },
+				Config:      testAccMSOL3OutInvalidOSPFWithoutAreaTypeConfig(),
+				ExpectError: regexp.MustCompile(`area_type must be configured when enabled is true`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject authenticated interface group BFD without a key") },
+				Config:      testAccMSOL3OutInvalidInterfaceGroupBFDWithoutKeyConfig(),
+				ExpectError: regexp.MustCompile(`interface_groups\["edge"\]\.bfd\.key must have a value when\s+interface_groups\["edge"\]\.bfd\.authentication_enabled is true`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject interface group OSPF authentication without a key ID") },
+				Config:      testAccMSOL3OutInvalidInterfaceGroupOSPFWithoutKeyIDConfig(),
+				ExpectError: regexp.MustCompile(`interface_groups\["edge"\]\.ospf\.key_id must have a value when\s+interface_groups\["edge"\]\.ospf\.authentication_type is one of simple, md5`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject an empty interface group name") },
+				Config:      testAccMSOL3OutInvalidInterfaceGroupEmptyNameConfig(),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject a null interface group") },
+				Config:      testAccMSOL3OutInvalidInterfaceGroupNullConfig(),
+				ExpectError: regexp.MustCompile(`Null Map Value`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject an empty NetFlow monitor UUID in an interface group") },
+				Config:      testAccMSOL3OutInvalidInterfaceGroupEmptyNetFlowUUIDConfig(),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject a null NetFlow monitor UUID in an interface group") },
+				Config:      testAccMSOL3OutInvalidInterfaceGroupNullNetFlowUUIDConfig(),
+				ExpectError: regexp.MustCompile(`Null Map Value`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject L3Out creation in a nonexistent template") },
+				Config:      testAccMSOL3OutInvalidTemplateCreateConfig(),
+				ExpectError: regexp.MustCompile(`Failed to Create L3Out`),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out for invalid import reference") },
+				Config:    testAccMSOL3OutInvalidImportParentConfig(siteName, l3outName),
+			},
+			{
+				PreConfig:     func() { fmt.Println("Test: Reject import when the L3Out template does not exist") },
+				ResourceName:  "mso_l3out.test",
+				ImportState:   true,
+				ImportStateId: "00000000-0000-0000-0000-000000000000/00000000-0000-0000-0000-000000000000",
+				ExpectError: regexp.MustCompile(
+					`(?i)(non-existent|not found|does not exist)`,
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutInvalidOSPFWithoutAreaIDConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  ospf = {
+    enabled   = true
+    area_type = "regular"
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidOSPFWithoutAreaTypeConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  ospf = {
+    enabled = true
+    area_id = "0.0.0.1"
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidInterfaceGroupBFDWithoutKeyConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  interface_groups = {
+    edge = {
+      bfd = {
+        enabled                = true
+        authentication_enabled = true
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidInterfaceGroupOSPFWithoutKeyIDConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  interface_groups = {
+    edge = {
+      ospf = {
+        enabled             = true
+        authentication_type = "md5"
+        key                 = "secret"
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidInterfaceGroupEmptyNameConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  interface_groups = {
+    "" = {}
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidInterfaceGroupNullConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  interface_groups = {
+    edge = null
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidInterfaceGroupEmptyNetFlowUUIDConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  interface_groups = {
+    edge = {
+      netflow_monitor_uuids = {
+        ipv4 = ""
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidInterfaceGroupNullNetFlowUUIDConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "template"
+  name        = "test"
+  vrf_uuid    = "vrf"
+  interface_groups = {
+    edge = {
+      netflow_monitor_uuids = {
+        ipv4 = null
+      }
+    }
+  }
+}
+`
+}
+
+func testAccMSOL3OutInvalidTemplateCreateConfig() string {
+	return `
+resource "mso_l3out" "test" {
+  template_id = "00000000-0000-0000-0000-000000000000"
+  name        = "terraform_missing_template"
+  vrf_uuid    = "00000000-0000-0000-0000-000000000000"
+}
+`
+}
+
+func testAccMSOL3OutInvalidImportParentConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+}
+`
+}
+
+func testAccMSOL3OutDefaultRouteModeMissingConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  ospf = {
+    enabled                         = true
+    area_id                         = "0.0.0.1"
+    area_type                       = "regular"
+    originate_default_route_always = true
+  }
+}
+`
+}
+
+func testAccMSOL3OutDefaultRouteModeEmptyConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  ospf = {
+    enabled                         = true
+    area_id                         = "0.0.0.1"
+    area_type                       = "regular"
+    originate_default_route_always = true
+  }
+  originate_default_route = ""
+}
+`
+}
+
+func testAccMSOL3OutOSPFDisabledWithAreaConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  ospf = {
+    enabled = false
+    area_id = "0.0.0.1"
+  }
+}
+`
+}
+
 func testAccCheckL3OutRoutingProtocol(templateID, l3outUUID *string, expected string) resource.TestCheckFunc {
 	return func(_ *terraform.State) error {
 		template, err := ndoapi.GetTemplate(testAccAPIClient(), *templateID)
@@ -1003,6 +1900,7 @@ resource "mso_template" "l3out_test" {
 	`, l3outName, siteName,
 	)
 }
+
 func testAccCheckL3OutAnnotations(templateID, l3outUUID *string, expected map[string]string) resource.TestCheckFunc {
 	return func(_ *terraform.State) error {
 		if *templateID == "" || *l3outUUID == "" {
@@ -1050,181 +1948,4 @@ func testAccReplaceL3OutAnnotations(t *testing.T, templateID, l3outUUID string, 
 	if err != nil {
 		t.Fatalf("unable to replace L3Out annotations out of band: %v", err)
 	}
-}
-func TestAccMSOL3OutAnnotations(t *testing.T) {
-	siteName := testAccSiteName()
-	l3outName := testAccResourceName("terraform_l3out_annotations")
-	var templateID, l3outUUID string
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				PreConfig: func() { fmt.Println("Test: Create L3Out with annotations sharing a value") },
-				Config:    testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "shared"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
-					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "shared", "bar": "shared"}),
-				),
-			},
-			{
-				PreConfig: func() { fmt.Println("Test: Reorder L3Out annotation keys without changing the plan") },
-				Config:    testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
-				},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
-					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "shared", "bar": "shared"}),
-				),
-			},
-			{
-				PreConfig: func() { fmt.Println("Test: Update and add L3Out annotations") },
-				Config:    testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
-					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "bar": "shared", "baz": "shared"}),
-				),
-			},
-			{
-				PreConfig: func() { fmt.Println("Test: Remove one L3Out annotation") },
-				Config:    testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
-					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "baz": "shared"}),
-				),
-			},
-			{
-				PreConfig:    func() { fmt.Println("Test: Import L3Out with annotations") },
-				Config:       testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
-				ResourceName: "mso_l3out.test",
-				ImportState:  true,
-				ImportStateIdFunc: func(state *terraform.State) (string, error) {
-					resourceState, ok := state.RootModule().Resources["mso_l3out.test"]
-					if !ok {
-						return "", fmt.Errorf("mso_l3out.test not found in Terraform state")
-					}
-					return fmt.Sprintf("%s/%s", resourceState.Primary.Attributes["template_id"], resourceState.Primary.Attributes["uuid"]), nil
-				},
-				ImportStateVerify: true,
-			},
-			{
-				PreConfig: func() {
-					fmt.Println("Test: Omit L3Out annotations and preserve remote values")
-					testAccReplaceL3OutAnnotations(t, templateID, l3outUUID, models.AnnotationsModel{
-						"foo": "updated", "baz": "shared", "external": "shared",
-					})
-				},
-				Config: testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.external", "shared"),
-					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "baz": "shared", "external": "shared"}),
-				),
-			},
-			{
-				PreConfig: func() { fmt.Println("Test: Remove all L3Out annotations with an empty map") },
-				Config:    testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "0"),
-					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{}),
-				),
-			},
-		},
-	})
-}
-
-func testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName string) string {
-	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
-resource "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = local.l3out_name
-  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
-  description = "initial annotations"
-  annotations = {
-    foo = "shared"
-    bar = "shared"
-  }
-}
-`
-}
-
-func testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName string) string {
-	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
-resource "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = local.l3out_name
-  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
-  description = "initial annotations"
-  annotations = {
-    bar = "shared"
-    foo = "shared"
-  }
-}
-`
-}
-
-func testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName string) string {
-	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
-resource "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = local.l3out_name
-  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
-  description = "updated annotations"
-  annotations = {
-    bar = "shared"
-    foo = "updated"
-    baz = "shared"
-  }
-}
-`
-}
-
-func testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName string) string {
-	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
-resource "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = local.l3out_name
-  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
-  description = "updated annotations"
-  annotations = {
-    foo = "updated"
-    baz = "shared"
-  }
-}
-`
-}
-
-func testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName string) string {
-	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
-resource "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = local.l3out_name
-  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
-  description = "annotations omitted"
-}
-`
-}
-
-func testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName string) string {
-	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
-resource "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = local.l3out_name
-  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
-  description = "annotations cleared"
-  annotations = {}
-}
-`
 }

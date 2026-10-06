@@ -131,6 +131,10 @@ func (r *L3OutResource) Update(ctx context.Context, request resource.UpdateReque
 	if response.Diagnostics.HasError() {
 		return
 	}
+	if !configuration.InterfaceGroups.IsNull() {
+		l3OutInterfaceGroupPolicyMutationMu.Lock()
+		defer l3OutInterfaceGroupPolicyMutationMu.Unlock()
+	}
 	_, resolved, found, err := getL3OutResourceModel(
 		ctx,
 		r.client,

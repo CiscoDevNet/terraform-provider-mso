@@ -57,6 +57,7 @@ type L3OutModel struct {
 	OriginateDefaultRoute     types.String `tfsdk:"originate_default_route"`
 	OSPF                      types.Object `tfsdk:"ospf"`
 	Annotations               types.Map    `tfsdk:"annotations"`
+	InterfaceGroups           types.Map    `tfsdk:"interface_groups"`
 }
 
 // L3OutResourceIdentityModel identifies an L3Out within its template.
@@ -90,6 +91,9 @@ func (data L3OutModel) Path() ndoapi.Path {
 }
 
 // SetFromNDOObject translates an NDO L3Out object into Terraform state.
+// previousL3OutModel is the plan after Create/Update or the prior state during
+// Read. NDO returns only references for interface group authentication keys,
+// so their configured values must be carried forward from that model.
 func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string, object map[string]any, previousL3OutModel L3OutModel) error {
 	// Terraform validates configuration, but these fields come from NDO and
 	// must be valid before they are written to state.
@@ -167,11 +171,31 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 	if diagnostics.HasError() {
 		return fmt.Errorf("failed to convert L3Out annotations to Terraform state: %s", diagnostics.Errors()[0].Detail())
 	}
+	previousGroups := InterfaceGroupPoliciesFromTerraform(ctx, previousL3OutModel.InterfaceGroups, &diagnostics)
+	if diagnostics.HasError() {
+		return fmt.Errorf("failed to read previous L3Out interface groups: %s", diagnostics.Errors()[0].Detail())
+	}
+	var groups InterfaceGroupPoliciesModel
+	if err := groups.SetFromNDOObject(ctx, object, previousGroups, &diagnostics); err != nil {
+		return err
+	}
+	if diagnostics.HasError() {
+		return fmt.Errorf("failed to read L3Out interface groups: %s", diagnostics.Errors()[0].Detail())
+	}
+	data.InterfaceGroups = groups.TerraformValue(ctx, &diagnostics)
+	if diagnostics.HasError() {
+		return fmt.Errorf("failed to convert L3Out interface groups to Terraform state: %s", diagnostics.Errors()[0].Detail())
+	}
 	return nil
 }
 
 // DataSourceValue removes fields that cannot be read from Orchestration.
 func (data L3OutModel) DataSourceValue(ctx context.Context, diagnostics *diag.Diagnostics) L3OutModel {
+	groups := InterfaceGroupPoliciesFromTerraform(ctx, data.InterfaceGroups, diagnostics)
+	if diagnostics.HasError() {
+		return data
+	}
+	data.InterfaceGroups = groups.DataSourceValue(ctx, diagnostics)
 	return data
 }
 
@@ -222,6 +246,13 @@ func (data L3OutModel) ToPayload(ctx context.Context, configuration L3OutModel, 
 		annotations := AnnotationsModelFromTerraform(ctx, data.Annotations, diagnostics)
 		if annotations != nil {
 			payload["tagAnnotations"] = annotations.ToPayload()
+		}
+	}
+	if !configuration.InterfaceGroups.IsNull() {
+		groups := InterfaceGroupPoliciesFromTerraform(ctx, data.InterfaceGroups, diagnostics)
+		configured := InterfaceGroupPoliciesFromTerraform(ctx, configuration.InterfaceGroups, diagnostics)
+		if !diagnostics.HasError() && groups != nil {
+			payload["interfaceGroups"] = groups.ToPayload(ctx, configured, diagnostics)
 		}
 	}
 	return payload
@@ -320,6 +351,7 @@ func L3OutResourceSchema() schema.Schema {
 			},
 			"originate_default_route": l3OutDefaultRouteResourceAttribute(),
 			"annotations":             annotationsResourceAttribute(),
+			"interface_groups":        interfaceGroupPoliciesResourceAttribute(),
 			"ospf": schema.SingleNestedAttribute{
 				Optional: true,
 				Computed: true,
@@ -390,6 +422,7 @@ func L3OutDataSourceSchema() datasourceschema.Schema {
 			},
 			"originate_default_route": l3OutDefaultRouteDataSourceAttribute(),
 			"annotations":             annotationsDataSourceAttribute(),
+			"interface_groups":        interfaceGroupPoliciesDataSourceAttribute(),
 			"ospf": datasourceschema.SingleNestedAttribute{
 				Computed:            true,
 				Attributes:          l3OutOSPFDataSourceSchema(),
@@ -449,6 +482,16 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 		if !diagnostics.HasError() {
 			if err := annotations.AddPatchOperations(operations, resolved.Object); err != nil {
 				diagnostics.AddError("Failed to Read L3Out Annotations", err.Error())
+			}
+		}
+	}
+	if !configuration.InterfaceGroups.IsNull() {
+		groups := InterfaceGroupPoliciesFromTerraform(ctx, plan.InterfaceGroups, diagnostics)
+		configured := InterfaceGroupPoliciesFromTerraform(ctx, configuration.InterfaceGroups, diagnostics)
+		previous := InterfaceGroupPoliciesFromTerraform(ctx, state.InterfaceGroups, diagnostics)
+		if !diagnostics.HasError() {
+			if err := groups.AddPatchOperations(ctx, resolved.Object, operations, resolved.PatchPath(), configured, previous, diagnostics); err != nil {
+				diagnostics.AddError("Failed to Read L3Out Interface Groups", err.Error())
 			}
 		}
 	}

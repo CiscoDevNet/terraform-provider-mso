@@ -13,6 +13,8 @@ Manages one IP-based L3Out in a Nexus Dashboard Orchestration L3Out template. Cr
 
 When an optional setting is omitted, the provider reads and retains its value from Orchestration. Set a clearable string to `""` to clear it, or set a Boolean to `false` to disable it. For a protocol object, `{}` and `enabled = false` both disable the protocol. Collection attributes have their own ownership rules below.
 
+-> **Authentication key limitation:** Orchestration accepts the BFD and OSPF interface group keys but returns only an opaque key reference. The provider retains a previously configured key in Terraform state so that refresh and unrelated updates do not discard it. It cannot verify the stored key against Orchestration or detect a key changed outside Terraform. An imported L3Out has no key value to recover. Treat Terraform state as sensitive because it contains configured keys.
+
 ## API Information
 
 - **APIs**: Nexus Dashboard Orchestration API (template endpoints).
@@ -36,7 +38,7 @@ In Nexus Dashboard, choose **Manage > Orchestration > Tenant Templates > L3Out**
 resource "mso_l3out" "example" {
   template_id                  = mso_template.l3out.id
   name                         = "example_l3out"
-  description                  = "L3Out with BGP, OSPF, and annotations"
+  description                  = "L3Out managed with annotations and interface groups"
   vrf_uuid                     = mso_schema_template_vrf.example.uuid
   l3_domain                    = mso_fabric_policies_l3_domain.example.name
   target_dscp                  = "unspecified"
@@ -63,10 +65,47 @@ resource "mso_l3out" "example" {
     owner   = "network"
     purpose = "external-routing"
   }
+
+  interface_groups = {
+    edge = {
+      description                   = "Edge interfaces"
+      interface_routing_policy_uuid = mso_tenant_policies_l3out_interface_routing_policy.example.uuid
+      custom_qos_policy_uuid        = mso_tenant_policies_custom_qos_policy.example.uuid
+      qos_priority                  = "level6"
+
+      netflow_monitor_uuids = {
+        ipv4        = mso_tenant_policies_netflow_monitor.ipv4.uuid
+        ipv6        = mso_tenant_policies_netflow_monitor.ipv6.uuid
+        ce          = mso_tenant_policies_netflow_monitor.ce.uuid
+        unspecified = mso_tenant_policies_netflow_monitor.unspecified.uuid
+      }
+
+      bfd = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 20
+        key                    = var.bfd_key
+      }
+
+      bfd_multi_hop = {
+        enabled                = true
+        authentication_enabled = true
+        key_id                 = 30
+        key                    = var.bfd_multi_hop_key
+      }
+
+      ospf = {
+        enabled             = true
+        authentication_type = "md5"
+        key_id              = 10
+        key                 = var.ospf_key
+      }
+    }
+  }
 }
 ```
 
-The [complete L3Out example](https://github.com/CiscoDevNet/terraform-provider-mso/tree/master/examples/l3out) creates the tenant, site association, VRF, L3 domain, and L3Out template.
+The [complete L3Out example](https://github.com/CiscoDevNet/terraform-provider-mso/tree/master/examples/l3out) creates the tenant, site association, VRF, L3 domain, policy templates, QoS and routing policies, NetFlow exporter, record, and all four monitor references.
 
 ## Schema
 
@@ -117,6 +156,67 @@ The [complete L3Out example](https://github.com/CiscoDevNet/terraform-provider-m
         - **Default**: `false` when no configured or prior value is available.
 - `annotations` (Map of String, API: `l3outTemplate.l3outs[].tagAnnotations[]` with `tagKey` and `tagValue`) The L3Out annotations indexed by key. When configured, the map owns the entire collection; removing a key removes its annotation, and `{}` clears all annotations. To manage individual annotations, use the [mso_l3out_annotation](/docs/providers/mso/r/l3out_annotation.html) resource and leave this map omitted.
     - **Validation**: Keys must be nonempty and values cannot be null. Different keys may have the same value.
+- `interface_groups` (Map of Object) The interface group policies indexed by their unique names. When configured, the map owns the entire collection; removing a name removes that group, and `{}` clears all groups. To manage individual groups, use the [mso_l3out_interface_group_policy](/docs/providers/mso/r/l3out_interface_group_policy.html) resource and leave this map omitted.
+    - **API**: `l3outTemplate.l3outs[].interfaceGroups[]`.
+    - **Validation**: Group names must be nonempty. Use an empty object, such as `edge = {}`, for a named group without explicit settings; `edge = null` is invalid.
+    - `description` (String) The description of the interface group policy.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].description`.
+    - `interface_routing_policy_uuid` (String) The UUID of the referenced tenant interface routing policy.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].interfaceRoutingPolicyRef`.
+    - `custom_qos_policy_uuid` (String) The UUID of the referenced tenant custom QoS policy.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].qosRef`.
+    - `qos_priority` (String) The QoS priority of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].qosPriority`.
+        - **Valid values**: `level1` through `level6`, `unspecified`.
+        - **Orchestration default**: `unspecified` when the field is absent on a new interface group.
+    - `netflow_monitor_uuids` (Map of String) The referenced NetFlow monitor UUIDs, keyed by traffic type. A configured map owns all references: remove a key to remove that reference, or use `{}` to remove all references.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].netFlowMonitorRefs`.
+        - **Valid keys**: `ipv4`, `ipv6`, `ce`, `unspecified`.
+        - **Validation**: Each value must be a nonempty string; `""` does not remove a reference.
+    - `bfd` (Object) The single-hop BFD settings of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd`.
+        - `enabled` (Boolean) Whether single-hop BFD is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.enabled` or absence of `l3outTemplate.l3outs[].interfaceGroups[].bfd`.
+            - **Default**: `false`.
+        - `authentication_enabled` (Boolean) Whether single-hop BFD authentication is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.authEnabled`.
+            - **Validation**: True requires `key_id` and `key`; authentication settings require `enabled = true`.
+        - `key_id` (Number) The ID of the single-hop BFD authentication key.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.keyID`.
+            - **Validation**: Allowed only when authentication is enabled.
+        - `key` (String, Sensitive) The single-hop BFD authentication key. Orchestration does not return the secret; the provider retains a previously configured key in state.
+            - **API write**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.key.value`.
+            - **Validation**: Allowed only when authentication is enabled.
+    - `bfd_multi_hop` (Object) The multi-hop BFD settings of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop`.
+        - `enabled` (Boolean) Whether multi-hop BFD is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.enabled` or absence of `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop`.
+            - **Default**: `false`.
+        - `authentication_enabled` (Boolean) Whether multi-hop BFD authentication is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.authEnabled`.
+            - **Validation**: True requires `key_id` and `key`; authentication settings require `enabled = true`.
+        - `key_id` (Number) The ID of the multi-hop BFD authentication key.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.keyID`.
+            - **Validation**: Allowed only when authentication is enabled.
+        - `key` (String, Sensitive) The multi-hop BFD authentication key. Orchestration does not return the secret; the provider retains a previously configured key in state.
+            - **API write**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.key.value`.
+            - **Validation**: Allowed only when authentication is enabled.
+    - `ospf` (Object) The OSPF authentication settings of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf`.
+        - `enabled` (Boolean) Whether OSPF authentication settings are enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.enabled` or absence of `l3outTemplate.l3outs[].interfaceGroups[].ospf`.
+            - **Default**: `false`.
+        - `authentication_type` (String) The OSPF authentication mode.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.authType`.
+            - **Valid values**: `none`, `simple`, `md5`.
+            - **Validation**: `simple` and `md5` require `key_id` and `key`; other OSPF settings require `enabled = true`.
+        - `key_id` (Number) The ID of the OSPF authentication key.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.keyID`.
+            - **Validation**: Allowed only with `simple` or `md5`.
+        - `key` (String, Sensitive) The OSPF authentication key. Orchestration does not return the secret; the provider retains a previously configured key in state.
+            - **API write**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.key.value`.
+            - **Validation**: Allowed only with `simple` or `md5`.
+
 ### Read-Only
 
 - `uuid` (String, API: `l3outTemplate.l3outs[].uuid`) The UUID assigned to the L3Out by Orchestration.
@@ -148,6 +248,7 @@ import {
 
 - [mso_l3out data source](/docs/providers/mso/d/l3out.html)
 - [mso_l3out_annotation resource](/docs/providers/mso/r/l3out_annotation.html)
+- [mso_l3out_interface_group_policy resource](/docs/providers/mso/r/l3out_interface_group_policy.html)
 - [mso_template resource](/docs/providers/mso/r/template.html)
 - [mso_schema_template_vrf resource](/docs/providers/mso/r/schema_template_vrf.html)
 - [mso_fabric_policies_l3_domain resource](/docs/providers/mso/r/fabric_policies_l3_domain.html)

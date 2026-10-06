@@ -11,6 +11,8 @@ description: |-
 
 Reads an IP-based L3Out by name from a Nexus Dashboard Orchestration L3Out template. The template and L3Out must already exist. Dedicated L3Out templates were introduced in Nexus Dashboard Orchestrator (NDO) 4.1(1); this page targets Nexus Dashboard 4.1+ (Orchestration 5.1+).
 
+-> Orchestration does not return BFD or OSPF interface group authentication keys. This data source exposes the authentication settings and key IDs, but not the key values.
+
 ## API Information
 
 - **APIs**: Nexus Dashboard Orchestration API (template endpoints).
@@ -78,12 +80,54 @@ None.
     - `originate_summary_lsa` (Boolean, API: `ospfAreaConfig.control.originate`) Whether OSPF originates summary LSAs.
     - `suppress_forwarding_address_in_translated_lsa` (Boolean, API: `ospfAreaConfig.control.suppressFA`) Whether OSPF suppresses forwarding addresses in translated LSAs.
 - `annotations` (Map of String, API: `l3outTemplate.l3outs[].tagAnnotations[]` with `tagKey` and `tagValue`) The L3Out annotations indexed by key; the map is empty when none exist.
+- `interface_groups` (Map of Object) The interface group policies indexed by name.
+    - **API**: `l3outTemplate.l3outs[].interfaceGroups[]`.
+    - `description` (String) The description of the interface group policy.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].description`.
+    - `interface_routing_policy_uuid` (String) The UUID of the referenced tenant interface routing policy.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].interfaceRoutingPolicyRef`.
+    - `custom_qos_policy_uuid` (String) The UUID of the referenced tenant custom QoS policy.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].qosRef`.
+    - `qos_priority` (String) The QoS priority of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].qosPriority`.
+        - **Valid values**: `level1` through `level6`, `unspecified`.
+        - **Orchestration default**: `unspecified` when the field is absent on a new interface group.
+    - `netflow_monitor_uuids` (Map of String) The referenced NetFlow monitor UUIDs, keyed by traffic type.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].netFlowMonitorRefs`.
+        - **Valid keys**: `ipv4`, `ipv6`, `ce`, `unspecified`.
+    - `bfd` (Object) The single-hop BFD settings of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd`.
+        - `enabled` (Boolean) Whether single-hop BFD is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.enabled` or absence of `l3outTemplate.l3outs[].interfaceGroups[].bfd`.
+        - `authentication_enabled` (Boolean) Whether single-hop BFD authentication is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.authEnabled`.
+        - `key_id` (Number) The ID of the single-hop BFD authentication key.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfd.keyID`.
+    - `bfd_multi_hop` (Object) The multi-hop BFD settings of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop`.
+        - `enabled` (Boolean) Whether multi-hop BFD is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.enabled` or absence of `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop`.
+        - `authentication_enabled` (Boolean) Whether multi-hop BFD authentication is enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.authEnabled`.
+        - `key_id` (Number) The ID of the multi-hop BFD authentication key.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].bfdMultiHop.keyID`.
+    - `ospf` (Object) The OSPF authentication settings of the interface group.
+        - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf`.
+        - `enabled` (Boolean) Whether OSPF authentication settings are enabled.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.enabled` or absence of `l3outTemplate.l3outs[].interfaceGroups[].ospf`.
+        - `authentication_type` (String) The OSPF authentication mode.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.authType`.
+            - **Valid values**: `none`, `simple`, `md5`.
+        - `key_id` (Number) The ID of the OSPF authentication key.
+            - **API**: `l3outTemplate.l3outs[].interfaceGroups[].ospf.keyID`.
+
 ## References
 
 ### Related Terraform Objects
 
 - [mso_l3out resource](/docs/providers/mso/r/l3out.html)
 - [mso_l3out_annotation data source](/docs/providers/mso/d/l3out_annotation.html)
+- [mso_l3out_interface_group_policy data source](/docs/providers/mso/d/l3out_interface_group_policy.html)
 
 ### External Documentation
 

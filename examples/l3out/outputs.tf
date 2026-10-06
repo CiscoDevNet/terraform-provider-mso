@@ -9,3 +9,8 @@ output "l3out_id" {
 output "observed_annotations" {
   value = data.mso_l3out.example.annotations
 }
+
+output "observed_interface_groups" {
+  value     = data.mso_l3out.example.interface_groups
+  sensitive = true
+}

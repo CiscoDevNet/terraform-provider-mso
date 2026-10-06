@@ -111,6 +111,51 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "0"),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Read L3Out interface groups from the data source") },
+				Config:    testAccMSOL3OutDataSourceInterfaceGroupsConfig(testAccMSOL3OutInterfaceGroupsCreateConfig(siteName, l3outName)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.%", "4"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.backup.description", "backup group"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.bfd.key_id", "20"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key_id", "30"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.ospf.authentication_type", "md5"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.middle.description", "middle group"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.tail.description", "tail group"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Refresh L3Out interface groups after an update") },
+				Config:    testAccMSOL3OutDataSourceInterfaceGroupsConfig(testAccMSOL3OutInterfaceGroupsUpdateConfig(siteName, l3outName)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.%", "4"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.bfd.key_id", "21"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.bfd_multi_hop.key_id", "31"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.ospf.authentication_type", "simple"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.backup.description", "updated backup"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.middle.description", "middle group"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.tail.description", "tail group"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Read cleared L3Out interface groups") },
+				Config:    testAccMSOL3OutDataSourceInterfaceGroupsConfig(testAccMSOL3OutInterfaceGroupsEmptyConfig(siteName, l3outName)),
+				Check:     resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.%", "0"),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Read all interface group tenant references and NetFlow monitor types") },
+				Config:    testAccMSOL3OutDataSourceInterfaceGroupsConfig(testAccMSOL3OutInterfaceGroupAllReferencesConfig(siteName, l3outName)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("data.mso_l3out.test", "interface_groups.edge.interface_routing_policy_uuid", "mso_tenant_policies_l3out_interface_routing_policy.routing", "uuid"),
+					resource.TestCheckResourceAttrPair("data.mso_l3out.test", "interface_groups.edge.custom_qos_policy_uuid", "mso_tenant_policies_custom_qos_policy.qos", "uuid"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.qos_priority", "level6"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.%", "4"),
+					resource.TestCheckResourceAttrPair("data.mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ipv4", "mso_tenant_policies_netflow_monitor.ipv4", "uuid"),
+					resource.TestCheckResourceAttrPair("data.mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ipv6", "mso_tenant_policies_netflow_monitor.ipv6", "uuid"),
+					resource.TestCheckResourceAttrPair("data.mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.ce", "mso_tenant_policies_netflow_monitor.ce", "uuid"),
+					resource.TestCheckResourceAttrPair("data.mso_l3out.test", "interface_groups.edge.netflow_monitor_uuids.unspecified", "mso_tenant_policies_netflow_monitor.unspecified", "uuid"),
+				),
+			},
 		},
 	})
 }
@@ -264,6 +309,16 @@ resource "mso_l3out" "test" {
 data "mso_l3out" "test" {
   template_id = mso_template.l3out_test.id
   name        = mso_l3out.test.name
+}
+`
+}
+
+func testAccMSOL3OutDataSourceInterfaceGroupsConfig(config string) string {
+	return config + `
+data "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = mso_l3out.test.name
+  depends_on  = [mso_l3out.test]
 }
 `
 }
