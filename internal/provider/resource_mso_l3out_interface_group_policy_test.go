@@ -9,8 +9,10 @@ import (
 	"github.com/CiscoDevNet/terraform-provider-mso/internal/models"
 	"github.com/CiscoDevNet/terraform-provider-mso/internal/ndoapi"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccMSOL3OutInterfaceGroupPolicyResource(t *testing.T) {
@@ -903,6 +905,133 @@ resource "mso_l3out_interface_group_policy" "test" {
   custom_qos_policy_uuid        = ""
   qos_priority                  = "unspecified"
   netflow_monitor_uuids         = {}
+}
+`
+}
+
+func TestAccMSOL3OutInterfaceGroupPolicyOwnership(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_interface_group_ownership")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:        func() { fmt.Println("Test: Manage a standalone group while the L3Out map is omitted") },
+				Config:           testAccMSOL3OutInterfaceGroupPolicyCreateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr("mso_l3out_interface_group_policy.test", "name", "test_interface_group"),
+			},
+			{
+				PreConfig:        func() { fmt.Println("Test: Update the L3Out without managing its interface groups") },
+				Config:           testAccMSOL3OutInterfaceGroupPolicyOmittedParentUpdateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "description", "parent updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "1"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.test_interface_group.description", "initial"),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutInterfaceGroupPolicyOmittedParentUpdateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  description = "parent updated"
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  bgp = {
+    enabled = true
+  }
+  ospf = {
+    enabled   = true
+    area_id   = "0.0.0.7"
+    area_type = "regular"
+  }
+}
+
+resource "mso_l3out_interface_group_policy" "test" {
+  template_id = mso_template.l3out_test.id
+  l3out_uuid  = mso_l3out.test.uuid
+  name        = "test_interface_group"
+  description = "initial"
+}
+`
+}
+
+func TestAccMSOL3OutInterfaceGroupPolicyOwnershipConflict(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_interface_group_conflict")
+	var templateID, l3outUUID string
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Configure one interface group on the L3Out") },
+				Config:    testAccMSOL3OutInterfaceGroupPolicyOwnershipParentConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.%", "1"),
+					testAccCheckL3OutInterfaceGroups(&templateID, &l3outUUID, map[string]string{"parent": "parent group"}),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Expect a parent plan diff when a child adds a group to a managed map") },
+				Config:             testAccMSOL3OutInterfaceGroupPolicyOwnershipConflictConfig(siteName, l3outName),
+				ExpectNonEmptyPlan: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mso_l3out.test", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue(
+							"mso_l3out.test",
+							tfjsonpath.New("interface_groups"),
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"parent": knownvalue.ObjectPartial(map[string]knownvalue.Check{
+									"description": knownvalue.StringExact("parent group"),
+								}),
+							}),
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out_interface_group_policy.child", "name", "child"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "interface_groups.parent.description", "parent group"),
+					testAccCheckL3OutInterfaceGroups(&templateID, &l3outUUID, map[string]string{
+						"parent": "parent group",
+						"child":  "standalone group",
+					}),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutInterfaceGroupPolicyOwnershipConflictConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutInterfaceGroupPolicyOwnershipParentConfig(siteName, l3outName) + `
+resource "mso_l3out_interface_group_policy" "child" {
+  template_id = mso_template.l3out_test.id
+  l3out_uuid  = mso_l3out.test.uuid
+  name        = "child"
+  description = "standalone group"
+}
+`
+}
+
+func testAccMSOL3OutInterfaceGroupPolicyOwnershipParentConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  interface_groups = {
+    parent = {
+      description = "parent group"
+    }
+  }
 }
 `
 }

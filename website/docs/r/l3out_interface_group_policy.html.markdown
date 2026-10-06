@@ -11,6 +11,8 @@ description: |-
 
 Manages one named interface group policy on an existing L3Out. The L3Out template, L3Out, and any referenced tenant routing, custom QoS, or NetFlow policies must already exist.
 
+-> Leave `mso_l3out.interface_groups` omitted when managing a group with this resource. A configured parent map owns the entire group collection.
+
 When an optional setting is omitted, the provider reads and retains its value from Orchestration. Set a clearable string to `""` to clear it. For BFD and OSPF objects, `{}` and `enabled = false` both disable the object. The NetFlow reference map has its own ownership rule below.
 
 -> **Authentication key limitation:** Orchestration accepts the BFD and OSPF keys but returns only an opaque key reference. The provider retains a previously configured key in Terraform state so that refresh and unrelated updates do not discard it. It cannot verify the stored key against Orchestration or detect a key changed outside Terraform. An imported interface group has no key value to recover. Treat Terraform state as sensitive because it contains configured keys.

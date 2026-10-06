@@ -56,6 +56,11 @@ func TestL3OutSetFromNDOObjectRejectsRequiredFields(t *testing.T) {
 		{name: "unknown routing protocol", change: func(object map[string]any) { object["routingProtocol"] = "unknown" }, expected: `unexpected NDO routingProtocol`},
 		{name: "invalid default route", change: func(object map[string]any) { object["defaultRouteLeak"] = "invalid" }, expected: `"defaultRouteLeak" has unexpected type string`},
 		{name: "invalid annotations", change: func(object map[string]any) { object["tagAnnotations"] = "invalid" }, expected: `"tagAnnotations" has unexpected type string`},
+		{name: "invalid interface groups", change: func(object map[string]any) { object["interfaceGroups"] = "invalid" }, expected: `"interfaceGroups" has unexpected type string`},
+		{name: "invalid interface group entry", change: func(object map[string]any) { object["interfaceGroups"] = []any{"invalid"} }, expected: `interfaceGroups[0] has unexpected type string`},
+		{name: "duplicate interface group name", change: func(object map[string]any) {
+			object["interfaceGroups"] = []any{map[string]any{"name": "edge"}, map[string]any{"name": "edge"}}
+		}, expected: `duplicate name "edge"`},
 	}
 
 	for _, test := range tests {
