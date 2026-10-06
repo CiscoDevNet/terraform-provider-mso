@@ -7,8 +7,10 @@ import (
 
 	"github.com/CiscoDevNet/terraform-provider-mso/internal/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccMSOL3OutAnnotationResource(t *testing.T) {
@@ -254,6 +256,125 @@ resource "mso_l3out_annotation" "invalid" {
 `
 }
 
+func TestAccMSOL3OutAnnotationOwnership(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_annotation_ownership")
+	var templateID, l3outUUID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Manage a standalone annotation while the L3Out map is omitted") },
+				Config:    testAccMSOL3OutAnnotationCreateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out_annotation.owner", "value", "network"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"owner": "network"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update the L3Out without managing its annotations") },
+				Config:    testAccMSOL3OutAnnotationOmittedParentUpdateConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "description", "parent updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.owner", "network"),
+					resource.TestCheckResourceAttr("mso_l3out_annotation.owner", "value", "network"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"owner": "network"}),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutAnnotationOmittedParentUpdateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "parent updated"
+}
+
+resource "mso_l3out_annotation" "owner" {
+  template_id = mso_template.l3out_test.id
+  l3out_uuid  = mso_l3out.test.uuid
+  key         = "owner"
+  value       = "network"
+}
+`
+}
+
+func TestAccMSOL3OutAnnotationOwnershipConflict(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_annotation_conflict")
+	var templateID, l3outUUID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Configure one annotation on the L3Out") },
+				Config:    testAccMSOL3OutAnnotationOwnershipParentConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "1"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.owner", "network"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"owner": "network"}),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Expect an L3Out plan diff when a child adds another annotation") },
+				Config:             testAccMSOL3OutAnnotationOwnershipConflictConfig(siteName, l3outName),
+				ExpectNonEmptyPlan: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mso_l3out.test", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue("mso_l3out.test", tfjsonpath.New("annotations"), knownvalue.MapExact(map[string]knownvalue.Check{
+							"owner": knownvalue.StringExact("network"),
+						})),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out_annotation.purpose", "value", "routing"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"owner": "network", "purpose": "routing"}),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutAnnotationOwnershipParentConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  annotations = {
+    owner = "network"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationOwnershipConflictConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutAnnotationOwnershipParentConfig(siteName, l3outName) + `
+resource "mso_l3out_annotation" "purpose" {
+  template_id = mso_template.l3out_test.id
+  l3out_uuid  = mso_l3out.test.uuid
+  key         = "purpose"
+  value       = "routing"
+}
+`
+}
 func testAccCheckL3OutAnnotationCompositeID(resourceName string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
 		resourceState, ok := state.RootModule().Resources[resourceName]

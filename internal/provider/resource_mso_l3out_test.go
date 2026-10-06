@@ -1051,3 +1051,180 @@ func testAccReplaceL3OutAnnotations(t *testing.T, templateID, l3outUUID string, 
 		t.Fatalf("unable to replace L3Out annotations out of band: %v", err)
 	}
 }
+func TestAccMSOL3OutAnnotations(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_annotations")
+	var templateID, l3outUUID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out with annotations sharing a value") },
+				Config:    testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "shared", "bar": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Reorder L3Out annotation keys without changing the plan") },
+				Config:    testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "shared", "bar": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update and add L3Out annotations") },
+				Config:    testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "bar": "shared", "baz": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove one L3Out annotation") },
+				Config:    testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "baz": "shared"}),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import L3Out with annotations") },
+				Config:       testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
+				ResourceName: "mso_l3out.test",
+				ImportState:  true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resourceState, ok := state.RootModule().Resources["mso_l3out.test"]
+					if !ok {
+						return "", fmt.Errorf("mso_l3out.test not found in Terraform state")
+					}
+					return fmt.Sprintf("%s/%s", resourceState.Primary.Attributes["template_id"], resourceState.Primary.Attributes["uuid"]), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Omit L3Out annotations and preserve remote values")
+					testAccReplaceL3OutAnnotations(t, templateID, l3outUUID, models.AnnotationsModel{
+						"foo": "updated", "baz": "shared", "external": "shared",
+					})
+				},
+				Config: testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.external", "shared"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{"foo": "updated", "baz": "shared", "external": "shared"}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove all L3Out annotations with an empty map") },
+				Config:    testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "0"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{}),
+				),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "initial annotations"
+  annotations = {
+    foo = "shared"
+    bar = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "initial annotations"
+  annotations = {
+    bar = "shared"
+    foo = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "updated annotations"
+  annotations = {
+    bar = "shared"
+    foo = "updated"
+    baz = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "updated annotations"
+  annotations = {
+    foo = "updated"
+    baz = "shared"
+  }
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "annotations omitted"
+}
+`
+}
+
+func testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "annotations cleared"
+  annotations = {}
+}
+`
+}

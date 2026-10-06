@@ -56,6 +56,7 @@ type L3OutModel struct {
 	BGP                       types.Object `tfsdk:"bgp"`
 	OriginateDefaultRoute     types.String `tfsdk:"originate_default_route"`
 	OSPF                      types.Object `tfsdk:"ospf"`
+	Annotations               types.Map    `tfsdk:"annotations"`
 }
 
 // L3OutResourceIdentityModel identifies an L3Out within its template.
@@ -157,6 +158,15 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 	if err != nil {
 		return err
 	}
+	var annotations AnnotationsModel
+	if err := annotations.SetFromNDOObject(object); err != nil {
+		return err
+	}
+	var diagnostics diag.Diagnostics
+	data.Annotations = annotations.TerraformValue(ctx, &diagnostics)
+	if diagnostics.HasError() {
+		return fmt.Errorf("failed to convert L3Out annotations to Terraform state: %s", diagnostics.Errors()[0].Detail())
+	}
 	return nil
 }
 
@@ -207,6 +217,12 @@ func (data L3OutModel) ToPayload(ctx context.Context, configuration L3OutModel, 
 	}
 	if defaultRouteLeak := defaultRoute.ToPayload(); len(defaultRouteLeak) > 0 {
 		payload["defaultRouteLeak"] = defaultRouteLeak
+	}
+	if !configuration.Annotations.IsNull() {
+		annotations := AnnotationsModelFromTerraform(ctx, data.Annotations, diagnostics)
+		if annotations != nil {
+			payload["tagAnnotations"] = annotations.ToPayload()
+		}
 	}
 	return payload
 }
@@ -303,6 +319,7 @@ func L3OutResourceSchema() schema.Schema {
 				MarkdownDescription: "Enables import route control on this L3Out.",
 			},
 			"originate_default_route": l3OutDefaultRouteResourceAttribute(),
+			"annotations":             annotationsResourceAttribute(),
 			"ospf": schema.SingleNestedAttribute{
 				Optional: true,
 				Computed: true,
@@ -372,6 +389,7 @@ func L3OutDataSourceSchema() datasourceschema.Schema {
 				MarkdownDescription: "Whether import route control is enabled.",
 			},
 			"originate_default_route": l3OutDefaultRouteDataSourceAttribute(),
+			"annotations":             annotationsDataSourceAttribute(),
 			"ospf": datasourceschema.SingleNestedAttribute{
 				Computed:            true,
 				Attributes:          l3OutOSPFDataSourceSchema(),
@@ -424,6 +442,14 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 	if routingProtocolChange.bgp != nil || routingProtocolChange.ospf != nil {
 		if err := setL3OutRoutingProtocolOperations(operations, resolved.Object, routingProtocolChange); err != nil {
 			diagnostics.AddError("Invalid L3Out Routing Protocol", err.Error())
+		}
+	}
+	if !configuration.Annotations.IsNull() {
+		annotations := AnnotationsModelFromTerraform(ctx, plan.Annotations, diagnostics)
+		if !diagnostics.HasError() {
+			if err := annotations.AddPatchOperations(operations, resolved.Object); err != nil {
+				diagnostics.AddError("Failed to Read L3Out Annotations", err.Error())
+			}
 		}
 	}
 

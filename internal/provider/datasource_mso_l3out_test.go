@@ -45,6 +45,8 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "pim_enabled", "true"),
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "bgp.enabled", "false"),
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "ospf.enabled", "false"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "1"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.owner", "network"),
 					resource.TestCheckResourceAttrSet("data.mso_l3out.test", "id"),
 				),
 			},
@@ -97,6 +99,16 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "ospf.suppress_forwarding_address_in_translated_lsa", "true"),
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "originate_default_route", "only"),
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "ospf.originate_default_route_always", "false"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.owner", "operations"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.purpose", "routing"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Read cleared L3Out annotations from datasource") },
+				Config:    testAccMSOL3OutDataSourceClearAnnotationsConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "0"),
 				),
 			},
 		},
@@ -130,6 +142,7 @@ resource "mso_l3out" "test" {
   l3_domain   = mso_fabric_policies_l3_domain.l3out_test_domain_1.name
   target_dscp = "af11"
   pim_enabled = true
+  annotations = { owner = "network" }
 }
 
 data "mso_l3out" "test" {
@@ -215,6 +228,10 @@ resource "mso_l3out" "test" {
   bgp = {
     enabled = true
   }
+  annotations = {
+    owner   = "operations"
+    purpose = "routing"
+  }
   ospf = {
     enabled                                        = true
     area_id                                        = "0.0.0.1"
@@ -226,6 +243,22 @@ resource "mso_l3out" "test" {
     originate_default_route_always                 = false
   }
   originate_default_route = "only"
+}
+
+data "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = mso_l3out.test.name
+}
+`
+}
+
+func testAccMSOL3OutDataSourceClearAnnotationsConfig(siteName, l3outName string) string {
+	return testAccMSOL3OutPrerequisites(siteName, l3outName) + `
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  annotations = {}
 }
 
 data "mso_l3out" "test" {

@@ -77,12 +77,13 @@ None.
     - `send_redistributed_lsa` (Boolean, API: `ospfAreaConfig.control.redistribute`) Whether OSPF sends redistributed LSAs.
     - `originate_summary_lsa` (Boolean, API: `ospfAreaConfig.control.originate`) Whether OSPF originates summary LSAs.
     - `suppress_forwarding_address_in_translated_lsa` (Boolean, API: `ospfAreaConfig.control.suppressFA`) Whether OSPF suppresses forwarding addresses in translated LSAs.
-
+- `annotations` (Map of String, API: `l3outTemplate.l3outs[].tagAnnotations[]` with `tagKey` and `tagValue`) The L3Out annotations indexed by key; the map is empty when none exist.
 ## References
 
 ### Related Terraform Objects
 
 - [mso_l3out resource](/docs/providers/mso/r/l3out.html)
+- [mso_l3out_annotation data source](/docs/providers/mso/d/l3out_annotation.html)
 
 ### External Documentation
 

@@ -81,7 +81,7 @@ resource "mso_template" "l3out" {
 resource "mso_l3out" "example" {
   template_id                  = mso_template.l3out.id
   name                         = "example_l3out"
-  description                  = "L3Out with BGP and OSPF"
+  description                  = "L3Out with BGP, OSPF, and annotations"
   vrf_uuid                     = mso_schema_template_vrf.example.uuid
   l3_domain                    = mso_fabric_policies_l3_domain.example.name
   target_dscp                  = "unspecified"
@@ -102,6 +102,11 @@ resource "mso_l3out" "example" {
     send_redistributed_lsa                        = true
     originate_summary_lsa                         = true
     suppress_forwarding_address_in_translated_lsa = false
+  }
+
+  annotations = {
+    owner   = "network"
+    purpose = "external-routing"
   }
 }
 
