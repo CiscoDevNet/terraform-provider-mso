@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"maps"
 	"regexp"
 	"testing"
 
@@ -1001,4 +1002,52 @@ resource "mso_template" "l3out_test" {
 }
 	`, l3outName, siteName,
 	)
+}
+func testAccCheckL3OutAnnotations(templateID, l3outUUID *string, expected map[string]string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		if *templateID == "" || *l3outUUID == "" {
+			return fmt.Errorf("L3Out template ID or UUID has not been captured")
+		}
+		template, err := ndoapi.GetTemplate(testAccAPIClient(), *templateID)
+		if err != nil {
+			return err
+		}
+		resolved, found, err := template.Find(models.NewL3OutPath(*l3outUUID, ""))
+		if err != nil {
+			return err
+		}
+		if !found {
+			return fmt.Errorf("L3Out %q not found in template %q", *l3outUUID, *templateID)
+		}
+		var actual models.AnnotationsModel
+		if err := actual.SetFromNDOObject(resolved.Object); err != nil {
+			return err
+		}
+		if !maps.Equal(map[string]string(actual), expected) {
+			return fmt.Errorf("unexpected remote annotations: got %v, want %v", actual, expected)
+		}
+		return nil
+	}
+}
+
+func testAccReplaceL3OutAnnotations(t *testing.T, templateID, l3outUUID string, annotations models.AnnotationsModel) {
+	t.Helper()
+	template, err := ndoapi.GetTemplate(testAccAPIClient(), templateID)
+	if err != nil {
+		t.Fatalf("unable to read L3Out template: %v", err)
+	}
+	resolved, found, err := template.Find(models.NewL3OutPath(l3outUUID, ""))
+	if err != nil {
+		t.Fatalf("unable to resolve L3Out for annotation replacement: %v", err)
+	}
+	if !found {
+		t.Fatalf("L3Out %q not found in template %q", l3outUUID, templateID)
+	}
+	_, err = testAccAPIClient().PatchbyID(
+		ndoapi.TemplateEndpoint(templateID),
+		ndoapi.NewPatchPayload("replace", resolved.PatchPath()+"/tagAnnotations", annotations.ToPayload()),
+	)
+	if err != nil {
+		t.Fatalf("unable to replace L3Out annotations out of band: %v", err)
+	}
 }
