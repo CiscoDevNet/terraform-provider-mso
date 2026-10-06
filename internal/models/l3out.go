@@ -50,6 +50,7 @@ type L3OutModel struct {
 	TargetDSCP                types.String `tfsdk:"target_dscp"`
 	PIMEnabled                types.Bool   `tfsdk:"pim_enabled"`
 	ImportRouteControlEnabled types.Bool   `tfsdk:"import_route_control_enabled"`
+	OriginateDefaultRoute     types.String `tfsdk:"originate_default_route"`
 }
 
 // L3OutResourceIdentityModel identifies an L3Out within its template.
@@ -129,6 +130,12 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 		return err
 	}
 	data.ImportRouteControlEnabled = tfplugin.BoolOrNull(importControl, importControlExists)
+	var defaultRoute L3OutDefaultRouteModel
+	err = defaultRoute.SetFromNDOObject(object)
+	if err != nil {
+		return err
+	}
+	data.OriginateDefaultRoute = defaultRoute.Mode
 	return nil
 }
 
@@ -163,6 +170,10 @@ func (data L3OutModel) ToPayload(ctx context.Context, configuration L3OutModel, 
 	}
 	routingProtocolChange := l3OutRoutingProtocolChange{}
 	payload["routingProtocol"] = l3OutRoutingProtocolValue(routingProtocolChange)
+	defaultRoute := L3OutDefaultRouteModel{Mode: configuration.OriginateDefaultRoute}
+	if defaultRouteLeak := defaultRoute.ToPayload(); len(defaultRouteLeak) > 0 {
+		payload["defaultRouteLeak"] = defaultRouteLeak
+	}
 	return payload
 }
 
@@ -247,6 +258,7 @@ func L3OutResourceSchema() schema.Schema {
 				},
 				MarkdownDescription: "Enables import route control on this L3Out.",
 			},
+			"originate_default_route": l3OutDefaultRouteResourceAttribute(),
 		},
 	}
 }
@@ -297,6 +309,7 @@ func L3OutDataSourceSchema() datasourceschema.Schema {
 				Computed:            true,
 				MarkdownDescription: "Whether import route control is enabled.",
 			},
+			"originate_default_route": l3OutDefaultRouteDataSourceAttribute(),
 		},
 	}
 }
@@ -318,6 +331,10 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 		operations.Set("importRouteControl", *importControl)
 	}
 	routingProtocolChange := l3OutRoutingProtocolChange{}
+	defaultRoute := L3OutDefaultRouteModel{Mode: plan.OriginateDefaultRoute}
+	if err := defaultRoute.AddPatchOperations(operations, resolved.Object); err != nil {
+		diagnostics.AddError("Failed to Read L3Out Default Route", err.Error())
+	}
 	if routingProtocolChange.bgp != nil || routingProtocolChange.ospf != nil {
 		if err := setL3OutRoutingProtocolOperations(operations, resolved.Object, routingProtocolChange); err != nil {
 			diagnostics.AddError("Invalid L3Out Routing Protocol", err.Error())
