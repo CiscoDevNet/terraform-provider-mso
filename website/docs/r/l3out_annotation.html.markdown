@@ -11,6 +11,8 @@ description: |-
 
 Manages one annotation identified by its key on an existing L3Out. The template and L3Out must exist. Separate resources can manage different keys on the same L3Out.
 
+-> Leave `mso_l3out.annotations` omitted when managing an annotation with this resource. A configured parent map owns the entire annotation collection.
+
 ## API Information
 
 - **APIs**: Nexus Dashboard Orchestration API (template endpoints).

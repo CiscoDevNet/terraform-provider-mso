@@ -11,7 +11,7 @@ description: |-
 
 Manages one IP-based L3Out in a Nexus Dashboard Orchestration L3Out template. Create an `mso_template` with `template_type = "l3out"` and an associated VRF first. Dedicated L3Out templates were introduced in Nexus Dashboard Orchestrator (NDO) 4.1(1); this page targets Nexus Dashboard 4.1+ (Orchestration 5.1+). The `mso_schema_template_l3out` resource manages the older schema-template representation.
 
-When an optional setting is omitted, the provider reads and retains its value from Orchestration. Set a clearable string to `""` to clear it, or set a Boolean to `false` to disable it. For a protocol object, `{}` and `enabled = false` both disable the protocol.
+When an optional setting is omitted, the provider reads and retains its value from Orchestration. Set a clearable string to `""` to clear it, or set a Boolean to `false` to disable it. For a protocol object, `{}` and `enabled = false` both disable the protocol. Collection attributes have their own ownership rules below.
 
 ## API Information
 
@@ -36,7 +36,7 @@ In Nexus Dashboard, choose **Manage > Orchestration > Tenant Templates > L3Out**
 resource "mso_l3out" "example" {
   template_id                  = mso_template.l3out.id
   name                         = "example_l3out"
-  description                  = "L3Out with BGP and OSPF"
+  description                  = "L3Out with BGP, OSPF, and annotations"
   vrf_uuid                     = mso_schema_template_vrf.example.uuid
   l3_domain                    = mso_fabric_policies_l3_domain.example.name
   target_dscp                  = "unspecified"
@@ -57,6 +57,11 @@ resource "mso_l3out" "example" {
     send_redistributed_lsa                        = true
     originate_summary_lsa                         = true
     suppress_forwarding_address_in_translated_lsa = false
+  }
+
+  annotations = {
+    owner   = "network"
+    purpose = "external-routing"
   }
 }
 ```
@@ -110,6 +115,8 @@ The [complete L3Out example](https://github.com/CiscoDevNet/terraform-provider-m
         - **Default**: `false` when no configured or prior value is available.
     - `suppress_forwarding_address_in_translated_lsa` (Boolean, API: `ospfAreaConfig.control.suppressFA`) Whether OSPF suppresses the forwarding address in translated LSAs.
         - **Default**: `false` when no configured or prior value is available.
+- `annotations` (Map of String, API: `l3outTemplate.l3outs[].tagAnnotations[]` with `tagKey` and `tagValue`) The L3Out annotations indexed by key. When configured, the map owns the entire collection; removing a key removes its annotation, and `{}` clears all annotations. To manage individual annotations, use the [mso_l3out_annotation](/docs/providers/mso/r/l3out_annotation.html) resource and leave this map omitted.
+    - **Validation**: Keys must be nonempty and values cannot be null. Different keys may have the same value.
 ### Read-Only
 
 - `uuid` (String, API: `l3outTemplate.l3outs[].uuid`) The UUID assigned to the L3Out by Orchestration.
@@ -140,6 +147,7 @@ import {
 ### Related Terraform Objects
 
 - [mso_l3out data source](/docs/providers/mso/d/l3out.html)
+- [mso_l3out_annotation resource](/docs/providers/mso/r/l3out_annotation.html)
 - [mso_template resource](/docs/providers/mso/r/template.html)
 - [mso_schema_template_vrf resource](/docs/providers/mso/r/schema_template_vrf.html)
 - [mso_fabric_policies_l3_domain resource](/docs/providers/mso/r/fabric_policies_l3_domain.html)
