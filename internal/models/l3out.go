@@ -53,6 +53,7 @@ type L3OutModel struct {
 	TargetDSCP                types.String `tfsdk:"target_dscp"`
 	PIMEnabled                types.Bool   `tfsdk:"pim_enabled"`
 	ImportRouteControlEnabled types.Bool   `tfsdk:"import_route_control_enabled"`
+	BGP                       types.Object `tfsdk:"bgp"`
 	OriginateDefaultRoute     types.String `tfsdk:"originate_default_route"`
 	OSPF                      types.Object `tfsdk:"ospf"`
 }
@@ -142,6 +143,10 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 		return err
 	}
 	data.ImportRouteControlEnabled = tfplugin.BoolOrNull(importControl, importControlExists)
+	data.BGP, err = l3OutBGPObjectFromNDO(routingProtocol.bgp)
+	if err != nil {
+		return err
+	}
 	var defaultRoute L3OutDefaultRouteModel
 	err = defaultRoute.SetFromNDOObject(object)
 	if err != nil {
@@ -190,6 +195,10 @@ func (data L3OutModel) ToPayload(ctx context.Context, configuration L3OutModel, 
 		ospfEnabled := true
 		routingProtocolChange.ospf = &ospfEnabled
 		maps.Copy(payload, ospf.toPayload())
+	}
+	if _, configured := l3OutBGPModelFromTerraform(configuration.BGP); configured {
+		bgp, _ := l3OutBGPModelFromTerraform(data.BGP)
+		routingProtocolChange.bgp = tfplugin.KnownBoolPointer(bgp.Enabled)
 	}
 	payload["routingProtocol"] = l3OutRoutingProtocolValue(routingProtocolChange)
 	defaultRoute := L3OutDefaultRouteModel{Mode: configuration.OriginateDefaultRoute}
@@ -275,6 +284,16 @@ func L3OutResourceSchema() schema.Schema {
 				},
 				MarkdownDescription: "Whether protocol-independent multicast is enabled on the L3Out.",
 			},
+			"bgp": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+					tfplugin.UseConfiguredDisabledObject("enabled"),
+				},
+				Attributes:          l3OutBGPResourceSchema(),
+				MarkdownDescription: "BGP settings of the L3Out.",
+			},
 			"import_route_control_enabled": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
@@ -343,6 +362,11 @@ func L3OutDataSourceSchema() datasourceschema.Schema {
 				Computed:            true,
 				MarkdownDescription: "Whether protocol-independent multicast is enabled.",
 			},
+			"bgp": datasourceschema.SingleNestedAttribute{
+				Computed:            true,
+				Attributes:          l3OutBGPDataSourceSchema(),
+				MarkdownDescription: "BGP configuration of the L3Out, including its enabled state.",
+			},
 			"import_route_control_enabled": datasourceschema.BoolAttribute{
 				Computed:            true,
 				MarkdownDescription: "Whether import route control is enabled.",
@@ -392,6 +416,10 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 	}
 	if err := defaultRoute.AddPatchOperations(operations, resolved.Object); err != nil {
 		diagnostics.AddError("Failed to Read L3Out Default Route", err.Error())
+	}
+	if _, configured := l3OutBGPModelFromTerraform(configuration.BGP); configured {
+		bgp, _ := l3OutBGPModelFromTerraform(plan.BGP)
+		routingProtocolChange.bgp = tfplugin.KnownBoolPointer(bgp.Enabled)
 	}
 	if routingProtocolChange.bgp != nil || routingProtocolChange.ospf != nil {
 		if err := setL3OutRoutingProtocolOperations(operations, resolved.Object, routingProtocolChange); err != nil {
