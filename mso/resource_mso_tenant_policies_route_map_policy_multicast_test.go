@@ -3,12 +3,17 @@ package mso
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -29,6 +34,42 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 							"action":              "permit",
 						},
 					),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate Route Map Policy for Multicast after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "mcastRouteMapPolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesMcastRouteMapPolicyConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "name", "tf_test_route_map_policy_multicast"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "description", "Terraform test Route Map Policy for Multicast"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
+						map[string]string{
+							"order":               "1",
+							"group_ip":            "226.2.2.2/8",
+							"source_ip":           "1.1.1.1/1",
+							"rendezvous_point_ip": "1.1.1.2",
+							"action":              "permit",
+						},
+					),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
 				),
 			},
 			{
@@ -90,6 +131,23 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing Route Map Policy for Multicast") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_route_map_policy_multicast", "mcastRouteMap"),
