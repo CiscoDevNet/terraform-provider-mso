@@ -28,7 +28,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "sync_interval", "-3"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "announce_interval", "1"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "announce_timeout", "3"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "override_node_profile", "false"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "override_node_profile", "true"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "ptp_policy_uuid"),
 					func(s *terraform.State) error {
@@ -60,7 +60,7 @@ func TestAccMSOPtpPolicyProfileResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "sync_interval", "-3"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "announce_interval", "1"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "announce_timeout", "3"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "override_node_profile", "false"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "override_node_profile", "true"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_ptp_policy_profile.ptp_policy_profile", "ptp_policy_uuid"),
 				),
@@ -155,7 +155,7 @@ func testAccMSOPtpPolicyProfileConfigCreate() string {
 		sync_interval         = -3
 		announce_timeout      = 3
 		announce_interval     = 1
-		override_node_profile = false
+		override_node_profile = true
 	}`, testAccMSOPtpPolicyConfigCreate())
 }
 
