@@ -124,6 +124,14 @@ func resourceMSOIPSLAMonitoringPolicy() *schema.Resource {
 	}
 }
 
+func getIPSLAMonitoringPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "ipslaMonitoringPolicies")
+}
+
 func setIPSLAMonitoringPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 
 	d.SetId(fmt.Sprintf("templateId/%s/IPSLAMonitoringPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
@@ -149,7 +157,13 @@ func setIPSLAMonitoringPolicyData(d *schema.ResourceData, response *container.Co
 
 func resourceMSOIPSLAMonitoringPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO IPSLA Monitoring Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOIPSLAMonitoringPolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOIPSLAMonitoringPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_ipsla_monitoring_policy %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO IPSLA Monitoring Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -232,22 +246,23 @@ func resourceMSOIPSLAMonitoringPolicyRead(d *schema.ResourceData, m interface{})
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "IPSLAMonitoringPolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "ipslaMonitoringPolicies")
+	policy, err := getIPSLAMonitoringPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setIPSLAMonitoringPolicyData(d, policy, templateId)
+	if err := setIPSLAMonitoringPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO IPSLA Monitoring Policy Resource - Read Complete : %v", d.Id())
 	return nil
 }
