@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,13 @@ func TestAccMSOFabricResourcePortChannelInterfaceDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Missing fabric_resource_policies_port_channel_interface data source remains an error")
+				},
+				Config:      testAccMSOFabricResourcePortChannelInterfaceDataSourceWithInterfaceDescriptionsMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Port Channel Interface Data Source - With Interface Descriptions") },
 				Config:    testAccMSOFabricResourcePortChannelInterfaceDataSourceWithInterfaceDescriptions(),
@@ -52,4 +60,12 @@ func testAccMSOFabricResourcePortChannelInterfaceDataSourceWithInterfaceDescript
 		msoFabricResourcePortChannelInterfaceName,
 		msoFabricResourceTemplateName,
 	)
+}
+
+func testAccMSOFabricResourcePortChannelInterfaceDataSourceWithInterfaceDescriptionsMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_resource_policies_port_channel_interface" "missing" {
+        template_id = mso_fabric_resource_policies_port_channel_interface.%s.template_id
+        name        = "missing_out_of_band_test_policy"
+    }`, testAccMSOFabricResourcePortChannelInterfaceConfigUpdateAddingExtraInterfaceDescription(), msoFabricResourcePortChannelInterfaceName)
 }
