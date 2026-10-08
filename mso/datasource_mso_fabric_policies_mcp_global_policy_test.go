@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOMCPGlobalPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_mcp_global_policy data source remains an error") },
+				Config:      testAccMSOMCPGlobalPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: MCP Global Policy Data Source") },
 				Config:    testAccMSOMCPGlobalPolicyDataSource(),
@@ -40,4 +46,12 @@ data "mso_fabric_policies_mcp_global_policy" "mcp_global_policy" {
 	template_id = mso_template.%[2]s.id
 	name        = mso_fabric_policies_mcp_global_policy.%[3]s.name
 }`, testAccMSOFabricPoliciesMCPGlobalPolicyConfigCreate(), msoFabricPolicyTemplateName, msoFabricPolicyTemplateMCPGlobalPolicyName)
+}
+
+func testAccMSOMCPGlobalPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_mcp_global_policy" "missing" {
+        template_id = mso_fabric_policies_mcp_global_policy.%s.template_id
+        name        = "missing_out_of_band_test_policy"
+    }`, testAccMSOFabricPoliciesMCPGlobalPolicyConfigCreate(), msoFabricPolicyTemplateMCPGlobalPolicyName)
 }

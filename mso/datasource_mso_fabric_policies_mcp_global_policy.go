@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -73,17 +72,14 @@ func dataSourceMSOMCPGlobalPolicyRead(d *schema.ResourceData, m interface{}) err
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getMCPGlobalPolicy(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "mcpGlobalPolicy")
-	if err != nil {
+	if err := setMCPGlobalPolicyData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setMCPGlobalPolicyData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO MCP Global Policy Data Source - Read Complete: %v", d.Id())
 	return nil
 }
