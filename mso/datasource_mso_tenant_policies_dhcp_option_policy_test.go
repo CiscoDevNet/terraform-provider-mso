@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSODHCPOptionPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSODHCPOptionPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: DHCP Option Policy Data Source") },
 				Config:    testAccMSODHCPOptionPolicyDataSource(),
@@ -39,5 +45,13 @@ func testAccMSODHCPOptionPolicyDataSource() string {
     data "mso_tenant_policies_dhcp_option_policy" "dhcp_policy" {
         template_id = mso_tenant_policies_dhcp_option_policy.dhcp_policy.template_id
         name        = "test_dhcp_option_policy"
+    }`, testAccMSODHCPOptionPolicyConfigCreate())
+}
+
+func testAccMSODHCPOptionPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_dhcp_option_policy" "missing" {
+        template_id = mso_tenant_policies_dhcp_option_policy.dhcp_policy.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSODHCPOptionPolicyConfigCreate())
 }
