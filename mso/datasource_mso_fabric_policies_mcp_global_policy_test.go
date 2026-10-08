@@ -16,7 +16,7 @@ func TestAccMSOMCPGlobalPolicyDataSource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_mcp_global_policy data source remains an error") },
 				Config:      testAccMSOMCPGlobalPolicyDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: MCP Global Policy Data Source") },

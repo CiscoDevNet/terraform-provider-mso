@@ -24,7 +24,7 @@ func TestAccMSOPhysicalDomainDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_physical_domain.physical_domain", "name", "tf_test_physical_domain"),
 					resource.TestCheckResourceAttr("data.mso_fabric_policies_physical_domain.physical_domain", "description", "Terraform test Physical Domain"),
-					resource.TestCheckResourceAttrSet("mso_fabric_policies_physical_domain.physical_domain", "vlan_pool_uuid"),
+					resource.TestCheckResourceAttrSet("data.mso_fabric_policies_physical_domain.physical_domain", "vlan_pool_uuid"),
 				),
 			},
 		},

@@ -18,7 +18,7 @@ func TestAccMSOFabricResourcePortChannelInterfaceDataSource(t *testing.T) {
 					fmt.Println("Test: Missing fabric_resource_policies_port_channel_interface data source remains an error")
 				},
 				Config:      testAccMSOFabricResourcePortChannelInterfaceDataSourceWithInterfaceDescriptionsMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Port Channel Interface Data Source - With Interface Descriptions") },

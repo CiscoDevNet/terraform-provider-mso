@@ -26,7 +26,7 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyDataSource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
 				Config:      testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTagsDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name 00:00:00:00:00:FF-.* not found`),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf("Policy name 00:00:00:00:00:FF-[%s] not found", msoSchemaTemplateBdName))),
 			},
 			{
 				PreConfig: func() {
