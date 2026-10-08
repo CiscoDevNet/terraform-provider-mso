@@ -103,16 +103,15 @@ func resourceMSOVirtualPortChannelInterface() *schema.Resource {
 	}
 }
 
-func setVPCInterfaceData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+func getVPCInterface(c *client.Client, templateId, policyName string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return GetPolicyByName(response, policyName, "fabricResourceTemplate", "template", "virtualPortChannels")
+}
 
-	vpcCont, err := GetPolicyByName(response, policyName, "fabricResourceTemplate", "template", "virtualPortChannels")
-	if err != nil {
-		return err
-	}
+func setVPCInterfaceData(d *schema.ResourceData, vpcCont *container.Container, templateId string) error {
 	name := models.StripQuotes(vpcCont.S("name").String())
 
 	d.SetId(fmt.Sprintf("templateId/%s/virtualPortChannelInterface/%s", templateId, name))
@@ -151,24 +150,31 @@ func setVPCInterfaceData(d *schema.ResourceData, msoClient *client.Client, templ
 }
 
 func resourceMSOVirtualPortChannelInterfaceImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
-	log.Printf("[DEBUG] MSO VPC Interface - Beginning Import: %v", d.Id())
+	log.Printf("[DEBUG] MSO Virtual Port Channel Interface Resource - Beginning Import: %v", d.Id())
 	msoClient := m.(*client.Client)
-
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	importedID := d.Id()
+	templateId, err := GetTemplateIdFromResourceId(importedID)
 	if err != nil {
 		return nil, err
 	}
-	name, err := GetPolicyNameFromResourceId(d.Id(), "virtualPortChannelInterface")
+	policyName, err := GetPolicyNameFromResourceId(importedID, "virtualPortChannelInterface")
 	if err != nil {
 		return nil, err
 	}
-
-	err = setVPCInterfaceData(d, msoClient, templateId, name)
+	policy, err := getVPCInterface(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("cannot import Virtual Port Channel Interface %q: resource not found: %w", importedID, err)
+		}
 		return nil, err
 	}
-
-	log.Printf("[DEBUG] MSO VPC Interface - Import Complete: %v", d.Id())
+	if err := setVPCInterfaceData(d, policy, templateId); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import Virtual Port Channel Interface %q: resource not found", importedID)
+	}
+	log.Printf("[DEBUG] MSO Virtual Port Channel Interface Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -210,18 +216,22 @@ func resourceMSOVirtualPortChannelInterfaceCreate(d *schema.ResourceData, m any)
 }
 
 func resourceMSOVirtualPortChannelInterfaceRead(d *schema.ResourceData, m any) error {
-	log.Printf("[DEBUG] MSO VPC Interface - Beginning Read: %v", d.Id())
+	log.Printf("[DEBUG] MSO Virtual Port Channel Interface Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
-
 	templateId := d.Get("template_id").(string)
-	name := d.Get("name").(string)
-
-	err := setVPCInterfaceData(d, msoClient, templateId, name)
+	policyName := d.Get("name").(string)
+	policy, err := getVPCInterface(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
-
-	log.Printf("[DEBUG] MSO VPC Interface - Read Complete : %v", d.Id())
+	if err := setVPCInterfaceData(d, policy, templateId); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] MSO Virtual Port Channel Interface Resource - Read Complete: %v", d.Id())
 	return nil
 }
 
