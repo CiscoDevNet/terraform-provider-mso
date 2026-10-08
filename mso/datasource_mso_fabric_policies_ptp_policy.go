@@ -75,7 +75,13 @@ func dataSourcePtpPolicyRead(d *schema.ResourceData, m interface{}) error {
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	setPtpPolicyData(d, msoClient, templateId, policyName)
+	policy, err := getPtpPolicy(msoClient, templateId, policyName)
+	if err != nil {
+		return err
+	}
+	if err := setPtpPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO PTP Policy Data Source - Read Complete : %v", d.Id())
 	return nil
 }
