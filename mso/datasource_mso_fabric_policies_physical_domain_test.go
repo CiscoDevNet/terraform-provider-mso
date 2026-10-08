@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOPhysicalDomainDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSOPhysicalDomainDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Physical Domain Data Source") },
 				Config:    testAccMSOPhysicalDomainDataSource(),
@@ -30,5 +36,13 @@ func testAccMSOPhysicalDomainDataSource() string {
 	data "mso_fabric_policies_physical_domain" "physical_domain" {
 	    template_id        = mso_fabric_policies_physical_domain.physical_domain.template_id
 	    name               = "tf_test_physical_domain"
+    }`, testAccMSOPhysicalDomainConfigCreate())
+}
+
+func testAccMSOPhysicalDomainDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_physical_domain" "missing" {
+        template_id = mso_fabric_policies_physical_domain.physical_domain.template_id
+        name        = "tf_missing_oob"
     }`, testAccMSOPhysicalDomainConfigCreate())
 }

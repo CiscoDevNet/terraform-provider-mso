@@ -43,7 +43,13 @@ func dataSourceMSOPhysicalDomainRead(d *schema.ResourceData, m interface{}) erro
 	templateId := d.Get("template_id").(string)
 	name := d.Get("name").(string)
 
-	setPhysicalDomainData(d, msoClient, templateId, name)
+	policy, err := getPhysicalDomain(msoClient, templateId, name)
+	if err != nil {
+		return err
+	}
+	if err := setPhysicalDomainData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO Physical Domain Data Source - Read Complete : %v", d.Id())
 	return nil
 }
