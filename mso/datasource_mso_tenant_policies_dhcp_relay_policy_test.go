@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -14,6 +15,11 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesDHCPRelayPolicyDataSourceMissing(name),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: DHCP Relay Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesDHCPRelayPolicyDataSource(name),
@@ -49,5 +55,13 @@ func testAccMSOTenantPoliciesDHCPRelayPolicyDataSource(name string) string {
     data "mso_tenant_policies_dhcp_relay_policy" "%[2]s" {
         template_id = mso_tenant_policies_dhcp_relay_policy.%[2]s.template_id
         name        = "%[2]s"
+    }`, testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreate(name), name)
+}
+
+func testAccMSOTenantPoliciesDHCPRelayPolicyDataSourceMissing(name string) string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_dhcp_relay_policy" "missing" {
+        template_id = mso_tenant_policies_dhcp_relay_policy.%s.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreate(name), name)
 }
