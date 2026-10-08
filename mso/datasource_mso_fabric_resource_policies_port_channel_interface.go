@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -71,12 +70,7 @@ func dataSourceMSOPortChannelInterfaceRead(d *schema.ResourceData, m interface{}
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
-	policy, err := GetPolicyByName(response, policyName, "fabricResourceTemplate", "template", "portChannels")
+	policy, err := getPortChannelInterface(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
