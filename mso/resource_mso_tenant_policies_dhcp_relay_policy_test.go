@@ -3,14 +3,19 @@ package mso
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 	name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resourceName := fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name)
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -51,6 +56,50 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 							"external_epg_uuid":          fmt.Sprintf("mso_schema_template_external_epg.%s.uuid", msoSchemaTemplateExtEpgName),
 						},
 					),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate DHCP Relay Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "dhcpRelayPolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesDHCPRelayPolicyConfigCreate(name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "name", name),
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "description", ""),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "template_id"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers.#", "2"),
+					CustomTestCheckTypeSetElemAttrs(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
+						map[string]string{
+							"application_epg_uuid":       fmt.Sprintf("mso_schema_template_anp_epg.%s.uuid", msoSchemaTemplateAnpEpgName),
+							"dhcp_server_address":        "1.1.1.1",
+							"dhcp_server_vrf_preference": "false",
+							"external_epg_uuid":          "",
+						},
+					),
+					CustomTestCheckTypeSetElemAttrs(fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name), "dhcp_relay_providers",
+						map[string]string{
+							"application_epg_uuid":       "",
+							"dhcp_server_address":        "2.2.2.2",
+							"dhcp_server_vrf_preference": "true",
+							"external_epg_uuid":          fmt.Sprintf("mso_schema_template_external_epg.%s.uuid", msoSchemaTemplateExtEpgName),
+						},
+					),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
 				),
 			},
 			{
@@ -142,6 +191,23 @@ func TestAccMSOTenantPoliciesDHCPRelayPolicyResource(t *testing.T) {
 				ResourceName:      fmt.Sprintf("mso_tenant_policies_dhcp_relay_policy.%s", name),
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing DHCP Relay Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_dhcp_relay_policy", "dhcpRelay"),
