@@ -99,27 +99,38 @@ func resourceMSOPtpPolicyProfile() *schema.Resource {
 	}
 }
 
-func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+func getPtpPolicyProfile(c *client.Client, templateId, policyName string) (*container.Container, string, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		return err
+		return nil, "", err
 	}
-
-	ptp_policy_uuid, ok := response.S("fabricPolicyTemplate", "template", "ptpPolicy", "uuid").Data().(string)
-	if !ok {
-		return fmt.Errorf("PTP Policy not found")
-	}
-
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "ptpPolicy", "profiles")
+	ptpPolicy, err := getPolicyCollection(response, "fabricPolicyTemplate", "template", "ptpPolicy")
 	if err != nil {
-		return err
+		return nil, "", err
 	}
+	if ptpPolicy.Data() == nil {
+		return nil, "", &policyNotFoundError{message: "PTP Policy not found"}
+	}
+	if _, ok := ptpPolicy.Data().(map[string]interface{}); !ok {
+		return nil, "", fmt.Errorf("PTP Policy is not an object")
+	}
+	ptpPolicyUUID, ok := ptpPolicy.S("uuid").Data().(string)
+	if !ok || ptpPolicyUUID == "" {
+		return nil, "", fmt.Errorf("PTP Policy UUID is missing or invalid")
+	}
+	policy, err := GetPolicyByName(ptpPolicy, policyName, "profiles")
+	if err != nil {
+		return nil, "", err
+	}
+	return policy, ptpPolicyUUID, nil
+}
 
+func setPtpPolicyProfileData(d *schema.ResourceData, policy *container.Container, templateId, ptpPolicyUUID string) error {
 	name := models.StripQuotes(policy.S("name").String())
 	d.SetId(fmt.Sprintf("templateId/%s/ptpPolicyProfile/%s", templateId, name))
 	d.Set("template_id", templateId)
 	d.Set("name", name)
-	d.Set("ptp_policy_uuid", ptp_policy_uuid)
+	d.Set("ptp_policy_uuid", ptpPolicyUUID)
 	d.Set("uuid", models.StripQuotes(policy.S("uuid").String()))
 	d.Set("delay_interval", policy.S("delayIntvl").Data().(float64))
 	d.Set("sync_interval", policy.S("syncIntvl").Data().(float64))
@@ -145,18 +156,28 @@ func setPtpPolicyProfileData(d *schema.ResourceData, msoClient *client.Client, t
 func resourceMSOPtpPolicyProfileImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO PTP Policy Profile Resource - Beginning Import: %v", d.Id())
 	msoClient := m.(*client.Client)
-
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	importedID := d.Id()
+	templateId, err := GetTemplateIdFromResourceId(importedID)
 	if err != nil {
 		return nil, err
 	}
-
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "ptpPolicyProfile")
+	policyName, err := GetPolicyNameFromResourceId(importedID, "ptpPolicyProfile")
 	if err != nil {
 		return nil, err
 	}
-
-	setPtpPolicyProfileData(d, msoClient, templateId, policyName)
+	policy, ptpPolicyUUID, err := getPtpPolicyProfile(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("cannot import PTP Policy Profile %q: resource not found: %w", importedID, err)
+		}
+		return nil, err
+	}
+	if err := setPtpPolicyProfileData(d, policy, templateId, ptpPolicyUUID); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import PTP Policy Profile %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO PTP Policy Profile Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -223,12 +244,20 @@ func resourceMSOPtpPolicyProfileCreate(d *schema.ResourceData, m any) error {
 func resourceMSOPtpPolicyProfileRead(d *schema.ResourceData, m any) error {
 	log.Printf("[DEBUG] MSO PTP Policy Profile Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
-
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
-
-	setPtpPolicyProfileData(d, msoClient, templateId, policyName)
-	log.Printf("[DEBUG] MSO PTP Policy Profile Resource - Read Complete : %v", d.Id())
+	policy, ptpPolicyUUID, err := getPtpPolicyProfile(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return err
+	}
+	if err := setPtpPolicyProfileData(d, policy, templateId, ptpPolicyUUID); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] MSO PTP Policy Profile Resource - Read Complete: %v", d.Id())
 	return nil
 }
 
