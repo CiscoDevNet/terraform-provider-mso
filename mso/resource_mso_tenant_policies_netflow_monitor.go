@@ -69,6 +69,14 @@ func buildExporterUUIDsPayload(exportersRaw interface{}) []string {
 	return exporters
 }
 
+func getNetflowMonitor(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "netFlowMonitors")
+}
+
 func setNetflowMonitorData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/NetflowMonitor/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -95,9 +103,12 @@ func setNetflowMonitorData(d *schema.ResourceData, response *container.Container
 
 func resourceMSOTenantPoliciesNetflowMonitorImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO NetFlow Monitor Resource - Beginning Import: %v", d.Id())
-	err := resourceMSOTenantPoliciesNetflowMonitorRead(d, m)
-	if err != nil {
+	importID := d.Id()
+	if err := resourceMSOTenantPoliciesNetflowMonitorRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_netflow_monitor %q: resource not found", importID)
 	}
 	log.Printf("[DEBUG] MSO NetFlow Monitor Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -140,18 +151,17 @@ func resourceMSOTenantPoliciesNetflowMonitorRead(d *schema.ResourceData, m inter
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	monitorName, err := GetPolicyNameFromResourceId(d.Id(), "NetflowMonitor")
 	if err != nil {
 		return err
 	}
 
-	monitor, err := GetPolicyByName(response, monitorName, "tenantPolicyTemplate", "template", "netFlowMonitors")
+	monitor, err := getNetflowMonitor(msoClient, templateId, monitorName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

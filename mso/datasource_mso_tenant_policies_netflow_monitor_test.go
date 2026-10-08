@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesNetflowMonitorDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesNetflowMonitorDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: NetFlow Monitor Data Source") },
 				Config:    testAccMSOTenantPoliciesNetflowMonitorDataSource(),
@@ -32,5 +38,13 @@ func testAccMSOTenantPoliciesNetflowMonitorDataSource() string {
     data "mso_tenant_policies_netflow_monitor" "netflow_monitor" {
         template_id = mso_tenant_policies_netflow_monitor.netflow_monitor.template_id
         name        = "test_netflow_monitor"
+    }`, testAccMSOTenantPoliciesNetflowMonitorConfigCreate())
+}
+
+func testAccMSOTenantPoliciesNetflowMonitorDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_netflow_monitor" "missing" {
+        template_id = mso_tenant_policies_netflow_monitor.netflow_monitor.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesNetflowMonitorConfigCreate())
 }
