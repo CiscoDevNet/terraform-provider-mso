@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -133,21 +132,12 @@ func dataSourceMSONetflowExporterSiteRead(d *schema.ResourceData, m interface{})
 	siteID := d.Get("site_id").(string)
 	exporterUUID := d.Get("netflow_exporter_uuid").(string)
 
-	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	exporterCont, err := getNetflowExporterSite(msoClient, templateID, siteID, exporterUUID)
 	if err != nil {
 		return err
 	}
-	siteIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "siteId", siteID, "tenantPolicyTemplate", "sites")
-	if err != nil {
-		return fmt.Errorf("site %q is not present in template %q: %v", siteID, templateID, err)
-	}
-	siteCont := templateCont.S("tenantPolicyTemplate", "sites").Index(siteIndex)
-	exporterIndex, err := GetPolicyIndexByKeyAndValue(siteCont, "ref", exporterUUID, "netFlowExporters")
-	if err != nil {
-		return fmt.Errorf("NetFlow Exporter %q does not exist on site %q", exporterUUID, siteID)
-	}
 
-	if err := setNetflowExporterSiteData(d, siteCont.S("netFlowExporters").Index(exporterIndex), templateID, siteID, exporterUUID); err != nil {
+	if err := setNetflowExporterSiteData(d, exporterCont, templateID, siteID, exporterUUID); err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Site Data Source - Read Complete: %v", d.Id())
