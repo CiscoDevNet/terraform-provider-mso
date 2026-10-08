@@ -348,6 +348,14 @@ func buildOSPFInterfacePayload(ospfSettings []interface{}) map[string]interface{
 	return payload
 }
 
+func getL3OutInterfaceRoutingPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "l3OutIntfPolGroups")
+}
+
 func setL3OutInterfaceRoutingPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/L3OutInterfaceRoutingPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -502,7 +510,13 @@ func setL3OutInterfaceRoutingPolicyData(d *schema.ResourceData, response *contai
 
 func resourceMSOL3OutInterfaceRoutingPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO L3Out Interface Routing Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOL3OutInterfaceRoutingPolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOL3OutInterfaceRoutingPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_l3out_interface_routing_policy %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO L3Out Interface Routing Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -559,22 +573,23 @@ func resourceMSOL3OutInterfaceRoutingPolicyRead(d *schema.ResourceData, m interf
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "L3OutInterfaceRoutingPolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "l3OutIntfPolGroups")
+	policy, err := getL3OutInterfaceRoutingPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setL3OutInterfaceRoutingPolicyData(d, policy, templateId)
+	if err := setL3OutInterfaceRoutingPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO L3Out Interface Routing Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }
