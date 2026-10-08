@@ -2,6 +2,7 @@ package mso
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -352,22 +353,67 @@ func GetPolicyNameFromResourceId(input, policyType string) (string, error) {
 	return "", fmt.Errorf("PolicyType not found in the id")
 }
 
-func GetPolicyIndexByKeyAndValue(cont *container.Container, policyIdentifier, policyIdentifierValue string, templateElements ...string) (int, error) {
-	index := -1
+// policyNotFoundError distinguishes an absent policy from a failed request or
+// an invalid response. Resource reads can remove absent policies from state,
+// while imports and data sources continue to return the error.
+type policyNotFoundError struct {
+	message string
+}
 
-	policyArray := cont.S(templateElements...)
-	if policyArray.Data() == nil {
-		return index, fmt.Errorf("Policy type %s is not a list or does not exist", templateElements[len(templateElements)-1])
+func (e *policyNotFoundError) Error() string {
+	return e.message
+}
+
+func isPolicyNotFound(err error) bool {
+	var notFound *policyNotFoundError
+	return errors.As(err, &notFound)
+}
+
+// getPolicyCollection validates the parent objects before interpreting a missing
+// collection as absence. A malformed template response must not remove state.
+func getPolicyCollection(cont *container.Container, templateElements ...string) (*container.Container, error) {
+	if cont == nil {
+		return nil, fmt.Errorf("cannot look up a policy in a nil response")
+	}
+	if len(templateElements) == 0 {
+		return nil, fmt.Errorf("policy collection path is required")
 	}
 
-	policyCount, err := cont.ArrayCount(templateElements...)
+	collection := cont
+	for i, element := range templateElements {
+		if _, ok := collection.Data().(map[string]interface{}); !ok {
+			parentPath := "response"
+			if i > 0 {
+				parentPath = strings.Join(templateElements[:i], "/")
+			}
+			return nil, fmt.Errorf("Policy collection parent %s is not an object", parentPath)
+		}
+		collection = collection.S(element)
+	}
+	return collection, nil
+}
+
+func GetPolicyIndexByKeyAndValue(cont *container.Container, policyIdentifier, policyIdentifierValue string, templateElements ...string) (int, error) {
+	index := -1
+	policyArray, err := getPolicyCollection(cont, templateElements...)
+	if err != nil {
+		return index, err
+	}
+	if policyArray.Data() == nil {
+		return index, &policyNotFoundError{message: fmt.Sprintf("Policy type %s is not a list or does not exist", templateElements[len(templateElements)-1])}
+	}
+
+	policyCount, err := policyArray.ArrayCount()
 	if err != nil {
 		return index, err
 	}
 
 	for i := 0; i < policyCount; i++ {
 		policy := policyArray.Index(i)
-		identifierValue := policy.S(policyIdentifier).Data().(string)
+		identifierValue, ok := policy.S(policyIdentifier).Data().(string)
+		if !ok {
+			return index, fmt.Errorf("Policy identifier %s at index %d is not a string", policyIdentifier, i)
+		}
 		if identifierValue == policyIdentifierValue {
 			index = i
 			break
@@ -375,33 +421,48 @@ func GetPolicyIndexByKeyAndValue(cont *container.Container, policyIdentifier, po
 	}
 
 	if index == -1 {
-		return index, fmt.Errorf("Policy %s %s not found in policy list", policyIdentifier, policyIdentifierValue)
+		return index, &policyNotFoundError{message: fmt.Sprintf("Policy %s %s not found in policy list", policyIdentifier, policyIdentifierValue)}
 	}
 
 	return index, nil
 }
 
 func GetPolicyByName(cont *container.Container, policyName string, templateElements ...string) (*container.Container, error) {
-	policyObject := cont.S(templateElements...)
-	if policyObject.Data() != nil {
-		policyCount, err := cont.ArrayCount(templateElements...)
-		if err == nil {
-			for i := 0; i < policyCount; i++ {
-				policy := policyObject.Index(i)
-				name, ok := policy.S("name").Data().(string)
-				if ok && name == policyName {
-					return policy, nil
-				}
+	policyObject, err := getPolicyCollection(cont, templateElements...)
+	if err != nil {
+		return nil, err
+	}
+	switch policies := policyObject.Data().(type) {
+	case nil:
+		// An omitted or null collection contains no matching policy.
+	case []interface{}:
+		for i := range policies {
+			policy := policyObject.Index(i)
+			name, ok := policy.S("name").Data().(string)
+			if !ok {
+				return nil, fmt.Errorf("Policy name at index %d is not a string", i)
 			}
-		} else {
-			name, ok := policyObject.S("name").Data().(string)
-			if ok && name == policyName {
-				return policyObject, nil
+			if name == policyName {
+				return policy, nil
 			}
 		}
+	case map[string]interface{}:
+		// Some policy types are singleton objects rather than lists.
+		if len(policies) == 0 {
+			break
+		}
+		name, ok := policyObject.S("name").Data().(string)
+		if !ok {
+			return nil, fmt.Errorf("Policy name is not a string")
+		}
+		if name == policyName {
+			return policyObject, nil
+		}
+	default:
+		return nil, fmt.Errorf("Policy type %s is not a list or object", strings.Join(templateElements, "/"))
 	}
 
-	return nil, fmt.Errorf("Policy name %s not found", policyName)
+	return nil, &policyNotFoundError{message: fmt.Sprintf("Policy name %s not found", policyName)}
 }
 
 func isTaskStatusPending(c *container.Container) bool {
