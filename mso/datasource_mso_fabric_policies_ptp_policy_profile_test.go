@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOPtpPolicyProfileDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSOPtpPolicyProfileDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: PTP Policy Profile Data Source") },
 				Config:    testAccMSOPtpPolicyProfileDataSource(),
@@ -57,5 +63,13 @@ func testAccMSOPtpPolicyProfileDataSource() string {
 	data "mso_fabric_policies_ptp_policy_profile" "ptp_policy_profile" {
 	    template_id        = mso_fabric_policies_ptp_policy_profile.ptp_policy_profile.template_id
 	    name               = "tf_ptp_profile"
+    }`, testAccMSOPtpPolicyProfileConfig())
+}
+
+func testAccMSOPtpPolicyProfileDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_ptp_policy_profile" "missing" {
+        template_id = mso_fabric_policies_ptp_policy_profile.ptp_policy_profile.template_id
+        name        = "tf_missing_oob"
     }`, testAccMSOPtpPolicyProfileConfig())
 }
