@@ -191,7 +191,7 @@ func resourceMSOPtpPolicyProfileCreate(d *schema.ResourceData, m any) error {
 
 	if override_node_profile, ok := d.GetOk("override_node_profile"); ok {
 		if override_node_profile.(bool) {
-			payload["announceIntvl"] = override_node_profile.(bool)
+			payload["nodeProfileOverride"] = override_node_profile.(bool)
 		}
 	}
 
