@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesIGMPInterfacePolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_igmp_interface_policy.igmp_policy"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -15,6 +21,48 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyResource(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Create IGMP Interface Policy") },
 				Config:    testAccMSOTenantPoliciesIGMPInterfacePolicyConfigCreate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "name", "test_igmp_interface_policy"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "description", "Test IGMP Interface Policy"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_igmp_interface_policy.igmp_policy", "uuid"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "version3_asm", "true"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "fast_leave", "true"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "report_link_local_groups", "true"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "igmp_version", "v3"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "group_timeout", "300"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "query_interval", "125"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "query_response_interval", "10"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "last_member_count", "2"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "last_member_response_time", "1"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "startup_query_count", "2"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "startup_query_interval", "31"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "querier_timeout", "255"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "robustness_variable", "2"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "maximum_multicast_entries", "1000000"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "reserved_multicast_entries", "100000"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_igmp_interface_policy.igmp_policy", "state_limit_route_map_uuid"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate IGMP Interface Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "igmpInterfacePolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesIGMPInterfacePolicyConfigCreate(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "name", "test_igmp_interface_policy"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_igmp_interface_policy.igmp_policy", "description", "Test IGMP Interface Policy"),
@@ -137,6 +185,23 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_igmp_interface_policy.igmp_policy",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing IGMP Interface Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_igmp_interface_policy", "igmpInterface"),

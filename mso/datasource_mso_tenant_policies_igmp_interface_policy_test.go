@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesIGMPInterfacePolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: IGMP Interface Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesIGMPInterfacePolicyDataSource(),
@@ -43,7 +49,7 @@ func TestAccMSOTenantPoliciesIGMPInterfacePolicyDataSource(t *testing.T) {
 	})
 }
 
-func testAccMSOTenantPoliciesIGMPInterfacePolicyDataSource() string {
+func testAccMSOTenantPoliciesIGMPInterfacePolicyConfig() string {
 	return fmt.Sprintf(`%s
     resource "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id                    = mso_template.template_tenant.id
@@ -66,10 +72,22 @@ func testAccMSOTenantPoliciesIGMPInterfacePolicyDataSource() string {
         reserved_multicast_entries     = 4294967295
         state_limit_route_map_uuid     = mso_tenant_policies_route_map_policy_multicast.state_limit.uuid
         static_report_route_map_uuid   = mso_tenant_policies_route_map_policy_multicast.static_report.uuid
-    }
+    }`, fmt.Sprintf("%s%s", testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPAllRouteMapsConfig()))
+}
+
+func testAccMSOTenantPoliciesIGMPInterfacePolicyDataSource() string {
+	return fmt.Sprintf(`%s
 
     data "mso_tenant_policies_igmp_interface_policy" "igmp_policy" {
         template_id = mso_template.template_tenant.id
         name        = mso_tenant_policies_igmp_interface_policy.igmp_policy.name
-    }`, fmt.Sprintf("%s%s", testAccMSOTemplateResourceTenantConfig(), testAccMSOTenantPoliciesIGMPAllRouteMapsConfig()))
+    }`, testAccMSOTenantPoliciesIGMPInterfacePolicyConfig())
+}
+
+func testAccMSOTenantPoliciesIGMPInterfacePolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_igmp_interface_policy" "missing" {
+        template_id = mso_tenant_policies_igmp_interface_policy.igmp_policy.template_id
+        name        = "missing_out_of_band_deletion"
+    }`, testAccMSOTenantPoliciesIGMPInterfacePolicyConfig())
 }

@@ -167,6 +167,14 @@ func resourceMSOIGMPInterfacePolicy() *schema.Resource {
 	}
 }
 
+func getIGMPInterfacePolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "igmpInterfacePolicies")
+}
+
 func setIGMPInterfacePolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/IGMPInterfacePolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -238,7 +246,13 @@ func setIGMPInterfacePolicyData(d *schema.ResourceData, response *container.Cont
 
 func resourceMSOIGMPInterfacePolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO IGMP Interface Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOIGMPInterfacePolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOIGMPInterfacePolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_igmp_interface_policy %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO IGMP Interface Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -349,22 +363,23 @@ func resourceMSOIGMPInterfacePolicyRead(d *schema.ResourceData, m interface{}) e
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "IGMPInterfacePolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "igmpInterfacePolicies")
+	policy, err := getIGMPInterfacePolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setIGMPInterfacePolicyData(d, policy, templateId)
+	if err := setIGMPInterfacePolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO IGMP Interface Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }
