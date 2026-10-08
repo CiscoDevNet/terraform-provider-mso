@@ -79,6 +79,14 @@ func resourceMSOBGPPeerPrefixPolicy() *schema.Resource {
 	}
 }
 
+func getBGPPeerPrefixPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "bgpPeerPrefixPolicies")
+}
+
 func setBGPPeerPrefixPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/BGPPeerPrefixPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -95,7 +103,13 @@ func setBGPPeerPrefixPolicyData(d *schema.ResourceData, response *container.Cont
 
 func resourceMSOBGPPeerPrefixPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO BGP Peer Prefix Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOBGPPeerPrefixPolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOBGPPeerPrefixPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_bgp_peer_prefix_policy %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO BGP Peer Prefix Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -150,22 +164,23 @@ func resourceMSOBGPPeerPrefixPolicyRead(d *schema.ResourceData, m interface{}) e
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "BGPPeerPrefixPolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "bgpPeerPrefixPolicies")
+	policy, err := getBGPPeerPrefixPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setBGPPeerPrefixPolicyData(d, policy, templateId)
+	if err := setBGPPeerPrefixPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO BGP Peer Prefix Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }
