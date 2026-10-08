@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOVlanPoolDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSOVlanPoolDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: VLAN Pool Data Source") },
 				Config:    testAccMSOVlanPoolDataSource(),
@@ -36,5 +42,13 @@ func testAccMSOVlanPoolDataSource() string {
 	data "mso_fabric_policies_vlan_pool" "vlan_pool" {
 	    template_id        = mso_fabric_policies_vlan_pool.vlan_pool.template_id
 	    name               = "tf_test_vlan_pool"
+    }`, testAccMSOVlanPoolConfigCreate())
+}
+
+func testAccMSOVlanPoolDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_vlan_pool" "missing" {
+        template_id = mso_fabric_policies_vlan_pool.vlan_pool.template_id
+        name        = "tf_missing_oob"
     }`, testAccMSOVlanPoolConfigCreate())
 }

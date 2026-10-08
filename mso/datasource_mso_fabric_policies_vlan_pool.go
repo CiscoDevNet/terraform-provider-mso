@@ -55,7 +55,13 @@ func dataSourceMSOVlanPoolRead(d *schema.ResourceData, m interface{}) error {
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	setVlanPoolData(d, msoClient, templateId, policyName)
+	policy, err := getVlanPool(msoClient, templateId, policyName)
+	if err != nil {
+		return err
+	}
+	if err := setVlanPoolData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO VLAN Pool Data Source - Read Complete : %v", d.Id())
 	return nil
 }
