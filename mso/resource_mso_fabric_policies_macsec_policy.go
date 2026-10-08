@@ -195,6 +195,10 @@ func setMacsecPolicyData(d *schema.ResourceData, msoClient *client.Client, templ
 		}
 	}
 
+	if policy.S("macsecKeys").Data() == nil {
+		return d.Set("macsec_keys", []any{})
+	}
+
 	count, err := policy.ArrayCount("macsecKeys")
 	if err != nil {
 		return fmt.Errorf("unable to count the number of macsec keys: %s", err)
