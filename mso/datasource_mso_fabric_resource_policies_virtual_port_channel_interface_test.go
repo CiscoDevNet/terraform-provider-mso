@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOVirtualPortChannelInterfaceDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSOVirtualPortChannelInterfaceDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: VPC Interface Data Source") },
 				Config:    testAccMSOVirtualPortChannelInterfaceDataSource(),
@@ -50,4 +56,12 @@ func testAccMSOVirtualPortChannelInterfaceDataSource() string {
 		name        = "tf_test_vpc_if"
 	}
 	`, testAccMSOVirtualPortChannelInterfaceConfigCreate())
+}
+
+func testAccMSOVirtualPortChannelInterfaceDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_resource_policies_virtual_port_channel_interface" "missing" {
+        template_id = mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if.template_id
+        name        = "tf_missing_oob"
+    }`, testAccMSOVirtualPortChannelInterfaceConfigCreate())
 }
