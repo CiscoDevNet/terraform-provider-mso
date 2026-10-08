@@ -55,6 +55,14 @@ func resourceMSOL3Domain() *schema.Resource {
 	}
 }
 
+func getL3Domain(c *client.Client, templateID, name string) (*container.Container, error) {
+	template, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(template, name, "fabricPolicyTemplate", "template", "l3Domains")
+}
+
 func setL3DomainData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/L3Domain/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -74,7 +82,13 @@ func setL3DomainData(d *schema.ResourceData, response *container.Container, temp
 
 func resourceMSOL3DomainImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO L3 Domain Resource - Beginning Import: %v", d.Id())
-	resourceMSOL3DomainRead(d, m)
+	importedID := d.Id()
+	if err := resourceMSOL3DomainRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import L3 Domain %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO L3 Domain Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -125,22 +139,23 @@ func resourceMSOL3DomainRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	domainName, err := GetPolicyNameFromResourceId(d.Id(), "L3Domain")
 	if err != nil {
 		return err
 	}
 
-	domain, err := GetPolicyByName(response, domainName, "fabricPolicyTemplate", "template", "l3Domains")
+	domain, err := getL3Domain(msoClient, templateId, domainName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setL3DomainData(d, domain, templateId)
+	if err := setL3DomainData(d, domain, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO L3 Domain Resource - Read Complete: %v", d.Id())
 	return nil
 }
