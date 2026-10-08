@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesCustomQoSPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasicMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Custom QoS Policy Data Source - Basic") },
 				Config:    testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasic(),
@@ -60,5 +66,13 @@ func testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasic() string {
     data "mso_tenant_policies_custom_qos_policy" "qos_policy" {
         template_id = mso_template.template_tenant.id
         name        = mso_tenant_policies_custom_qos_policy.qos_policy.name
+    }`, testAccMSOTenantPoliciesCustomQoSPolicyConfigCreate())
+}
+
+func testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasicMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_custom_qos_policy" "missing" {
+        template_id = mso_tenant_policies_custom_qos_policy.qos_policy.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesCustomQoSPolicyConfigCreate())
 }
