@@ -222,8 +222,12 @@ func netflowExporterSiteVrfTenant(d *schema.ResourceData, tenant, blockName stri
 
 func resourceMSONetflowExporterSiteImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO NetFlow Exporter Site Resource - Beginning Import: %v", d.Id())
+	importedID := d.Id()
 	if err := resourceMSONetflowExporterSiteRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import NetFlow Exporter site %q: resource not found", importedID)
 	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Site Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil

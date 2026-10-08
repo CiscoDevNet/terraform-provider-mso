@@ -54,9 +54,12 @@ func setNetflowExporterData(d *schema.ResourceData, response *container.Containe
 
 func resourceMSONetflowExporterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Beginning Import: %v", d.Id())
-	err := resourceMSONetflowExporterRead(d, m)
-	if err != nil {
+	importedID := d.Id()
+	if err := resourceMSONetflowExporterRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import NetFlow Exporter %q: resource not found", importedID)
 	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -91,16 +94,14 @@ func resourceMSONetflowExporterRead(d *schema.ResourceData, m interface{}) error
 	if err != nil {
 		return err
 	}
-
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policyName, err := GetPolicyNameFromResourceId(d.Id(), "NetflowExporter")
 	if err != nil {
 		return err
 	}
 
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "NetflowExporter")
+	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		d.SetId("")
-		return nil
+		return err
 	}
 
 	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "netFlowExporters")

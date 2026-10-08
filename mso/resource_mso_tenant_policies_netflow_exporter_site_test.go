@@ -192,6 +192,20 @@ func TestAccMSOTenantPoliciesNetflowExporterSiteResource(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
+				PreConfig:    func() { fmt.Println("Test: Import missing NetFlow Exporter site binding") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					attrs := rs.Primary.Attributes
+					return fmt.Sprintf("templateId/%s/site/%s/NetflowExporter/00000000-0000-0000-0000-000000000000", attrs["template_id"], attrs["site_id"]), nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import NetFlow Exporter site .*: resource not found`),
+			},
+			{
 				PreConfig:   func() { fmt.Println("Test: Fail when the site is not attached to the tenant template") },
 				Config:      testAccMSOTenantPoliciesNetflowExporterSiteConfigSiteNotAttached(),
 				ExpectError: regexp.MustCompile(`(?i)site .* is not present in template`),

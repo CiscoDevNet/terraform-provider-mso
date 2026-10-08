@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -64,6 +65,20 @@ func TestAccMSOTenantPoliciesNetflowExporterResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_netflow_exporter.netflow_exporter",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing NetFlow Exporter") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					templateID := rs.Primary.Attributes["template_id"]
+					return fmt.Sprintf("templateId/%s/NetflowExporter/missing_import_test_exporter", templateID), nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import NetFlow Exporter .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_netflow_exporter", "tenantPolicyTemplate", "template", "netFlowExporters"),
