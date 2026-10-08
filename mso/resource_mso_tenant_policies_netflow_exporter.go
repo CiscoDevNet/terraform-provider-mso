@@ -43,6 +43,14 @@ func resourceMSONetflowExporter() *schema.Resource {
 	}
 }
 
+func getNetflowExporter(c *client.Client, templateID, name string) (*container.Container, error) {
+	template, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(template, name, "tenantPolicyTemplate", "template", "netFlowExporters")
+}
+
 func setNetflowExporterData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/NetflowExporter/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -99,21 +107,18 @@ func resourceMSONetflowExporterRead(d *schema.ResourceData, m interface{}) error
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getNetflowExporter(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
-	}
-
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "netFlowExporters")
-	if err != nil {
-		d.SetId("")
-		return nil
 	}
 
 	err = setNetflowExporterData(d, policy, templateId)
 	if err != nil {
-		d.SetId("")
-		return nil
+		return err
 	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Resource - Read Complete: %v", d.Id())
 	return nil

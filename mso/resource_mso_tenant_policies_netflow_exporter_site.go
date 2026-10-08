@@ -253,23 +253,16 @@ func resourceMSONetflowExporterSiteRead(d *schema.ResourceData, m interface{}) e
 		return err
 	}
 
-	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	exporterCont, err := getNetflowExporterSite(msoClient, templateID, siteID, exporterUUID)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
-	siteIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "siteId", siteID, "tenantPolicyTemplate", "sites")
-	if err != nil {
-		d.SetId("")
-		return nil
-	}
-	siteCont := templateCont.S("tenantPolicyTemplate", "sites").Index(siteIndex)
-	exporterIndex, err := GetPolicyIndexByKeyAndValue(siteCont, "ref", exporterUUID, "netFlowExporters")
-	if err != nil {
-		d.SetId("")
-		return nil
-	}
 
-	if err := setNetflowExporterSiteData(d, siteCont.S("netFlowExporters").Index(exporterIndex), templateID, siteID, exporterUUID); err != nil {
+	if err := setNetflowExporterSiteData(d, exporterCont, templateID, siteID, exporterUUID); err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] MSO NetFlow Exporter Site Resource - Read Complete: %v", d.Id())
@@ -368,6 +361,29 @@ func parseNetflowExporterSiteID(id string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf("invalid NetFlow Exporter site ID %q", id)
 	}
 	return parts[1], parts[3], parts[5], nil
+}
+
+func getNetflowExporterSite(c *client.Client, templateID, siteID, exporterUUID string) (*container.Container, error) {
+	templateCont, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	siteIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "siteId", siteID, "tenantPolicyTemplate", "sites")
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("site %q is not present in template %q: %w", siteID, templateID, err)
+		}
+		return nil, err
+	}
+	siteCont := templateCont.S("tenantPolicyTemplate", "sites").Index(siteIndex)
+	exporterIndex, err := GetPolicyIndexByKeyAndValue(siteCont, "ref", exporterUUID, "netFlowExporters")
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("NetFlow Exporter %q does not exist on site %q: %w", exporterUUID, siteID, err)
+		}
+		return nil, err
+	}
+	return siteCont.S("netFlowExporters").Index(exporterIndex), nil
 }
 
 func setNetflowExporterSiteData(d *schema.ResourceData, response *container.Container, templateID, siteID, exporterUUID string) error {
