@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_interface_setting data source remains an error") },
+				Config:      testAccMSOFabricPoliciesInterfaceSettingPhysicalDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Data Source Interface Setting with type physical") },
 				Config:    testAccMSOFabricPoliciesInterfaceSettingPhysicalDataSource(),
@@ -56,6 +62,11 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelDataSource(t *testing.T)
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_interface_setting data source remains an error") },
+				Config:      testAccMSOFabricPoliciesInterfaceSettingPortChannelDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Data Source Interface Setting with type portchannel") },
 				Config:    testAccMSOFabricPoliciesInterfaceSettingPortChannelDataSource(),
@@ -116,4 +127,20 @@ func testAccMSOFabricPoliciesInterfaceSettingPortChannelDataSource() string {
 		template_id                        = mso_template.%[3]s.id
 		name                               = mso_fabric_policies_interface_setting.%[2]s_portchannel.name
 	}`, testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigUpdate(), msoFabricPolicyTemplateInterfaceSettingName, msoFabricPolicyTemplateName)
+}
+
+func testAccMSOFabricPoliciesInterfaceSettingPhysicalDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_interface_setting" "missing" {
+        template_id = mso_fabric_policies_interface_setting.%s.template_id
+        name        = "missing_out_of_band_test_policy"
+    }`, testAccMSOFabricPoliciesInterfaceSettingPhysicalConfigUpdate(), msoFabricPolicyTemplateInterfaceSettingName+"_physical")
+}
+
+func testAccMSOFabricPoliciesInterfaceSettingPortChannelDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_interface_setting" "missing" {
+        template_id = mso_fabric_policies_interface_setting.%s.template_id
+        name        = "missing_out_of_band_test_policy"
+    }`, testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigUpdate(), msoFabricPolicyTemplateInterfaceSettingName+"_portchannel")
 }
