@@ -3,12 +3,17 @@ package mso
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesEndpointMACTagPolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
 		Providers: testAccProviders,
@@ -21,6 +26,59 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Create Endpoint MAC Tag Policy (BD scope) with multiple annotations and tags")
+				},
+				Config: testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTags(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "mac", "AA:BB:A1:B2:C3:D4"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "name", fmt.Sprintf("AA:BB:A1:B2:C3:D4-[%s]", msoSchemaTemplateBdName)),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "bd_uuid"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "tag_annotations.#", "2"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "policy_tags.#", "2"),
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "tag_annotations",
+						map[string]string{
+							"key":   "annotation_key_1",
+							"value": "annotation_value_1",
+						},
+					),
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "tag_annotations",
+						map[string]string{
+							"key":   "annotation_key_2",
+							"value": "annotation_value_2",
+						},
+					),
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "policy_tags",
+						map[string]string{
+							"key":   "policy_key_1",
+							"value": "policy_value_1",
+						},
+					),
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd", "policy_tags",
+						map[string]string{
+							"key":   "policy_key_2",
+							"value": "policy_value_2",
+						},
+					),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate Endpoint MAC Tag Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "endpointMacTagPolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
 				},
 				Config: testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTags(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -117,6 +175,23 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing Endpoint MAC Tag Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: Create Endpoint MAC Tag Policy with duplicate object") },

@@ -24,6 +24,11 @@ func TestAccMSOTenantPoliciesEndpointMACTagPolicyDataSource(t *testing.T) {
 				ExpectError: regexp.MustCompile(`conflicts with`),
 			},
 			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTagsDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name 00:00:00:00:00:FF-.* not found`),
+			},
+			{
 				PreConfig: func() {
 					fmt.Println("Test: Endpoint MAC Tag Policy (BD scope) with multiple annotations and tags Data Source")
 				},
@@ -93,4 +98,13 @@ func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTagsD
 		testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTags(),
 		msoTenantPolicyTemplateName,
 	)
+}
+
+func testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTagsDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_endpoint_mac_tag_policy" "missing" {
+        template_id = mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd.template_id
+        mac         = "00:00:00:00:00:FF"
+        bd_uuid     = mso_tenant_policies_endpoint_mac_tag_policy.endpoint_mac_bd.bd_uuid
+    }`, testAccMSOTenantPoliciesEndpointMACTagPolicyConfigCreateBDWithMultipleTags())
 }
