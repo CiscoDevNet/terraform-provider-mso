@@ -100,6 +100,14 @@ func buildDHCPOptionsPayload(optionsRaw interface{}) []interface{} {
 	return options
 }
 
+func getDHCPOptionPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "dhcpOptionPolicies")
+}
+
 func setDHCPOptionPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/DHCPOptionPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -137,7 +145,13 @@ func setDHCPOptionPolicyData(d *schema.ResourceData, response *container.Contain
 
 func resourceMSODHCPOptionPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO DHCP Option Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSODHCPOptionPolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSODHCPOptionPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_dhcp_option_policy %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO DHCP Option Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -180,22 +194,23 @@ func resourceMSODHCPOptionPolicyRead(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "DHCPOptionPolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "dhcpOptionPolicies")
+	policy, err := getDHCPOptionPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setDHCPOptionPolicyData(d, policy, templateId)
+	if err := setDHCPOptionPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO DHCP Option Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }

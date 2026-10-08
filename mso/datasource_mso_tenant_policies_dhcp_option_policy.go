@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -68,17 +67,14 @@ func dataSourceMSODHCPOptionPolicyRead(d *schema.ResourceData, m interface{}) er
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getDHCPOptionPolicy(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "dhcpOptionPolicies")
-	if err != nil {
+	if err := setDHCPOptionPolicyData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setDHCPOptionPolicyData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO DHCP Option Policy Data Source - Read Complete: %v", d.Id())
 	return nil
 }
