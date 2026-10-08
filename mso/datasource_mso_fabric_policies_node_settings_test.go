@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSONodeSettingsDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSONodeSettingsDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Node Settings Data Source") },
 				Config:    testAccMSONodeSettingsDataSource(),
@@ -33,5 +39,13 @@ func testAccMSONodeSettingsDataSource() string {
 	data "mso_fabric_policies_node_settings" "node_settings" {
 	    template_id        = mso_fabric_policies_node_settings.node_settings.template_id
 	    name               = "tf_test_node_settings"
+    }`, testAccMSONodeSettingsConfigCreate())
+}
+
+func testAccMSONodeSettingsDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_node_settings" "missing" {
+        template_id = mso_fabric_policies_node_settings.node_settings.template_id
+        name        = "tf_missing_oob"
     }`, testAccMSONodeSettingsConfigCreate())
 }
