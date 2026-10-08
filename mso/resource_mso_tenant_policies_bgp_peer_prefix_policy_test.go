@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesBGPPeerPrefixPolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -22,6 +28,36 @@ func TestAccMSOTenantPoliciesBGPPeerPrefixPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "max_number_of_prefixes", "1000"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "threshold_percentage", "50"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "restart_time", "60"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate BGP Peer Prefix Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "bgpPeerPrefixPolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesBGPPeerPrefixPolicyConfigCreate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "name", "test_bgp_peer_prefix_policy"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "description", "Test BGP Peer Prefix Policy"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "action", "restart"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "max_number_of_prefixes", "1000"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "threshold_percentage", "50"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy", "restart_time", "60"),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
 				),
 			},
 			{
@@ -89,6 +125,23 @@ func TestAccMSOTenantPoliciesBGPPeerPrefixPolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing BGP Peer Prefix Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_bgp_peer_prefix_policy", "bgpPeerPrefixPol"),

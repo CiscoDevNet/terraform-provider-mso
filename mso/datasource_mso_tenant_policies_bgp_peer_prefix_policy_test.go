@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesBGPPeerPrefixPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesBGPPeerPrefixPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: BGP Peer Prefix Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesBGPPeerPrefixPolicyDataSource(),
@@ -33,5 +39,13 @@ func testAccMSOTenantPoliciesBGPPeerPrefixPolicyDataSource() string {
     data "mso_tenant_policies_bgp_peer_prefix_policy" "bgp_policy" {
         template_id = mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy.template_id
         name        = "test_bgp_peer_prefix_policy"
+    }`, testAccMSOTenantPoliciesBGPPeerPrefixPolicyConfigCreate())
+}
+
+func testAccMSOTenantPoliciesBGPPeerPrefixPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_bgp_peer_prefix_policy" "missing" {
+        template_id = mso_tenant_policies_bgp_peer_prefix_policy.bgp_policy.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesBGPPeerPrefixPolicyConfigCreate())
 }
