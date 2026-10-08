@@ -95,12 +95,7 @@ func dataSourceMSOEndpointMACTagPolicyRead(d *schema.ResourceData, m interface{}
 	}
 	d.SetId(dataSourceId)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
-	policy, err := GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "endpointMacTagPolicies")
+	policy, err := getEndpointMACTagPolicy(msoClient, templateId, name)
 	if err != nil {
 		return err
 	}

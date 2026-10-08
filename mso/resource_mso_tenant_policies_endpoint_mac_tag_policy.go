@@ -133,6 +133,14 @@ func getPolicyTagsPayload(policyTagsSet *schema.Set) []map[string]interface{} {
 	return payload
 }
 
+func getEndpointMACTagPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "endpointMacTagPolicies")
+}
+
 func setEndpointMACTagPolicyData(d *schema.ResourceData, response *container.Container, templateId string, m interface{}) error {
 	d.Set("template_id", templateId)
 	d.Set("mac", models.StripQuotes(response.S("mac").String()))
@@ -181,9 +189,12 @@ func setEndpointMACTagPolicyData(d *schema.ResourceData, response *container.Con
 
 func resourceMSOEndpointMACTagPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Endpoint MAC Tag Policy Resource - Beginning Import: %v", d.Id())
-	err := resourceMSOEndpointMACTagPolicyRead(d, m)
-	if err != nil {
+	importID := d.Id()
+	if err := resourceMSOEndpointMACTagPolicyRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_endpoint_mac_tag_policy %q: resource not found", importID)
 	}
 	log.Printf("[DEBUG] MSO Endpoint MAC Tag Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -244,18 +255,17 @@ func resourceMSOEndpointMACTagPolicyRead(d *schema.ResourceData, m interface{}) 
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "EndpointMACTagPolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "endpointMacTagPolicies")
+	policy, err := getEndpointMACTagPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
