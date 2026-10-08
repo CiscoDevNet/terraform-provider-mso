@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOL3OutInterfaceRoutingPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOL3OutInterfaceRoutingPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: L3Out Interface Routing Policy Data Source") },
 				Config:    testAccMSOL3OutInterfaceRoutingPolicyDataSource(),
@@ -50,5 +56,13 @@ func testAccMSOL3OutInterfaceRoutingPolicyDataSource() string {
     data "mso_tenant_policies_l3out_interface_routing_policy" "routing_policy" {
         template_id = mso_tenant_policies_l3out_interface_routing_policy.routing_policy.template_id
         name        = "test_routing_policy"
+    }`, testAccMSOL3OutInterfaceRoutingPolicyConfigAddOSPF())
+}
+
+func testAccMSOL3OutInterfaceRoutingPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_l3out_interface_routing_policy" "missing" {
+        template_id = mso_tenant_policies_l3out_interface_routing_policy.routing_policy.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOL3OutInterfaceRoutingPolicyConfigAddOSPF())
 }
