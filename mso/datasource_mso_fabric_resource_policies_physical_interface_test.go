@@ -18,7 +18,7 @@ func TestAccMSOFabricResourcePhysicalInterfaceDataSource(t *testing.T) {
 					fmt.Println("Test: Missing fabric_resource_policies_physical_interface data source remains an error")
 				},
 				Config:      testAccMSOFabricResourcePhysicalInterfaceTypePhysicalDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Physical Interface Data Source - With Interface type physical") },
@@ -60,7 +60,7 @@ func TestAccMSOFabricResourcePhysicalInterfaceDataSource(t *testing.T) {
 					fmt.Println("Test: Missing fabric_resource_policies_physical_interface data source remains an error")
 				},
 				Config:      testAccMSOFabricResourcePhysicalInterfaceTypeBreakoutDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Physical Interface Data Source - Breakout Mode") },

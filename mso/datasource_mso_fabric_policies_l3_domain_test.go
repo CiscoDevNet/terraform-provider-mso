@@ -16,7 +16,7 @@ func TestAccMSOL3DomainDataSource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_l3_domain data source remains an error") },
 				Config:      testAccMSOL3DomainDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: L3 Domain Data Source") },

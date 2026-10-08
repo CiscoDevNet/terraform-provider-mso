@@ -16,7 +16,7 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalDataSource(t *testing.T) {
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_interface_setting data source remains an error") },
 				Config:      testAccMSOFabricPoliciesInterfaceSettingPhysicalDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Data Source Interface Setting with type physical") },
@@ -65,7 +65,7 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelDataSource(t *testing.T)
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_interface_setting data source remains an error") },
 				Config:      testAccMSOFabricPoliciesInterfaceSettingPortChannelDataSourceMissing(),
-				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_test_policy not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Data Source Interface Setting with type portchannel") },
