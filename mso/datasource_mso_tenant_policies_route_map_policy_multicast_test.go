@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesMcastRouteMapPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Multicast Route Map Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesMcastRouteMapPolicyDataSource(),
@@ -48,5 +54,13 @@ func testAccMSOTenantPoliciesMcastRouteMapPolicyDataSource() string {
 	data "mso_tenant_policies_route_map_policy_multicast" "route_map_policy_multicast" {
 	    template_id        = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.template_id
 	    name               = "tf_test_route_map_policy_multicast"
+    }`, testAccMSOTenantPoliciesMcastRouteMapPolicyConfigUpdateAddingExtraEntry())
+}
+
+func testAccMSOTenantPoliciesMcastRouteMapPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_route_map_policy_multicast" "missing" {
+        template_id = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesMcastRouteMapPolicyConfigUpdateAddingExtraEntry())
 }
