@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,13 @@ func TestAccMSOFabricResourcePhysicalInterfaceDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Missing fabric_resource_policies_physical_interface data source remains an error")
+				},
+				Config:      testAccMSOFabricResourcePhysicalInterfaceTypePhysicalDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: Physical Interface Data Source - With Interface type physical") },
 				Config:    testAccMSOFabricResourcePhysicalInterfaceTypePhysicalDataSource(),
@@ -46,6 +54,13 @@ func TestAccMSOFabricResourcePhysicalInterfaceDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName+"_breakout", "name", msoFabricResourcePhysicalInterfaceName+"_breakout_updated"),
 					resource.TestCheckResourceAttr("mso_fabric_resource_policies_physical_interface."+msoFabricResourcePhysicalInterfaceName+"_breakout", "policy_group_type", "breakout"),
 				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Missing fabric_resource_policies_physical_interface data source remains an error")
+				},
+				Config:      testAccMSOFabricResourcePhysicalInterfaceTypeBreakoutDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Physical Interface Data Source - Breakout Mode") },
@@ -94,4 +109,20 @@ func testAccMSOFabricResourcePhysicalInterfaceTypeBreakoutDataSource() string {
 		msoFabricResourcePhysicalInterfaceName+"_breakout",
 		msoFabricResourceTemplateName,
 	)
+}
+
+func testAccMSOFabricResourcePhysicalInterfaceTypePhysicalDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_resource_policies_physical_interface" "missing" {
+        template_id = mso_fabric_resource_policies_physical_interface.%s.template_id
+        name        = "missing_out_of_band_test_policy"
+    }`, testAccMSOFabricResourcePhysicalInterfaceConfigUpdateAddingExtraInterfaceDescription(), msoFabricResourcePhysicalInterfaceName)
+}
+
+func testAccMSOFabricResourcePhysicalInterfaceTypeBreakoutDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_resource_policies_physical_interface" "missing" {
+        template_id = mso_fabric_resource_policies_physical_interface.%s.template_id
+        name        = "missing_out_of_band_test_policy"
+    }`, testAccMSOFabricResourcePhysicalInterfaceBreakoutModeConfigUpdateRemovingExtraInterfaceDescription(), msoFabricResourcePhysicalInterfaceName+"_breakout")
 }
