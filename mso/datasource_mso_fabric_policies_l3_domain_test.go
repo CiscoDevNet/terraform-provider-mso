@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOL3DomainDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_l3_domain data source remains an error") },
+				Config:      testAccMSOL3DomainDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name .* not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: L3 Domain Data Source") },
 				Config:    testAccMSOL3DomainDataSource(),
@@ -36,5 +42,13 @@ func testAccMSOL3DomainDataSource() string {
     data "mso_fabric_policies_l3_domain" "l3_domain" {
         template_id = mso_template.template_fabric_policy.id
         name        = mso_fabric_policies_l3_domain.l3_domain.name
+    }`, testAccMSOL3DomainConfigCreate())
+}
+
+func testAccMSOL3DomainDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_l3_domain" "missing" {
+        template_id = mso_fabric_policies_l3_domain.l3_domain.template_id
+        name        = "missing_out_of_band_test_policy"
     }`, testAccMSOL3DomainConfigCreate())
 }
