@@ -82,18 +82,15 @@ func setVlanRange(rangeEntries *schema.Set) []map[string]any {
 	return vlanRange
 }
 
-func setVlanPoolData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+func getVlanPool(c *client.Client, templateId, policyName string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "vlanPools")
+}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "vlanPools")
-	if err != nil {
-		return err
-	}
-
+func setVlanPoolData(d *schema.ResourceData, policy *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/VlanPool/%s", templateId, models.StripQuotes(policy.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(policy.S("name").String()))
@@ -124,18 +121,28 @@ func setVlanPoolData(d *schema.ResourceData, msoClient *client.Client, templateI
 func resourceMSOVlanPoolImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Beginning Import: %v", d.Id())
 	msoClient := m.(*client.Client)
-
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	importedID := d.Id()
+	templateId, err := GetTemplateIdFromResourceId(importedID)
 	if err != nil {
 		return nil, err
 	}
-
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "VlanPool")
+	policyName, err := GetPolicyNameFromResourceId(importedID, "VlanPool")
 	if err != nil {
 		return nil, err
 	}
-
-	setVlanPoolData(d, msoClient, templateId, policyName)
+	policy, err := getVlanPool(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("cannot import VLAN Pool %q: resource not found: %w", importedID, err)
+		}
+		return nil, err
+	}
+	if err := setVlanPoolData(d, policy, templateId); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import VLAN Pool %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -172,12 +179,20 @@ func resourceMSOVlanPoolCreate(d *schema.ResourceData, m any) error {
 func resourceMSOVlanPoolRead(d *schema.ResourceData, m any) error {
 	log.Printf("[DEBUG] MSO VLAN Pool Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
-
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
-
-	setVlanPoolData(d, msoClient, templateId, policyName)
-	log.Printf("[DEBUG] MSO VLAN Pool Resource - Read Complete : %v", d.Id())
+	policy, err := getVlanPool(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return err
+	}
+	if err := setVlanPoolData(d, policy, templateId); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] MSO VLAN Pool Resource - Read Complete: %v", d.Id())
 	return nil
 }
 
