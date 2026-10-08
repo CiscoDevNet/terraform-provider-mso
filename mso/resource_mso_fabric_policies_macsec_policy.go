@@ -149,18 +149,15 @@ func setMacsecKeys(macsecKeyEntries *schema.Set) []map[string]any {
 	return macsecKeys
 }
 
-func setMacsecPolicyData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+func getMacsecPolicy(c *client.Client, templateId, policyName string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "macsecPolicies")
+}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "macsecPolicies")
-	if err != nil {
-		return err
-	}
-
+func setMacsecPolicyData(d *schema.ResourceData, policy *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/macsecPolicy/%s", templateId, models.StripQuotes(policy.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(policy.S("name").String()))
@@ -232,18 +229,28 @@ func setMacsecPolicyData(d *schema.ResourceData, msoClient *client.Client, templ
 func resourceMSOMacsecPolicyImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO MACSec Policy Resource - Beginning Import: %v", d.Id())
 	msoClient := m.(*client.Client)
-
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	importedID := d.Id()
+	templateId, err := GetTemplateIdFromResourceId(importedID)
 	if err != nil {
 		return nil, err
 	}
-
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "macsecPolicy")
+	policyName, err := GetPolicyNameFromResourceId(importedID, "macsecPolicy")
 	if err != nil {
 		return nil, err
 	}
-
-	setMacsecPolicyData(d, msoClient, templateId, policyName)
+	policy, err := getMacsecPolicy(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("cannot import MACSec Policy %q: resource not found: %w", importedID, err)
+		}
+		return nil, err
+	}
+	if err := setMacsecPolicyData(d, policy, templateId); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import MACSec Policy %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO MACSec Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -322,12 +329,20 @@ func resourceMSOMacsecPolicyCreate(d *schema.ResourceData, m any) error {
 func resourceMSOMacsecPolicyRead(d *schema.ResourceData, m any) error {
 	log.Printf("[DEBUG] MSO MACSec Policy Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
-
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
-
-	setMacsecPolicyData(d, msoClient, templateId, policyName)
-	log.Printf("[DEBUG] MSO MACSec Policy Resource - Read Complete : %v", d.Id())
+	policy, err := getMacsecPolicy(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return err
+	}
+	if err := setMacsecPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] MSO MACSec Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }
 

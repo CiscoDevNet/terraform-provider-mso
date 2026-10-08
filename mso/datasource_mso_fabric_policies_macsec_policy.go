@@ -95,7 +95,13 @@ func dataSourceMacsecPolicyRead(d *schema.ResourceData, m interface{}) error {
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	setMacsecPolicyData(d, msoClient, templateId, policyName)
+	policy, err := getMacsecPolicy(msoClient, templateId, policyName)
+	if err != nil {
+		return err
+	}
+	if err := setMacsecPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO MACsec Policy Data Source - Read Complete : %v", d.Id())
 	return nil
 }
