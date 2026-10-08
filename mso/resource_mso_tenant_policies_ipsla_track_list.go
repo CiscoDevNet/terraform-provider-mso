@@ -101,6 +101,14 @@ func resourceMSOIPSLATrackList() *schema.Resource {
 	}
 }
 
+func getIPSLATrackList(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "ipslaTrackLists")
+}
+
 func setIPSLATrackListData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/IPSLATrackLists/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -136,7 +144,13 @@ func setIPSLATrackListData(d *schema.ResourceData, response *container.Container
 
 func resourceMSOIPSLATrackListImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO IPSLA Track List Resource - Beginning Import: %v", d.Id())
-	resourceMSOIPSLATrackListRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOIPSLATrackListRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_ipsla_track_list %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO IPSLA Track List Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -193,22 +207,23 @@ func resourceMSOIPSLATrackListRead(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "IPSLATrackLists")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "ipslaTrackLists")
+	policy, err := getIPSLATrackList(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setIPSLATrackListData(d, policy, templateId)
+	if err := setIPSLATrackListData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO IPSLA Track List Resource - Read Complete : %v", d.Id())
 	return nil
 }

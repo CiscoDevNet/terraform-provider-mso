@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesIPSLATrackListDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesIPSLATrackListDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: IPSLA Track List Data Source") },
 				Config:    testAccMSOTenantPoliciesIPSLATrackListDataSource(),
@@ -42,5 +48,13 @@ func testAccMSOTenantPoliciesIPSLATrackListDataSource() string {
 	data "mso_tenant_policies_ipsla_track_list" "%[2]s_data" {
 	    template_id	= mso_tenant_policies_ipsla_track_list.%[2]s.template_id
 	    name		= "%[2]s"
+    }`, testAccMSOTenantPoliciesIPSLATrackListConfigUpdateRemovingExtraEntry(), msoTenantPolicyTemplateIPSLATrackListName)
+}
+
+func testAccMSOTenantPoliciesIPSLATrackListDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_ipsla_track_list" "missing" {
+        template_id = mso_tenant_policies_ipsla_track_list.%s.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesIPSLATrackListConfigUpdateRemovingExtraEntry(), msoTenantPolicyTemplateIPSLATrackListName)
 }

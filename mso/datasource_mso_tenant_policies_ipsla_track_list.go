@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -80,17 +79,14 @@ func dataSourceMSOIPSLATrackListRead(d *schema.ResourceData, m interface{}) erro
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getIPSLATrackList(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "ipslaTrackLists")
-	if err != nil {
+	if err := setIPSLATrackListData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setIPSLATrackListData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO IPSLA Track List Data Source - Read Complete : %v", d.Id())
 	return nil
 }
