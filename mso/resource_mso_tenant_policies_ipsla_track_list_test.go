@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_ipsla_track_list." + msoTenantPolicyTemplateIPSLATrackListName
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -29,6 +35,43 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 							"weight":         "10",
 						},
 					),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate IPSLA Track List after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "ipslaTrackLists"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesIPSLATrackListConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "name", msoTenantPolicyTemplateIPSLATrackListName),
+					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "description", "Terraform test IPSLA Track List"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "threshold_down", "11"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "threshold_up", "12"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "type", "weight"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members.#", "1"),
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName, "members",
+						map[string]string{
+							"destination_ip": "1.1.1.1",
+							"scope_type":     "bd",
+							"weight":         "10",
+						},
+					),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
 				),
 			},
 			{
@@ -81,6 +124,23 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_ipsla_track_list." + msoTenantPolicyTemplateIPSLATrackListName,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing IPSLA Track List") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_ipsla_track_list", "ipslaTrackList"),
