@@ -235,6 +235,14 @@ func resourceMSOInterfaceSetting() *schema.Resource {
 	}
 }
 
+func getInterfaceSetting(c *client.Client, templateID, name string) (*container.Container, error) {
+	template, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(template, name, "fabricPolicyTemplate", "template", "interfacePolicyGroups")
+}
+
 func setInterfaceSettingData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	log.Printf("[DEBUG] MSO Interface Setting Resource - Beginning setInterfaceSettingData")
 
@@ -387,7 +395,13 @@ func setInterfaceSettingData(d *schema.ResourceData, response *container.Contain
 
 func resourceMSOInterfaceSettingImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Interface Setting Resource - Beginning Import: %v", d.Id())
-	resourceMSOInterfaceSettingRead(d, m)
+	importedID := d.Id()
+	if err := resourceMSOInterfaceSettingRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import Interface Setting %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO Interface Setting Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -770,18 +784,17 @@ func resourceMSOInterfaceSettingRead(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "InterfaceSetting")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "interfacePolicyGroups")
+	policy, err := getInterfaceSetting(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
