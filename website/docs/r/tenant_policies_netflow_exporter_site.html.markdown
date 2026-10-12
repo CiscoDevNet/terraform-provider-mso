@@ -44,7 +44,7 @@ resource "mso_tenant_policies_netflow_exporter_site" "netflow_exporter_site" {
 * `source_ip` - (Optional) The custom source IP address or prefix. Required when `source_ip_address_type` is `customSrcIP`.
 * `destination_port` - (Required) The destination port of the NetFlow Exporter.
 * `destination_ip` - (Required) The IPv4 or IPv6 destination address.
-* `dscp` - (Required) The QoS DSCP value.
+* `dscp` - (Required) The QoS DSCP value. Allowed values are `af11`, `af12`, `af13`, `af21`, `af22`, `af23`, `af31`, `af32`, `af33`, `af41`, `af42`, `af43`, `cs0`, `cs1`, `cs2`, `cs3`, `cs4`, `cs5`, `cs6`, `cs7`, `expedited_forwarding`, `unspecified`, and `voice_admit`.
 * `application_epg` - (Optional) The application EPG associated with the NetFlow Exporter. Cannot be combined with `external_epg`.
     * `tenant_name` - (Required) The name of the tenant.
     * `anp_name` - (Required) The name of the application profile.
