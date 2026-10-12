@@ -439,10 +439,7 @@ func GetPolicyByName(cont *container.Container, policyName string, templateEleme
 		for i := range policies {
 			policy := policyObject.Index(i)
 			name, ok := policy.S("name").Data().(string)
-			if !ok {
-				return nil, fmt.Errorf("Policy name at index %d is not a string", i)
-			}
-			if name == policyName {
+			if ok && name == policyName {
 				return policy, nil
 			}
 		}
@@ -452,10 +449,7 @@ func GetPolicyByName(cont *container.Container, policyName string, templateEleme
 			break
 		}
 		name, ok := policyObject.S("name").Data().(string)
-		if !ok {
-			return nil, fmt.Errorf("Policy name is not a string")
-		}
-		if name == policyName {
+		if ok && name == policyName {
 			return policyObject, nil
 		}
 	default:
