@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,13 +14,18 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyDataSource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesMcastRouteMapPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Multicast Route Map Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesMcastRouteMapPolicyDataSource(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "name", "tf_test_route_map_policy_multicast"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "description", "Terraform test Route Map Policy for Multicast adding extra entry"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries.#", "2"),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "name", "tf_test_route_map_policy_multicast"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "description", "Terraform test Route Map Policy for Multicast adding extra entry"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries.#", "2"),
+					customTestCheckResourceTypeSetAttr("data.mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
 						map[string]string{
 							"order":               "1",
 							"group_ip":            "226.2.2.2/8",
@@ -28,7 +34,7 @@ func TestAccMSOTenantPoliciesMcastRouteMapPolicyDataSource(t *testing.T) {
 							"action":              "permit",
 						},
 					),
-					customTestCheckResourceTypeSetAttr("mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
+					customTestCheckResourceTypeSetAttr("data.mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast", "route_map_multicast_entries",
 						map[string]string{
 							"order":               "2",
 							"group_ip":            "226.3.3.3/24",
@@ -48,5 +54,13 @@ func testAccMSOTenantPoliciesMcastRouteMapPolicyDataSource() string {
 	data "mso_tenant_policies_route_map_policy_multicast" "route_map_policy_multicast" {
 	    template_id        = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.template_id
 	    name               = "tf_test_route_map_policy_multicast"
+    }`, testAccMSOTenantPoliciesMcastRouteMapPolicyConfigUpdateAddingExtraEntry())
+}
+
+func testAccMSOTenantPoliciesMcastRouteMapPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_route_map_policy_multicast" "missing" {
+        template_id = mso_tenant_policies_route_map_policy_multicast.route_map_policy_multicast.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesMcastRouteMapPolicyConfigUpdateAddingExtraEntry())
 }

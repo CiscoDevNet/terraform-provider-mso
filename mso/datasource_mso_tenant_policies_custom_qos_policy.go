@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -112,17 +111,14 @@ func dataSourceMSOCustomQoSPolicyRead(d *schema.ResourceData, m interface{}) err
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getCustomQoSPolicy(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "qosPolicies")
-	if err != nil {
+	if err := setCustomQoSPolicyData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setCustomQoSPolicyData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO Custom QoS Policy Data Source - Read Complete: %v", d.Id())
 	return nil
 }

@@ -132,6 +132,14 @@ func getInterfaceDescriptionsPayload(node string, interfaceDescriptions *schema.
 	return payload
 }
 
+func getPortChannelInterface(c *client.Client, templateID, name string) (*container.Container, error) {
+	template, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(template, name, "fabricResourceTemplate", "template", "portChannels")
+}
+
 func setPortChannelInterfaceData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/PortChannelInterface/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -167,9 +175,12 @@ func setPortChannelInterfaceData(d *schema.ResourceData, response *container.Con
 
 func resourceMSOPortChannelInterfaceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Port Channel Interface Resource - Beginning Import: %v", d.Id())
-	err := resourceMSOPortChannelInterfaceRead(d, m)
-	if err != nil {
+	importedID := d.Id()
+	if err := resourceMSOPortChannelInterfaceRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import Port Channel Interface %q: resource not found", importedID)
 	}
 	log.Printf("[DEBUG] MSO Port Channel Interface Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -217,18 +228,17 @@ func resourceMSOPortChannelInterfaceRead(d *schema.ResourceData, m interface{}) 
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "PortChannelInterface")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricResourceTemplate", "template", "portChannels")
+	policy, err := getPortChannelInterface(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

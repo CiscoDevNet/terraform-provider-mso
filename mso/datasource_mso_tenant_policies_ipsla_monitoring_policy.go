@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -84,17 +83,14 @@ func dataSourceMSOIPSLAMonitoringPolicyRead(d *schema.ResourceData, m interface{
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getIPSLAMonitoringPolicy(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "ipslaMonitoringPolicies")
-	if err != nil {
+	if err := setIPSLAMonitoringPolicyData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setIPSLAMonitoringPolicyData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO IPSLA Monitoring Policy Data Source - Read Complete : %v", d.Id())
 	return nil
 }

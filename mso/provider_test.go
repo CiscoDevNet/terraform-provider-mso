@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
+	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -29,6 +31,65 @@ func init() {
 func TestProvider(t *testing.T) {
 	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
+	}
+}
+
+func testAccDeletePolicyOutOfBand(c *client.Client, templateID, uuid string, templateElements ...string) error {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return err
+	}
+	policy, index, err := testAccFindPolicyByUUID(response, uuid, templateElements...)
+	if err != nil {
+		return err
+	}
+	name, ok := policy.S("name").Data().(string)
+	if !ok {
+		return fmt.Errorf("policy to delete has no valid name")
+	}
+	path := "/" + strings.Join(templateElements, "/")
+	if index >= 0 {
+		path += "/" + strconv.Itoa(index)
+	}
+	if _, err := c.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateID), models.GetRemovePatchPayload(path)); err != nil {
+		return err
+	}
+
+	response, err = c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return err
+	}
+	if _, err := GetPolicyByName(response, name, templateElements...); !isPolicyNotFound(err) {
+		if err != nil {
+			return fmt.Errorf("verify out-of-band deletion: %w", err)
+		}
+		return fmt.Errorf("policy %q still exists after out-of-band deletion", name)
+	}
+	return nil
+}
+
+// Singleton policies may expose their UUID inside the global settings object.
+func testAccFindPolicyByUUID(response *container.Container, uuid string, templateElements ...string) (*container.Container, int, error) {
+	collection, err := getPolicyCollection(response, templateElements...)
+	if err != nil {
+		return nil, -1, err
+	}
+	switch collection.Data().(type) {
+	case []interface{}:
+		index, err := GetPolicyIndexByKeyAndValue(response, "uuid", uuid, templateElements...)
+		if err != nil {
+			return nil, -1, err
+		}
+		return collection.Index(index), index, nil
+	case map[string]interface{}:
+		policyUUID, _ := collection.S("uuid").Data().(string)
+		globalUUID, _ := collection.S("global", "uuid").Data().(string)
+		if policyUUID != uuid && globalUUID != uuid {
+			return nil, -1, fmt.Errorf("singleton policy UUID does not match state")
+		}
+		return collection, -1, nil
+	default:
+		return nil, -1, fmt.Errorf("policy collection is not a list or object")
 	}
 }
 

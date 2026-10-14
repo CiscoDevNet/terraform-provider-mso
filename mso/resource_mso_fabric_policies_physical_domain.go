@@ -52,18 +52,15 @@ func resourceMSOPhysicalDomain() *schema.Resource {
 	}
 }
 
-func setPhysicalDomainData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+func getPhysicalDomain(c *client.Client, templateId, policyName string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "domains")
+}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "domains")
-	if err != nil {
-		return err
-	}
-
+func setPhysicalDomainData(d *schema.ResourceData, policy *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/physicalDomain/%s", templateId, models.StripQuotes(policy.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(policy.S("name").String()))
@@ -77,18 +74,28 @@ func setPhysicalDomainData(d *schema.ResourceData, msoClient *client.Client, tem
 func resourceMSOPhysicalDomainImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Physical Domain Resource - Beginning Import: %v", d.Id())
 	msoClient := m.(*client.Client)
-
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	importedID := d.Id()
+	templateId, err := GetTemplateIdFromResourceId(importedID)
 	if err != nil {
 		return nil, err
 	}
-
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "physicalDomain")
+	policyName, err := GetPolicyNameFromResourceId(importedID, "physicalDomain")
 	if err != nil {
 		return nil, err
 	}
-
-	setPhysicalDomainData(d, msoClient, templateId, policyName)
+	policy, err := getPhysicalDomain(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("cannot import Physical Domain %q: resource not found: %w", importedID, err)
+		}
+		return nil, err
+	}
+	if err := setPhysicalDomainData(d, policy, templateId); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import Physical Domain %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO Physical Domain Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -125,12 +132,20 @@ func resourceMSOPhysicalDomainCreate(d *schema.ResourceData, m any) error {
 func resourceMSOPhysicalDomainRead(d *schema.ResourceData, m any) error {
 	log.Printf("[DEBUG] MSO Physical Domain Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
-
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
-
-	setPhysicalDomainData(d, msoClient, templateId, policyName)
-	log.Printf("[DEBUG] MSO Physical Domain Resource - Read Complete : %v", d.Id())
+	policy, err := getPhysicalDomain(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return err
+	}
+	if err := setPhysicalDomainData(d, policy, templateId); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] MSO Physical Domain Resource - Read Complete: %v", d.Id())
 	return nil
 }
 

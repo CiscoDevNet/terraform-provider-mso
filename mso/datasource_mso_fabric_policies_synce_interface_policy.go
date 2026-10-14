@@ -59,7 +59,13 @@ func dataSourceMSOSyncEInterfacePolicyRead(d *schema.ResourceData, m interface{}
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	setSyncEInterfacePolicyData(d, msoClient, templateId, policyName)
+	policy, err := getSyncEInterfacePolicy(msoClient, templateId, policyName)
+	if err != nil {
+		return err
+	}
+	if err := setSyncEInterfacePolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO VLAN Pool Data Source - Read Complete : %v", d.Id())
 	return nil
 }

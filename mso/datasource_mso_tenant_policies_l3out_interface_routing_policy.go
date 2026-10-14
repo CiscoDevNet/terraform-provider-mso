@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -181,17 +180,14 @@ func dataSourceMSOL3OutInterfaceRoutingPolicyRead(d *schema.ResourceData, m inte
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getL3OutInterfaceRoutingPolicy(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "l3OutIntfPolGroups")
-	if err != nil {
+	if err := setL3OutInterfaceRoutingPolicyData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setL3OutInterfaceRoutingPolicyData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO L3Out Interface Routing Policy Data Source - Read Complete: %v", d.Id())
 	return nil
 }

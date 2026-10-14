@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
+	resourceName := "mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -15,6 +21,50 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Virtual Port Channel Interface Resource - Create")
+				},
+				Config: testAccMSOVirtualPortChannelInterfaceConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "name", "tf_test_vpc_if"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "description", "Terraform test VPC Interface"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_1", "101"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_2", "102"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_1_interfaces.#", "2"),
+					testCheckTypeSetStringElemAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_1_interfaces", "1/1"),
+					testCheckTypeSetStringElemAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_1_interfaces", "1/10-11"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_2_interfaces.#", "1"),
+					testCheckTypeSetStringElemAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "node_2_interfaces", "1/2"),
+					resource.TestCheckResourceAttr("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_descriptions.#", "1"),
+					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if", "interface_policy_group_uuid"),
+					CustomTestCheckTypeSetElemAttrs(
+						"mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
+						"interface_descriptions",
+						map[string]string{
+							"node":        "101",
+							"interface":   "1/1",
+							"description": "Terraform test interface description",
+						},
+					),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate Virtual Port Channel Interface after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "fabricResourceTemplate", "template", "virtualPortChannels"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
 				},
 				Config: testAccMSOVirtualPortChannelInterfaceConfigCreate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -119,6 +169,23 @@ func TestAccMSOVirtualPortChannelInterfaceResource(t *testing.T) {
 				ResourceName:      "mso_fabric_resource_policies_virtual_port_channel_interface.vpc_if",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing Virtual Port Channel Interface") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments(

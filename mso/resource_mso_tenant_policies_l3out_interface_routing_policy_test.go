@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOL3OutInterfaceRoutingPolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_l3out_interface_routing_policy.routing_policy"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -15,6 +21,47 @@ func TestAccMSOL3OutInterfaceRoutingPolicyResource(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Create L3Out Interface Routing Policy with BFD") },
 				Config:    testAccMSOL3OutInterfaceRoutingPolicyConfigCreateWithBFD(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "name", "test_routing_policy"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "description", "Test L3Out Interface Routing Policy"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "uuid"),
+
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_multi_hop_settings.#", "1"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_multi_hop_settings.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_multi_hop_settings.0.detection_multiplier", "3"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_multi_hop_settings.0.min_receive_interval", "250"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_multi_hop_settings.0.min_transmit_interval", "250"),
+
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.#", "1"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.detection_multiplier", "3"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.min_receive_interval", "50"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.min_transmit_interval", "50"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.echo_receive_interval", "50"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.echo_admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "bfd_settings.0.interface_control", "false"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate L3Out Interface Routing Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "l3OutIntfPolGroups"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOL3OutInterfaceRoutingPolicyConfigCreateWithBFD(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "name", "test_routing_policy"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_interface_routing_policy.routing_policy", "description", "Test L3Out Interface Routing Policy"),
@@ -158,6 +205,23 @@ func TestAccMSOL3OutInterfaceRoutingPolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_l3out_interface_routing_policy.routing_policy",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing L3Out Interface Routing Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_l3out_interface_routing_policy", "l3OutIntfPolGroup"),

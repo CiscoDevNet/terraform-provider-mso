@@ -68,8 +68,11 @@ func dataSourceMSOFabricResourcePoliciesVirtualPortChannelInterfaceRead(d *schem
 	templateId := d.Get("template_id").(string)
 	name := d.Get("name").(string)
 
-	err := setVPCInterfaceData(d, msoClient, templateId, name)
+	policy, err := getVPCInterface(msoClient, templateId, name)
 	if err != nil {
+		return err
+	}
+	if err := setVPCInterfaceData(d, policy, templateId); err != nil {
 		return err
 	}
 

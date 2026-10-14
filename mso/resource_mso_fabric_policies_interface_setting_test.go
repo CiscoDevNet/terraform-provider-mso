@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
+	resourceName := "mso_fabric_policies_interface_setting." + msoFabricPolicyTemplateInterfaceSettingName + "_physical"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -15,6 +21,60 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Create Fabric Policies Interface Setting with type physical") },
 				Config:    testAccMSOFabricPoliciesInterfaceSettingPhysicalConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "name", msoFabricPolicyTemplateInterfaceSettingName+"_physical"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "description", ""),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "auto_negotiation", "on"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "cdp_admin_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "lldp_receive_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "llfc_receive_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "llfc_transmit_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "lldp_transmit_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "pfc_admin_state", "auto"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "l2_interface_qinq", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "l2_interface_reflective_relay", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "vlan_scope", "global"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "stp_bpdu_filter", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "stp_bpdu_guard", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_strict_mode", "off"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_initial_delay_time", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_transmission_frequency_sec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_transmission_frequency_msec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_grace_period_sec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "mcp_grace_period_msec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "link_level_bring_up_delay", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "link_level_debounce_interval", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "link_level_fec", "inherit"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "speed", "inherit"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "type", "physical"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "template_id"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "domain_uuids.#", "1"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "synce_uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy_uuid"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate Physical Interface Setting after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "fabricPolicyTemplate", "template", "interfacePolicyGroups"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOFabricPoliciesInterfaceSettingPhysicalConfigCreate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "name", msoFabricPolicyTemplateInterfaceSettingName+"_physical"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "description", ""),
@@ -91,11 +151,31 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_physical", "access_macsec_policy_uuid", ""),
 				),
 			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing Physical Interface Setting") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
+			},
 		},
 	})
 }
 
 func TestAccMSOFabricPoliciesInterfaceSettingPortChannelResource(t *testing.T) {
+	resourceName := "mso_fabric_policies_interface_setting." + msoFabricPolicyTemplateInterfaceSettingName + "_portchannel"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -103,6 +183,61 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelResource(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Create Fabric Policies Interface Setting with type portchannel") },
 				Config:    testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "name", msoFabricPolicyTemplateInterfaceSettingName+"_portchannel"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "description", ""),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "auto_negotiation", "on"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "cdp_admin_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "lldp_receive_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "llfc_receive_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "llfc_transmit_state", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "lldp_transmit_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "pfc_admin_state", "auto"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "l2_interface_qinq", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "l2_interface_reflective_relay", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "vlan_scope", "global"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "stp_bpdu_filter", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "stp_bpdu_guard", "disabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_strict_mode", "off"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_initial_delay_time", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_transmission_frequency_msec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_transmission_frequency_sec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_grace_period_sec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "mcp_grace_period_msec", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "link_level_bring_up_delay", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "link_level_debounce_interval", "0"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "link_level_fec", "inherit"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "template_id"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "load_balance_hashing", ""),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_max_links", "16"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_min_links", "1"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "port_channel_mode", "static_channel_mode_on"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "speed", "inherit"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "type", "portchannel"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate Port Channel Interface Setting after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "fabricPolicyTemplate", "template", "interfacePolicyGroups"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOFabricPoliciesInterfaceSettingPortChannelConfigCreate(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "name", msoFabricPolicyTemplateInterfaceSettingName+"_portchannel"),
 					resource.TestCheckResourceAttr("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "description", ""),
@@ -185,6 +320,23 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "synce_uuid"),
 					resource.TestCheckResourceAttrSet("mso_fabric_policies_interface_setting."+msoFabricPolicyTemplateInterfaceSettingName+"_portchannel", "access_macsec_policy_uuid"),
 				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing Port Channel Interface Setting") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 	})

@@ -3,12 +3,17 @@ package mso
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOMacsecPolicyResource(t *testing.T) {
+	resourceName := "mso_fabric_policies_macsec_policy.macsec_policy"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -41,6 +46,49 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 							"end_time":   "2030-09-23 00:00:00",
 						},
 					),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate MACsec Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "fabricPolicyTemplate", "template", "macsecPolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOMacsecPolicyConfigCreate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "name", "tf_test_macsec_policy"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "description", "Terraform test MACsec Policy"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "admin_state", "enabled"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "interface_type", "access"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "cipher_suite", "256GcmAes"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "window_size", "128"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "security_policy", "shouldSecure"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "sak_expire_time", "60"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "confidentiality_offset", "offset30"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "key_server_priority", "8"),
+					resource.TestCheckResourceAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys.#", "1"),
+					customTestCheckResourceTypeSetAttr("mso_fabric_policies_macsec_policy.macsec_policy", "macsec_keys",
+						map[string]string{
+							"key_name":   "abc123",
+							"psk":        "AA111111111111111111111111111111111111111111111111111111111111aa",
+							"start_time": "2027-09-23 00:00:00",
+							"end_time":   "2030-09-23 00:00:00",
+						},
+					),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
 				),
 			},
 			{
@@ -126,6 +174,23 @@ func TestAccMSOMacsecPolicyResource(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"macsec_keys"},
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing MACsec Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_fabric_policies_macsec_policy", "fabricPolicyTemplate", "template", "macsecPolicies"),

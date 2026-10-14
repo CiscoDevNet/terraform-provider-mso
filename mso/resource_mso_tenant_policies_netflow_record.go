@@ -82,6 +82,14 @@ func buildMatchParametersPayload(matchParamsRaw interface{}) []string {
 	return matchParams
 }
 
+func getNetflowRecord(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "netFlowRecords")
+}
+
 func setNetflowRecordData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	name := models.StripQuotes(response.S("name").String())
 	d.SetId(fmt.Sprintf("templateId/%s/NetflowRecord/%s", templateId, name))
@@ -106,9 +114,12 @@ func setNetflowRecordData(d *schema.ResourceData, response *container.Container,
 
 func resourceMSONetflowRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO NetFlow Record Resource - Beginning Import: %v", d.Id())
-	err := resourceMSONetflowRecordRead(d, m)
-	if err != nil {
+	importID := d.Id()
+	if err := resourceMSONetflowRecordRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_netflow_record %q: resource not found", importID)
 	}
 	log.Printf("[DEBUG] MSO NetFlow Record Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -149,18 +160,17 @@ func resourceMSONetflowRecordRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "NetflowRecord")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "netFlowRecords")
+	policy, err := getNetflowRecord(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

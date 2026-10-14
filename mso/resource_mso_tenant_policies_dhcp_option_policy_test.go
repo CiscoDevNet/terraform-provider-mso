@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSODHCPOptionPolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_dhcp_option_policy.dhcp_policy"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -15,6 +21,43 @@ func TestAccMSODHCPOptionPolicyResource(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Create DHCP Option Policy") },
 				Config:    testAccMSODHCPOptionPolicyConfigCreate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "name", "test_dhcp_option_policy"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "description", "Test DHCP Option Policy"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "uuid"),
+
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "options", map[string]string{
+						"name": "option_1",
+						"id":   "1",
+						"data": "data_1",
+					}),
+					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "options", map[string]string{
+						"name": "option_2",
+						"id":   "2",
+						"data": "data_2",
+					}),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate DHCP Option Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "dhcpOptionPolicies"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSODHCPOptionPolicyConfigCreate(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "name", "test_dhcp_option_policy"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_dhcp_option_policy.dhcp_policy", "description", "Test DHCP Option Policy"),
@@ -101,6 +144,23 @@ func TestAccMSODHCPOptionPolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_dhcp_option_policy.dhcp_policy",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing DHCP Option Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_dhcp_option_policy", "dhcpOption"),

@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,15 +14,20 @@ func TestAccMSONodeSettingsDataSource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSONodeSettingsDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Node Settings Data Source") },
 				Config:    testAccMSONodeSettingsDataSource(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "description", "Terraform test Node Settings Policy"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.0.admin_state", "enabled"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "synce.0.quality_level", "option_2_generation_1"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.0.node_domain", "25"),
-					resource.TestCheckResourceAttr("mso_fabric_policies_node_settings.node_settings", "ptp.0.priority_2", "99"),
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_node_settings.node_settings", "name", "tf_test_node_settings"),
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_node_settings.node_settings", "description", "Terraform test Node Settings Policy"),
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_node_settings.node_settings", "synce.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_node_settings.node_settings", "synce.0.quality_level", "option_2_generation_1"),
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_node_settings.node_settings", "ptp.0.node_domain", "25"),
+					resource.TestCheckResourceAttr("data.mso_fabric_policies_node_settings.node_settings", "ptp.0.priority_2", "99"),
 				),
 			},
 		},
@@ -33,5 +39,13 @@ func testAccMSONodeSettingsDataSource() string {
 	data "mso_fabric_policies_node_settings" "node_settings" {
 	    template_id        = mso_fabric_policies_node_settings.node_settings.template_id
 	    name               = "tf_test_node_settings"
+    }`, testAccMSONodeSettingsConfigCreate())
+}
+
+func testAccMSONodeSettingsDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_node_settings" "missing" {
+        template_id = mso_fabric_policies_node_settings.node_settings.template_id
+        name        = "tf_missing_oob"
     }`, testAccMSONodeSettingsConfigCreate())
 }

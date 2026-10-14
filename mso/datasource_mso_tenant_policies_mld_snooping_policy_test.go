@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesMLDSnoopingPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesMLDSnoopingPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: MLD Snooping Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesMLDSnoopingPolicyDataSource(),
@@ -38,5 +44,13 @@ func testAccMSOTenantPoliciesMLDSnoopingPolicyDataSource() string {
     data "mso_tenant_policies_mld_snooping_policy" "mld_policy" {
         template_id = mso_tenant_policies_mld_snooping_policy.mld_policy.template_id
         name        = "test_mld_snooping_policy"
+    }`, testAccMSOTenantPoliciesMLDSnoopingPolicyConfigCreate())
+}
+
+func testAccMSOTenantPoliciesMLDSnoopingPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_mld_snooping_policy" "missing" {
+        template_id = mso_tenant_policies_mld_snooping_policy.mld_policy.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesMLDSnoopingPolicyConfigCreate())
 }

@@ -94,6 +94,14 @@ func resourceMSOMCPGlobalPolicy() *schema.Resource {
 	}
 }
 
+func getMCPGlobalPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	template, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(template, name, "fabricPolicyTemplate", "template", "mcpGlobalPolicy")
+}
+
 func setMCPGlobalPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/MCPGlobalPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -145,7 +153,13 @@ func setMCPGlobalPolicyData(d *schema.ResourceData, response *container.Containe
 
 func resourceMSOMCPGlobalPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO MCP Global Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOMCPGlobalPolicyRead(d, m)
+	importedID := d.Id()
+	if err := resourceMSOMCPGlobalPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import MCP Global Policy %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO MCP Global Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -223,22 +237,23 @@ func resourceMSOMCPGlobalPolicyRead(d *schema.ResourceData, m interface{}) error
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "MCPGlobalPolicy")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "mcpGlobalPolicy")
+	policy, err := getMCPGlobalPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setMCPGlobalPolicyData(d, policy, templateId)
+	if err := setMCPGlobalPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO MCP Global Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }

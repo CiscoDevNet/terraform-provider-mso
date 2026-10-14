@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -55,12 +54,7 @@ func dataSourceMSOTenantPoliciesNetflowMonitorRead(d *schema.ResourceData, m int
 	templateId := d.Get("template_id").(string)
 	monitorName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
-	monitor, err := GetPolicyByName(response, monitorName, "tenantPolicyTemplate", "template", "netFlowMonitors")
+	monitor, err := getNetflowMonitor(msoClient, templateId, monitorName)
 	if err != nil {
 		return err
 	}

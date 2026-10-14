@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,21 +14,26 @@ func TestAccMSOTenantPoliciesCustomQoSPolicyDataSource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasicMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_out_of_band_deletion not found`),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Custom QoS Policy Data Source - Basic") },
 				Config:    testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("mso_tenant_policies_custom_qos_policy.qos_policy", "name", "test_custom_qos_policy"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_custom_qos_policy.qos_policy", "description", "Test Custom QoS Policy"),
-					resource.TestCheckResourceAttrSet("mso_tenant_policies_custom_qos_policy.qos_policy", "uuid"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_custom_qos_policy.qos_policy", "name", "test_custom_qos_policy"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_custom_qos_policy.qos_policy", "description", "Test Custom QoS Policy"),
+					resource.TestCheckResourceAttrSet("data.mso_tenant_policies_custom_qos_policy.qos_policy", "uuid"),
 
-					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_custom_qos_policy.qos_policy", "dscp_mappings", map[string]string{
+					CustomTestCheckTypeSetElemAttrs("data.mso_tenant_policies_custom_qos_policy.qos_policy", "dscp_mappings", map[string]string{
 						"dscp_from":    "af11",
 						"dscp_to":      "af12",
 						"dscp_target":  "af11",
 						"target_cos":   "background",
 						"qos_priority": "level1",
 					}),
-					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_custom_qos_policy.qos_policy", "dscp_mappings", map[string]string{
+					CustomTestCheckTypeSetElemAttrs("data.mso_tenant_policies_custom_qos_policy.qos_policy", "dscp_mappings", map[string]string{
 						"dscp_from":    "af21",
 						"dscp_to":      "af22",
 						"dscp_target":  "af21",
@@ -35,14 +41,14 @@ func TestAccMSOTenantPoliciesCustomQoSPolicyDataSource(t *testing.T) {
 						"qos_priority": "level2",
 					}),
 
-					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_custom_qos_policy.qos_policy", "cos_mappings", map[string]string{
+					CustomTestCheckTypeSetElemAttrs("data.mso_tenant_policies_custom_qos_policy.qos_policy", "cos_mappings", map[string]string{
 						"dot1p_from":   "background",
 						"dot1p_to":     "best_effort",
 						"dscp_target":  "af11",
 						"target_cos":   "background",
 						"qos_priority": "level1",
 					}),
-					CustomTestCheckTypeSetElemAttrs("mso_tenant_policies_custom_qos_policy.qos_policy", "cos_mappings", map[string]string{
+					CustomTestCheckTypeSetElemAttrs("data.mso_tenant_policies_custom_qos_policy.qos_policy", "cos_mappings", map[string]string{
 						"dot1p_from":   "excellent_effort",
 						"dot1p_to":     "critical_applications",
 						"dscp_target":  "af21",
@@ -60,5 +66,13 @@ func testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasic() string {
     data "mso_tenant_policies_custom_qos_policy" "qos_policy" {
         template_id = mso_template.template_tenant.id
         name        = mso_tenant_policies_custom_qos_policy.qos_policy.name
+    }`, testAccMSOTenantPoliciesCustomQoSPolicyConfigCreate())
+}
+
+func testAccMSOTenantPoliciesCustomQoSPolicyDataSourceBasicMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_custom_qos_policy" "missing" {
+        template_id = mso_tenant_policies_custom_qos_policy.qos_policy.template_id
+        name        = "missing_out_of_band_deletion"
     }`, testAccMSOTenantPoliciesCustomQoSPolicyConfigCreate())
 }

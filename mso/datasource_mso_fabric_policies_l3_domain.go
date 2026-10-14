@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -49,17 +48,14 @@ func dataSourceMSOL3DomainRead(d *schema.ResourceData, m interface{}) error {
 	templateId := d.Get("template_id").(string)
 	domainName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	domain, err := getL3Domain(msoClient, templateId, domainName)
 	if err != nil {
 		return err
 	}
 
-	domain, err := GetPolicyByName(response, domainName, "fabricPolicyTemplate", "template", "l3Domains")
-	if err != nil {
+	if err := setL3DomainData(d, domain, templateId); err != nil {
 		return err
 	}
-
-	setL3DomainData(d, domain, templateId)
 	log.Printf("[DEBUG] MSO L3 Domain Data Source - Read Complete: %v", d.Id())
 	return nil
 }

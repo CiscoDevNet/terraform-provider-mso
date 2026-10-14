@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOMacsecPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject missing policy data source") },
+				Config:      testAccMSOMacsecPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile("Policy name tf_missing_oob not found"),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: MACsec Policy Data Source") },
 				Config:    testAccMSOMacsecPolicyDataSource(),
@@ -45,5 +51,13 @@ func testAccMSOMacsecPolicyDataSource() string {
 	data "mso_fabric_policies_macsec_policy" "macsec_policy" {
 	    template_id        = mso_fabric_policies_macsec_policy.macsec_policy.template_id
 	    name               = "tf_test_macsec_policy"
+    }`, testAccMSOMacsecPolicyConfigCreate())
+}
+
+func testAccMSOMacsecPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_fabric_policies_macsec_policy" "missing" {
+        template_id = mso_fabric_policies_macsec_policy.macsec_policy.template_id
+        name        = "tf_missing_oob"
     }`, testAccMSOMacsecPolicyConfigCreate())
 }

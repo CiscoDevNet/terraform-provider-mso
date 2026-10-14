@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesNetflowMonitorResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_netflow_monitor.netflow_monitor"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
 		Providers: testAccProviders,
@@ -15,6 +21,34 @@ func TestAccMSOTenantPoliciesNetflowMonitorResource(t *testing.T) {
 			{
 				PreConfig: func() { fmt.Println("Test: Create NetFlow Monitor") },
 				Config:    testAccMSOTenantPoliciesNetflowMonitorConfigCreate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_netflow_monitor.netflow_monitor", "name", "test_netflow_monitor"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_netflow_monitor.netflow_monitor", "description", "Test NetFlow Monitor"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_netflow_monitor.netflow_monitor", "uuid"),
+					resource.TestCheckResourceAttrSet("mso_tenant_policies_netflow_monitor.netflow_monitor", "netflow_record_uuid"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_netflow_monitor.netflow_monitor", "netflow_exporter_uuids.#", "1"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate NetFlow Monitor after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "netFlowMonitors"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesNetflowMonitorConfigCreate(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_netflow_monitor.netflow_monitor", "name", "test_netflow_monitor"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_netflow_monitor.netflow_monitor", "description", "Test NetFlow Monitor"),
@@ -50,6 +84,23 @@ func TestAccMSOTenantPoliciesNetflowMonitorResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_netflow_monitor.netflow_monitor",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing NetFlow Monitor") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_netflow_monitor", "tenantPolicyTemplate", "template", "netFlowMonitors"),

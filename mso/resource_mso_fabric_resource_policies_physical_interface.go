@@ -107,6 +107,14 @@ func getInterfaceDescriptionsPayloadPhysical(interfaceDescriptions *schema.Set) 
 	return payload
 }
 
+func getPhysicalInterface(c *client.Client, templateID, name string) (*container.Container, error) {
+	template, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(template, name, "fabricResourceTemplate", "template", "interfaceProfiles")
+}
+
 func setPhysicalInterfaceData(d *schema.ResourceData, response *container.Container, templateId string) error {
 	d.SetId(fmt.Sprintf("templateId/%s/PhysicalInterface/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
@@ -160,9 +168,12 @@ func setPhysicalInterfaceData(d *schema.ResourceData, response *container.Contai
 
 func resourceMSOPhysicalInterfaceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Physical Interface Resource - Beginning Import: %v", d.Id())
-	err := resourceMSOPhysicalInterfaceRead(d, m)
-	if err != nil {
+	importedID := d.Id()
+	if err := resourceMSOPhysicalInterfaceRead(d, m); err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import Physical Interface %q: resource not found", importedID)
 	}
 	log.Printf("[DEBUG] MSO Physical Interface Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -225,18 +236,17 @@ func resourceMSOPhysicalInterfaceRead(d *schema.ResourceData, m interface{}) err
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "PhysicalInterface")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricResourceTemplate", "template", "interfaceProfiles")
+	policy, err := getPhysicalInterface(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

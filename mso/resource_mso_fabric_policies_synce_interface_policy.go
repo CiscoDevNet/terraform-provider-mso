@@ -83,17 +83,15 @@ func resourceMSOSyncEInterfacePolicy() *schema.Resource {
 	}
 }
 
-func setSyncEInterfacePolicyData(d *schema.ResourceData, msoClient *client.Client, templateId, policyName string) error {
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+func getSyncEInterfacePolicy(c *client.Client, templateId, policyName string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "syncEthIntfPolicies")
+}
 
-	policy, err := GetPolicyByName(response, policyName, "fabricPolicyTemplate", "template", "syncEthIntfPolicies")
-	if err != nil {
-		return err
-	}
-
+func setSyncEInterfacePolicyData(d *schema.ResourceData, policy *container.Container, templateId string) error {
 	name := models.StripQuotes(policy.S("name").String())
 	d.SetId(fmt.Sprintf("templateId/%s/SyncEInterfacePolicy/%s", templateId, name))
 	d.Set("template_id", templateId)
@@ -120,18 +118,28 @@ func setSyncEInterfacePolicyData(d *schema.ResourceData, msoClient *client.Clien
 func resourceMSOSyncEInterfacePolicyImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO SyncE Interface Policy Resource - Beginning Import: %v", d.Id())
 	msoClient := m.(*client.Client)
-
-	templateId, err := GetTemplateIdFromResourceId(d.Id())
+	importedID := d.Id()
+	templateId, err := GetTemplateIdFromResourceId(importedID)
 	if err != nil {
 		return nil, err
 	}
-
-	policyName, err := GetPolicyNameFromResourceId(d.Id(), "SyncEInterfacePolicy")
+	policyName, err := GetPolicyNameFromResourceId(importedID, "SyncEInterfacePolicy")
 	if err != nil {
 		return nil, err
 	}
-
-	setSyncEInterfacePolicyData(d, msoClient, templateId, policyName)
+	policy, err := getSyncEInterfacePolicy(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			return nil, fmt.Errorf("cannot import SyncE Interface Policy %q: resource not found: %w", importedID, err)
+		}
+		return nil, err
+	}
+	if err := setSyncEInterfacePolicyData(d, policy, templateId); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import SyncE Interface Policy %q: resource not found", importedID)
+	}
 	log.Printf("[DEBUG] MSO SyncE Interface Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -192,12 +200,20 @@ func resourceMSOSyncEInterfacePolicyCreate(d *schema.ResourceData, m any) error 
 func resourceMSOSyncEInterfacePolicyRead(d *schema.ResourceData, m any) error {
 	log.Printf("[DEBUG] MSO SyncE Interface Policy Resource - Beginning Read: %v", d.Id())
 	msoClient := m.(*client.Client)
-
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
-
-	setSyncEInterfacePolicyData(d, msoClient, templateId, policyName)
-	log.Printf("[DEBUG] MSO SyncE Interface Policy Resource - Read Complete : %v", d.Id())
+	policy, err := getSyncEInterfacePolicy(msoClient, templateId, policyName)
+	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return err
+	}
+	if err := setSyncEInterfacePolicyData(d, policy, templateId); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] MSO SyncE Interface Policy Resource - Read Complete: %v", d.Id())
 	return nil
 }
 

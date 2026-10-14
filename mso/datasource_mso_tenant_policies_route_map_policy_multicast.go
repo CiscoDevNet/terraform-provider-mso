@@ -1,7 +1,6 @@
 package mso
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
@@ -68,17 +67,14 @@ func dataSourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m interface{})
 	templateId := d.Get("template_id").(string)
 	policyName := d.Get("name").(string)
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	policy, err := getMcastRouteMapPolicy(msoClient, templateId, policyName)
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "mcastRouteMapPolicies")
-	if err != nil {
+	if err := setMcastRouteMapPolicyData(d, policy, templateId); err != nil {
 		return err
 	}
-
-	setMcastRouteMapPolicyData(d, policy, templateId)
 	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Data Source - Read Complete : %v", d.Id())
 	return nil
 }

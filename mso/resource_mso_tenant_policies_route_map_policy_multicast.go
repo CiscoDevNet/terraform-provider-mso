@@ -99,6 +99,14 @@ func setMcastRouteMapEntryList(mcastRouteMapEntries *schema.Set) []map[string]an
 	return mcastRouteMapEntryList
 }
 
+func getMcastRouteMapPolicy(c *client.Client, templateID, name string) (*container.Container, error) {
+	response, err := c.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
+	if err != nil {
+		return nil, err
+	}
+	return GetPolicyByName(response, name, "tenantPolicyTemplate", "template", "mcastRouteMapPolicies")
+}
+
 func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Container, templateId string) error {
 
 	d.SetId(fmt.Sprintf("templateId/%s/RouteMapPolicyMulticast/%s", templateId, models.StripQuotes(response.S("name").String())))
@@ -130,7 +138,13 @@ func setMcastRouteMapPolicyData(d *schema.ResourceData, response *container.Cont
 
 func resourceMSOMcastRouteMapPolicyImport(d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Beginning Import: %v", d.Id())
-	resourceMSOMcastRouteMapPolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOMcastRouteMapPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_route_map_policy_multicast %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -173,22 +187,23 @@ func resourceMSOMcastRouteMapPolicyRead(d *schema.ResourceData, m any) error {
 		return err
 	}
 
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
-	if err != nil {
-		return err
-	}
-
 	policyName, err := GetPolicyNameFromResourceId(d.Id(), "RouteMapPolicyMulticast")
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "mcastRouteMapPolicies")
+	policy, err := getMcastRouteMapPolicy(msoClient, templateId, policyName)
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
-	setMcastRouteMapPolicyData(d, policy, templateId)
+	if err := setMcastRouteMapPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] MSO Route Map Policy for Multicast Resource - Read Complete : %v", d.Id())
 	return nil
 }
