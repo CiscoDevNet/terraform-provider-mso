@@ -72,9 +72,10 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				Computed: true,
 			},
 			"external_epg_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:       schema.TypeString,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("external_epg_type"),
 				ValidateFunc: validation.StringInSlice([]string{
 					"on-premise",
 					"cloud",
@@ -100,23 +101,26 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"anp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:       schema.TypeString,
+				Optional:   true,
+				Deprecated: cloudDeprecationMessage("anp_name"),
 				// Computed:     true,
 				// Commented out computed to allow anp removal when not provided
-				// ANP is not exposed in UI anymore for a long time so we should investigate deprecation
+				// ANP is only used by cloud external EPGs, which are deprecated on Nexus Dashboard 4.x / NDO 5.x.
 				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"anp_schema_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
+				Deprecated:   cloudDeprecationMessage("anp_schema_id"),
 				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"anp_template_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
+				Deprecated:   cloudDeprecationMessage("anp_template_name"),
 				ValidateFunc: validation.StringLenBetween(0, 1000),
 			},
 			"include_in_preferred_group": &schema.Schema{
@@ -125,20 +129,23 @@ func resourceMSOTemplateExtenalepg() *schema.Resource {
 				Default:  false,
 			},
 			"site_id": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:       schema.TypeList,
+				Optional:   true,
+				Deprecated: cloudDeprecationMessage("site_id"),
+				Elem:       &schema.Schema{Type: schema.TypeString},
 			},
 			"selector_name": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
+				Deprecated:   cloudDeprecationMessage("selector_name"),
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 			"selector_ip": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
+				Deprecated:   cloudDeprecationMessage("selector_ip"),
 				ValidateFunc: validation.StringLenBetween(1, 1000),
 			},
 
