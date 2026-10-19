@@ -37,7 +37,7 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 * `external_epg_name` - (Required) Name of the External EPG.
 * `display_name` - (Required) Display Name of the External EPG on the MSO UI.
 * `description` - (Optional) The description of the External EPG.
-* `external_epg_type` - (Optional) The type of External EPG. Allowed values are `on-premise` and `cloud`. Default to `on-premise`.
+* `external_epg_type` - (Optional) **Deprecated** The type of External EPG. Allowed values are `on-premise` and `cloud`. Default to `on-premise`.
 * `vrf_name` - (Required) The VRF associated with the External EPG. VRF must exist.
 * `vrf_schema_id` - (Optional) SchemaID of VRF. schema_id of External EPG will be used if not provided. This parameter should be used when VRF is in a different schema than external EPG.
 * `vrf_template_name` - (Optional) Template Name of VRF. The template_name of External EPG will be used if not provided.
@@ -45,13 +45,13 @@ resource "mso_schema_template_external_epg" "template_externalepg" {
 * `l3out_name` - (Optional) Name of L3out to attach. Should use this parameter with `external_epg_type` as `on-premise`.
 * `l3out_schema_id` - (Optional) SchemaId of L3out. `schema_id` will be used if not provided. Should use this parameter with `external_epg_type` as `on-premise`.
 * `l3out_template_name` - (Optional) Template name of L3out. `template_name` will be used if not provided. Should use this parameter with `external_epg_type` as `on-premise`.
-* `anp_name` - (Optional) Name of anp to attach.
-* `anp_schema_id` - (Optional) SchemaId of anp. `schema_id` will be used if not provided.
-* `anp_template_name` - (Optional) Template name of anp. `template_name` will be used if not provided.
+* `anp_name` - (Optional) **Deprecated** Name of ANP to attach.
+* `anp_schema_id` - (Optional) **Deprecated** SchemaId of ANP. `schema_id` will be used if not provided.
+* `anp_template_name` - (Optional) **Deprecated** Template name of ANP. `template_name` will be used if not provided.
 
-* `site_id` - (Optional) List of ids of sites associated with the schema. Required when `external_epg_type` is "cloud".
-* `selector_name` - (Optional) name of the selector for external epg. Required when `external_epg_type` is "cloud".
-* `selector_ip` - (Optional) ip address for expression in selector. Required when `external_epg_type` is "cloud".
+* `site_id` - (Optional) **Deprecated** List of ids of sites associated with the schema. Required when `external_epg_type` is "cloud".
+* `selector_name` - (Optional) **Deprecated** Name of the selector for external EPG. Required when `external_epg_type` is "cloud".
+* `selector_ip` - (Optional) **Deprecated** IP address for the selector expression. Required when `external_epg_type` is "cloud".
 
 NOTE: SchemaID and Template Name for VRF and L3out must be same.
 

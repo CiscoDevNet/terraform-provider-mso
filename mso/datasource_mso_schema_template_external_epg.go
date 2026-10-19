@@ -39,8 +39,9 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Computed: true,
 			},
 			"external_epg_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("external_epg_type"),
 			},
 			"display_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -59,16 +60,19 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Computed: true,
 			},
 			"anp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("anp_name"),
 			},
 			"anp_schema_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("anp_schema_id"),
 			},
 			"anp_template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("anp_template_name"),
 			},
 			"l3out_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -83,12 +87,14 @@ func dataSourceMSOTemplateExternalepg() *schema.Resource {
 				Computed: true,
 			},
 			"selector_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("selector_name"),
 			},
 			"selector_ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: cloudDeprecationMessage("selector_ip"),
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
