@@ -33,10 +33,19 @@ func datasourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
 				Computed:    true,
 				Description: "The description of the L3Out Node Routing Policy.",
 			},
-			"as_path_multipath_relax": {
-				Type:        schema.TypeBool,
+			"bgp_best_path_control": {
+				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "BGP Best Path Control - AS path multipath relax.",
+				Description: "BGP best path control settings.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"as_path_multipath_relax": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Allow load balancing across paths with different AS paths.",
+						},
+					},
+				},
 			},
 			"bfd_multi_hop_settings": {
 				Type:        schema.TypeList,
