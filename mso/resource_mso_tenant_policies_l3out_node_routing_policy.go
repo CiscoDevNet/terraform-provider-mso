@@ -282,7 +282,8 @@ func setL3OutNodeRoutingPolicyData(d *schema.ResourceData, response *container.C
 	d.SetId(fmt.Sprintf("templateId/%s/L3OutNodeRoutingPolicy/%s", templateId, models.StripQuotes(response.S("name").String())))
 	d.Set("template_id", templateId)
 	d.Set("name", models.StripQuotes(response.S("name").String()))
-	d.Set("description", models.StripQuotes(response.S("description").String()))
+	description, _ := response.S("description").Data().(string)
+	d.Set("description", description)
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
 	bestPathSettings := []interface{}{}
