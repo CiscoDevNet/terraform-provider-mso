@@ -18,11 +18,14 @@ Manages Layer 3 Outside (L3Out) Node Routing Policies on Cisco Nexus Dashboard O
 
 ```hcl
 resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
-  template_id             = mso_template.template_tenant.id
-  name                    = "production_node_routing_policy"
-  description             = "Production L3Out Node Routing Policy"
-  as_path_multipath_relax = true
-  
+  template_id = mso_template.template_tenant.id
+  name        = "production_node_routing_policy"
+  description = "Production L3Out Node Routing Policy"
+
+  bgp_best_path_control {
+    as_path_multipath_relax = true
+  }
+
   bfd_multi_hop_settings {
     admin_state           = "enabled"
     detection_multiplier  = 3
@@ -42,10 +45,13 @@ resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
 
 ## Argument Reference ##
 
+At least one of `bgp_best_path_control`, `bfd_multi_hop_settings`, or `bgp_node_settings` must be configured when creating or updating a policy. Terraform validates this requirement before apply. An empty block counts as configured.
+
 * `template_id` - (Required) The unique ID of the tenant policy template.
 * `name` - (Required) The name of the L3Out Node Routing Policy.
 * `description` - (Optional) The description of the L3Out Node Routing Policy. When unset during creation, no description is applied.
-* `as_path_multipath_relax` - (Optional) BGP Best Path Control - enables AS path multipath relaxation to allow load balancing across paths with different AS paths. When unset during creation, this setting is not configured. Valid values: `true`, `false`.
+* `bgp_best_path_control` - (Optional) BGP best path control configuration block. Supports a single block. An empty block delegates the initial setting to NDO. Omitting this block removes BGP best path control if it exists.
+  * `as_path_multipath_relax` - (Optional) Enables AS path multipath relaxation to allow load balancing across paths with different AS paths. Default: `false` when unset during creation. Valid values: `true`, `false`.
 * `bfd_multi_hop_settings` - (Optional) BFD multi-hop configuration block. Omitting this block will remove BFD multi-hop settings if they exist.
   * `admin_state` - (Optional) Administrative state. Default: `enabled` when unset during creation. Valid values: `enabled`, `disabled`.
   * `detection_multiplier` - (Optional) The number of consecutive BFD packets that must be missed before the session is declared down. Default: 3 when unset during creation. Valid range: 1-50.
