@@ -28,11 +28,14 @@ resource "mso_template" "tenant_template" {
 # L3Out Node Routing Policy example with all configuration blocks
 
 resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy_full" {
-  template_id             = mso_template.tenant_template.id
-  name                    = "production_node_routing_policy"
-  description             = "Production L3Out Node Routing Policy with BFD and BGP"
-  as_path_multipath_relax = true
-  
+  template_id = mso_template.tenant_template.id
+  name        = "production_node_routing_policy"
+  description = "Production L3Out Node Routing Policy with BFD and BGP"
+
+  bgp_best_path_control {
+    as_path_multipath_relax = true
+  }
+
   bfd_multi_hop_settings {
     admin_state           = "enabled"
     detection_multiplier  = 3

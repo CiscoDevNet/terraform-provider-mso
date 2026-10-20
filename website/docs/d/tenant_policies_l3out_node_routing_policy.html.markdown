@@ -21,6 +21,10 @@ data "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
   template_id = mso_template.template_tenant.id
   name        = "production_node_routing_policy"
 }
+
+output "bgp_best_path_control" {
+  value = data.mso_tenant_policies_l3out_node_routing_policy.node_policy.bgp_best_path_control
+}
 ```
 
 ## Argument Reference ##
@@ -33,7 +37,8 @@ data "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
 * `uuid` - (Read-Only) The UUID of the L3Out Node Routing Policy.
 * `id` - (Read-Only) The unique Terraform identifier of the L3Out Node Routing Policy in the template.
 * `description` - (Read-Only) The description of the L3Out Node Routing Policy.
-* `as_path_multipath_relax` - (Read-Only) BGP Best Path Control AS path multipath relax setting.
+* `bgp_best_path_control` - (Read-Only) A list containing BGP best path control configuration. Empty list if not configured. When present, contains a single element with:
+  * `as_path_multipath_relax` - (Read-Only) Whether AS path multipath relaxation is enabled.
 * `bfd_multi_hop_settings` - (Read-Only) A list containing BFD multi-hop configuration. Empty list if not configured. When present, contains a single element with:
   * `admin_state` - (Read-Only) Administrative state.
   * `detection_multiplier` - (Read-Only) The number of consecutive BFD packets that must be missed before the session is declared down.

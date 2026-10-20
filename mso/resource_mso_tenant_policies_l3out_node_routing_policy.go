@@ -12,6 +12,12 @@ import (
 )
 
 func resourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
+	routingPolicySettings := []string{
+		"bgp_best_path_control",
+		"bfd_multi_hop_settings",
+		"bgp_node_settings",
+	}
+
 	return &schema.Resource{
 		Create: resourceMSOL3OutNodeRoutingPolicyCreate,
 		Read:   resourceMSOL3OutNodeRoutingPolicyRead,
@@ -44,17 +50,29 @@ func resourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
 				Computed:    true,
 				Description: "The UUID of the L3Out Node Routing Policy.",
 			},
-			"as_path_multipath_relax": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "BGP Best Path Control - AS path multipath relax. Allows load balancing across paths with different AS paths.",
+			"bgp_best_path_control": {
+				Type:         schema.TypeList,
+				Optional:     true,
+				MaxItems:     1,
+				AtLeastOneOf: routingPolicySettings,
+				Description:  "BGP best path control settings.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"as_path_multipath_relax": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "Allow load balancing across paths with different AS paths.",
+						},
+					},
+				},
 			},
 			"bfd_multi_hop_settings": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    1,
-				Description: "BFD multi-hop configuration.",
+				Type:         schema.TypeList,
+				Optional:     true,
+				MaxItems:     1,
+				AtLeastOneOf: routingPolicySettings,
+				Description:  "BFD multi-hop configuration.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"admin_state": {
@@ -91,10 +109,11 @@ func resourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
 				},
 			},
 			"bgp_node_settings": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    1,
-				Description: "BGP node configuration.",
+				Type:         schema.TypeList,
+				Optional:     true,
+				MaxItems:     1,
+				AtLeastOneOf: routingPolicySettings,
+				Description:  "BGP node configuration.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"graceful_restart_helper": {
@@ -162,6 +181,42 @@ func buildNodeBFDMultiHopPayload(bfdMultiHop []interface{}) map[string]interface
 	return payload
 }
 
+func buildBGPBestPathControlPayload(d *schema.ResourceData, bestPathSettings []interface{}) map[string]interface{} {
+	if len(bestPathSettings) == 0 {
+		return nil
+	}
+
+	// The SDK can represent a newly added empty block as a nil element.
+	settings, ok := bestPathSettings[0].(map[string]interface{})
+	if !ok {
+		settings = map[string]interface{}{}
+	}
+	payload := make(map[string]interface{})
+
+	// Preserve the computed value when replacing an existing best path control block.
+	previous, _ := d.GetChange("bgp_best_path_control")
+	previousSettings, ok := previous.([]interface{})
+	hasMultipathRelax := ok && len(previousSettings) > 0
+
+	// Use raw configuration so new blocks can use NDO defaults while preserving explicit false.
+	rawConfig := d.GetRawConfig()
+	if rawConfig.IsKnown() && !rawConfig.IsNull() {
+		bestPathConfig := rawConfig.GetAttr("bgp_best_path_control")
+		if bestPathConfig.IsKnown() && !bestPathConfig.IsNull() && bestPathConfig.LengthInt() > 0 {
+			multipathRelax := bestPathConfig.AsValueSlice()[0].GetAttr("as_path_multipath_relax")
+			if multipathRelax.IsKnown() && !multipathRelax.IsNull() {
+				hasMultipathRelax = true
+			}
+		}
+	}
+
+	if multipathRelax, ok := settings["as_path_multipath_relax"].(bool); ok && hasMultipathRelax {
+		payload["asPathMultipathRelax"] = multipathRelax
+	}
+
+	return payload
+}
+
 func buildBGPNodeSettingsPayload(bgpSettings []interface{}) map[string]interface{} {
 	if len(bgpSettings) == 0 {
 		return nil
@@ -196,13 +251,15 @@ func setL3OutNodeRoutingPolicyData(d *schema.ResourceData, response *container.C
 	d.Set("description", models.StripQuotes(response.S("description").String()))
 	d.Set("uuid", models.StripQuotes(response.S("uuid").String()))
 
-	if response.Exists("asPathPol") && response.S("asPathPol").Exists("asPathMultipathRelax") {
+	bestPathSettings := []interface{}{}
+	if response.Exists("asPathPol") {
+		bestPathMap := map[string]interface{}{}
 		if val, ok := response.S("asPathPol").S("asPathMultipathRelax").Data().(bool); ok {
-			d.Set("as_path_multipath_relax", val)
+			bestPathMap["as_path_multipath_relax"] = val
 		}
-	} else {
-		d.Set("as_path_multipath_relax", nil)
+		bestPathSettings = []interface{}{bestPathMap}
 	}
+	d.Set("bgp_best_path_control", bestPathSettings)
 
 	if response.Exists("bfdMultiHopPol") {
 		bfdMultiHop := response.S("bfdMultiHopPol")
@@ -287,13 +344,7 @@ func resourceMSOL3OutNodeRoutingPolicyCreate(d *schema.ResourceData, m interface
 	log.Printf("[DEBUG] MSO L3Out Node Routing Policy Resource - Beginning Create: %v", d.Id())
 	msoClient := m.(*client.Client)
 
-	hasBFDMultiHop := len(d.Get("bfd_multi_hop_settings").([]interface{})) > 0
-	hasBGP := len(d.Get("bgp_node_settings").([]interface{})) > 0
-	hasASPath := d.Get("as_path_multipath_relax") != nil
-
-	if !hasBFDMultiHop && !hasBGP && !hasASPath {
-		return fmt.Errorf("at least one of 'bfd_multi_hop_settings', 'bgp_node_settings', or 'as_path_multipath_relax' must be specified")
-	}
+	bestPathSettings := d.Get("bgp_best_path_control").([]interface{})
 
 	payload := map[string]interface{}{
 		"name": d.Get("name").(string),
@@ -303,10 +354,8 @@ func resourceMSOL3OutNodeRoutingPolicyCreate(d *schema.ResourceData, m interface
 		payload["description"] = description.(string)
 	}
 
-	if asPath, ok := d.GetOk("as_path_multipath_relax"); ok {
-		payload["asPathPol"] = map[string]interface{}{
-			"asPathMultipathRelax": asPath.(bool),
-		}
+	if len(bestPathSettings) > 0 {
+		payload["asPathPol"] = buildBGPBestPathControlPayload(d, bestPathSettings)
 	}
 
 	if bfdMultiHopRaw, ok := d.GetOk("bfd_multi_hop_settings"); ok {
@@ -401,19 +450,24 @@ func resourceMSOL3OutNodeRoutingPolicyUpdate(d *schema.ResourceData, m interface
 		}
 	}
 
-	if d.HasChange("as_path_multipath_relax") {
-		_, newVal := d.GetChange("as_path_multipath_relax")
+	if d.HasChange("bgp_best_path_control") {
+		bestPathSettings := d.Get("bgp_best_path_control").([]interface{})
+		hasRemoteBestPathControl := templateCont.S("tenantPolicyTemplate", "template", "l3OutNodePolGroups").Index(policyIndex).Exists("asPathPol")
 
-		if newVal == nil {
-			err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/asPathPol", updatePath), nil)
-			if err != nil {
-				return err
+		if len(bestPathSettings) == 0 {
+			if hasRemoteBestPathControl {
+				err := addPatchPayloadToContainer(payloadCont, "remove", fmt.Sprintf("%s/asPathPol", updatePath), nil)
+				if err != nil {
+					return err
+				}
 			}
 		} else {
-			asPathPayload := map[string]interface{}{
-				"asPathMultipathRelax": newVal.(bool),
+			asPathPayload := buildBGPBestPathControlPayload(d, bestPathSettings)
+			operation := "add"
+			if hasRemoteBestPathControl {
+				operation = "replace"
 			}
-			err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/asPathPol", updatePath), asPathPayload)
+			err := addPatchPayloadToContainer(payloadCont, operation, fmt.Sprintf("%s/asPathPol", updatePath), asPathPayload)
 			if err != nil {
 				return err
 			}

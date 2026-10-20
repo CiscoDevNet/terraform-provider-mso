@@ -26,7 +26,8 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "description", "Test L3Out Node Routing Policy"),
 					resource.TestCheckResourceAttrSet("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "uuid"),
 					resource.TestCheckResourceAttrSet("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "template_id"),
-					resource.TestCheckResourceAttr("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "as_path_multipath_relax", "false"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_best_path_control.#", "1"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_best_path_control.0.as_path_multipath_relax", "false"),
 
 					resource.TestCheckResourceAttr("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "bfd_multi_hop_settings.#", "1"),
 					resource.TestCheckResourceAttr("data.mso_tenant_policies_l3out_node_routing_policy.node_policy", "bfd_multi_hop_settings.0.admin_state", "enabled"),
