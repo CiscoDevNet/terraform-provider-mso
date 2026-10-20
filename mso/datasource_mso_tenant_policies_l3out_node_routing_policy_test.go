@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,11 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSource(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Missing L3Out Node Routing Policy data source returns an error") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSourceMissing(),
+				ExpectError: regexp.MustCompile(`Policy name missing_node_routing_policy not found`),
+			},
 			{
 				PreConfig: func() { fmt.Println("Test: L3Out Node Routing Policy Data Source") },
 				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSource(),
@@ -45,5 +51,13 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSource() string {
     data "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
         template_id = mso_tenant_policies_l3out_node_routing_policy.node_policy.template_id
         name        = "test_node_routing_policy"
+    }`, testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSourceMissing() string {
+	return fmt.Sprintf(`%s
+    data "mso_tenant_policies_l3out_node_routing_policy" "missing" {
+        template_id = mso_tenant_policies_l3out_node_routing_policy.node_policy.template_id
+        name        = "missing_node_routing_policy"
     }`, testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate())
 }
