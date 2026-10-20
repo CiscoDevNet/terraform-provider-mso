@@ -15,6 +15,7 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 	zeroHoldResourceName := "mso_tenant_policies_l3out_node_routing_policy.zero_hold_interval"
 	asPathResourceName := "mso_tenant_policies_l3out_node_routing_policy.as_path_only"
 	bestPathDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.best_path_defaults"
+	bfdDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.bfd_defaults"
 	bgpDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.bgp_defaults"
 	var templateID, uuid string
 
@@ -35,6 +36,21 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.0.as_path_multipath_relax", "false"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bfd_multi_hop_settings.#", "0"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_node_settings.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out Node Routing Policy - Default BFD Multi-Hop Settings Only") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBFDDefaults(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "name", "test_node_routing_policy_bfd_defaults"),
+					resource.TestCheckResourceAttrSet(bfdDefaultsResourceName, "uuid"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bgp_best_path_control.#", "0"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bfd_multi_hop_settings.#", "1"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bfd_multi_hop_settings.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bfd_multi_hop_settings.0.detection_multiplier", "3"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bfd_multi_hop_settings.0.min_receive_interval", "250"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bfd_multi_hop_settings.0.min_transmit_interval", "250"),
+					resource.TestCheckResourceAttr(bfdDefaultsResourceName, "bgp_node_settings.#", "0"),
 				),
 			},
 			{
@@ -264,6 +280,41 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 				),
 			},
 			{
+				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Add Default BFD Multi-Hop Settings") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigAddBFDDefaults(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "test_node_routing_policy"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_best_path_control.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_best_path_control.0.as_path_multipath_relax", "true"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.detection_multiplier", "3"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.min_receive_interval", "250"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.min_transmit_interval", "250"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Add Default BGP Node Settings") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigAddBGPDefaults(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "test_node_routing_policy"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_best_path_control.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_best_path_control.0.as_path_multipath_relax", "true"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.detection_multiplier", "3"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.min_receive_interval", "250"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.min_transmit_interval", "250"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.graceful_restart_helper", "true"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.keep_alive_interval", "60"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.hold_interval", "180"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.stale_interval", "300"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.max_as_limit", "0"),
+				),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Maximum Values") },
 				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMaxValues(),
 				Check: resource.ComposeTestCheckFunc(
@@ -350,6 +401,17 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPBestPathDefaul
         description = "Test L3Out Node Routing Policy"
 
         bgp_best_path_control {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBFDDefaults() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "bfd_defaults" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy_bfd_defaults"
+        description = "Test L3Out Node Routing Policy"
+
+        bfd_multi_hop_settings {}
     }`, testAccMSOTemplateResourceTenantConfig())
 }
 
@@ -586,6 +648,37 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigRemoveBFDAndBGP() strin
         bgp_best_path_control {
             as_path_multipath_relax = true
         }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigAddBFDDefaults() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy"
+        description = "Default BFD Multi-Hop Settings Added"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = true
+        }
+
+        bfd_multi_hop_settings {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigAddBGPDefaults() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy"
+        description = "Default BGP Node Settings Added"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = true
+        }
+
+        bfd_multi_hop_settings {}
+        bgp_node_settings {}
     }`, testAccMSOTemplateResourceTenantConfig())
 }
 
