@@ -25,17 +25,35 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					fmt.Println("Test: Create L3Out Node Routing Policy - Default BGP Best Path Control")
+					fmt.Println("Test: Create L3Out Node Routing Policy - Default BGP Best Path Control without Description")
 				},
 				Config: testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPBestPathDefaults(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "name", "test_node_routing_policy_best_path_defaults"),
-					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "description", "Test L3Out Node Routing Policy"),
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "description", ""),
 					resource.TestCheckResourceAttrSet(bestPathDefaultsResourceName, "uuid"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.#", "1"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.0.as_path_multipath_relax", "false"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bfd_multi_hop_settings.#", "0"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_node_settings.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Set Description") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigBGPBestPathDefaultsWithDescription(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "description", "Test L3Out Node Routing Policy"),
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.#", "1"),
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.0.as_path_multipath_relax", "false"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Remove Description") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPBestPathDefaults(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "description", ""),
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.#", "1"),
+					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.0.as_path_multipath_relax", "false"),
 				),
 			},
 			{
@@ -394,6 +412,15 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 }
 
 func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPBestPathDefaults() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "best_path_defaults" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy_best_path_defaults"
+        bgp_best_path_control {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigBGPBestPathDefaultsWithDescription() string {
 	return fmt.Sprintf(`%s
     resource "mso_tenant_policies_l3out_node_routing_policy" "best_path_defaults" {
         template_id = mso_template.template_tenant.id
