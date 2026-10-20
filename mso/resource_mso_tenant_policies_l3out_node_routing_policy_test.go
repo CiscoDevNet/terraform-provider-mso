@@ -2,12 +2,18 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
+	resourceName := "mso_tenant_policies_l3out_node_routing_policy.node_policy"
+	var templateID, uuid string
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -33,6 +39,44 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.hold_interval", "180"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.stale_interval", "300"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.max_as_limit", "0"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						templateID = rs.Primary.Attributes["template_id"]
+						uuid = rs.Primary.Attributes["uuid"]
+						if templateID == "" || uuid == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Recreate L3Out Node Routing Policy after out-of-band deletion")
+					if err := testAccDeletePolicyOutOfBand(testAccPreCheck(t), templateID, uuid, "tenantPolicyTemplate", "template", "l3OutNodePolGroups"); err != nil {
+						t.Fatalf("delete %s out of band: %v", resourceName, err)
+					}
+				},
+				Config: testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "test_node_routing_policy"),
+					resource.TestCheckResourceAttr(resourceName, "description", "Test L3Out Node Routing Policy"),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
+					resource.TestCheckResourceAttr(resourceName, "as_path_multipath_relax", "false"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.admin_state", "enabled"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.detection_multiplier", "3"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.min_receive_interval", "250"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.0.min_transmit_interval", "250"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.graceful_restart_helper", "true"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.keep_alive_interval", "60"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.hold_interval", "180"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.stale_interval", "300"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.max_as_limit", "0"),
 				),
 			},
 			{
@@ -107,7 +151,7 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy Name") },
+				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Name") },
 				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigUpdateName(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "name", "test_node_routing_policy_renamed"),
@@ -119,6 +163,23 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 				ResourceName:      "mso_tenant_policies_l3out_node_routing_policy.node_policy",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import missing L3Out Node Routing Policy") },
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok || rs.Primary == nil {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					separator := strings.LastIndex(rs.Primary.ID, "/")
+					if separator < 0 || separator == len(rs.Primary.ID)-1 {
+						return "", fmt.Errorf("resource %s has an invalid import ID", resourceName)
+					}
+					return rs.Primary.ID[:separator+1] + "tf_missing_oob", nil
+				},
+				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_l3out_node_routing_policy", "l3OutNodePolGroup"),

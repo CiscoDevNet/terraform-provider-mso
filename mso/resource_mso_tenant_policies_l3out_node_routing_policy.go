@@ -272,7 +272,13 @@ func setL3OutNodeRoutingPolicyData(d *schema.ResourceData, response *container.C
 
 func resourceMSOL3OutNodeRoutingPolicyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO L3Out Node Routing Policy Resource - Beginning Import: %v", d.Id())
-	resourceMSOL3OutNodeRoutingPolicyRead(d, m)
+	importID := d.Id()
+	if err := resourceMSOL3OutNodeRoutingPolicyRead(d, m); err != nil {
+		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_l3out_node_routing_policy %q: resource not found", importID)
+	}
 	log.Printf("[DEBUG] MSO L3Out Node Routing Policy Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
 }
@@ -349,6 +355,10 @@ func resourceMSOL3OutNodeRoutingPolicyRead(d *schema.ResourceData, m interface{}
 
 	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "l3OutNodePolGroups")
 	if err != nil {
+		if isPolicyNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
