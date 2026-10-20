@@ -18,6 +18,7 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 	bfdDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.bfd_defaults"
 	bgpDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.bgp_defaults"
 	var templateID, uuid string
+	var originalTemplateID, originalUUID string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -381,6 +382,64 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "description", "Renamed Policy"),
 					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.stale_interval", "1"),
 					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.max_as_limit", "10"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Prepare L3Out Node Routing Policy Template Replacement") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigTemplateChangeSource(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair(resourceName, "template_id", "mso_template.template_tenant", "id"),
+					resource.TestCheckResourceAttrSet("mso_template.template_tenant_replacement", "id"),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						originalTemplateID = rs.Primary.Attributes["template_id"]
+						originalUUID = rs.Primary.Attributes["uuid"]
+						if originalTemplateID == "" || originalUUID == "" {
+							return fmt.Errorf("resource %s is missing its template ID or UUID", resourceName)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Replace L3Out Node Routing Policy - Template ID") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigTemplateChangeDestination(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair(resourceName, "template_id", "mso_template.template_tenant_replacement", "id"),
+					resource.TestCheckResourceAttr(resourceName, "name", "test_node_routing_policy_renamed"),
+					resource.TestCheckResourceAttr(resourceName, "description", "Renamed Policy"),
+					resource.TestCheckResourceAttrSet(resourceName, "uuid"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_best_path_control.0.as_path_multipath_relax", "true"),
+					resource.TestCheckResourceAttr(resourceName, "bfd_multi_hop_settings.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.graceful_restart_helper", "true"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.keep_alive_interval", "60"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.hold_interval", "180"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.stale_interval", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.max_as_limit", "0"),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceName]
+						if !ok || rs.Primary == nil {
+							return fmt.Errorf("resource %s not found in state", resourceName)
+						}
+						if rs.Primary.Attributes["uuid"] == originalUUID {
+							return fmt.Errorf("resource %s retained its UUID after changing template ID", resourceName)
+						}
+						response, err := testAccPreCheck(t).GetViaURL(fmt.Sprintf("api/v1/templates/%s", originalTemplateID))
+						if err != nil {
+							return fmt.Errorf("read original template after replacement: %w", err)
+						}
+						if _, err := GetPolicyIndexByKeyAndValue(response, "uuid", originalUUID, "tenantPolicyTemplate", "template", "l3OutNodePolGroups"); !isPolicyNotFound(err) {
+							if err != nil {
+								return fmt.Errorf("verify original policy was deleted during replacement: %w", err)
+							}
+							return fmt.Errorf("original policy with UUID %s still exists after replacement", originalUUID)
+						}
+						return nil
+					},
 				),
 			},
 			{
@@ -810,4 +869,60 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigUpdateName() string {
             hold_interval           = 180
         }
     }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigTemplateChangeSource() string {
+	return fmt.Sprintf(`%s
+    resource "mso_template" "template_tenant_replacement" {
+        template_name = "test_template_tenant_replacement"
+        template_type = "tenant"
+        tenant_id     = mso_tenant.%s.id
+        sites         = [data.mso_site.%s.id]
+    }
+
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy_renamed"
+        description = "Renamed Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = true
+        }
+
+        bgp_node_settings {
+            graceful_restart_helper = true
+            keep_alive_interval     = 60
+            hold_interval           = 180
+            stale_interval          = 1
+            max_as_limit            = 0
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigTemplateChangeDestination() string {
+	return fmt.Sprintf(`%s
+    resource "mso_template" "template_tenant_replacement" {
+        template_name = "test_template_tenant_replacement"
+        template_type = "tenant"
+        tenant_id     = mso_tenant.%s.id
+        sites         = [data.mso_site.%s.id]
+    }
+
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id = mso_template.template_tenant_replacement.id
+        name        = "test_node_routing_policy_renamed"
+        description = "Renamed Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = true
+        }
+
+        bgp_node_settings {
+            graceful_restart_helper = true
+            keep_alive_interval     = 60
+            hold_interval           = 180
+            stale_interval          = 1
+            max_as_limit            = 0
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), msoTemplateTenantName, msoTemplateSiteName1)
 }
