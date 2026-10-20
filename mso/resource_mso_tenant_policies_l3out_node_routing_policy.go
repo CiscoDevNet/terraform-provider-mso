@@ -32,6 +32,7 @@ func resourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
 			"template_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The ID of the tenant policy template.",
 			},
 			"name": {
