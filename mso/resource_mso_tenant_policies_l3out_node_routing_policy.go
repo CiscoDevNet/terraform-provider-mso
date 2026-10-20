@@ -165,7 +165,11 @@ func buildNodeBFDMultiHopPayload(bfdMultiHop []interface{}) map[string]interface
 		return nil
 	}
 
-	settings := bfdMultiHop[0].(map[string]interface{})
+	// The SDK can represent a newly added empty block as a nil element.
+	settings, ok := bfdMultiHop[0].(map[string]interface{})
+	if !ok {
+		settings = map[string]interface{}{}
+	}
 	payload := make(map[string]interface{})
 
 	if adminState, ok := settings["admin_state"].(string); ok && adminState != "" {
@@ -225,7 +229,11 @@ func buildBGPNodeSettingsPayload(d *schema.ResourceData, bgpSettings []interface
 		return nil
 	}
 
-	settings := bgpSettings[0].(map[string]interface{})
+	// The SDK can represent a newly added empty block as a nil element.
+	settings, ok := bgpSettings[0].(map[string]interface{})
+	if !ok {
+		settings = map[string]interface{}{}
+	}
 	payload := make(map[string]interface{})
 	settingsToSend := make(map[string]bool)
 
