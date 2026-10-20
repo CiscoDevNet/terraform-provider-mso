@@ -12,8 +12,10 @@ import (
 
 func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 	resourceName := "mso_tenant_policies_l3out_node_routing_policy.node_policy"
+	zeroHoldResourceName := "mso_tenant_policies_l3out_node_routing_policy.zero_hold_interval"
 	asPathResourceName := "mso_tenant_policies_l3out_node_routing_policy.as_path_only"
 	bestPathDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.best_path_defaults"
+	bgpDefaultsResourceName := "mso_tenant_policies_l3out_node_routing_policy.bgp_defaults"
 	var templateID, uuid string
 
 	resource.Test(t, resource.TestCase{
@@ -33,6 +35,34 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_best_path_control.0.as_path_multipath_relax", "false"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bfd_multi_hop_settings.#", "0"),
 					resource.TestCheckResourceAttr(bestPathDefaultsResourceName, "bgp_node_settings.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out Node Routing Policy - Default BGP Node Settings Only") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPDefaults(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "name", "test_node_routing_policy_bgp_defaults"),
+					resource.TestCheckResourceAttrSet(bgpDefaultsResourceName, "uuid"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_best_path_control.#", "0"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bfd_multi_hop_settings.#", "0"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_node_settings.#", "1"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_node_settings.0.graceful_restart_helper", "true"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_node_settings.0.keep_alive_interval", "60"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_node_settings.0.hold_interval", "180"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_node_settings.0.stale_interval", "300"),
+					resource.TestCheckResourceAttr(bgpDefaultsResourceName, "bgp_node_settings.0.max_as_limit", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out Node Routing Policy - Zero BGP Hold Interval") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateZeroHoldInterval(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(zeroHoldResourceName, "name", "test_node_routing_policy_zero_hold_interval"),
+					resource.TestCheckResourceAttrSet(zeroHoldResourceName, "uuid"),
+					resource.TestCheckResourceAttr(zeroHoldResourceName, "bgp_node_settings.0.graceful_restart_helper", "false"),
+					resource.TestCheckResourceAttr(zeroHoldResourceName, "bgp_node_settings.0.keep_alive_interval", "0"),
+					resource.TestCheckResourceAttr(zeroHoldResourceName, "bgp_node_settings.0.hold_interval", "0"),
+					resource.TestCheckResourceAttr(zeroHoldResourceName, "bgp_node_settings.0.max_as_limit", "0"),
 				),
 			},
 			{
@@ -259,10 +289,19 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bfd_multi_hop_settings.0.min_receive_interval", "250"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bfd_multi_hop_settings.0.min_transmit_interval", "250"),
 
-					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.keep_alive_interval", "1"),
-					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.hold_interval", "3"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.keep_alive_interval", "0"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.hold_interval", "0"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.stale_interval", "1"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.max_as_limit", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update L3Out Node Routing Policy - Minimum Positive BGP Timers") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinPositiveBGPTimers(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.keep_alive_interval", "1"),
+					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "bgp_node_settings.0.hold_interval", "3"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.max_as_limit", "10"),
 				),
 			},
 			{
@@ -271,6 +310,8 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "name", "test_node_routing_policy_renamed"),
 					resource.TestCheckResourceAttr("mso_tenant_policies_l3out_node_routing_policy.node_policy", "description", "Renamed Policy"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.stale_interval", "1"),
+					resource.TestCheckResourceAttr(resourceName, "bgp_node_settings.0.max_as_limit", "10"),
 				),
 			},
 			{
@@ -312,6 +353,45 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPBestPathDefaul
     }`, testAccMSOTemplateResourceTenantConfig())
 }
 
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPDefaults() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "bgp_defaults" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy_bgp_defaults"
+        description = "Test L3Out Node Routing Policy"
+
+        bgp_node_settings {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateZeroHoldInterval() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "zero_hold_interval" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy_zero_hold_interval"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            admin_state           = "enabled"
+            detection_multiplier  = 3
+            min_receive_interval  = 250
+            min_transmit_interval = 250
+        }
+
+        bgp_node_settings {
+            graceful_restart_helper = false
+            keep_alive_interval     = 0
+            hold_interval           = 0
+            stale_interval          = 300
+            max_as_limit            = 0
+        }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
 func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateASPathOnly() string {
 	return fmt.Sprintf(`%s
     resource "mso_tenant_policies_l3out_node_routing_policy" "as_path_only" {
@@ -331,23 +411,13 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate() string {
         template_id            = mso_template.template_tenant.id
         name                   = "test_node_routing_policy"
         description            = "Test L3Out Node Routing Policy"
+
         bgp_best_path_control {
             as_path_multipath_relax = false
         }
-        bfd_multi_hop_settings {
-            admin_state           = "enabled"
-            detection_multiplier  = 3
-            min_receive_interval  = 250
-            min_transmit_interval = 250
-        }
-        
-        bgp_node_settings {
-            graceful_restart_helper = true
-            keep_alive_interval     = 60
-            hold_interval           = 180
-            stale_interval          = 300
-            max_as_limit            = 0
-        }
+
+        bfd_multi_hop_settings {}
+        bgp_node_settings {}
     }`, testAccMSOTemplateResourceTenantConfig())
 }
 
@@ -567,10 +637,38 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinValues() string {
         
         bgp_node_settings {
             graceful_restart_helper = false
+            keep_alive_interval     = 0
+            hold_interval           = 0
+            stale_interval          = 1
+            max_as_limit            = 0
+        }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinPositiveBGPTimers() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy_min"
+        description            = "Minimum Values Test"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            admin_state           = "enabled"
+            detection_multiplier  = 1
+            min_receive_interval  = 250
+            min_transmit_interval = 250
+        }
+
+        bgp_node_settings {
+            graceful_restart_helper = false
             keep_alive_interval     = 1
             hold_interval           = 3
             stale_interval          = 1
-            max_as_limit            = 0
+            max_as_limit            = 10
         }
     }`, testAccMSOTemplateResourceTenantConfig())
 }

@@ -130,11 +130,14 @@ func resourceMSOL3OutNodeRoutingPolicy() *schema.Resource {
 							Description:  "BGP keepalive interval in seconds. Default: 60 when unset during creation. Range: 0-3600.",
 						},
 						"hold_interval": {
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.IntAtLeast(0),
-							Description:  "BGP hold interval in seconds. Default: 180 when unset during creation. Must be 0 or between 3-3600.",
+							Type:     schema.TypeInt,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.Any(
+								validation.IntInSlice([]int{0}),
+								validation.IntBetween(3, 3600),
+							),
+							Description: "BGP hold interval in seconds. Default: 180 when unset during creation. Must be 0 or between 3-3600.",
 						},
 						"stale_interval": {
 							Type:         schema.TypeInt,
@@ -217,27 +220,50 @@ func buildBGPBestPathControlPayload(d *schema.ResourceData, bestPathSettings []i
 	return payload
 }
 
-func buildBGPNodeSettingsPayload(bgpSettings []interface{}) map[string]interface{} {
+func buildBGPNodeSettingsPayload(d *schema.ResourceData, bgpSettings []interface{}) map[string]interface{} {
 	if len(bgpSettings) == 0 {
 		return nil
 	}
 
 	settings := bgpSettings[0].(map[string]interface{})
 	payload := make(map[string]interface{})
+	settingsToSend := make(map[string]bool)
 
-	if gracefulRestart, ok := settings["graceful_restart_helper"].(bool); ok {
+	// Preserve computed values when replacing an existing BGP settings block.
+	previous, _ := d.GetChange("bgp_node_settings")
+	if previousSettings, ok := previous.([]interface{}); ok && len(previousSettings) > 0 {
+		for name := range previousSettings[0].(map[string]interface{}) {
+			settingsToSend[name] = true
+		}
+	}
+
+	// Use raw configuration to distinguish omitted Optional+Computed fields from explicit 0 or false.
+	// Omitted fields in a new BGP block must use NDO defaults.
+	rawConfig := d.GetRawConfig()
+	if rawConfig.IsKnown() && !rawConfig.IsNull() {
+		bgpConfig := rawConfig.GetAttr("bgp_node_settings")
+		if bgpConfig.IsKnown() && !bgpConfig.IsNull() && bgpConfig.LengthInt() > 0 {
+			for name, value := range bgpConfig.AsValueSlice()[0].AsValueMap() {
+				if value.IsKnown() && !value.IsNull() {
+					settingsToSend[name] = true
+				}
+			}
+		}
+	}
+
+	if gracefulRestart, ok := settings["graceful_restart_helper"].(bool); ok && settingsToSend["graceful_restart_helper"] {
 		payload["gracefulRestartHelper"] = gracefulRestart
 	}
-	if keepAlive, ok := settings["keep_alive_interval"].(int); ok && keepAlive != 0 {
+	if keepAlive, ok := settings["keep_alive_interval"].(int); ok && settingsToSend["keep_alive_interval"] {
 		payload["keepAliveInterval"] = keepAlive
 	}
-	if holdInterval, ok := settings["hold_interval"].(int); ok {
+	if holdInterval, ok := settings["hold_interval"].(int); ok && settingsToSend["hold_interval"] {
 		payload["holdInterval"] = holdInterval
 	}
-	if staleInterval, ok := settings["stale_interval"].(int); ok && staleInterval != 0 {
+	if staleInterval, ok := settings["stale_interval"].(int); ok && settingsToSend["stale_interval"] {
 		payload["staleInterval"] = staleInterval
 	}
-	if maxAsLimit, ok := settings["max_as_limit"].(int); ok {
+	if maxAsLimit, ok := settings["max_as_limit"].(int); ok && settingsToSend["max_as_limit"] {
 		payload["maxAslimit"] = maxAsLimit
 	}
 
@@ -365,7 +391,7 @@ func resourceMSOL3OutNodeRoutingPolicyCreate(d *schema.ResourceData, m interface
 	}
 
 	if bgpRaw, ok := d.GetOk("bgp_node_settings"); ok {
-		if bgpPayload := buildBGPNodeSettingsPayload(bgpRaw.([]interface{})); bgpPayload != nil {
+		if bgpPayload := buildBGPNodeSettingsPayload(d, bgpRaw.([]interface{})); bgpPayload != nil {
 			payload["bgpTimerPol"] = bgpPayload
 		}
 	}
@@ -503,7 +529,7 @@ func resourceMSOL3OutNodeRoutingPolicyUpdate(d *schema.ResourceData, m interface
 				return err
 			}
 		} else {
-			if bgpPayload := buildBGPNodeSettingsPayload(bgpRaw); bgpPayload != nil {
+			if bgpPayload := buildBGPNodeSettingsPayload(d, bgpRaw); bgpPayload != nil {
 				err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/bgpTimerPol", updatePath), bgpPayload)
 				if err != nil {
 					return err
