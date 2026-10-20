@@ -470,6 +470,155 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 	})
 }
 
+func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResourceErrors(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject L3Out Node Routing Policy without template ID") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorWithoutTemplateID(),
+				ExpectError: regexp.MustCompile(`The argument "template_id" is required`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject L3Out Node Routing Policy without name") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorWithoutName(),
+				ExpectError: regexp.MustCompile(`The argument "name" is required`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject empty L3Out Node Routing Policy name") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorName(""),
+				ExpectError: regexp.MustCompile(`expected length of name to be in the range \(1 - 64\)`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject L3Out Node Routing Policy name longer than 64 characters") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorName(strings.Repeat("a", 65)),
+				ExpectError: regexp.MustCompile(`expected length of name to be in the range \(1 - 64\)`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject multiple BFD multi-hop settings blocks") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorMultipleBFDSettings(),
+				ExpectError: regexp.MustCompile(`Too many bfd_multi_hop_settings blocks`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject multiple BGP node settings blocks") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorMultipleBGPSettings(),
+				ExpectError: regexp.MustCompile(`Too many bgp_node_settings blocks`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject invalid BFD admin state") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorInvalidBFDAdminState(),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.admin_state to be one of`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BFD detection multiplier below 1") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigDetectionMultiplier(0),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.detection_multiplier to be in the range \(1 - 50\), got 0`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BFD detection multiplier above 50") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigDetectionMultiplier(51),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.detection_multiplier to be in the range \(1 - 50\), got 51`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BFD minimum receive interval below 250") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinReceiveInterval(249),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.min_receive_interval to be in the range \(250 - 999\), got 249`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BFD minimum receive interval above 999") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinReceiveInterval(1000),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.min_receive_interval to be in the range \(250 - 999\), got 1000`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BFD minimum transmit interval below 250") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinTransmitInterval(249),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.min_transmit_interval to be in the range \(250 - 999\), got 249`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BFD minimum transmit interval above 999") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinTransmitInterval(1000),
+				ExpectError: regexp.MustCompile(`expected bfd_multi_hop_settings\.0\.min_transmit_interval to be in the range \(250 - 999\), got 1000`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject negative BGP keep-alive interval") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigKeepAliveInterval(-1),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.keep_alive_interval to be in the range \(0 - 3600\), got -1`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP keep-alive interval above 3600") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigKeepAliveInterval(3601),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.keep_alive_interval to be in the range \(0 - 3600\), got 3601`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject negative BGP hold interval") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigHoldInterval(-1),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.hold_interval to be in the range \(3 - 3600\), got -1`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP hold interval of 1") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigHoldInterval(1),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.hold_interval to be in the range \(3 - 3600\), got 1`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP hold interval of 2") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigHoldInterval(2),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.hold_interval to be in the range \(3 - 3600\), got 2`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP hold interval above 3600") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigHoldInterval(3601),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.hold_interval to be in the range \(3 - 3600\), got 3601`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP stale interval below 1") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigStaleInterval(0),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.stale_interval to be in the range \(1 - 3600\), got 0`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP stale interval above 3600") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigStaleInterval(3601),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.stale_interval to be in the range \(1 - 3600\), got 3601`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject negative BGP maximum AS limit") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMaxASLimit(-1),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.max_as_limit to be in the range \(0 - 2000\), got -1`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject BGP maximum AS limit above 2000") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMaxASLimit(2001),
+				ExpectError: regexp.MustCompile(`expected bgp_node_settings\.0\.max_as_limit to be in the range \(0 - 2000\), got 2001`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject multiple BGP best path control blocks") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorMultipleBGPBestPathControl(),
+				ExpectError: regexp.MustCompile(`Too many bgp_best_path_control blocks`),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out Node Routing Policy before removing all settings") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate(),
+				Check:     resource.TestCheckResourceAttrSet("mso_tenant_policies_l3out_node_routing_policy.node_policy", "uuid"),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject removing all L3Out Node Routing Policy settings") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigRemoveAll(),
+				ExpectError: regexp.MustCompile("one of\\s+`bfd_multi_hop_settings,bgp_best_path_control,bgp_node_settings`\\s+must be\\s+specified"),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject L3Out Node Routing Policy without settings") },
+				Config:      testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorWithoutSettings(),
+				ExpectError: regexp.MustCompile("one of\\s+`bfd_multi_hop_settings,bgp_best_path_control,bgp_node_settings`\\s+must be\\s+specified"),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Restore valid L3Out Node Routing Policy settings") },
+				Config:    testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate(),
+				Check:     resource.TestCheckResourceAttrSet("mso_tenant_policies_l3out_node_routing_policy.node_policy", "uuid"),
+			},
+		},
+	})
+}
+
 func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateBGPBestPathDefaults() string {
 	return fmt.Sprintf(`%s
     resource "mso_tenant_policies_l3out_node_routing_policy" "best_path_defaults" {
@@ -553,6 +702,220 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreateASPathOnly() stri
     }`, testAccMSOTemplateResourceTenantConfig())
 }
 
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorWithoutTemplateID() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorWithoutName() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorName(name string) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = %q
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), name)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorMultipleBFDSettings() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {}
+        bfd_multi_hop_settings {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorMultipleBGPSettings() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bgp_node_settings {}
+        bgp_node_settings {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorInvalidBFDAdminState() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            admin_state = "invalid"
+        }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigDetectionMultiplier(detectionMultiplier int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            detection_multiplier = %d
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), detectionMultiplier)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinReceiveInterval(minReceiveInterval int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            min_receive_interval = %d
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), minReceiveInterval)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMinTransmitInterval(minTransmitInterval int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            min_transmit_interval = %d
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), minTransmitInterval)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigKeepAliveInterval(keepAliveInterval int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bgp_node_settings {
+            keep_alive_interval = %d
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), keepAliveInterval)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigStaleInterval(staleInterval int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bgp_node_settings {
+            stale_interval = %d
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), staleInterval)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigMaxASLimit(maxASLimit int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bgp_node_settings {
+            max_as_limit = %d
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), maxASLimit)
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorWithoutSettings() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "as_path_only" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy_settings"
+        description = "Test L3Out Node Routing Policy"
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigErrorMultipleBGPBestPathControl() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id = mso_template.template_tenant.id
+        name        = "test_node_routing_policy"
+        description = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bgp_best_path_control {
+            as_path_multipath_relax = true
+        }
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
 func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate() string {
 	return fmt.Sprintf(`%s
     resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
@@ -567,6 +930,34 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigCreate() string {
         bfd_multi_hop_settings {}
         bgp_node_settings {}
     }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigHoldInterval(holdInterval int) string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "Test L3Out Node Routing Policy"
+
+        bgp_best_path_control {
+            as_path_multipath_relax = false
+        }
+
+        bfd_multi_hop_settings {
+            admin_state           = "enabled"
+            detection_multiplier  = 3
+            min_receive_interval  = 250
+            min_transmit_interval = 250
+        }
+
+        bgp_node_settings {
+            graceful_restart_helper = true
+            keep_alive_interval     = 60
+            hold_interval           = %d
+            stale_interval          = 300
+            max_as_limit            = 0
+        }
+    }`, testAccMSOTemplateResourceTenantConfig(), holdInterval)
 }
 
 func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigUpdateBGP() string {
@@ -765,6 +1156,15 @@ func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigAddBGPDefaults() string
 
         bfd_multi_hop_settings {}
         bgp_node_settings {}
+    }`, testAccMSOTemplateResourceTenantConfig())
+}
+
+func testAccMSOTenantPoliciesL3OutNodeRoutingPolicyConfigRemoveAll() string {
+	return fmt.Sprintf(`%s
+    resource "mso_tenant_policies_l3out_node_routing_policy" "node_policy" {
+        template_id            = mso_template.template_tenant.id
+        name                   = "test_node_routing_policy"
+        description            = "All Settings Removed"
     }`, testAccMSOTemplateResourceTenantConfig())
 }
 
