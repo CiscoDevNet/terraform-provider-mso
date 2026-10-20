@@ -57,7 +57,7 @@ At least one of `bgp_best_path_control`, `bfd_multi_hop_settings`, or `bgp_node_
   * `detection_multiplier` - (Optional) The number of consecutive BFD packets that must be missed before the session is declared down. Default: 3 when unset during creation. Valid range: 1-50.
   * `min_receive_interval` - (Optional) The minimum interval in microseconds between received BFD packets. Default: 250 when unset during creation. Valid range: 250-999 microseconds.
   * `min_transmit_interval` - (Optional) The minimum interval in microseconds between transmitted BFD packets. Default: 250 when unset during creation. Valid range: 250-999 microseconds.
-* `bgp_node_settings` - (Optional) BGP node configuration block. Omitting this block will remove BGP node settings if they exist.
+* `bgp_node_settings` - (Optional) BGP node configuration block. Omitting this block will remove BGP node settings if they exist. Omitted attributes within a configured block use NDO defaults during creation and retain their current values during updates.
   * `graceful_restart_helper` - (Optional) Enable or disable BGP graceful restart helper mode, allowing the router to assist peers during restart. Default: `true` (enabled) when unset during creation.
   * `keep_alive_interval` - (Optional) The BGP keepalive interval in seconds. Keepalive messages maintain the BGP session. Default: 60 when unset during creation. Valid range: 0-3600 seconds.
   * `hold_interval` - (Optional) The BGP hold interval in seconds. If no message is received within this time, the session is terminated. Default: 180 when unset during creation. Must be 0 or between 3-3600 seconds.
