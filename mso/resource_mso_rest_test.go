@@ -67,7 +67,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -101,9 +100,9 @@ func TestAccMSORestResource(t *testing.T) {
 	resourceName := "mso_rest.schema"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSORestSchemaDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSORestSchemaDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -182,7 +181,7 @@ func TestAccMSORestResource(t *testing.T) {
 				PreConfig: func() {
 					fmt.Println("Test: Manual cleanup -- DELETE schema on MSO so tenant destroy succeeds")
 					if msoRestSchemaId != "" {
-						msoClient := testAccProvider.Meta().(*client.Client)
+						msoClient := msoClientTest
 						_ = msoClient.DeletebyId("api/v1/schemas/" + msoRestSchemaId)
 					}
 				},
@@ -428,7 +427,7 @@ func testAccCheckMSORestSchemaCaptureId() resource.TestCheckFunc {
 			return nil
 		}
 
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 		cont, err := msoClient.GetViaURL("api/v1/schemas")
 		if err != nil {
 			return fmt.Errorf("failed to list schemas: %s", err)
@@ -460,7 +459,7 @@ func testAccCheckMSORestSchemaDestroy(s *terraform.State) error {
 	if msoRestSchemaId == "" {
 		return nil
 	}
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	// Best-effort cleanup. Ignore the error: if the schema is already gone
 	// the DELETE will surface a 404 which is fine for our purposes.
@@ -533,7 +532,7 @@ func testAccCheckMSORestEpgSubnetCount(epgName string, expected int) resource.Te
 		if msoRestSchemaId == "" {
 			return fmt.Errorf("msoRestSchemaId not captured; step 1 capture must run first")
 		}
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 		cont, err := msoClient.GetViaURL("api/v1/schemas/" + msoRestSchemaId)
 		if err != nil {
 			return fmt.Errorf("failed to GET schema %s: %s", msoRestSchemaId, err)
@@ -562,7 +561,7 @@ func testAccCheckMSORestEpgBdRef(epgName string) resource.TestCheckFunc {
 		if msoRestSchemaId == "" {
 			return fmt.Errorf("msoRestSchemaId not captured; step 1 capture must run first")
 		}
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 		cont, err := msoClient.GetViaURL("api/v1/schemas/" + msoRestSchemaId)
 		if err != nil {
 			return err
@@ -600,7 +599,7 @@ func testAccCheckMSORestEpgDisplayName(epgName, expected string) resource.TestCh
 		if msoRestSchemaId == "" {
 			return fmt.Errorf("msoRestSchemaId not captured; step 1 capture must run first")
 		}
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 		cont, err := msoClient.GetViaURL("api/v1/schemas/" + msoRestSchemaId)
 		if err != nil {
 			return err

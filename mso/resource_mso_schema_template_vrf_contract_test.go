@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -16,9 +15,9 @@ var msoSchemaTemplateVrfContractSchemaId string
 
 func TestAccMSOSchemaTemplateVrfContractResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateVrfContractDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateVrfContractDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create VRF contract as provider") },
@@ -77,7 +76,7 @@ func TestAccMSOSchemaTemplateVrfContractResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate VRF contract after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					vrfContractRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/vrfs/%s/%s/0", msoSchemaTemplateName, msoSchemaTemplateVrfName, humanToApiType["consumer"]))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateVrfContractSchemaId), vrfContractRemovePatchPayload)
 					if err != nil {
@@ -124,7 +123,7 @@ func testAccMSOSchemaTemplateVrfContractConfigConsumer() string {
 }
 
 func testAccCheckMSOSchemaTemplateVrfContractDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_vrf_contract" {

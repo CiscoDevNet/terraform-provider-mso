@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -27,9 +26,9 @@ func TestAccMSOTenantPoliciesNetflowExporterSiteResource(t *testing.T) {
 	resourceName := "mso_tenant_policies_netflow_exporter_site.netflow_exporter_site"
 	siteDataSource := "data.mso_site." + msoTemplateSiteName1
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOTenantPoliciesNetflowExporterSiteDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOTenantPoliciesNetflowExporterSiteDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create NetFlow Exporter site configuration without EPG association") },
@@ -693,7 +692,7 @@ func testAccMSOTenantPoliciesNetflowExporterSiteConfigExporterDoesNotExist() str
 }
 
 func manuallyDeleteNetflowExporterSiteFromTemplate(templateID, siteID, exporterUUID string) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return fmt.Errorf("manual delete: get template %s: %w", templateID, err)
@@ -715,7 +714,7 @@ func manuallyDeleteNetflowExporterSiteFromTemplate(templateID, siteID, exporterU
 }
 
 func testAccCheckMSOTenantPoliciesNetflowExporterSiteDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_tenant_policies_netflow_exporter_site" {
 			continue

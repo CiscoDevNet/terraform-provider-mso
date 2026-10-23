@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,9 +14,9 @@ var msoSchemaTemplateAnpSchemaId string
 
 func TestAccMSOSchemaTemplateAnpResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateAnpDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create ANP with name and display_name") },
@@ -93,7 +92,7 @@ func TestAccMSOSchemaTemplateAnpResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate ANP after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					anpRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s", msoSchemaTemplateName, msoSchemaTemplateAnpName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpSchemaId), anpRemovePatchPayload)
 					if err != nil {
@@ -196,7 +195,7 @@ func testAccMSOSchemaTemplateAnpConfigWithEpgChildUpdateDescription() string {
 }
 
 func testAccCheckMSOSchemaTemplateAnpDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_anp" {

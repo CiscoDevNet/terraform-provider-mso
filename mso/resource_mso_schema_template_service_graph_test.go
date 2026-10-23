@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,9 +14,9 @@ var msoSchemaTemplateServiceGraphSchemaId string
 
 func TestAccMSOSchemaTemplateServiceGraphResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -76,7 +75,7 @@ func TestAccMSOSchemaTemplateServiceGraphResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate Schema Template Service Graph after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					path := fmt.Sprintf("/templates/%s/serviceGraphs/%s", msoSchemaTemplateName, msoSchemaTemplateServiceGraphName)
 					_, err := msoClient.PatchbyID(
 						fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateServiceGraphSchemaId),
@@ -100,7 +99,7 @@ func TestAccMSOSchemaTemplateServiceGraphResource(t *testing.T) {
 }
 
 func testAccCheckMSOSchemaTemplateServiceGraphDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_template_service_graph" {
 			continue

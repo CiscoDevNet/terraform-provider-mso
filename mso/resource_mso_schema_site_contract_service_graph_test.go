@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -39,9 +38,9 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 	resourceRef := "mso_schema_site_contract_service_graph." + msoSchemaTemplateContractName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteContractServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAPICPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteContractServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -114,7 +113,7 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate site contract service graph after manual deletion")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					path := fmt.Sprintf("/sites/%s-%s/contracts/%s/serviceGraphRelationship",
 						msoSchemaSiteContractServiceGraphSiteId,
 						msoSchemaTemplateName,
@@ -143,7 +142,7 @@ func TestAccMSOSchemaSiteContractServiceGraphResource(t *testing.T) {
 // serviceGraphRelationship has been removed from the site contract in the
 // schema after the test.
 func testAccCheckMSOSchemaSiteContractServiceGraphDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_contract_service_graph" {

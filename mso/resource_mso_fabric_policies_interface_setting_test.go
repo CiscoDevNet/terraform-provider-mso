@@ -15,8 +15,8 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalResource(t *testing.T) {
 	var templateID, uuid string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Fabric Policies Interface Setting with type physical") },
@@ -177,8 +177,8 @@ func TestAccMSOFabricPoliciesInterfaceSettingPortChannelResource(t *testing.T) {
 	var templateID, uuid string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Fabric Policies Interface Setting with type portchannel") },

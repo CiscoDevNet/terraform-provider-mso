@@ -13,8 +13,8 @@ func TestAccMSOTenantPoliciesNetflowExporterSiteDataSource(t *testing.T) {
 	resourceName := "mso_tenant_policies_netflow_exporter_site.netflow_exporter_site"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: NetFlow Exporter Site Data Source - Not Found") },
