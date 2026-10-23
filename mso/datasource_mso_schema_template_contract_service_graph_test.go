@@ -13,9 +13,9 @@ func TestAccMSOSchemaTemplateContractServiceGraphDatasource(t *testing.T) {
 	datasourceRef := "data.mso_schema_template_contract_service_graph." + msoSchemaTemplateContractName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateContractServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateContractServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				// Contract exists but no service graph relationship has been created yet.

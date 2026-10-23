@@ -2,6 +2,7 @@ package mso
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,21 +11,38 @@ import (
 	"sync"
 	"testing"
 
+	internalprovider "github.com/CiscoDevNet/terraform-provider-mso/internal/provider"
 	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var testAccProviders map[string]*schema.Provider
-var testAccProvider *schema.Provider
-
-func init() {
-	testAccProvider = Provider()
-	testAccProviders = map[string]*schema.Provider{
-		"mso": testAccProvider,
+func testAccProtoV6ProviderFactories(t *testing.T) map[string]func() (tfprotov6.ProviderServer, error) {
+	t.Helper()
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"mso": func() (tfprotov6.ProviderServer, error) {
+			server, err := internalprovider.MuxProviderServer(context.Background(), "test", Provider().GRPCProvider)
+			if err != nil {
+				return nil, err
+			}
+			mux := server()
+			// The SDK harness closes v6 test transports without calling StopProvider.
+			// Stop every mux instance explicitly to release SDKv2 stop-context goroutines.
+			t.Cleanup(func() {
+				response, err := mux.StopProvider(context.Background(), &tfprotov6.StopProviderRequest{})
+				if err != nil {
+					t.Errorf("stop mux provider: %v", err)
+					return
+				}
+				if response != nil && response.Error != "" {
+					t.Errorf("stop mux provider: %s", response.Error)
+				}
+			})
+			return mux, nil
+		},
 	}
 }
 
@@ -94,6 +112,9 @@ func testAccFindPolicyByUUID(response *container.Container, uuid string, templat
 }
 
 var (
+	// testAccPreCheck initializes this client before test steps run. API checks
+	// use it directly because each mux factory call creates a new SDKv2 provider;
+	// there is no shared provider instance whose Meta() they can inspect.
 	msoClientTest     *client.Client
 	msoClientTestOnce sync.Once
 )

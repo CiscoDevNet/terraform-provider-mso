@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -19,9 +18,9 @@ func TestAccMSOSchemaTemplateContractServiceGraphResource(t *testing.T) {
 	resourceRef := "mso_schema_template_contract_service_graph." + msoSchemaTemplateContractName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateContractServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateContractServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -67,7 +66,7 @@ func TestAccMSOSchemaTemplateContractServiceGraphResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate contract service graph after manual deletion of service graph relationship")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					path := fmt.Sprintf("/templates/%s/contracts/%s/serviceGraphRelationship", msoSchemaTemplateName, msoSchemaTemplateContractName)
 					_, err := msoClient.PatchbyID(
 						fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateContractServiceGraphSchemaId),
@@ -91,7 +90,7 @@ func TestAccMSOSchemaTemplateContractServiceGraphResource(t *testing.T) {
 }
 
 func testAccCheckMSOSchemaTemplateContractServiceGraphDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_template_contract_service_graph" {
 			continue

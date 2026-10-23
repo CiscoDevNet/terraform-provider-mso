@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,9 +14,9 @@ var msoSchemaTemplateContractServiceChainingSchemaId string
 
 func TestAccMSOSchemaTemplateContractServiceChainingResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateContractServiceChainingDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateContractServiceChainingDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Service Chaining with two nodes") },
@@ -99,7 +98,7 @@ func TestAccMSOSchemaTemplateContractServiceChainingResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate Service Chaining after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					path := fmt.Sprintf("/templates/%s/contracts/%s/serviceChaining", msoSchemaTemplateName, msoSchemaTemplateContractName)
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateContractServiceChainingSchemaId), models.GetRemovePatchPayload(path))
 					if err != nil {
@@ -130,7 +129,7 @@ func testAccMSOSchemaTemplateContractServiceChainingImportStateIdFunc(s *terrafo
 }
 
 func testAccCheckMSOSchemaTemplateContractServiceChainingDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_contract_service_chaining" {

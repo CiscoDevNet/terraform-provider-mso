@@ -18,9 +18,9 @@ func TestAccMSOSchemaSiteBdSubnetDatasource(t *testing.T) {
 	siteBdSubnetDatasource := "data.mso_schema_site_bd_subnet." + msoSchemaTemplateBdName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteBdSubnetDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteBdSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

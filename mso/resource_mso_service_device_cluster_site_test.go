@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -132,7 +131,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				}
 			}
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			// Intermediate "prereqs only" step: apply the full deps stack
 			// (templates + deploys + cluster) but NOT cluster_site, then poll
@@ -931,8 +930,8 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 // HCL that validates cleanly, so they are safe terminators.
 func TestAccMSOServiceDeviceClusterSiteResourceErrors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: invalid port_type enum value is rejected") },
@@ -1069,7 +1068,7 @@ func TestAccMSOServiceDeviceClusterSiteResourceErrors(t *testing.T) {
 // drift-recovery test step to simulate an out-of-band deletion before the same
 // Terraform configuration is re-applied.
 func manuallyDeleteServiceDeviceClusterSiteFromTemplate(templateID, siteID, deviceName string) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return fmt.Errorf("manual delete: get template %s: %w", templateID, err)

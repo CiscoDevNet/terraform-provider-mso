@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,9 +14,9 @@ var msoSchemaTemplateL3outSchemaId string
 
 func TestAccMSOSchemaTemplateL3outResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateL3outDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateL3outDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create L3out with name and display_name") },
@@ -97,7 +96,7 @@ func TestAccMSOSchemaTemplateL3outResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate L3out after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					l3outRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/intersiteL3outs/%s", msoSchemaTemplateName, msoSchemaTemplateL3outName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateL3outSchemaId), l3outRemovePatchPayload)
 					if err != nil {
@@ -182,7 +181,7 @@ func testAccMSOSchemaTemplateL3outConfigUpdateVrf() string {
 }
 
 func testAccCheckMSOSchemaTemplateL3outDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_l3out" {
