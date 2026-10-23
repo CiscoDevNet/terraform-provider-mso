@@ -36,9 +36,9 @@ func TestAccMSOSchemaSiteAnpEpgDomainDatasource(t *testing.T) {
 	vmmDnDs := "data.mso_schema_site_anp_epg_domain.ds_vmm_dn"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgDomainDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgDomainDestroy,
 		Steps: []resource.TestStep{
 			// Each step's PreConfig calls cleanupOrphanSchemaSiteTestResources
 			// (defined in datasource_mso_schema_site_test.go) to remove any

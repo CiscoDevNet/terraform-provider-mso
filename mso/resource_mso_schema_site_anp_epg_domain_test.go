@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -67,9 +66,9 @@ func TestAccMSOSchemaSiteAnpEpgDomainResource(t *testing.T) {
 	vmmDnDn := fmt.Sprintf("uni/vmmp-VMware/dom-%s", msoSiteAnpEpgDomainNameVmmDn)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgDomainDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgDomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Create site ANP EPG domain with no DN inputs (expect error)") },
@@ -475,7 +474,7 @@ resource "mso_schema_site_anp_epg_domain" "%[21]s" {
 // site/anp/epg. A missing schema or sites array is treated as a successful
 // destroy.
 func testAccCheckMSOSchemaSiteAnpEpgDomainDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_anp_epg_domain" {

@@ -12,8 +12,8 @@ const msoTfTenantName = "tf_test_mso_tenant_app"
 
 func TestAccNdoSchemaTemplateDeploy_Error(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Cross-template VRF/BD dependency (expecting deployment error)") },
@@ -35,8 +35,8 @@ func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Check Retry on Deploy") },
@@ -49,8 +49,8 @@ func TestAccNdoSchemaTemplateDeploy_WithCustomRetry(t *testing.T) {
 
 func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingSchemaId(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Schema id validation") },
@@ -63,8 +63,8 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingSchemaId(t *testing.T
 
 func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingTemplateName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Template name validation") },
@@ -77,8 +77,8 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_MissingTemplateName(t *testi
 
 func TestAccNdoSchemaTemplateDeploy_ValidationError_NonAppMissingName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Template name validation with template_type tenant") },
@@ -91,8 +91,8 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_NonAppMissingName(t *testing
 
 func TestAccNdoSchemaTemplateDeploy_Success_WithTemplateId(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Deploy with template id") },
@@ -105,8 +105,8 @@ func TestAccNdoSchemaTemplateDeploy_Success_WithTemplateId(t *testing.T) {
 
 func TestAccNdoSchemaTemplateDeploy_Success_WithoutTemplateId(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Deploy without template id") },
@@ -119,8 +119,8 @@ func TestAccNdoSchemaTemplateDeploy_Success_WithoutTemplateId(t *testing.T) {
 
 func TestAccNdoSchemaTemplateDeploy_Undeploy(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Deploy tenant template") },
@@ -135,8 +135,8 @@ func TestAccNdoSchemaTemplateDeploy_Undeploy(t *testing.T) {
 
 func TestAccNdoSchemaTemplateDeploy_UndeployWithSiteIds(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Deploy tenant template") },
@@ -159,8 +159,8 @@ func TestAccNdoSchemaTemplateDeploy_UndeployWithSiteIds(t *testing.T) {
 
 func TestAccNdoSchemaTemplateDeploy_ValidationError_UndeployWithoutSiteIds(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Undeploy validation - site_ids required") },
@@ -173,8 +173,8 @@ func TestAccNdoSchemaTemplateDeploy_ValidationError_UndeployWithoutSiteIds(t *te
 
 func TestAccNdoSchemaTemplateDeploy_ApplicationTemplate_UndeployWithSiteIds(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Deploy application template") },

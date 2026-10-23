@@ -11,8 +11,8 @@ import (
 func TestAccMSOTemplateDatasourceTenantErrors(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: No template_id or template_name provided in Template configuration") },
@@ -41,8 +41,8 @@ func TestAccMSOTemplateDatasourceTenantErrors(t *testing.T) {
 func TestAccMSOTemplateDatasourceTenantName(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Tenant template with name and type provided in Template configuration") },
@@ -67,8 +67,8 @@ func TestAccMSOTemplateDatasourceTenantName(t *testing.T) {
 func TestAccMSOTemplateDatasourceTenantId(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Tenant template with id provided in Template configuration") },

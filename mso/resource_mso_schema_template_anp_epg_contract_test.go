@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -16,9 +15,9 @@ var msoSchemaTemplateAnpEpgContractSchemaId string
 
 func TestAccMSOSchemaTemplateAnpEpgContractResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create EPG Contract as provider") },
@@ -82,7 +81,7 @@ func TestAccMSOSchemaTemplateAnpEpgContractResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate EPG Contract after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgContractSchemaId))
 					if err != nil {
 						t.Fatalf("Failed to get schema: %v", err)
@@ -142,7 +141,7 @@ resource "mso_schema_template_anp_epg_contract" "%[2]s_provider" {
 
 // testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy verifies the contract relationship is removed after test.
 func testAccCheckMSOSchemaTemplateAnpEpgContractResourceDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_anp_epg_contract" {

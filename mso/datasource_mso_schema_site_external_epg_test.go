@@ -18,9 +18,9 @@ func TestAccMSOSchemaSiteExternalEpgDataSource(t *testing.T) {
 	siteEpgDataSource := "data.mso_schema_site_external_epg." + msoSchemaTemplateExtEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteExternalEpgDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteExternalEpgDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -16,9 +15,9 @@ var msoSchemaTemplateExtEpgSubnetSchemaId string
 func TestAccMSOSchemaTemplateExternalEpgSubnetResource(t *testing.T) {
 	resourceName := "mso_schema_template_external_epg_subnet." + msoSchemaTemplateExtEpgName + "_subnet"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateExtEpgSubnetDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateExtEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create External EPG Subnet with required ip only") },
@@ -134,7 +133,7 @@ func TestAccMSOSchemaTemplateExternalEpgSubnetResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate External EPG Subnet after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					subnetRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/externalEpgs/%s/subnets/0", msoSchemaTemplateName, msoSchemaTemplateExtEpgName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateExtEpgSubnetSchemaId), subnetRemovePatchPayload)
 					if err != nil {
@@ -241,7 +240,7 @@ func testAccMSOSchemaTemplateExtEpgSubnetConfigUpdateIp() string {
 }
 
 func testAccCheckMSOSchemaTemplateExtEpgSubnetDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_external_epg_subnet" {

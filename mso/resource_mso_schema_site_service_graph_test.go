@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -21,9 +20,9 @@ func TestAccMSOSchemaSiteServiceGraphResource(t *testing.T) {
 	resourceRef := "mso_schema_site_service_graph." + msoSchemaTemplateServiceGraphName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAPICPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -82,7 +81,7 @@ func TestAccMSOSchemaSiteServiceGraphResource(t *testing.T) {
 // on this resource is a no-op in the API, but the graph is removed implicitly
 // when the template service graph is destroyed during test teardown.
 func testAccCheckMSOSchemaSiteServiceGraphDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_service_graph" {

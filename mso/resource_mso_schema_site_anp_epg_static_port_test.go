@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -27,9 +26,9 @@ func TestAccMSOSchemaSiteAnpEpgStaticPortResource(t *testing.T) {
 	staticPortResource := "mso_schema_site_anp_epg_static_port." + msoSchemaTemplateAnpEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgStaticPortDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgStaticPortDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -285,7 +284,7 @@ func testAccMSOSchemaSiteAnpEpgStaticPortConfigNoSiteAssociation() string {
 // matches the portPath still exists. A missing schema or missing sites array
 // is treated as a successful destroy.
 func testAccCheckMSOSchemaSiteAnpEpgStaticPortDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_anp_epg_static_port" {

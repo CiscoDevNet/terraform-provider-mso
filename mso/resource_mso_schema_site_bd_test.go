@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -39,9 +38,9 @@ func TestAccMSOSchemaSiteBdResource(t *testing.T) {
 	siteBdL3outResource := "mso_schema_site_bd_l3out." + msoSchemaTemplateBdName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteBdDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteBdDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -448,7 +447,7 @@ func testAccCheckMSOSchemaSiteBdHasL3Out(siteBdResourceName, wantL3Out string) r
 		stateTemplate := rs.Primary.Attributes["template_name"]
 		stateBd := rs.Primary.Attributes["bd_name"]
 
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 		cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 		if err != nil {
 			return fmt.Errorf("unable to fetch schema %s: %v", schemaId, err)
@@ -509,7 +508,7 @@ func testAccCheckMSOSchemaSiteBdHasL3Out(siteBdResourceName, wantL3Out string) r
 // templateName. A missing schema or missing sites array is treated as a
 // successful destroy.
 func testAccCheckMSOSchemaSiteBdDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_bd" {

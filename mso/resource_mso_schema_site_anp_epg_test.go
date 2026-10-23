@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -28,9 +27,9 @@ func TestAccMSOSchemaSiteAnpEpgResource(t *testing.T) {
 	siteAnpEpgResource := "mso_schema_site_anp_epg." + msoSchemaTemplateAnpEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -175,7 +174,7 @@ func testAccMSOSchemaSiteAnpEpgConfigNoSiteAssociation() string {
 // under the matching siteId + anpName. A missing schema or missing sites
 // array is treated as a successful destroy.
 func testAccCheckMSOSchemaSiteAnpEpgDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_anp_epg" {

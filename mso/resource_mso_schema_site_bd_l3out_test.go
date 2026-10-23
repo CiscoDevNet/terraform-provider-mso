@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -23,9 +22,9 @@ func TestAccMSOSchemaSiteBdL3outResource(t *testing.T) {
 	siteBdL3outResource := "mso_schema_site_bd_l3out." + msoSchemaTemplateBdName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteBdL3outDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteBdL3outDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -147,7 +146,7 @@ func testAccMSOSchemaSiteBdL3outConfigNoSiteAssociation() string {
 // siteId + templateName + bd_name. A missing schema or missing sites array is
 // treated as a successful destroy.
 func testAccCheckMSOSchemaSiteBdL3outDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_bd_l3out" {

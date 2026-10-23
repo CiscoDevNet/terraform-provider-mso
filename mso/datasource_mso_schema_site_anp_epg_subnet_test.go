@@ -18,9 +18,9 @@ func TestAccMSOSchemaSiteAnpEpgSubnetDatasource(t *testing.T) {
 	subnetDatasource := "data.mso_schema_site_anp_epg_subnet." + msoSchemaTemplateAnpEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgSubnetDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

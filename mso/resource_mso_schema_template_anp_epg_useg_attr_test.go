@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -20,9 +19,9 @@ var msoSchemaTemplateAnpEpgUsegAttrSchemaId string
 
 func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgUsegAttrDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateAnpEpgUsegAttrDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create UsegAttr with required attributes only (ip type)") },
@@ -120,7 +119,7 @@ func TestAccMSOSchemaTemplateAnpEpgUsegAttrResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate UsegAttr after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					path := fmt.Sprintf("/templates/%s/anps/%s/epgs/%s/uSegAttrs/%s",
 						msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName, msoSchemaTemplateAnpEpgUsegAttrName2)
 					removePayload := models.GetRemovePatchPayload(path)
@@ -468,7 +467,7 @@ func testAccMSOSchemaTemplateAnpEpgUsegAttrConfigUpdateParentEpg() string {
 }
 
 func testAccCheckMSOSchemaTemplateAnpEpgUsegAttrDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_anp_epg_useg_attr" {

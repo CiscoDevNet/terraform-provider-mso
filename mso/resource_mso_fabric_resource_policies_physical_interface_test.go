@@ -17,8 +17,8 @@ func TestAccMSOFabricResourcePhysicalInterfaceResource(t *testing.T) {
 	var breakoutTemplateID, breakoutUUID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Create Without interface_policy_group_uuid and breakout_mode (error)") },

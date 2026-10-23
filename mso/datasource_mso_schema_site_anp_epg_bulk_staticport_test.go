@@ -18,9 +18,9 @@ func TestAccMSOSchemaSiteAnpEpgBulkStaticPortDatasource(t *testing.T) {
 	bulkStaticPortDatasource := "data.mso_schema_site_anp_epg_bulk_staticport." + msoSchemaTemplateAnpEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgBulkStaticPortDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgBulkStaticPortDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
