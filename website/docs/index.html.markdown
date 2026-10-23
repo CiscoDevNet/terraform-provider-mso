@@ -11,6 +11,8 @@ MSO Provider
 
 Cisco ACI Multi-Site Orchestrator (MSO) / Nexus Dashboard Orchestrator (NDO) is responsible for provisioning, health monitoring, and managing the full lifecycle of Cisco ACI networking policies and tenant policies across Cisco ACI sites around the world. Terraform provider MSO is a Terraform plugin which will be used to manage the MSO Fabric Constructs on the Cisco MSO platform with leveraging advantages of Terraform. The provider needs to be configured with the proper credentials before it can be used.
 
+The provider requires Terraform CLI v1.1.7 or later and uses Terraform plugin protocol version 6. Upgrade Terraform before upgrading this provider if you currently use an earlier Terraform version.
+
 !> Cisco NDO 4.2(2) introduces a change in behavior to Schema IDs, which impacts existing Terraform state files. When upgrading, all managed resources must be re-imported. Please refer to the [4.2(2) release notes](https://www.cisco.com/c/en/us/td/docs/dcn/ndo/4x/release-notes/cisco-nexus-dashboard-orchestrator-release-notes-422.html#ChangesinBehavior) for behavioral changes.
 
 Limitations
@@ -40,6 +42,8 @@ Example Usage
 
  ```hcl
 terraform {
+  required_version = ">= 1.1.7"
+
   required_providers {
     mso = {
       source = "CiscoDevNet/mso"
