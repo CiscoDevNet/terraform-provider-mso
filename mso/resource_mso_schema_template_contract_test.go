@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -16,9 +15,9 @@ var msoSchemaTemplateContractSchemaId string
 
 func TestAccMSOSchemaTemplateContractResourceTwoWay(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateContractDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateContractDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -139,7 +138,7 @@ func TestAccMSOSchemaTemplateContractResourceTwoWay(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate contract after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					contractRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/contracts/%s", msoSchemaTemplateName, msoSchemaTemplateContractName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateContractSchemaId), contractRemovePatchPayload)
 					if err != nil {
@@ -170,9 +169,9 @@ func TestAccMSOSchemaTemplateContractResourceTwoWay(t *testing.T) {
 
 func TestAccMSOSchemaTemplateContractResourceOneWay(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateContractDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateContractDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -484,7 +483,7 @@ func testAccMSOSchemaTemplateContractOneWayConfigAddBothWay() string {
 }
 
 func testAccCheckMSOSchemaTemplateContractDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_contract" {

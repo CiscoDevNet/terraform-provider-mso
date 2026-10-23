@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -19,8 +18,8 @@ var (
 func TestAccMSOTenantPoliciesNetflowExporterResource(t *testing.T) {
 	resourceName := "mso_tenant_policies_netflow_exporter.netflow_exporter"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create NetFlow Exporter") },
@@ -86,7 +85,7 @@ func TestAccMSOTenantPoliciesNetflowExporterResource(t *testing.T) {
 }
 
 func manuallyDeleteNetflowExporterFromTemplate(templateID, exporterUUID string) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return fmt.Errorf("manual delete: get template %s: %w", templateID, err)

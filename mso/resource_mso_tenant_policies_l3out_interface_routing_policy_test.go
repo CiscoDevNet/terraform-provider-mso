@@ -15,8 +15,8 @@ func TestAccMSOL3OutInterfaceRoutingPolicyResource(t *testing.T) {
 	var templateID, uuid string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create L3Out Interface Routing Policy with BFD") },

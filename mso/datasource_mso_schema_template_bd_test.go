@@ -10,8 +10,8 @@ import (
 
 func TestAccMSOSchemaTemplateBdDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Schema Template BD Data Source - Not Found") },

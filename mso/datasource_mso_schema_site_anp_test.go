@@ -13,9 +13,9 @@ func TestAccMSOSchemaSiteAnpDatasource(t *testing.T) {
 	siteAnpDatasource := "data.mso_schema_site_anp.anp"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Read site ANP datasource not-found error") },

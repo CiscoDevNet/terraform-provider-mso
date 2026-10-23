@@ -13,9 +13,9 @@ func TestAccMSOSchemaSiteServiceGraphDatasource(t *testing.T) {
 	datasourceRef := "data.mso_schema_site_service_graph." + msoSchemaTemplateServiceGraphName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAPICPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Lookup non-existing site service graph (expect error)") },

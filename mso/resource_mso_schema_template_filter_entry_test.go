@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -17,9 +16,9 @@ func TestAccMSOSchemaTemplateFilterEntryResource(t *testing.T) {
 	filterEntryName := msoSchemaTemplateFilterName + "_entry"
 	resourceName := "mso_schema_template_filter_entry." + msoSchemaTemplateFilterName
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateFilterEntryDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateFilterEntryDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create filter entry with basic attributes") },
@@ -174,7 +173,7 @@ func TestAccMSOSchemaTemplateFilterEntryResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate filter entry after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					filterRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/filters/%s", msoSchemaTemplateName, msoSchemaTemplateFilterName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateFilterEntrySchemaId), filterRemovePatchPayload)
 					if err != nil {
@@ -192,7 +191,7 @@ func TestAccMSOSchemaTemplateFilterEntryResource(t *testing.T) {
 				PreConfig: func() { fmt.Println("Test: Delete last entry, filter should be deleted") },
 				Config:    testAccMSOSchemaTemplateFilterEntryPrerequisiteConfig(),
 				Check: func(s *terraform.State) error {
-					client := testAccProvider.Meta().(*client.Client)
+					client := msoClientTest
 					cont, err := client.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateFilterEntrySchemaId))
 					if err != nil {
 						return err
@@ -412,7 +411,7 @@ func testAccMSOSchemaTemplateFilterEntryConfigSecondEntryOnly() string {
 }
 
 func testAccCheckMSOSchemaTemplateFilterEntryDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_filter_entry" {

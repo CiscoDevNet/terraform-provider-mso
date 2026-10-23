@@ -10,9 +10,9 @@ import (
 
 func TestAccMSOSchemaSiteDatasource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteDestroy,
 		Steps: []resource.TestStep{
 			// Step ordering: error -> error -> success, with each step's
 			// PreConfig calling cleanupOrphanSchemaSiteTestResources to remove

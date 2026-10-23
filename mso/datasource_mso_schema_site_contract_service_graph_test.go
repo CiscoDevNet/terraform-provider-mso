@@ -24,9 +24,9 @@ func TestAccMSOSchemaSiteContractServiceGraphDatasource(t *testing.T) {
 	datasourceRef := "data.mso_schema_site_contract_service_graph." + msoSchemaTemplateContractName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAPICPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteContractServiceGraphDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAPICPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteContractServiceGraphDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

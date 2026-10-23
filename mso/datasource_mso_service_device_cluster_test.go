@@ -11,8 +11,8 @@ import (
 func TestAccMSOServiceDeviceClusterDataSource(t *testing.T) {
 	dataSourceName := "data.mso_service_device_cluster.cluster"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

@@ -10,8 +10,8 @@ import (
 
 func TestAccMSOFabricPoliciesInterfaceSettingPhysicalDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing fabric_policies_interface_setting data source remains an error") },
@@ -58,8 +58,8 @@ func TestAccMSOFabricPoliciesInterfaceSettingPhysicalDataSource(t *testing.T) {
 
 func TestAccMSOFabricPoliciesInterfaceSettingPortChannelDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 
 			{

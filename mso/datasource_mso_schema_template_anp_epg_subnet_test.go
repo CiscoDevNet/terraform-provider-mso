@@ -10,9 +10,9 @@ import (
 
 func TestAccMSOSchemaTemplateAnpEpgSubnetDatasource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Read EPG Subnet datasource not found error") },

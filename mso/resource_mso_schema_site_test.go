@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -29,9 +28,9 @@ func TestAccMSOSchemaSiteResource(t *testing.T) {
 	site2Resource := "mso_schema_site." + msoSchemaSiteResourceLabel2
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Add site_1 to schema template (not deployed)") },
@@ -164,7 +163,7 @@ func testAccCheckMSOSchemaSiteCount(resourceName string, expected int) resource.
 			return fmt.Errorf("resource not found in state: %s", resourceName)
 		}
 		schemaId := rs.Primary.Attributes["schema_id"]
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 		cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", schemaId))
 		if err != nil {
 			return fmt.Errorf("failed to GET schema %s: %v", schemaId, err)
@@ -192,7 +191,7 @@ func testAccCheckMSOSchemaSiteAbsent(resourceName, siteName string) resource.Tes
 			return fmt.Errorf("resource not found in state: %s", resourceName)
 		}
 		schemaId := rs.Primary.Attributes["schema_id"]
-		msoClient := testAccProvider.Meta().(*client.Client)
+		msoClient := msoClientTest
 
 		// Resolve siteName -> siteId.
 		sitesCont, err := msoClient.GetViaURL("api/v1/sites")
@@ -240,7 +239,7 @@ func testAccCheckMSOSchemaSiteAbsent(resourceName, siteName string) resource.Tes
 }
 
 func testAccCheckMSOSchemaSiteDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site" {

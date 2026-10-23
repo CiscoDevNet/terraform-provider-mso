@@ -10,9 +10,9 @@ import (
 
 func TestAccMSOSchemaTemplateExternalEpgDatasource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateExtEpgDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateExtEpgDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Read External EPG datasource not found error") },

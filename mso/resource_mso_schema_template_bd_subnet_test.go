@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -24,8 +23,8 @@ const msoSchemaTemplateBdSubnetIPDataPlaneLearningIP = "10.1.1.1/24"
 // flooding, as required by NDO when IP data plane learning is disabled.
 func TestAccMSOSchemaTemplateBdSubnetResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create BD Subnet with required attributes") },
@@ -121,7 +120,7 @@ func TestAccMSOSchemaTemplateBdSubnetResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate BD Subnet after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateBdSubnetSchemaId))
 					if err != nil {
 						t.Fatalf("Failed to get schema: %v", err)
@@ -319,7 +318,7 @@ func findBdSubnetIndex(cont *container.Container, templateName, bdName, ip strin
 }
 
 func testAccCheckMSOSchemaTemplateBdSubnetDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_bd_subnet" {
 			schemaID := rs.Primary.Attributes["schema_id"]

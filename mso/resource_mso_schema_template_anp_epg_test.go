@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,9 +14,9 @@ var msoSchemaTemplateAnpEpgSchemaId string
 
 func TestAccMSOSchemaTemplateAnpEpgResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateAnpEpgDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create EPG with name and display_name") },
@@ -125,7 +124,7 @@ func TestAccMSOSchemaTemplateAnpEpgResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate EPG after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					epgRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/anps/%s/epgs/%s", msoSchemaTemplateName, msoSchemaTemplateAnpName, msoSchemaTemplateAnpEpgName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgSchemaId), epgRemovePatchPayload)
 					if err != nil {
@@ -386,7 +385,7 @@ func testAccMSOSchemaTemplateAnpEpgConfigRemoveVrf() string {
 }
 
 func testAccCheckMSOSchemaTemplateAnpEpgDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_anp_epg" {

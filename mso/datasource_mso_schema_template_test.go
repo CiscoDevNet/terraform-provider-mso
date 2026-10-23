@@ -21,8 +21,8 @@ import (
 
 func TestAccMSOSchemaTemplateDatasource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Read non-existing template - not found error") },

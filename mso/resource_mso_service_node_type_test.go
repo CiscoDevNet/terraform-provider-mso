@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -33,9 +32,9 @@ func TestAccMSOServiceNodeTypeResource(t *testing.T) {
 		// Custom service node type creation/deletion (POST/DELETE) is no longer
 		// supported by the platform as of NDO 5.3 (ND 4.3): the API now only
 		// allows GET on api/v1/schemas/service-node-types.
-		PreCheck:     func() { testAccPreCheck(t); testAccVersionLessThanCheck(t, "5.3") },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOServiceNodeTypeDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAccVersionLessThanCheck(t, "5.3") },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOServiceNodeTypeDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Service Node Type") },
@@ -71,7 +70,7 @@ func TestAccMSOServiceNodeTypeResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate Service Node Type with explicit display name after manual deletion")
-					c := testAccProvider.Meta().(*client.Client)
+					c := msoClientTest
 					if err := c.DeletebyId("api/v1/schemas/service-node-types/" + msoServiceNodeTypeId); err != nil {
 						t.Fatalf("Failed to delete service node type %s via API: %s", msoServiceNodeTypeId, err)
 					}
@@ -100,7 +99,7 @@ func TestAccMSOServiceNodeTypeResource(t *testing.T) {
 }
 
 func testAccCheckMSOServiceNodeTypeDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*client.Client)
+	c := msoClientTest
 	cont, err := c.GetViaURL("api/v1/schemas/service-node-types")
 	if err != nil {
 		return err
