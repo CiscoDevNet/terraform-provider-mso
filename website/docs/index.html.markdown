@@ -80,5 +80,8 @@ Following arguments are supported with Cisco MSO terraform provider.
 * `url` - (Required) URL for CISCO MSO.
 * `insecure` - (Optional) This determines whether to use insecure HTTP connection or not. Default value is `true`.
 * `domain`- (Optional) Name of domain. Use this parameter to provide domain name in case of using remote user with the Terraform provider. Defaults to `Local`.
-* `platform`- (Optional) Parameter is used to check the platform from which MSO is accessed. Defaults to `mso`.
+* `platform`- (Optional) **Deprecated** Platform from which MSO is accessed. Accepts `mso` or `nd`. When omitted, uses `MSO_PLATFORM`, falling back to `mso`.
+
+  !> **Deprecated Warning:** Both `platform` and `MSO_PLATFORM` will be removed in a future major release, when the provider will always use Nexus Dashboard (`nd`). Until then, keep your existing `platform = "nd"` or `MSO_PLATFORM=nd` setting for Nexus Dashboard deployments. An explicit `platform` value takes precedence; the environment variable deprecation warning appears only when `MSO_PLATFORM` supplies the platform.
+
 * `retries` - (Optional) Number of retries for REST API calls. Defaults to `2`.

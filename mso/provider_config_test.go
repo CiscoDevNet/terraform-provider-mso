@@ -32,6 +32,11 @@ func TestSDKProviderConfiguration(t *testing.T) {
 			want: providerconfig.Config{Username: defaults.Username, Password: defaults.Password, URL: defaults.URL, IsInsecure: false, MaxRetries: 4, Domain: "environment-domain", ProxyUrl: "http://environment-proxy.test:8080", Platform: "nd"},
 		},
 		{
+			name: "environment still accepts legacy mso platform",
+			env:  map[string]string{"MSO_PLATFORM": "mso"},
+			want: providerconfig.Config{Username: defaults.Username, Password: defaults.Password, URL: defaults.URL, IsInsecure: true, MaxRetries: 2, Platform: "mso"},
+		},
+		{
 			name:       "explicit values override environment including false and zero",
 			env:        map[string]string{"MSO_INSECURE": "true", "MSO_RETRIES": "4", "MSO_DOMAIN": "environment-domain", "MSO_PROXY_URL": "http://environment-proxy.test:8080", "MSO_PLATFORM": "mso"},
 			attributes: map[string]interface{}{"username": "configured-user", "password": "configured-password", "url": "https://configured.test", "insecure": false, "retries": "0", "domain": "configured-domain", "proxy_url": "http://configured-proxy.test:8080", "platform": "nd"},
@@ -92,8 +97,23 @@ func TestSDKProviderConfiguration(t *testing.T) {
 				t.Fatalf("encoding provider configuration: %v", err)
 			}
 			prepared, err := server.PrepareProviderConfig(ctx, &tfprotov5.PrepareProviderConfigRequest{Config: &config})
-			if err != nil || len(prepared.Diagnostics) != 0 {
-				t.Fatalf("preparing provider configuration: response=%v, error=%v", prepared, err)
+			if err != nil {
+				t.Fatalf("preparing provider configuration: %v", err)
+			}
+			wantWarnings := 0
+			if !attributes["platform"].IsNull() {
+				wantWarnings = 1
+			}
+			if len(prepared.Diagnostics) != wantWarnings {
+				t.Fatalf("preparation diagnostics = %v, want %d platform deprecation warnings", prepared.Diagnostics, wantWarnings)
+			}
+			for _, diagnostic := range prepared.Diagnostics {
+				if diagnostic.Severity != tfprotov5.DiagnosticSeverityWarning ||
+					diagnostic.Summary != "Argument is deprecated" ||
+					diagnostic.Detail != providerconfig.PlatformDeprecationMessage ||
+					!diagnostic.Attribute.Equal(tftypes.NewAttributePath().WithAttributeName("platform")) {
+					t.Fatalf("unexpected preparation diagnostic: %v", diagnostic)
+				}
 			}
 			response, err := server.ConfigureProvider(ctx, &tfprotov5.ConfigureProviderRequest{Config: prepared.PreparedConfig, TerraformVersion: "1.1.7"})
 			if err != nil {
@@ -102,16 +122,35 @@ func TestSDKProviderConfiguration(t *testing.T) {
 			if !called {
 				t.Fatal("SDK protocol server did not call provider configuration")
 			}
-			if test.wantError != "" {
-				for _, diagnostic := range response.Diagnostics {
-					if diagnostic.Severity == tfprotov5.DiagnosticSeverityError && strings.Contains(diagnostic.Summary+diagnostic.Detail, test.wantError) {
-						return
-					}
-				}
-				t.Fatalf("expected error containing %q, got %v", test.wantError, response.Diagnostics)
+			wantEnvironmentWarnings := 0
+			if attributes["platform"].IsNull() && test.env["MSO_PLATFORM"] != "" {
+				wantEnvironmentWarnings = 1
 			}
-			if len(response.Diagnostics) != 0 {
-				t.Fatalf("unexpected configuration diagnostics: %v", response.Diagnostics)
+			errors, warnings := 0, 0
+			for _, diagnostic := range response.Diagnostics {
+				switch diagnostic.Severity {
+				case tfprotov5.DiagnosticSeverityWarning:
+					warnings++
+					if diagnostic.Summary != "Environment variable is deprecated" || diagnostic.Detail != providerconfig.PlatformEnvironmentDeprecationMessage {
+						t.Fatalf("unexpected configuration warning: %v", diagnostic)
+					}
+				case tfprotov5.DiagnosticSeverityError:
+					errors++
+					if test.wantError == "" || !strings.Contains(diagnostic.Summary+diagnostic.Detail, test.wantError) {
+						t.Fatalf("unexpected configuration error: %v", diagnostic)
+					}
+				default:
+					t.Fatalf("unexpected configuration diagnostic: %v", diagnostic)
+				}
+			}
+			if warnings != wantEnvironmentWarnings {
+				t.Fatalf("environment deprecation warnings = %d, want %d", warnings, wantEnvironmentWarnings)
+			}
+			if test.wantError != "" {
+				if errors != 1 {
+					t.Fatalf("configuration errors = %d, want one containing %q", errors, test.wantError)
+				}
+				return
 			}
 			if !reflect.DeepEqual(got, test.want) {
 				t.Fatalf("resolved configuration mismatch: got %#v, want %#v", got, test.want)
