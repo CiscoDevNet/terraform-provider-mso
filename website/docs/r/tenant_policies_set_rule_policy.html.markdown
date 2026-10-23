@@ -78,7 +78,7 @@ resource "mso_tenant_policies_set_rule_policy" "example" {
 
 ## Argument Reference ##
 
-* `template_id` - (Required) The ID of the tenant policy template.
+* `template_id` - (Required) The ID of the tenant policy template. Changing this forces a new resource.
 * `name` - (Required) The name of the Set Rule Policy. Length: 1-64 characters.
 * `description` - (Optional) The description of the Set Rule Policy. Default: empty string when unset.
 * `set_route_tag` - (Optional) A single block containing required integer `value`. Range: 0-999999999. Omit the block to remove the action.
