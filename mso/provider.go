@@ -49,6 +49,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
+				Deprecated:  providerconfig.PlatformDeprecationMessage,
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
 					"nd",
@@ -244,12 +245,21 @@ func Provider() *schema.Provider {
 }
 
 func configureClient(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	config, err := configFromSDKResourceData(d)
-	if err != nil {
-		return nil, diag.FromErr(err)
+	var diagnostics diag.Diagnostics
+	if _, configured := d.GetOkExists("platform"); !configured && os.Getenv("MSO_PLATFORM") != "" {
+		diagnostics = append(diagnostics, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Environment variable is deprecated",
+			Detail:   providerconfig.PlatformEnvironmentDeprecationMessage,
+		})
 	}
 
-	return config.GetClient(), nil
+	config, err := configFromSDKResourceData(d)
+	if err != nil {
+		return nil, append(diagnostics, diag.FromErr(err)...)
+	}
+
+	return config.GetClient(), diagnostics
 }
 
 func configFromSDKResourceData(d *schema.ResourceData) (providerconfig.Config, error) {

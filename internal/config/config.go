@@ -7,6 +7,16 @@ import (
 	"github.com/ciscoecosystem/mso-go-client/client"
 )
 
+// PlatformDeprecationMessage is shared by both provider schemas so muxed
+// configurations receive consistent guidance during the deprecation period.
+const PlatformDeprecationMessage = "platform is deprecated: it will be removed in a future major release, " +
+	"when Nexus Dashboard (ND) will be selected automatically. Keep platform = \"nd\" for ND deployments until then."
+
+// PlatformEnvironmentDeprecationMessage covers configurations that select the
+// platform through the environment instead of the provider attribute.
+const PlatformEnvironmentDeprecationMessage = "MSO_PLATFORM is deprecated: it will be removed in a future major release, " +
+	"when Nexus Dashboard (ND) will be selected automatically. Keep MSO_PLATFORM=nd for ND deployments until then."
+
 // Config is the provider runtime configuration shared by the SDKv2 and
 // Framework provider implementations.
 type Config struct {

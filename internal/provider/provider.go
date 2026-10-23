@@ -74,8 +74,9 @@ func (p *MSOProvider) Schema(_ context.Context, _ provider.SchemaRequest, respon
 				Description: "Proxy Server URL with port number",
 			},
 			"platform": providerschema.StringAttribute{
-				Optional:    true,
-				Description: "Parameter that specifies where MSO is installed",
+				Optional:           true,
+				Description:        "Parameter that specifies where MSO is installed",
+				DeprecationMessage: providerconfig.PlatformDeprecationMessage,
 				Validators: []validator.String{
 					stringvalidator.OneOf("mso", "nd"),
 				},
@@ -94,6 +95,10 @@ func (p *MSOProvider) Configure(ctx context.Context, request provider.ConfigureR
 	response.Diagnostics.Append(request.Config.Get(ctx, &data)...)
 	if response.Diagnostics.HasError() {
 		return
+	}
+
+	if data.Platform.IsNull() && os.Getenv("MSO_PLATFORM") != "" {
+		response.Diagnostics.AddWarning("Environment variable is deprecated", providerconfig.PlatformEnvironmentDeprecationMessage)
 	}
 
 	config, err := data.Config()

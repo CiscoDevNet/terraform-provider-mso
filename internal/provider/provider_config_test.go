@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	providerconfig "github.com/CiscoDevNet/terraform-provider-mso/internal/config"
 	"github.com/CiscoDevNet/terraform-provider-mso/mso"
 	"github.com/ciscoecosystem/mso-go-client/client"
 	frameworkprovider "github.com/hashicorp/terraform-plugin-framework/provider"
@@ -55,6 +56,11 @@ func TestFrameworkProviderConfiguration(t *testing.T) {
 			want: Config{Username: defaults.Username, Password: defaults.Password, URL: defaults.URL, IsInsecure: false, MaxRetries: 4, Domain: "environment-domain", ProxyUrl: "http://environment-proxy.test:8080", Platform: "nd"},
 		},
 		{
+			name: "environment still accepts legacy mso platform",
+			env:  map[string]string{"MSO_PLATFORM": "mso"},
+			want: Config{Username: defaults.Username, Password: defaults.Password, URL: defaults.URL, IsInsecure: true, MaxRetries: 2, Platform: "mso"},
+		},
+		{
 			name:       "explicit values override environment including false and zero",
 			env:        map[string]string{"MSO_INSECURE": "true", "MSO_RETRIES": "4", "MSO_DOMAIN": "environment-domain", "MSO_PROXY_URL": "http://environment-proxy.test:8080", "MSO_PLATFORM": "mso"},
 			attributes: map[string]interface{}{"username": "configured-user", "password": "configured-password", "url": "https://configured.test", "insecure": false, "retries": "0", "domain": "configured-domain", "proxy_url": "http://configured-proxy.test:8080", "platform": "nd"},
@@ -78,6 +84,7 @@ func TestFrameworkProviderConfiguration(t *testing.T) {
 		{name: "explicit empty username does not fall back", attributes: map[string]interface{}{"username": ""}, wantError: "Username must be provided"},
 		{name: "unknown insecure is rejected", attributes: map[string]interface{}{"insecure": tftypes.UnknownValue}, wantError: "insecure must be known"},
 		{name: "unknown username is rejected", attributes: map[string]interface{}{"username": tftypes.UnknownValue}, wantError: "MSO_USERNAME must be known"},
+		{name: "unknown platform does not use environment", env: map[string]string{"MSO_PLATFORM": "nd"}, attributes: map[string]interface{}{"platform": tftypes.UnknownValue}, wantError: "MSO_PLATFORM must be known"},
 	}
 
 	for _, test := range tests {
@@ -115,19 +122,38 @@ func TestFrameworkProviderConfiguration(t *testing.T) {
 			if !p.called {
 				t.Fatal("Framework protocol server did not call provider configuration")
 			}
-			if test.wantError != "" {
-				for _, diagnostic := range response.Diagnostics {
-					if diagnostic.Severity == tfprotov6.DiagnosticSeverityError && strings.Contains(diagnostic.Summary+diagnostic.Detail, test.wantError) {
-						if p.resourceData != nil || p.dataSourceData != nil {
-							t.Fatal("invalid configuration returned provider data")
-						}
-						return
-					}
-				}
-				t.Fatalf("expected error containing %q, got %v", test.wantError, response.Diagnostics)
+			wantEnvironmentWarnings := 0
+			if attributes["platform"].IsNull() && test.env["MSO_PLATFORM"] != "" {
+				wantEnvironmentWarnings = 1
 			}
-			if len(response.Diagnostics) != 0 {
-				t.Fatalf("unexpected configuration diagnostics: %v", response.Diagnostics)
+			errors, warnings := 0, 0
+			for _, diagnostic := range response.Diagnostics {
+				switch diagnostic.Severity {
+				case tfprotov6.DiagnosticSeverityWarning:
+					warnings++
+					if diagnostic.Summary != "Environment variable is deprecated" || diagnostic.Detail != providerconfig.PlatformEnvironmentDeprecationMessage {
+						t.Fatalf("unexpected configuration warning: %v", diagnostic)
+					}
+				case tfprotov6.DiagnosticSeverityError:
+					errors++
+					if test.wantError == "" || !strings.Contains(diagnostic.Summary+diagnostic.Detail, test.wantError) {
+						t.Fatalf("unexpected configuration error: %v", diagnostic)
+					}
+				default:
+					t.Fatalf("unexpected configuration diagnostic: %v", diagnostic)
+				}
+			}
+			if warnings != wantEnvironmentWarnings {
+				t.Fatalf("environment deprecation warnings = %d, want %d", warnings, wantEnvironmentWarnings)
+			}
+			if test.wantError != "" {
+				if errors != 1 {
+					t.Fatalf("configuration errors = %d, want one containing %q", errors, test.wantError)
+				}
+				if p.resourceData != nil || p.dataSourceData != nil {
+					t.Fatal("invalid configuration returned provider data")
+				}
+				return
 			}
 			if !reflect.DeepEqual(p.config, test.want) {
 				t.Fatalf("resolved configuration mismatch: got %#v, want %#v", p.config, test.want)
@@ -143,23 +169,27 @@ func TestFrameworkProviderConfiguration(t *testing.T) {
 func TestProviderPlatformValidation(t *testing.T) {
 	ctx := context.Background()
 	servers := []struct {
-		name string
-		new  func() (tfprotov6.ProviderServer, error)
+		name                string
+		deprecationWarnings int
+		new                 func() (tfprotov6.ProviderServer, error)
 	}{
 		{
-			name: "SDK upgraded to protocol 6",
+			name:                "SDK upgraded to protocol 6",
+			deprecationWarnings: 1,
 			new: func() (tfprotov6.ProviderServer, error) {
 				return tf5to6server.UpgradeServer(ctx, mso.Provider().GRPCProvider)
 			},
 		},
 		{
-			name: "Framework protocol 6",
+			name:                "Framework protocol 6",
+			deprecationWarnings: 1,
 			new: func() (tfprotov6.ProviderServer, error) {
 				return providerserver.NewProtocol6(New("test")())(), nil
 			},
 		},
 		{
-			name: "production mux",
+			name:                "production mux",
+			deprecationWarnings: 2,
 			new: func() (tfprotov6.ProviderServer, error) {
 				factory, err := MuxProviderServer(ctx, "test", mso.Provider().GRPCProvider)
 				if err != nil {
@@ -197,6 +227,16 @@ func TestProviderPlatformValidation(t *testing.T) {
 			if err != nil || len(providerSchema.Diagnostics) != 0 {
 				t.Fatalf("getting provider schema: response=%v, error=%v", providerSchema, err)
 			}
+			var platformSchema *tfprotov6.SchemaAttribute
+			for _, attribute := range providerSchema.Provider.Block.Attributes {
+				if attribute.Name == "platform" {
+					platformSchema = attribute
+					break
+				}
+			}
+			if platformSchema == nil || !platformSchema.Deprecated || platformSchema.DeprecationMessage != providerconfig.PlatformDeprecationMessage {
+				t.Fatalf("platform schema must advertise its shared deprecation message: %v", platformSchema)
+			}
 			configType := providerSchema.Provider.ValueType().(tftypes.Object)
 			for _, test := range tests {
 				t.Run(test.name, func(t *testing.T) {
@@ -212,20 +252,110 @@ func TestProviderPlatformValidation(t *testing.T) {
 					if err != nil {
 						t.Fatalf("validating provider configuration: %v", err)
 					}
-					errors := 0
+					errors, warnings := 0, 0
 					for _, diagnostic := range response.Diagnostics {
-						if diagnostic.Severity != tfprotov6.DiagnosticSeverityError {
-							continue
-						}
-						errors++
 						if !diagnostic.Attribute.Equal(tftypes.NewAttributePath().WithAttributeName("platform")) {
-							t.Errorf("validation error must identify platform: %v", diagnostic)
+							t.Errorf("validation diagnostic must identify platform: %v", diagnostic)
+						}
+						switch diagnostic.Severity {
+						case tfprotov6.DiagnosticSeverityError:
+							errors++
+						case tfprotov6.DiagnosticSeverityWarning:
+							warnings++
+							if diagnostic.Detail != providerconfig.PlatformDeprecationMessage ||
+								(diagnostic.Summary != "Argument is deprecated" && diagnostic.Summary != "Attribute Deprecated") {
+								t.Errorf("unexpected validation warning: %v", diagnostic)
+							}
+						default:
+							t.Errorf("unexpected validation diagnostic severity: %v", diagnostic)
 						}
 					}
 					if (errors > 0) != test.wantError {
 						t.Fatalf("validation errors = %d, want error = %t; diagnostics: %v", errors, test.wantError, response.Diagnostics)
 					}
+					if attributes["platform"].IsKnown() && !test.wantError {
+						wantWarnings := 0
+						if !attributes["platform"].IsNull() {
+							wantWarnings = serverTest.deprecationWarnings
+						}
+						if warnings != wantWarnings {
+							t.Fatalf("platform deprecation warnings = %d, want %d", warnings, wantWarnings)
+						}
+					}
 				})
+			}
+		})
+	}
+}
+
+func TestMuxProviderPlatformEnvironmentDeprecation(t *testing.T) {
+	for _, name := range []string{"MSO_INSECURE", "MSO_RETRIES", "MSO_DOMAIN", "MSO_PROXY_URL"} {
+		t.Setenv(name, "")
+	}
+	tests := []struct {
+		name         string
+		environment  string
+		platform     interface{}
+		wantWarnings int
+		wantError    bool
+	}{
+		{name: "environment unset"},
+		{name: "legacy mso environment", environment: "mso", wantWarnings: 2},
+		{name: "nd environment", environment: "nd", wantWarnings: 2},
+		{name: "explicit mso overrides nd environment", environment: "nd", platform: "mso"},
+		{name: "explicit nd overrides invalid environment", environment: "invalid", platform: "nd"},
+		// The mux stops when its first provider returns an error, so invalid
+		// environment configuration returns that provider's warning and error.
+		{name: "invalid environment still fails", environment: "invalid", wantWarnings: 1, wantError: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("MSO_PLATFORM", test.environment)
+			ctx := context.Background()
+			factory, err := MuxProviderServer(ctx, "test", mso.Provider().GRPCProvider)
+			if err != nil {
+				t.Fatalf("constructing provider mux: %v", err)
+			}
+			server := factory()
+			providerSchema, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
+			if err != nil || len(providerSchema.Diagnostics) != 0 {
+				t.Fatalf("getting provider schema: response=%v, error=%v", providerSchema, err)
+			}
+			configType := providerSchema.Provider.ValueType().(tftypes.Object)
+			values := map[string]interface{}{
+				"username": "configured-user", "password": "configured-password", "url": "https://configured.test", "platform": test.platform,
+			}
+			attributes := make(map[string]tftypes.Value, len(configType.AttributeTypes))
+			for name, attrType := range configType.AttributeTypes {
+				attributes[name] = tftypes.NewValue(attrType, values[name])
+			}
+			config, err := tfprotov6.NewDynamicValue(configType, tftypes.NewValue(configType, attributes))
+			if err != nil {
+				t.Fatalf("encoding provider configuration: %v", err)
+			}
+			response, err := server.ConfigureProvider(ctx, &tfprotov6.ConfigureProviderRequest{Config: &config, TerraformVersion: "1.1.7"})
+			if err != nil {
+				t.Fatalf("configuring provider mux: %v", err)
+			}
+			errors, warnings := 0, 0
+			for _, diagnostic := range response.Diagnostics {
+				switch diagnostic.Severity {
+				case tfprotov6.DiagnosticSeverityWarning:
+					warnings++
+					if diagnostic.Summary != "Environment variable is deprecated" || diagnostic.Detail != providerconfig.PlatformEnvironmentDeprecationMessage {
+						t.Fatalf("unexpected configuration warning: %v", diagnostic)
+					}
+				case tfprotov6.DiagnosticSeverityError:
+					errors++
+					if !test.wantError || !strings.Contains(diagnostic.Summary+diagnostic.Detail, "invalid value for platform") {
+						t.Fatalf("unexpected configuration error: %v", diagnostic)
+					}
+				default:
+					t.Fatalf("unexpected configuration diagnostic: %v", diagnostic)
+				}
+			}
+			if warnings != test.wantWarnings || (errors > 0) != test.wantError {
+				t.Fatalf("got %d warnings and %d errors, want %d warnings and error=%t", warnings, errors, test.wantWarnings, test.wantError)
 			}
 		})
 	}
