@@ -59,7 +59,7 @@ resource "mso_tenant_policies_match_rule_policy" "example" {
 
 ## Argument Reference ##
 
-* `template_id` - (Required) The ID of the tenant policy template.
+* `template_id` - (Required) The ID of the tenant policy template. Changing this forces a new resource.
 * `name` - (Required) The name of the Match Rule Policy. Length: 1-64 characters.
 * `description` - (Optional) The description of the Match Rule Policy. Default: empty string when unset.
 * `match_prefix` - (Optional) A set of match prefix blocks. Omit to remove the prefixes.
