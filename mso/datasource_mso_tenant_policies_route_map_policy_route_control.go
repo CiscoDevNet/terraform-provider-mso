@@ -33,6 +33,11 @@ func datasourceMSORouteMapPolicy() *schema.Resource {
 				Computed:    true,
 				Description: "The description of the Route Map Policy.",
 			},
+			"match_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The match type of the Route Map Policy.",
+			},
 		},
 	}
 }
@@ -54,7 +59,9 @@ func dataSourceMSORouteMapPolicyRead(d *schema.ResourceData, m interface{}) erro
 		return err
 	}
 
-	setRouteMapPolicyData(d, policy, templateId)
+	if err := setRouteMapPolicyData(d, policy, templateId); err != nil {
+		return err
+	}
 
 	log.Printf("[DEBUG] MSO Route Map Policy Data Source - Read Complete: %v", d.Id())
 	return nil
