@@ -29,4 +29,10 @@ resource "mso_tenant_policies_route_map_policy_route_control" "route_map_policy"
   template_id = mso_template.tenant_template.id
   name        = "example_route_map_policy"
   description = "Example Route Map Policy"
+  match_type  = "prefix_and_routing_policy"
+}
+
+data "mso_tenant_policies_route_map_policy_route_control" "route_map_policy" {
+  template_id = mso_tenant_policies_route_map_policy_route_control.route_map_policy.template_id
+  name        = mso_tenant_policies_route_map_policy_route_control.route_map_policy.name
 }
