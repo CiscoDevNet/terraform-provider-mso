@@ -22,17 +22,24 @@ func resourceMSORouteMapPolicyContext() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"parent_id": {
+			"template_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The Terraform ID of the parent Route Map Policy.",
+				Description: "The ID of the tenant policy template.",
+			},
+			"route_map_policy_uuid": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The UUID of the parent Route Map Policy.",
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The name of the Route Control context.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 64),
+				Description:  "The name of the Route Control context.",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -91,16 +98,35 @@ func buildMatchRuleUUIDsPayload(matchRulesRaw interface{}) []string {
 
 func resourceMSORouteMapPolicyContextImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Beginning Import: %v", d.Id())
-	parentId, contextName, err := ParseChildResourceId(d.Id(), "/context/")
+	importID := d.Id()
+	parentID, contextName, err := ParseChildResourceId(importID, "/context/")
 	if err != nil {
 		return nil, err
 	}
-	d.Set("parent_id", parentId)
-	d.Set("name", contextName)
+	templateID, err := GetTemplateIdFromResourceId(parentID)
+	if err != nil {
+		return nil, err
+	}
+	policyUUID, err := GetPolicyNameFromResourceId(parentID, "RouteMapPolicy")
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set("template_id", templateID); err != nil {
+		return nil, err
+	}
+	if err := d.Set("route_map_policy_uuid", policyUUID); err != nil {
+		return nil, err
+	}
+	if err := d.Set("name", contextName); err != nil {
+		return nil, err
+	}
 
 	err = resourceMSORouteMapPolicyContextRead(d, m)
 	if err != nil {
 		return nil, err
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("cannot import mso_tenant_policies_route_map_policy_route_control_context %q: resource not found", importID)
 	}
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Import Complete: %v", d.Id())
 	return []*schema.ResourceData{d}, nil
@@ -109,23 +135,15 @@ func resourceMSORouteMapPolicyContextImport(d *schema.ResourceData, m interface{
 func resourceMSORouteMapPolicyContextCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Beginning Create")
 	msoClient := m.(*client.Client)
-	parentId := d.Get("parent_id").(string)
+	templateID := d.Get("template_id").(string)
+	policyUUID := d.Get("route_map_policy_uuid").(string)
 
-	templateId, err := GetTemplateIdFromResourceId(parentId)
-	if err != nil {
-		return err
-	}
-	policyName, err := GetPolicyNameFromResourceId(parentId, "RouteMapPolicy")
-	if err != nil {
-		return err
-	}
-
-	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return err
 	}
 
-	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "name", policyName, "tenantPolicyTemplate", "template", "routeMapPolicies")
+	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "uuid", policyUUID, "tenantPolicyTemplate", "template", "routeMapPolicies")
 	if err != nil {
 		return err
 	}
@@ -148,12 +166,12 @@ func resourceMSORouteMapPolicyContextCreate(d *schema.ResourceData, m interface{
 	path := fmt.Sprintf("/tenantPolicyTemplate/template/routeMapPolicies/%d/contexts/-", policyIndex)
 	payloadModel := models.GetPatchPayload("add", path, payload)
 
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateId), payloadModel)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateID), payloadModel)
 	if err != nil {
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%s/context/%s", parentId, d.Get("name").(string)))
+	d.SetId(fmt.Sprintf("templateId/%s/RouteMapPolicy/%s/context/%s", templateID, policyUUID, d.Get("name").(string)))
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Create Complete: %v", d.Id())
 	return resourceMSORouteMapPolicyContextRead(d, m)
 }
@@ -161,111 +179,113 @@ func resourceMSORouteMapPolicyContextCreate(d *schema.ResourceData, m interface{
 func resourceMSORouteMapPolicyContextRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Beginning Read")
 	msoClient := m.(*client.Client)
-	parentId := d.Get("parent_id").(string)
+	templateID := d.Get("template_id").(string)
+	policyUUID := d.Get("route_map_policy_uuid").(string)
 
-	templateId, err := GetTemplateIdFromResourceId(parentId)
-	if err != nil {
-		return err
-	}
-	policyName, err := GetPolicyNameFromResourceId(parentId, "RouteMapPolicy")
-	if err != nil {
-		return err
-	}
-
-	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	response, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return err
 	}
 
-	policy, err := GetPolicyByName(response, policyName, "tenantPolicyTemplate", "template", "routeMapPolicies")
-	if err != nil {
-		return err
-	}
-
-	contextName := d.Get("name").(string)
-	contexts := policy.S("contexts")
-	count, _ := contexts.ArrayCount()
-
-	var match *container.Container
-	for i := 0; i < count; i++ {
-		c := contexts.Index(i)
-		if models.StripQuotes(c.S("name").String()) == contextName {
-			match = c
-			break
-		}
-	}
-
-	if match == nil {
-		log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Context '%s' not found in parent policy, clearing ID", contextName)
+	policyIndex, err := GetPolicyIndexByKeyAndValue(response, "uuid", policyUUID, "tenantPolicyTemplate", "template", "routeMapPolicies")
+	if isPolicyNotFound(err) {
 		d.SetId("")
 		return nil
 	}
-
-	if match.Exists("description") {
-		descValue := models.StripQuotes(match.S("description").String())
-		if descValue == "{}" {
-			d.Set("description", "")
-		} else {
-			d.Set("description", descValue)
-		}
-	} else {
-		d.Set("description", "")
+	if err != nil {
+		return err
 	}
 
-	if match.Exists("order") {
-		d.Set("order", int(match.S("order").Data().(float64)))
+	policy := response.S("tenantPolicyTemplate", "template", "routeMapPolicies").Index(policyIndex)
+	match, err := getRouteMapPolicyContext(policy, d.Get("name").(string), policyUUID)
+	if isPolicyNotFound(err) {
+		d.SetId("")
+		return nil
 	}
-
-	if match.Exists("action") {
-		d.Set("action", models.StripQuotes(match.S("action").String()))
+	if err != nil {
+		return err
 	}
-
-	if match.Exists("setRuleRef") {
-		setRuleValue := models.StripQuotes(match.S("setRuleRef").String())
-		if setRuleValue == "{}" {
-			d.Set("set_rule_uuid", "")
-		} else {
-			d.Set("set_rule_uuid", setRuleValue)
-		}
-	} else {
-		d.Set("set_rule_uuid", "")
+	if err := setRouteMapPolicyContextData(d, templateID, policyUUID, match); err != nil {
+		return err
 	}
-
-	if match.Exists("matchRules") {
-		apiList, _ := match.S("matchRules").Data().([]interface{})
-		uuids := make([]string, len(apiList))
-		for i, uuid := range apiList {
-			uuids[i] = models.StripQuotes(fmt.Sprintf("%v", uuid))
-		}
-		d.Set("match_rule_uuids", uuids)
-	} else {
-		d.Set("match_rule_uuids", []string{})
-	}
-
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Read Complete: %v", d.Id())
+	return nil
+}
+
+func getRouteMapPolicyContext(policy *container.Container, contextName, policyName string) (*container.Container, error) {
+	match, err := GetPolicyByName(policy, contextName, "contexts")
+	if isPolicyNotFound(err) {
+		return nil, &policyNotFoundError{message: fmt.Sprintf("Route Map Policy Context %q not found in parent policy %q", contextName, policyName)}
+	}
+	return match, err
+}
+
+func setRouteMapPolicyContextData(d *schema.ResourceData, templateID, policyUUID string, context *container.Container) error {
+	name, ok := context.S("name").Data().(string)
+	if !ok || name == "" {
+		return fmt.Errorf("Route Map Policy Context response does not contain a valid name")
+	}
+	description, _ := context.S("description").Data().(string)
+	setRuleUUID, _ := context.S("setRuleRef").Data().(string)
+	action, _ := context.S("action").Data().(string)
+	if action == "" {
+		action = "permit"
+	}
+	order, _ := context.S("order").Data().(float64)
+	matchRuleUUIDs := make([]string, 0)
+	if context.S("matchRules").Data() != nil {
+		matches, err := context.S("matchRules").Children()
+		if err != nil {
+			return fmt.Errorf("read Route Map Policy Context match rules: %w", err)
+		}
+		for _, match := range matches {
+			uuid, ok := match.Data().(string)
+			if !ok {
+				return fmt.Errorf("Route Map Policy Context match rule response does not contain a valid UUID")
+			}
+			matchRuleUUIDs = append(matchRuleUUIDs, uuid)
+		}
+	}
+	if err := d.Set("template_id", templateID); err != nil {
+		return err
+	}
+	if err := d.Set("route_map_policy_uuid", policyUUID); err != nil {
+		return err
+	}
+	if err := d.Set("name", name); err != nil {
+		return err
+	}
+	if err := d.Set("description", description); err != nil {
+		return err
+	}
+	if err := d.Set("set_rule_uuid", setRuleUUID); err != nil {
+		return err
+	}
+	if err := d.Set("match_rule_uuids", matchRuleUUIDs); err != nil {
+		return err
+	}
+	if err := d.Set("order", int(order)); err != nil {
+		return err
+	}
+	if err := d.Set("action", action); err != nil {
+		return err
+	}
+	d.SetId(fmt.Sprintf("templateId/%s/RouteMapPolicy/%s/context/%s", templateID, policyUUID, name))
 	return nil
 }
 
 func resourceMSORouteMapPolicyContextUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Beginning Update: %v", d.Id())
 	msoClient := m.(*client.Client)
-	parentId := d.Get("parent_id").(string)
+	templateID := d.Get("template_id").(string)
+	policyUUID := d.Get("route_map_policy_uuid").(string)
 
-	templateId, err := GetTemplateIdFromResourceId(parentId)
-	if err != nil {
-		return err
-	}
-	policyName, err := GetPolicyNameFromResourceId(parentId, "RouteMapPolicy")
-	if err != nil {
-		return err
-	}
-
-	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return err
 	}
 
-	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "name", policyName, "tenantPolicyTemplate", "template", "routeMapPolicies")
+	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "uuid", policyUUID, "tenantPolicyTemplate", "template", "routeMapPolicies")
 	if err != nil {
 		return err
 	}
@@ -281,28 +301,32 @@ func resourceMSORouteMapPolicyContextUpdate(d *schema.ResourceData, m interface{
 	payloadCont.Array()
 
 	if d.HasChange("description") {
-		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string))
+		if err := addPatchPayloadToContainer(payloadCont, "add", fmt.Sprintf("%s/description", updatePath), d.Get("description").(string)); err != nil {
+			return err
+		}
 	}
 	if d.HasChange("order") {
-		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/order", updatePath), d.Get("order").(int))
+		if err := addPatchPayloadToContainer(payloadCont, "add", fmt.Sprintf("%s/order", updatePath), d.Get("order").(int)); err != nil {
+			return err
+		}
 	}
 	if d.HasChange("action") {
-		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/action", updatePath), d.Get("action").(string))
+		if err := addPatchPayloadToContainer(payloadCont, "add", fmt.Sprintf("%s/action", updatePath), d.Get("action").(string)); err != nil {
+			return err
+		}
 	}
 	if d.HasChange("set_rule_uuid") {
-		addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/setRuleRef", updatePath), d.Get("set_rule_uuid").(string))
+		if err := addPatchPayloadToContainer(payloadCont, "add", fmt.Sprintf("%s/setRuleRef", updatePath), d.Get("set_rule_uuid").(string)); err != nil {
+			return err
+		}
 	}
 	if d.HasChange("match_rule_uuids") {
-		_, newVal := d.GetChange("match_rule_uuids")
-		uuids := buildMatchRuleUUIDsPayload(newVal)
-
-		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/matchRules", updatePath), uuids)
-		if err != nil {
+		if err := addPatchPayloadToContainer(payloadCont, "add", fmt.Sprintf("%s/matchRules", updatePath), buildMatchRuleUUIDsPayload(d.Get("match_rule_uuids"))); err != nil {
 			return err
 		}
 	}
 
-	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateId), payloadCont)
+	err = doPatchRequest(msoClient, fmt.Sprintf("api/v1/templates/%s", templateID), payloadCont)
 	if err != nil {
 		return err
 	}
@@ -314,29 +338,29 @@ func resourceMSORouteMapPolicyContextUpdate(d *schema.ResourceData, m interface{
 func resourceMSORouteMapPolicyContextDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] MSO Route Map Policy Context Resource - Beginning Delete: %v", d.Id())
 	msoClient := m.(*client.Client)
-	parentId := d.Get("parent_id").(string)
+	templateID := d.Get("template_id").(string)
+	policyUUID := d.Get("route_map_policy_uuid").(string)
 
-	templateId, err := GetTemplateIdFromResourceId(parentId)
-	if err != nil {
-		return err
-	}
-	policyName, err := GetPolicyNameFromResourceId(parentId, "RouteMapPolicy")
-	if err != nil {
-		return err
-	}
-
-	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateId))
+	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return err
 	}
 
-	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "name", policyName, "tenantPolicyTemplate", "template", "routeMapPolicies")
+	policyIndex, err := GetPolicyIndexByKeyAndValue(templateCont, "uuid", policyUUID, "tenantPolicyTemplate", "template", "routeMapPolicies")
+	if isPolicyNotFound(err) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		return err
 	}
 
 	policy := templateCont.S("tenantPolicyTemplate", "template", "routeMapPolicies").Index(policyIndex)
 	contextIndex, err := GetPolicyIndexByKeyAndValue(policy, "name", d.Get("name").(string), "contexts")
+	if isPolicyNotFound(err) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -344,7 +368,7 @@ func resourceMSORouteMapPolicyContextDelete(d *schema.ResourceData, m interface{
 	path := fmt.Sprintf("/tenantPolicyTemplate/template/routeMapPolicies/%d/contexts/%d", policyIndex, contextIndex)
 	payloadModel := models.GetRemovePatchPayload(path)
 
-	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateId), payloadModel)
+	_, err = msoClient.PatchbyID(fmt.Sprintf("api/v1/templates/%s", templateID), payloadModel)
 	if err != nil {
 		return err
 	}
