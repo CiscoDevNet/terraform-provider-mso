@@ -149,6 +149,7 @@ func Provider() *schema.Provider {
 			"mso_tenant_policies_ipsla_monitoring_policy":        resourceMSOIPSLAMonitoringPolicy(),
 			"mso_tenant_policies_ipsla_track_list":               resourceMSOIPSLATrackList(),
 			"mso_tenant_policies_l3out_interface_routing_policy": resourceMSOL3OutInterfaceRoutingPolicy(),
+			"mso_tenant_policies_l3out_node_routing_policy":      resourceMSOL3OutNodeRoutingPolicy(),
 			"mso_tenant_policies_match_rule_policy":              resourceMSOMatchRulePolicy(),
 			"mso_tenant_policies_mld_snooping_policy":            resourceMSOMLDSnoopingPolicy(),
 			"mso_tenant_policies_netflow_exporter":               resourceMSONetflowExporter(),
@@ -239,6 +240,7 @@ func Provider() *schema.Provider {
 			"mso_tenant_policies_ipsla_monitoring_policy":        datasourceMSOIPSLAMonitoringPolicy(),
 			"mso_tenant_policies_ipsla_track_list":               datasourceMSOIPSLATrackList(),
 			"mso_tenant_policies_l3out_interface_routing_policy": datasourceMSOL3OutInterfaceRoutingPolicy(),
+			"mso_tenant_policies_l3out_node_routing_policy":      datasourceMSOL3OutNodeRoutingPolicy(),
 			"mso_tenant_policies_match_rule_policy":              datasourceMSOMatchRulePolicy(),
 			"mso_tenant_policies_mld_snooping_policy":            datasourceMSOMLDSnoopingPolicy(),
 			"mso_tenant_policies_netflow_exporter":               datasourceMSONetflowExporter(),
@@ -249,7 +251,6 @@ func Provider() *schema.Provider {
 			"mso_tenant_policies_set_rule_policy":                datasourceMSOSetRulePolicy(),
 			"mso_user":                                           datasourceMSOUser(),
 		},
-
 		ConfigureContextFunc: configureClient,
 	}
 }
