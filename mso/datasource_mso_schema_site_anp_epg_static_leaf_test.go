@@ -18,9 +18,9 @@ func TestAccMSOSchemaSiteAnpEpgStaticLeafDatasource(t *testing.T) {
 	staticLeafDatasource := "data.mso_schema_site_anp_epg_static_leaf." + msoSchemaTemplateAnpEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteAnpEpgStaticLeafDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteAnpEpgStaticLeafDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

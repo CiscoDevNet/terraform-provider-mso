@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -20,9 +19,9 @@ var msoSchemaTemplateSchemaId string
 
 func TestAccMSOSchemaTemplateResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateTestDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateTestDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create template with name and display_name") },
@@ -82,7 +81,7 @@ func TestAccMSOSchemaTemplateResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Verify recreation of manually deleted template")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					path := fmt.Sprintf("/templates/%s", msoSchemaTemplateName)
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateSchemaId), models.GetRemovePatchPayload(path))
 					if err != nil {
@@ -301,7 +300,7 @@ resource "mso_schema_template" "%[2]s" {
 
 // testAccCheckMSOSchemaTemplateTestDestroy verifies that the template is deleted from the schema.
 func testAccCheckMSOSchemaTemplateTestDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template" {

@@ -11,6 +11,8 @@ MSO Provider
 
 Cisco ACI Multi-Site Orchestrator (MSO) / Nexus Dashboard Orchestrator (NDO) is responsible for provisioning, health monitoring, and managing the full lifecycle of Cisco ACI networking policies and tenant policies across Cisco ACI sites around the world. Terraform provider MSO is a Terraform plugin which will be used to manage the MSO Fabric Constructs on the Cisco MSO platform with leveraging advantages of Terraform. The provider needs to be configured with the proper credentials before it can be used.
 
+The provider requires Terraform CLI v1.1.7 or later and uses Terraform plugin protocol version 6. Upgrade Terraform before upgrading this provider if you currently use an earlier Terraform version.
+
 !> Cisco NDO 4.2(2) introduces a change in behavior to Schema IDs, which impacts existing Terraform state files. When upgrading, all managed resources must be re-imported. Please refer to the [4.2(2) release notes](https://www.cisco.com/c/en/us/td/docs/dcn/ndo/4x/release-notes/cisco-nexus-dashboard-orchestrator-release-notes-422.html#ChangesinBehavior) for behavioral changes.
 
 Limitations
@@ -40,6 +42,8 @@ Example Usage
 
  ```hcl
 terraform {
+  required_version = ">= 1.1.7"
+
   required_providers {
     mso = {
       source = "CiscoDevNet/mso"
@@ -76,5 +80,8 @@ Following arguments are supported with Cisco MSO terraform provider.
 * `url` - (Required) URL for CISCO MSO.
 * `insecure` - (Optional) This determines whether to use insecure HTTP connection or not. Default value is `true`.
 * `domain`- (Optional) Name of domain. Use this parameter to provide domain name in case of using remote user with the Terraform provider. Defaults to `Local`.
-* `platform`- (Optional) Parameter is used to check the platform from which MSO is accessed. Defaults to `mso`.
+* `platform`- (Optional) **Deprecated** Platform from which MSO is accessed. Accepts `mso` or `nd`. When omitted, uses `MSO_PLATFORM`, falling back to `mso`.
+
+  !> **Deprecated Warning:** Both `platform` and `MSO_PLATFORM` will be removed in a future major release, when the provider will always use Nexus Dashboard (`nd`). Until then, keep your existing `platform = "nd"` or `MSO_PLATFORM=nd` setting for Nexus Dashboard deployments. An explicit `platform` value takes precedence; the environment variable deprecation warning appears only when `MSO_PLATFORM` supplies the platform.
+
 * `retries` - (Optional) Number of retries for REST API calls. Defaults to `2`.

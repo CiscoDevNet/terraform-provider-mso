@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -27,8 +26,8 @@ const (
 func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 	resourceName := "mso_service_device_cluster.cluster"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Service Device Cluster with one interface") },
@@ -282,8 +281,8 @@ func TestAccMSOServiceDeviceClusterResource(t *testing.T) {
 // safe terminators.
 func TestAccMSOServiceDeviceClusterResourceErrors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: invalid device_mode is rejected") },
@@ -342,7 +341,7 @@ func TestAccMSOServiceDeviceClusterResourceErrors(t *testing.T) {
 // out-of-band deletion on NDO before the same Terraform configuration is
 // re-applied.
 func manuallyDeleteServiceDeviceClusterFromTemplate(templateID, deviceName string) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 	templateCont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/templates/%s", templateID))
 	if err != nil {
 		return fmt.Errorf("manual delete: get template %s: %w", templateID, err)

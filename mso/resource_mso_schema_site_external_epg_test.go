@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -32,9 +31,9 @@ func TestAccMSOSchemaSiteExternalEpgResource(t *testing.T) {
 	siteEpgResource := "mso_schema_site_external_epg." + msoSchemaTemplateExtEpgName
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaSiteExternalEpgDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaSiteExternalEpgDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -228,7 +227,7 @@ func testAccMSOSchemaSiteExternalEpgConfigNoSiteAssociation() string {
 // A missing schema or missing sites array is treated as a successful
 // destroy.
 func testAccCheckMSOSchemaSiteExternalEpgDestroy(s *terraform.State) error {
-	msoClient := testAccProvider.Meta().(*client.Client)
+	msoClient := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "mso_schema_site_external_epg" {

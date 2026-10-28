@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -28,9 +27,9 @@ const msoSchemaTemplateAnpEpgSubnetIPDataPlaneLearningIP = "10.0.0.10/32"
 // IPv4 host subnet.
 func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create EPG Subnet with required attributes only") },
@@ -134,7 +133,7 @@ func TestAccMSOSchemaTemplateAnpEpgSubnetResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate EPG Subnet after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					cont, err := msoClient.GetViaURL(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateAnpEpgSubnetSchemaId))
 					if err != nil {
 						t.Fatalf("Failed to get schema: %v", err)
@@ -338,7 +337,7 @@ func testAccMSOSchemaTemplateAnpEpgSubnetConfigUpdateParentEpg() string {
 }
 
 func testAccCheckMSOSchemaTemplateAnpEpgSubnetDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_anp_epg_subnet" {

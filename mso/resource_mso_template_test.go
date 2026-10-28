@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -18,8 +17,8 @@ var msoTemplateId string
 func TestAccMSOTemplateResourceTenant(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Duplicate sites provided in Tenant Template configuration (error)") },
@@ -184,7 +183,7 @@ func TestAccMSOTemplateResourceTenant(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Update the Tenant Template after manual removal from MSO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					err := msoClient.DeletebyId(fmt.Sprintf("api/v1/templates/%s", msoTemplateId))
 					if err != nil {
 						t.Fatalf("Failed to manually delete template '%s': %v", msoTemplateId, err)
@@ -404,8 +403,8 @@ func testAccMSOTemplateResourceTenanErrorNoTenantConfig() string {
 func TestAccMSOTemplateResourceL3out(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in L3out Template configuration (error)") },
@@ -503,8 +502,8 @@ func testAccMSOTemplateResourceL3outErrorChangeSiteConfig() string {
 func TestAccMSOTemplateResourceFabricPolicy(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Fabric Policy Template configuration (error)") },
@@ -552,8 +551,8 @@ func testAccMSOTemplateResourceFabricPolicyErrorTenantConfig() string {
 func TestAccMSOTemplateResourceFabricResource(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Tenant provided in Fabric Resource Template configuration (error)") },
@@ -601,8 +600,8 @@ func testAccMSOTemplateResourceFabricResourceErrorTenantConfig() string {
 func TestAccMSOTemplateResourceMonitoringTenant(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Monitoring Tenant Template configuration (error)") },
@@ -683,8 +682,8 @@ func testAccMSOTemplateResourceMonitoringTenantConfig() string {
 func TestAccMSOTemplateResourceMonitoringAccess(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Tenant provided in Monitoring Access Template configuration (error)") },
@@ -763,8 +762,8 @@ func testAccMSOTemplateResourceMonitoringAccessConfig() string {
 func TestAccMSOTemplateResourceServiceDevice(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: No tenant provided in Service Device Template configuration (error)") },

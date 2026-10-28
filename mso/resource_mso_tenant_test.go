@@ -27,9 +27,9 @@ var msoTenantNameUserAssociations = acctest.RandStringFromCharSet(10, acctest.Ch
 
 func TestAccMSOTenantResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMsoTenantDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMsoTenantDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Tenant") },
@@ -110,7 +110,7 @@ func TestAccMSOTenantResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Verify recreation of manually deleted Tenant")
-					client := testAccProvider.Meta().(*client.Client)
+					client := msoClientTest
 					err := client.DeletebyId("api/v1/tenants/" + msoTenantId)
 					if err != nil {
 						panic(fmt.Sprintf("Failed to delete tenant %s via API: %s", msoTenantId, err))
@@ -137,9 +137,9 @@ func TestAccMSOTenantResourceUserAssociations(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t); testAccVersionLessThanCheck(t, "5.2.0.0") },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMsoTenantDestroy,
+		PreCheck:                 func() { testAccPreCheck(t); testAccVersionLessThanCheck(t, "5.2.0.0") },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMsoTenantDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Tenant with user association") },
@@ -256,7 +256,7 @@ func testAccMSOTenantConfigUserAssociations(description, userID string) string {
 // they query the policy/template API (api/v1/templates/objects), whereas tenants
 // use a separate API endpoint (api/v1/tenants).
 func testAccCheckMsoTenantDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 
@@ -347,9 +347,9 @@ func testAccMSOTenantMatchUserMap(userMap map[string]interface{}, username strin
 // behavior retains the value across updates).
 func TestAccMSOTenantResourceDisplayNameDefault(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMsoTenantDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMsoTenantDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {

@@ -9,8 +9,8 @@ import (
 
 func TestAccMSOTenantPoliciesNetflowExporterDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t); testAccVersionCheck(t, "5.1") },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: NetFlow Exporter Data Source") },

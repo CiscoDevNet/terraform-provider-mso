@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,9 +14,9 @@ var msoSchemaTemplateExtEpgSchemaId string
 
 func TestAccMSOSchemaTemplateExternalEpgResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateExtEpgDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateExtEpgDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create External EPG with name and display_name") },
@@ -134,7 +133,7 @@ func TestAccMSOSchemaTemplateExternalEpgResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate External EPG after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					epgRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/externalEpgs/%s", msoSchemaTemplateName, msoSchemaTemplateExtEpgName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateExtEpgSchemaId), epgRemovePatchPayload)
 					if err != nil {
@@ -345,7 +344,7 @@ func testAccMSOSchemaTemplateExtEpgConfigRemoveChildren() string {
 }
 
 func testAccCheckMSOSchemaTemplateExtEpgDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type == "mso_schema_template_external_epg" {

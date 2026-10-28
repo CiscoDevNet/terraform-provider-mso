@@ -12,8 +12,8 @@ import (
 func TestAccMSOTenantPoliciesDHCPRelayPolicyDataSource(t *testing.T) {
 	name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing tenant policy data source returns an error") },

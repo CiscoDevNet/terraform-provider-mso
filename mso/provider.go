@@ -3,9 +3,10 @@ package mso
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
+	providerconfig "github.com/CiscoDevNet/terraform-provider-mso/internal/config"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -16,45 +17,39 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"username": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_USERNAME", nil),
+				Optional:    true,
 				Description: "Username for the MSO Account",
 			},
 			"password": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_PASSWORD", nil),
+				Optional:    true,
 				Description: "Password for the MSO Account",
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_URL", nil),
+				Optional:    true,
 				Description: "URL of the Cisco MSO web interface",
 			},
 			"insecure": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_INSECURE", true),
 				Description: "Allow insecure HTTPS client",
 			},
 			"domain": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_DOMAIN", nil),
 				Description: "Domain name for remote user authentication",
 			},
 			"proxy_url": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_PROXY_URL", nil),
 				Description: "Proxy Server URL with port number",
 			},
 			"platform": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_PLATFORM", nil),
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
+				Deprecated:  providerconfig.PlatformDeprecationMessage,
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
 					"nd",
@@ -63,7 +58,6 @@ func Provider() *schema.Provider {
 			"retries": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MSO_RETRIES", nil),
 				Description: "Number of retries for REST API calls. Defaults to 2.",
 			},
 		},
@@ -255,66 +249,52 @@ func Provider() *schema.Provider {
 }
 
 func configureClient(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	config := Config{
-		Username:   d.Get("username").(string),
-		Password:   d.Get("password").(string),
-		URL:        d.Get("url").(string),
-		IsInsecure: d.Get("insecure").(bool),
-		ProxyUrl:   d.Get("proxy_url").(string),
-		Domain:     d.Get("domain").(string),
-		Platform:   d.Get("platform").(string),
+	var diagnostics diag.Diagnostics
+	if _, configured := d.GetOkExists("platform"); !configured && os.Getenv("MSO_PLATFORM") != "" {
+		diagnostics = append(diagnostics, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Environment variable is deprecated",
+			Detail:   providerconfig.PlatformEnvironmentDeprecationMessage,
+		})
 	}
 
-	config.MaxRetries = 2
-	if d.Get("retries").(string) != "" {
-		maxRetries, err := strconv.Atoi(d.Get("retries").(string))
+	config, err := configFromSDKResourceData(d)
+	if err != nil {
+		return nil, append(diagnostics, diag.FromErr(err)...)
+	}
+
+	return config.GetClient(), diagnostics
+}
+
+func configFromSDKResourceData(d *schema.ResourceData) (providerconfig.Config, error) {
+	isInsecure := true
+
+	if value, ok := d.GetOkExists("insecure"); ok {
+		isInsecure = value.(bool)
+	} else if value := os.Getenv("MSO_INSECURE"); value != "" {
+		parsed, err := strconv.ParseBool(value)
 		if err != nil {
-			return nil, diag.Errorf("Invalid value for retries")
+			return providerconfig.Config{}, fmt.Errorf("invalid value for MSO_INSECURE")
 		}
-		config.MaxRetries = maxRetries
+		isInsecure = parsed
 	}
 
-	if err := config.Valid(); err != nil {
-		return nil, diag.FromErr(err)
-	}
-
-	return config.getClient(), nil
+	return providerconfig.BuildConfig(
+		sdkStringValue(d, "username", "MSO_USERNAME"),
+		sdkStringValue(d, "password", "MSO_PASSWORD"),
+		sdkStringValue(d, "url", "MSO_URL"),
+		isInsecure,
+		sdkStringValue(d, "proxy_url", "MSO_PROXY_URL"),
+		sdkStringValue(d, "domain", "MSO_DOMAIN"),
+		sdkStringValue(d, "platform", "MSO_PLATFORM"),
+		sdkStringValue(d, "retries", "MSO_RETRIES"),
+	)
 }
 
-func (c Config) Valid() error {
-
-	if c.Username == "" {
-		return fmt.Errorf("Username must be provided for the MSO provider")
+func sdkStringValue(d *schema.ResourceData, key, environmentVariable string) string {
+	if value, ok := d.GetOkExists(key); ok {
+		return value.(string)
 	}
 
-	if c.Password == "" {
-
-		return fmt.Errorf("Password must be provided for the MSO provider")
-	}
-	if c.URL == "" {
-		return fmt.Errorf("URL must be provided for MSO provider")
-	}
-
-	return nil
-}
-
-func (c Config) getClient() interface{} {
-	if c.Password != "" {
-
-		return client.GetClient(c.URL, c.Username, client.Password(c.Password), client.Insecure(c.IsInsecure), client.ProxyUrl(c.ProxyUrl), client.Domain(c.Domain), client.Platform(c.Platform), client.MaxRetries(c.MaxRetries))
-
-	}
-	return nil
-}
-
-// Config
-type Config struct {
-	Username   string
-	Password   string
-	IsInsecure bool
-	ProxyUrl   string
-	URL        string
-	Domain     string
-	Platform   string
-	MaxRetries int
+	return os.Getenv(environmentVariable)
 }

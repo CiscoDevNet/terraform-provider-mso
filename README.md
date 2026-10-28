@@ -3,9 +3,11 @@
 Requirements
 ------------
 
-- [Terraform](https://www.terraform.io/downloads.html) v0.12 or later.
+- [Terraform](https://www.terraform.io/downloads.html) v1.1.7 or later.
 
 - [Go](https://golang.org/doc/install) Latest Version
+
+The provider uses Terraform plugin protocol version 6. Upgrade Terraform to v1.1.7 or later before upgrading this provider if you currently use an earlier Terraform version.
 
 ## Building The Provider ##
 Clone this repository to: `$GOPATH/src/github.com/CiscoDevNet/terraform-provider-mso`.
@@ -25,6 +27,8 @@ If you are building the provider, follow the instructions to [install it as a pl
 ex.
 ```hcl
 terraform {
+  required_version = ">= 1.1.7"
+
   required_providers {
     mso = {
       source = "CiscoDevNet/mso"

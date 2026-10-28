@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/ciscoecosystem/mso-go-client/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -15,8 +14,8 @@ var msoSchemaTemplateBdSchemaId string
 
 func TestAccMSOSchemaTemplateBdResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Schema Template BD") },
@@ -121,7 +120,7 @@ func TestAccMSOSchemaTemplateBdResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Recreate BD after manual deletion from NDO")
-					msoClient := testAccProvider.Meta().(*client.Client)
+					msoClient := msoClientTest
 					bdRemovePatchPayload := models.GetRemovePatchPayload(fmt.Sprintf("/templates/%s/bds/%s", msoSchemaTemplateName, msoSchemaTemplateBdName))
 					_, err := msoClient.PatchbyID(fmt.Sprintf("api/v1/schemas/%s", msoSchemaTemplateBdSchemaId), bdRemovePatchPayload)
 					if err != nil {

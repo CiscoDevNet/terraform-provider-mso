@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ciscoecosystem/mso-go-client/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -20,9 +19,9 @@ var msoSchemaId string
 
 func TestAccMSOSchemaResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Schema with one template") },
@@ -253,7 +252,7 @@ func TestAccMSOSchemaResource(t *testing.T) {
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Verify recreation of manually deleted Schema")
-					client := testAccProvider.Meta().(*client.Client)
+					client := msoClientTest
 					err := client.DeletebyId("api/v1/schemas/" + msoSchemaId)
 					if err != nil {
 						panic(fmt.Sprintf("Failed to delete schema %s via API: %s", msoSchemaId, err))
@@ -440,7 +439,7 @@ resource "mso_schema_template_anp" "%[1]s" {
 
 // testAccCheckMSOSchemaDestroy verifies that the schema is deleted from MSO.
 func testAccCheckMSOSchemaDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*client.Client)
+	client := msoClientTest
 
 	for _, rs := range s.RootModule().Resources {
 

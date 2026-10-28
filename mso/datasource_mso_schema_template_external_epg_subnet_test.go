@@ -11,9 +11,9 @@ import (
 func TestAccMSOSchemaTemplateExternalEpgSubnetDatasource(t *testing.T) {
 	dataSourceName := "data.mso_schema_template_external_epg_subnet.ext_epg_subnet"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMSOSchemaTemplateExtEpgSubnetDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testAccCheckMSOSchemaTemplateExtEpgSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Read External EPG Subnet datasource not found error") },
