@@ -4,7 +4,7 @@ when:
     - cron
 
 variables:
-  - &go_image "10.15.39.22:5000/ci-terraform:alpine-go1.25.8-tf1.9.0"
+  - &go_image "10.15.39.22:5000/ci-terraform:alpine-go1.26.10-tf1.9.0"
 
 matrix:
   include:
