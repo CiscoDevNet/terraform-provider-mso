@@ -33,8 +33,8 @@ func TestAccMSOTenantPoliciesSetRulePolicyResource(t *testing.T) {
 			testAccPreCheck(t)
 			testAccVersionCheck(t, "5.1")
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_set_rule_policy", "tenantPolicyTemplate", "template", "setRulePolicies"),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_set_rule_policy", "tenantPolicyTemplate", "template", "setRulePolicies"),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Set Rule Policy - Minimal Configuration") },
@@ -753,8 +753,8 @@ func TestAccMSOTenantPoliciesSetRulePolicyResourceErrors(t *testing.T) {
 			testAccPreCheck(t)
 			testAccVersionCheck(t, "5.1")
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_set_rule_policy", "tenantPolicyTemplate", "template", "setRulePolicies"),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		CheckDestroy:             testCheckResourceDestroyPolicyWithPathAttributesAndArguments("mso_tenant_policies_set_rule_policy", "tenantPolicyTemplate", "template", "setRulePolicies"),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Set Rule Policy - Missing Template (error)") },
