@@ -9,6 +9,13 @@ Requirements
 
 The provider uses Terraform plugin protocol version 6. Upgrade Terraform to v1.1.7 or later before upgrading this provider if you currently use an earlier Terraform version.
 
+### Upgrading from Legacy Terraform (0.12+)
+To safely upgrade your infrastructure pipelines without losing or corrupting state files, you must follow the official sequential upgrade path. Do not skip major versions:
+
+1. Upgrade your CLI and state from **0.12 to 0.13** (and run `[terraform 0.13upgrade](https://developer.hashicorp.com/terraform/cli/commands/0.13upgrade)`).
+2. Move sequentially through **0.14**, **0.15**, and **1.0**.
+3. Once stable on Terraform 1.0+, you can safely step up to **1.1.7** or later to use this provider.
+
 ## Building The Provider ##
 Clone this repository to: `$GOPATH/src/github.com/CiscoDevNet/terraform-provider-mso`.
 Clone mso-go-client to `$GOPATH/src/github.com/ciscoecosystem/mso-go-client`.
