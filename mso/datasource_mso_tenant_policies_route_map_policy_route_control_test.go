@@ -17,7 +17,7 @@ func TestAccMSORouteMapPolicyDataSource(t *testing.T) {
 			testAccPreCheck(t)
 			testAccVersionCheck(t, "5.1")
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing Route Map Policy data source returns an error") },

@@ -35,7 +35,7 @@ func TestAccMSORouteMapPolicyResource(t *testing.T) {
 			testAccPreCheck(t)
 			testAccVersionCheck(t, "5.1")
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Create Route Map Policy without Description") },
@@ -316,7 +316,7 @@ func TestAccMSORouteMapPolicyResourceErrors(t *testing.T) {
 			testAccPreCheck(t)
 			testAccVersionCheck(t, "5.1")
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Reject Route Map Policy without template ID") },
