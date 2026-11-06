@@ -10,8 +10,8 @@ import (
 
 func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Missing L3Out Node Routing Policy data source returns an error") },

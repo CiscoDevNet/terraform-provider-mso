@@ -21,8 +21,8 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 	var originalTemplateID, originalUUID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
@@ -472,8 +472,8 @@ func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResource(t *testing.T) {
 
 func TestAccMSOTenantPoliciesL3OutNodeRoutingPolicyResourceErrors(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
 				PreConfig:   func() { fmt.Println("Test: Reject L3Out Node Routing Policy without template ID") },
