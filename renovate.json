@@ -1,0 +1,68 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "baseBranches": ["develop"],
+  "semanticCommits": "disabled",
+  "commitMessagePrefix": "[ignore]",
+  "postUpdateOptions": ["gomodTidy"],
+  "minimumReleaseAge": "3 days",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "labels": ["dependencies"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Keep the go directive in sync with the Go version used by HashiCorp Terraform",
+      "managerFilePatterns": ["/(^|/)go\\.mod$/"],
+      "matchStrings": ["(?m)^go (?<currentValue>\\d+\\.\\d+\\.\\d+)$"],
+      "depNameTemplate": "go-terraform-version",
+      "datasourceTemplate": "custom.terraform-go-version",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep .go-version in sync with the Go version used by HashiCorp Terraform",
+      "managerFilePatterns": ["/^\\.go-version$/"],
+      "matchStrings": ["^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$"],
+      "depNameTemplate": "go-terraform-version",
+      "datasourceTemplate": "custom.terraform-go-version",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "customDatasources": {
+    "terraform-go-version": {
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/hashicorp/terraform/main/.go-version",
+      "format": "plain"
+    }
+  },
+  "packageRules": [
+    {
+      "description": "Group all Terraform plugin toolchain packages into a single PR so the muxed provider always compiles",
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["/^github\\.com/hashicorp/terraform-plugin-/"],
+      "groupName": "terraform-plugin toolchain"
+    },
+    {
+      "description": "Follow the Go version used by HashiCorp Terraform instead of the latest Go release",
+      "matchManagers": ["gomod"],
+      "matchDatasources": ["golang-version"],
+      "enabled": false
+    },
+    {
+      "description": "The custom datasource has no release timestamps, so the release age check can't apply",
+      "matchDatasources": ["custom.terraform-go-version"],
+      "minimumReleaseAge": null
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "separateMajorMinor": false
+    },
+    {
+      "description": "Python in workflows is not a provider dependency",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "enabled": false
+    }
+  ]
+}
