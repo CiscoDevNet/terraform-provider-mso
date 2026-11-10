@@ -653,3 +653,185 @@ func splitCommaString(s string) []string {
 	}
 	return out
 }
+
+// buildTaskErrorMessage constructs a detailed error message for a failed deploy/undeploy task.
+// It combines the generic 'errMessage' from 'operDetails.detailedStatus' with the site specific
+// failure messages found in 'operDetails.execSiteStatus', which contain the actual error returned
+// by the site (e.g. APIC validation errors) and are otherwise silently dropped.
+// siteNames maps site IDs to names and is used to label each site entry; it may be nil.
+func buildTaskErrorMessage(cont *container.Container, defaultErrMessage string, siteNames map[string]string) string {
+	errorMessage := defaultErrMessage
+	if firstErrorMessageContainer := cont.S("operDetails", "detailedStatus", "errMessage").Index(0); firstErrorMessageContainer != nil {
+		if message, ok := firstErrorMessageContainer.Data().(string); ok && message != "" {
+			errorMessage = message
+		}
+	}
+
+	var siteErrorMessages []string
+	if execSiteStatusData, ok := cont.S("operDetails", "execSiteStatus").Data().([]interface{}); ok {
+		for _, execSiteStatus := range execSiteStatusData {
+			execSiteStatusMap, ok := execSiteStatus.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			statusMap, ok := execSiteStatusMap["status"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+			siteStatus, _ := statusMap["siteStatus"].(string)
+			msg, _ := statusMap["msg"].(string)
+			if siteStatus != "Failed" || msg == "" {
+				continue
+			}
+			// Some NDO versions populate 'errMessage' with the same detailed text as one of the
+			// 'execSiteStatus[].status.msg' entries. Remove it from the base error message so the
+			// details are only shown once, under the site they belong to.
+			errorMessage = strings.Replace(errorMessage, msg, "", 1)
+			siteId, _ := execSiteStatusMap["siteID"].(string)
+			siteLabel := siteId
+			if siteName := siteNames[siteId]; siteName != "" {
+				siteLabel = fmt.Sprintf("%s (%s)", siteName, siteId)
+			}
+			siteErrorMessages = append(siteErrorMessages, fmt.Sprintf("Site %s:", siteLabel))
+			siteErrorMessages = append(siteErrorMessages, indentLines(formatTaskErrorMessage(msg), "  ")...)
+		}
+	}
+
+	errorMessage = strings.TrimSpace(strings.TrimRight(strings.TrimSpace(errorMessage), ":"))
+	var lines []string
+	if errorMessage != "" {
+		lines = formatTaskErrorMessage(errorMessage)
+	}
+	return strings.Join(append(lines, siteErrorMessages...), "\n")
+}
+
+// getSiteNamesById returns a map of site IDs to site names, used to label task error messages.
+// The lookup is best effort: on failure it returns nil so errors fall back to showing site IDs.
+func getSiteNamesById(msoClient *client.Client) map[string]string {
+	path := "api/v1/sites"
+	if msoClient.GetPlatform() == "nd" {
+		path = "api/v2/sites"
+	}
+	cont, err := msoClient.GetViaURL(path)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to retrieve site names for task error message: %s", err)
+		return nil
+	}
+	return parseSiteNamesById(cont)
+}
+
+// parseSiteNamesById maps site IDs to names from a sites list response. ND responses
+// nest the name under 'common', while MSO responses have it at the top level.
+func parseSiteNamesById(cont *container.Container) map[string]string {
+	sites, ok := cont.S("sites").Data().([]interface{})
+	if !ok {
+		return nil
+	}
+	siteNames := make(map[string]string)
+	for _, site := range sites {
+		siteMap, ok := site.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		siteId, _ := siteMap["id"].(string)
+		siteName, _ := siteMap["name"].(string)
+		if common, ok := siteMap["common"].(map[string]interface{}); ok {
+			if commonName, ok := common["name"].(string); ok {
+				siteName = commonName
+			}
+		}
+		if siteId != "" && siteName != "" {
+			siteNames[siteId] = siteName
+		}
+	}
+	return siteNames
+}
+
+const (
+	taskErrorTruncationThreshold = 2400
+	taskErrorTruncationNotice    = "(message may have been truncated upstream; additional details may be missing)"
+)
+
+var periodSeparatorRegex = regexp.MustCompile(`\. +(\S)`)
+var wordRegex = regexp.MustCompile(`\S+`)
+
+// formatTaskErrorMessage splits a task error message returned by NDO/APIC into readable lines.
+// The backend joins individual faults with a literal "\n", with ". ", or without any separator,
+// depending on the version, so line breaks are inserted at those boundaries without altering
+// the original text. A truncation notice is appended when the message appears to be cut off.
+func formatTaskErrorMessage(message string) []string {
+	formatted := strings.ReplaceAll(message, `\n`, "\n")
+	if !strings.Contains(formatted, "\n") {
+		formatted = periodSeparatorRegex.ReplaceAllString(formatted, ".\n$1")
+	}
+	formatted = strings.ReplaceAll(formatted, "Validation failed: ", "Validation failed:\n")
+	formatted = wordRegex.ReplaceAllStringFunc(formatted, splitRunTogetherFaults)
+
+	var lines []string
+	for _, line := range strings.Split(formatted, "\n") {
+		line = strings.TrimRight(line, " \t\r")
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		// Keep the closing quote of the APIC 'text: "..."' wrapper on the last fault line.
+		if line == `"` && len(lines) > 0 {
+			lines[len(lines)-1] += line
+			continue
+		}
+		lines = append(lines, line)
+	}
+	if isTaskErrorMessageTruncated(message) {
+		lines = append(lines, taskErrorTruncationNotice)
+	}
+	return lines
+}
+
+// splitRunTogetherFaults inserts a line break where two faults are joined without a separator,
+// e.g. "native encapPort: ..." is split into "native encap" and "Port: ...". Words containing
+// "/" or "-[" are DNs (e.g. "epg-1/rspathAtt-[...]") and are never split.
+func splitRunTogetherFaults(word string) string {
+	if strings.Contains(word, "/") || strings.Contains(word, "-[") {
+		return word
+	}
+	var builder strings.Builder
+	for i := 0; i < len(word); i++ {
+		builder.WriteByte(word[i])
+		if i+2 < len(word) && isLowerASCII(word[i]) && isUpperASCII(word[i+1]) && isLowerASCII(word[i+2]) {
+			builder.WriteByte('\n')
+		}
+	}
+	return builder.String()
+}
+
+func isLowerASCII(c byte) bool {
+	return c >= 'a' && c <= 'z'
+}
+
+func isUpperASCII(c byte) bool {
+	return c >= 'A' && c <= 'Z'
+}
+
+// isTaskErrorMessageTruncated reports whether a task error message was likely truncated by
+// the backend, which cuts messages off at a fixed length (observed between 2432 and 2464 characters).
+func isTaskErrorMessageTruncated(message string) bool {
+	if len(message) < taskErrorTruncationThreshold {
+		return false
+	}
+	trimmed := message
+	for {
+		next := strings.TrimSuffix(strings.TrimRight(trimmed, " \t\r\n\""), `\n`)
+		if next == trimmed {
+			break
+		}
+		trimmed = next
+	}
+	return !strings.HasSuffix(trimmed, ".")
+}
+
+func indentLines(lines []string, indent string) []string {
+	indented := make([]string, len(lines))
+	for i, line := range lines {
+		indented[i] = indent + line
+	}
+	return indented
+}
