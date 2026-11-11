@@ -150,7 +150,7 @@ resource "mso_schema_site_service_graph" "%[2]s" {
   schema_id          = mso_schema.%[3]s.id
   template_name      = "%[4]s"
   site_id            = mso_schema_site.%[5]s.site_id
-  service_graph_name = "%[2]s"
+  service_graph_name = mso_schema_template_service_graph.%[2]s.service_graph_name
 
   service_node {
     device_dn = "%[6]s"
@@ -165,7 +165,7 @@ resource "mso_schema_site_service_graph" "%[2]s" {
   schema_id          = mso_schema.%[3]s.id
   template_name      = "%[4]s"
   site_id            = mso_schema_site.%[5]s.site_id
-  service_graph_name = "%[2]s"
+  service_graph_name = mso_schema_template_service_graph.%[2]s.service_graph_name
 
   service_node {
     device_dn               = "%[6]s"
@@ -185,7 +185,7 @@ resource "mso_schema_site_service_graph" "%[2]s" {
   schema_id          = mso_schema.%[3]s.id
   template_name      = "%[4]s"
   site_id            = mso_schema_site.%[5]s.site_id
-  service_graph_name = "%[2]s"
+  service_graph_name = mso_schema_template_service_graph.%[2]s.service_graph_name
 
   service_node {
     device_dn = "%[6]s"
