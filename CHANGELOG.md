@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.1.0 (November 17, 2026)
+
+This release adds a Terraform Plugin Framework provider, combined with the existing SDKv2 provider through a protocol 6 mux server. The provider now requires Terraform CLI v1.1.7 or later. See the [README](https://github.com/CiscoDevNet/terraform-provider-mso#upgrading-from-legacy-terraform-012) for details on upgrading from a legacy Terraform version (0.12+).
+
+DEPRECATIONS:
+
+- Deprecate `external_epg_type`, `anp_name`, `anp_schema_id`, `anp_template_name`, `site_id`, `selector_name`, and `selector_ip` attributes in mso_schema_template_external_epg resource and datasource: cloud-specific features are no longer supported in Nexus Dashboard 4.x (NDO 5.x) releases.
+- Deprecate `platform` provider attribute and `MSO_PLATFORM` environment variable: they will be removed in a future major release, when Nexus Dashboard (ND) will be selected automatically.
+
+IMPROVEMENTS:
+
+- Add `ip_data_plane_learning` attribute to mso_schema_template_bd_subnet, mso_schema_template_anp_epg_subnet, mso_schema_site_bd_subnet, and mso_schema_site_anp_epg_subnet resources and datasources.
+- Add mso_tenant_policies_netflow_exporter_site resource and datasource.
+- Add mso_tenant_policies_set_rule_policy resource and datasource.
+- Add mso_tenant_policies_match_rule_policy resource and datasource.
+- Add mso_tenant_policies_l3out_node_routing_policy resource and datasource.
+- Add mso_tenant_policies_route_map_policy_route_control resource and datasource.
+- Add mso_tenant_policies_route_map_policy_route_control_context resource and datasource.
+- Upgrade mso-go-client to v1.36.0 to add support for the `ip_data_plane_learning` attribute on subnets.
+- Upgrade Go version to 1.26.10.
+- Upgrade provider dependencies to address known vulnerabilities.
+
+BUG FIXES:
+
+- Fix mso_tenant_policies_netflow_exporter, mso_tenant_policies_netflow_monitor, mso_tenant_policies_netflow_record, mso_tenant_policies_bgp_peer_prefix_policy, mso_tenant_policies_custom_qos_policy, mso_tenant_policies_dhcp_option_policy, mso_tenant_policies_dhcp_relay_policy, mso_tenant_policies_endpoint_mac_tag_policy, mso_tenant_policies_igmp_interface_policy, mso_tenant_policies_ipsla_monitoring_policy, mso_tenant_policies_ipsla_track_list, mso_tenant_policies_l3out_interface_routing_policy, mso_tenant_policies_mld_snooping_policy, and mso_tenant_policies_route_map_policy_multicast resources to be removed from the state when deleted outside of Terraform and datasources to return an error when the object is not found.
+- Fix mso_fabric_policies_interface_setting, mso_fabric_policies_l3_domain, mso_fabric_policies_macsec_policy, mso_fabric_policies_mcp_global_policy, mso_fabric_policies_node_settings, mso_fabric_policies_physical_domain, mso_fabric_policies_ptp_policy, mso_fabric_policies_ptp_policy_profile, mso_fabric_policies_synce_interface_policy, mso_fabric_policies_vlan_pool, mso_fabric_resource_policies_physical_interface, mso_fabric_resource_policies_port_channel_interface, and mso_fabric_resource_policies_virtual_port_channel_interface resources to be removed from the state when deleted outside of Terraform and datasources to return an error when the object is not found.
+- Fix mso_fabric_policies_macsec_policy to handle omitted and null `macsec_keys`.
+- Fix mso_fabric_policies_ptp_policy_profile to set `nodeProfileOverride` from `override_node_profile` on create instead of overwriting `announce_interval`.
+
 ## 3.0.0 (September 7, 2026)
 
 This release migrates the provider to the Terraform Plugin SDK v2. Testing has been conducted across multiple versions to confirm that existing configurations are not impacted by this change.
