@@ -89,7 +89,6 @@ func datasourceMSOSite() *schema.Resource {
 				Computed: true,
 			},
 		}),
-		DeprecationMessage: nd4FunctionalDataSourceDeprecationMessage("mso_site"),
 	}
 }
 
