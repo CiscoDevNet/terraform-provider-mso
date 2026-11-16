@@ -199,8 +199,13 @@ github.com/hashicorp/terraform-plugin-framework/providerserver
 github.com/hashicorp/terraform-plugin-framework/resource
 github.com/hashicorp/terraform-plugin-framework/resource/identityschema
 github.com/hashicorp/terraform-plugin-framework/resource/schema
+github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault
+github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier
 github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults
+github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier
+github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier
 github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier
+github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier
 github.com/hashicorp/terraform-plugin-framework/schema/validator
 github.com/hashicorp/terraform-plugin-framework/statestore
 github.com/hashicorp/terraform-plugin-framework/statestore/schema
@@ -212,6 +217,7 @@ github.com/hashicorp/terraform-plugin-framework/types/basetypes
 github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag
 github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatorfuncerr
 github.com/hashicorp/terraform-plugin-framework-validators/internal/schemavalidator
+github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator
 github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator
 # github.com/hashicorp/terraform-plugin-go v0.31.0
 ## explicit; go 1.25.0
@@ -270,6 +276,27 @@ github.com/hashicorp/terraform-plugin-sdk/v2/internal/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/v2/meta
 github.com/hashicorp/terraform-plugin-sdk/v2/plugin
 github.com/hashicorp/terraform-plugin-sdk/v2/terraform
+# github.com/hashicorp/terraform-plugin-testing v1.14.0
+## explicit; go 1.24.0
+github.com/hashicorp/terraform-plugin-testing/compare
+github.com/hashicorp/terraform-plugin-testing/config
+github.com/hashicorp/terraform-plugin-testing/helper/resource
+github.com/hashicorp/terraform-plugin-testing/helper/resource/query
+github.com/hashicorp/terraform-plugin-testing/internal/addrs
+github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema
+github.com/hashicorp/terraform-plugin-testing/internal/configs/hcl2shim
+github.com/hashicorp/terraform-plugin-testing/internal/logging
+github.com/hashicorp/terraform-plugin-testing/internal/plugintest
+github.com/hashicorp/terraform-plugin-testing/internal/teststep
+github.com/hashicorp/terraform-plugin-testing/internal/tfdiags
+github.com/hashicorp/terraform-plugin-testing/knownvalue
+github.com/hashicorp/terraform-plugin-testing/plancheck
+github.com/hashicorp/terraform-plugin-testing/querycheck
+github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter
+github.com/hashicorp/terraform-plugin-testing/statecheck
+github.com/hashicorp/terraform-plugin-testing/terraform
+github.com/hashicorp/terraform-plugin-testing/tfjsonpath
+github.com/hashicorp/terraform-plugin-testing/tfversion
 # github.com/hashicorp/terraform-registry-address v0.4.0
 ## explicit; go 1.23.0
 github.com/hashicorp/terraform-registry-address
