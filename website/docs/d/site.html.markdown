@@ -8,8 +8,6 @@ description: |-
 
 # mso_site #
 
-!> **Deprecated** This data source remains functional on Nexus Dashboard (ND) 4.0+ / NDO 5.0+, but the corresponding `mso_site` resource is no longer functional. The data source will be removed once ND 3.x / NDO 4.x is no longer supported.
-
 Data source for MSO Site.
 
 ## Example Usage ##
