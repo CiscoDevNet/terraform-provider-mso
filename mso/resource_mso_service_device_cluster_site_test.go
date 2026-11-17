@@ -117,6 +117,20 @@ const (
 	testServiceDeviceClusterSiteClusterNameRenamed = "test_device_cluster_renamed"
 )
 
+func waitForServiceDeviceClusterSiteAPICMOs() error {
+	return waitForAPICMOs(
+		2*time.Minute,
+		"uni/phys-test_physical_domain_for_device",
+		"uni/phys-test_physical_domain_for_device_alt",
+		"uni/infra/funcprof/accbundle-test_dpc_for_device",
+		"uni/infra/funcprof/accbundle-test_vpc_for_device",
+		"uni/infra/funcprof/accbundle-test_vpc_for_device_2",
+		"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_1",
+		"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_2",
+		"uni/tn-"+msoTemplateTenantName+"/out-test_l3out_for_site_device/instP-test_extepg_for_site_device",
+	)
+}
+
 func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 	resourceName := "mso_service_device_cluster_site.cluster_site"
 	resource.Test(t, resource.TestCase{
@@ -177,17 +191,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 				Config: testAccMSOServiceDeviceClusterSiteDependencies(testServiceDeviceClusterSiteClusterName, []siteClusterInterface{siteClusterRichInterface1}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					func(s *terraform.State) error {
-						return waitForAPICMOs(
-							2*time.Minute,
-							"uni/phys-test_physical_domain_for_device",
-							"uni/phys-test_physical_domain_for_device_alt",
-							"uni/infra/funcprof/accbundle-test_dpc_for_device",
-							"uni/infra/funcprof/accbundle-test_vpc_for_device",
-							"uni/infra/funcprof/accbundle-test_vpc_for_device_2",
-							"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_1",
-							"uni/tn-"+msoTemplateTenantName+"/BD-test_bd_2",
-							"uni/tn-"+msoTemplateTenantName+"/out-test_l3out_for_site_device/instP-test_extepg_for_site_device",
-						)
+						return waitForServiceDeviceClusterSiteAPICMOs()
 					},
 				),
 			},
