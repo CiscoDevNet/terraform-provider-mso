@@ -2,18 +2,38 @@ package mso
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMSOServiceDeviceClusterSiteDataSource(t *testing.T) {
 	dataSourceName := "data.mso_service_device_cluster_site.cluster_site"
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			for _, env := range []string{envAPICURL, envAPICUsername, envAPICPassword} {
+				if os.Getenv(env) == "" {
+					t.Skipf("Skipping: %s must be set for the APIC settle check used before the cluster_site apply", env)
+				}
+			}
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Apply prerequisites and wait for APIC deployed MOs to settle")
+				},
+				Config: testAccMSOServiceDeviceClusterSiteDependencies(testServiceDeviceClusterSiteClusterName, []siteClusterInterface{siteClusterRichInterface1}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					func(_ *terraform.State) error {
+						return waitForServiceDeviceClusterSiteAPICMOs()
+					},
+				),
+			},
 			{
 				PreConfig: func() {
 					fmt.Println("Test: Service Device Cluster Site Data Source returns an error when the device does not exist")
