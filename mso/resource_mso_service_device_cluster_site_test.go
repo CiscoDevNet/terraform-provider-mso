@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -136,14 +135,7 @@ func TestAccMSOServiceDeviceClusterSiteResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			// The deps-only intermediate step below uses waitForAPICMOs
-			// (apic_test_helper_test.go) to gate the cluster_site apply on APIC
-			// convergence, so the APIC env vars are required for this test.
-			for _, env := range []string{envAPICURL, envAPICUsername, envAPICPassword} {
-				if os.Getenv(env) == "" {
-					t.Skipf("Skipping: %s must be set for the APIC settle Check used between the deploy chain and the cluster_site apply", env)
-				}
-			}
+			testAPICEnvPreCheck(t)
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{

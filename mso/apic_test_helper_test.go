@@ -27,16 +27,21 @@ const (
 	envAPICPassword = "APIC_PASSWORD"
 )
 
-// testAPICPreCheck skips t if the required APIC env vars are absent, otherwise
-// runs apicSetup to ensure all APIC objects exist. Called in each test's PreCheck
-// so objects are re-created after each test's TF destroy wipes the tenant.
-func testAPICPreCheck(t *testing.T) {
+func testAPICEnvPreCheck(t *testing.T) {
 	t.Helper()
 	for _, env := range []string{envAPICURL, envAPICUsername, envAPICPassword} {
 		if os.Getenv(env) == "" {
 			t.Skipf("Skipping: %s must be set for tests that require APIC configuration", env)
 		}
 	}
+}
+
+// testAPICPreCheck skips t if the required APIC env vars are absent, otherwise
+// runs apicSetup to ensure all APIC objects exist. Called in each test's PreCheck
+// so objects are re-created after each test's TF destroy wipes the tenant.
+func testAPICPreCheck(t *testing.T) {
+	t.Helper()
+	testAPICEnvPreCheck(t)
 	if err := apicSetup(); err != nil {
 		t.Fatalf("APIC setup failed: %v", err)
 	}

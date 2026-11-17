@@ -2,7 +2,6 @@ package mso
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -15,11 +14,7 @@ func TestAccMSOServiceDeviceClusterSiteDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			for _, env := range []string{envAPICURL, envAPICUsername, envAPICPassword} {
-				if os.Getenv(env) == "" {
-					t.Skipf("Skipping: %s must be set for the APIC settle check used before the cluster_site apply", env)
-				}
-			}
+			testAPICEnvPreCheck(t)
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
@@ -80,10 +75,9 @@ func testAccMSOServiceDeviceClusterSiteDataSourceConfig() string {
 
 // testAccMSOServiceDeviceClusterSiteDataSourceConfigNotFound wraps the
 // positive data source config and adds a second data source query against a
-// name that was never created on the site bucket. Used as the first step so
-// the expected lookup failure fires immediately; the positive step that
-// follows leaves the full deploy chain in place for the final destroy walk to
-// clean up in reverse order.
+// name that was never created on the site bucket. The positive step that
+// follows leaves the full deploy chain in place for the final destroy walk
+// to clean up in reverse order.
 func testAccMSOServiceDeviceClusterSiteDataSourceConfigNotFound() string {
 	return fmt.Sprintf(`%s
     data "mso_service_device_cluster_site" "missing" {
