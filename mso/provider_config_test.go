@@ -100,20 +100,8 @@ func TestSDKProviderConfiguration(t *testing.T) {
 			if err != nil {
 				t.Fatalf("preparing provider configuration: %v", err)
 			}
-			wantWarnings := 0
-			if !attributes["platform"].IsNull() {
-				wantWarnings = 1
-			}
-			if len(prepared.Diagnostics) != wantWarnings {
-				t.Fatalf("preparation diagnostics = %v, want %d platform deprecation warnings", prepared.Diagnostics, wantWarnings)
-			}
-			for _, diagnostic := range prepared.Diagnostics {
-				if diagnostic.Severity != tfprotov5.DiagnosticSeverityWarning ||
-					diagnostic.Summary != "Argument is deprecated" ||
-					diagnostic.Detail != providerconfig.PlatformDeprecationMessage ||
-					!diagnostic.Attribute.Equal(tftypes.NewAttributePath().WithAttributeName("platform")) {
-					t.Fatalf("unexpected preparation diagnostic: %v", diagnostic)
-				}
+			if len(prepared.Diagnostics) != 0 {
+				t.Fatalf("preparation diagnostics = %v, want none", prepared.Diagnostics)
 			}
 			response, err := server.ConfigureProvider(ctx, &tfprotov5.ConfigureProviderRequest{Config: prepared.PreparedConfig, TerraformVersion: "1.1.7"})
 			if err != nil {

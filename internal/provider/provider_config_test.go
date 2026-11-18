@@ -169,27 +169,23 @@ func TestFrameworkProviderConfiguration(t *testing.T) {
 func TestProviderPlatformValidation(t *testing.T) {
 	ctx := context.Background()
 	servers := []struct {
-		name                string
-		deprecationWarnings int
-		new                 func() (tfprotov6.ProviderServer, error)
+		name string
+		new  func() (tfprotov6.ProviderServer, error)
 	}{
 		{
-			name:                "SDK upgraded to protocol 6",
-			deprecationWarnings: 1,
+			name: "SDK upgraded to protocol 6",
 			new: func() (tfprotov6.ProviderServer, error) {
 				return tf5to6server.UpgradeServer(ctx, mso.Provider().GRPCProvider)
 			},
 		},
 		{
-			name:                "Framework protocol 6",
-			deprecationWarnings: 1,
+			name: "Framework protocol 6",
 			new: func() (tfprotov6.ProviderServer, error) {
 				return providerserver.NewProtocol6(New("test")())(), nil
 			},
 		},
 		{
-			name:                "production mux",
-			deprecationWarnings: 2,
+			name: "production mux",
 			new: func() (tfprotov6.ProviderServer, error) {
 				factory, err := MuxProviderServer(ctx, "test", mso.Provider().GRPCProvider)
 				if err != nil {
@@ -234,8 +230,8 @@ func TestProviderPlatformValidation(t *testing.T) {
 					break
 				}
 			}
-			if platformSchema == nil || !platformSchema.Deprecated || platformSchema.DeprecationMessage != providerconfig.PlatformDeprecationMessage {
-				t.Fatalf("platform schema must advertise its shared deprecation message: %v", platformSchema)
+			if platformSchema == nil || platformSchema.Deprecated || platformSchema.DeprecationMessage != "" {
+				t.Fatalf("platform schema must not advertise a deprecation: %v", platformSchema)
 			}
 			configType := providerSchema.Provider.ValueType().(tftypes.Object)
 			for _, test := range tests {
@@ -262,10 +258,7 @@ func TestProviderPlatformValidation(t *testing.T) {
 							errors++
 						case tfprotov6.DiagnosticSeverityWarning:
 							warnings++
-							if diagnostic.Detail != providerconfig.PlatformDeprecationMessage ||
-								(diagnostic.Summary != "Argument is deprecated" && diagnostic.Summary != "Attribute Deprecated") {
-								t.Errorf("unexpected validation warning: %v", diagnostic)
-							}
+							t.Errorf("unexpected validation warning: %v", diagnostic)
 						default:
 							t.Errorf("unexpected validation diagnostic severity: %v", diagnostic)
 						}
@@ -274,12 +267,8 @@ func TestProviderPlatformValidation(t *testing.T) {
 						t.Fatalf("validation errors = %d, want error = %t; diagnostics: %v", errors, test.wantError, response.Diagnostics)
 					}
 					if attributes["platform"].IsKnown() && !test.wantError {
-						wantWarnings := 0
-						if !attributes["platform"].IsNull() {
-							wantWarnings = serverTest.deprecationWarnings
-						}
-						if warnings != wantWarnings {
-							t.Fatalf("platform deprecation warnings = %d, want %d", warnings, wantWarnings)
+						if warnings != 0 {
+							t.Fatalf("platform deprecation warnings = %d, want 0", warnings)
 						}
 					}
 				})

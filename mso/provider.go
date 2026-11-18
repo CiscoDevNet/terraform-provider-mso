@@ -49,7 +49,6 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Parameter that specifies where MSO is installed", // defaults to "mso"
-				Deprecated:  providerconfig.PlatformDeprecationMessage,
 				ValidateFunc: validation.StringInSlice([]string{
 					"mso",
 					"nd",
