@@ -74,9 +74,8 @@ func (p *MSOProvider) Schema(_ context.Context, _ provider.SchemaRequest, respon
 				Description: "Proxy Server URL with port number",
 			},
 			"platform": providerschema.StringAttribute{
-				Optional:           true,
-				Description:        "Parameter that specifies where MSO is installed",
-				DeprecationMessage: providerconfig.PlatformDeprecationMessage,
+				Optional:    true,
+				Description: "Parameter that specifies where MSO is installed",
 				Validators: []validator.String{
 					stringvalidator.OneOf("mso", "nd"),
 				},
