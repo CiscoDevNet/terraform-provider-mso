@@ -12,6 +12,7 @@ import (
 
 func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 	resourceName := "mso_tenant_policies_ipsla_track_list." + msoTenantPolicyTemplateIPSLATrackListName
+	noMembersResourceName := resourceName + "_no_members"
 	var templateID, uuid string
 
 	resource.Test(t, resource.TestCase{
@@ -142,6 +143,55 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 				},
 				ExpectError: regexp.MustCompile(`cannot import .*: resource not found`),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove the original IPSLA Track List and retain its fixtures") },
+				Config:    IPSLATrackListPreConfig,
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create IPSLA Track List without members") },
+				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(noMembersResourceName, "name", msoTenantPolicyTemplateIPSLATrackListName+"_no_members"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "type", "percentage"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "12"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_down", "11"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "members.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update IPSLA Track List from no members to two members") },
+				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithTwoMembers(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(noMembersResourceName, "members.#", "2"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "type", "percentage"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "22"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_down", "21"),
+					CustomTestCheckTypeSetElemAttrs(noMembersResourceName, "members",
+						map[string]string{
+							"destination_ip": "1.1.1.5",
+							"scope_type":     "bd",
+							"weight":         "10",
+						},
+					),
+					CustomTestCheckTypeSetElemAttrs(noMembersResourceName, "members",
+						map[string]string{
+							"destination_ip": "1.1.1.4",
+							"scope_type":     "bd",
+							"weight":         "10",
+						},
+					),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update IPSLA Track List from two members back to no members") },
+				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(noMembersResourceName, "members.#", "0"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "type", "percentage"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "12"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_down", "11"),
+				),
+			},
 		},
 		CheckDestroy: testCheckResourceDestroyPolicyWithArguments("mso_tenant_policies_ipsla_track_list", "ipslaTrackList"),
 	})
@@ -160,6 +210,40 @@ func testAccMSOTenantPoliciesIPSLATrackListConfigCreate() string {
 		type           = "weight"
 		members {
 			destination_ip               = "1.1.1.1"
+			ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.%[3]s.uuid
+			scope_type                   = "bd"
+			scope_uuid                   = mso_schema_template_bd.%[4]s.uuid
+		}
+	}`, msoTenantPolicyTemplateIPSLATrackListName, msoTenantPolicyTemplateName, msoTenantPolicyTemplateIPSLAMonitoringPolicyName, msoSchemaTemplateBdName, IPSLATrackListPreConfig)
+}
+
+func testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers() string {
+	return fmt.Sprintf(`%[5]s
+	resource "mso_tenant_policies_ipsla_track_list" "%[1]s_no_members" {
+		template_id    = mso_template.%[2]s.id
+		name           = "%[1]s_no_members"
+		threshold_up   = 12
+		threshold_down = 11
+		type           = "percentage"
+	}`, msoTenantPolicyTemplateIPSLATrackListName, msoTenantPolicyTemplateName, msoTenantPolicyTemplateIPSLAMonitoringPolicyName, msoSchemaTemplateBdName, IPSLATrackListPreConfig)
+}
+
+func testAccMSOTenantPoliciesIPSLATrackListConfigWithTwoMembers() string {
+	return fmt.Sprintf(`%[5]s
+	resource "mso_tenant_policies_ipsla_track_list" "%[1]s_no_members" {
+		template_id    = mso_template.%[2]s.id
+		name           = "%[1]s_no_members"
+		threshold_down = 21
+		threshold_up   = 22
+		type           = "percentage"
+		members {
+			destination_ip               = "1.1.1.5"
+			ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.%[3]s.uuid
+			scope_type                   = "bd"
+			scope_uuid                   = mso_schema_template_bd.%[4]s.uuid
+		}
+		members {
+			destination_ip               = "1.1.1.4"
 			ipsla_monitoring_policy_uuid = mso_tenant_policies_ipsla_monitoring_policy.%[3]s.uuid
 			scope_type                   = "bd"
 			scope_uuid                   = mso_schema_template_bd.%[4]s.uuid
