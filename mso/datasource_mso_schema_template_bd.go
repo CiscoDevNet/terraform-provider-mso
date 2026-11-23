@@ -293,7 +293,7 @@ func setSchemaTemplateBDAttrs(schemaId, templateName, bdName string, cont *conta
 					}
 
 					if dhcpCount != 0 {
-						if versionInt == -1 {
+						if versionInt <= 0 {
 							dhcpPoliciesNameList, error := getDHCPPolicesNameByRef(dhcpCount, schemaId, templateName, bdCont, msoClient)
 							if error != nil {
 								return error

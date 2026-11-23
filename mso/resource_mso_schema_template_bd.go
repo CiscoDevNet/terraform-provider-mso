@@ -362,7 +362,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 						dhcpCount = 0
 					}
 					if dhcpCount != 0 {
-						if versionInt == -1 {
+						if versionInt <= 0 {
 							dhcpPoliciesNameList, error := getDHCPPolicesNameByRef(dhcpCount, schemaId, stateTemplate, bdCont, msoClient)
 							if error != nil {
 								return nil, error
@@ -532,10 +532,10 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 
 	dhcpPolList := make([]interface{}, 0)
 	if dhcpPolicies, ok := d.GetOk("dhcp_policies"); ok {
-		if versionInt != -1 && dhcpPoliciesContainUUID(dhcpPolicies) {
+		if versionInt > 0 && dhcpPoliciesContainUUID(dhcpPolicies) {
 			return fmt.Errorf("DHCP policy UUIDs require NDO 4.0 or later")
 		}
-		if versionInt == -1 {
+		if versionInt <= 0 {
 			dhcpRefList, err := mapDHCPPoliciesRefByName(schemaID, templateName, dhcpPolicies, msoClient)
 			if err != nil {
 				return err
@@ -708,7 +708,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 					}
 
 					if dhcpCount != 0 {
-						if versionInt == -1 {
+						if versionInt <= 0 {
 							dhcpPoliciesNameList, error := getDHCPPolicesNameByRef(dhcpCount, schemaId, stateTemplate, bdCont, msoClient)
 							if error != nil {
 								return error
@@ -974,10 +974,10 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("dhcp_policies") {
 		dhcpPolList := make([]interface{}, 0)
 		if dhcpPolicies, ok := d.GetOk("dhcp_policies"); ok {
-			if versionInt != -1 && dhcpPoliciesContainUUID(dhcpPolicies) {
+			if versionInt > 0 && dhcpPoliciesContainUUID(dhcpPolicies) {
 				return fmt.Errorf("DHCP policy UUIDs require NDO 4.0 or later")
 			}
-			if versionInt == -1 {
+			if versionInt <= 0 {
 				dhcpRefList, err := mapDHCPPoliciesRefByName(schemaID, templateName, dhcpPolicies, msoClient)
 				if err != nil {
 					return err

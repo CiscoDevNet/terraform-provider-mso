@@ -179,7 +179,7 @@ func setTemplateBDDHCPPolicy(c *client.Client, d *schema.ResourceData, op string
 	if err != nil {
 		return err
 	}
-	if versionCheck != -1 {
+	if versionCheck > 0 {
 		return fmt.Errorf("mso_schema_template_bd_dhcp_policy requires NDO 4.0 or later")
 	}
 	path := fmt.Sprintf("/templates/%s/bds/%s/dhcpLabels/-", d.Get("template_name"), d.Get("bd_name"))
@@ -329,7 +329,7 @@ func getTemplateBDDHCPPolicy(d *schema.ResourceData, c *client.Client) (map[stri
 	if err != nil {
 		return nil, err
 	}
-	if versionCheck != -1 {
+	if versionCheck > 0 {
 		return nil, fmt.Errorf("mso_schema_template_bd_dhcp_policy requires NDO 4.0 or later")
 	}
 	template, err := response.S("templates").SearchInObjectList(func(item *container.Container) bool {
