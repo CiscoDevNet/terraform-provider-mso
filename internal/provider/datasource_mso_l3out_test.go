@@ -139,12 +139,7 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Refresh L3Out datasource with all route-map references") },
-				Config: fmt.Sprintf(`%s
-data "mso_l3out" "test" {
-  template_id = mso_template.l3out_test.id
-  name        = mso_l3out.test.name
-}
-`, testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "both")),
+				Config:    testAccMSOL3OutDataSourceRouteMapsConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.mso_l3out.test",
@@ -326,4 +321,13 @@ data "mso_l3out" "test" {
   name        = mso_l3out.test.name
 }
 `, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutDataSourceRouteMapsConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+data "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = mso_l3out.test.name
+}
+`, testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "both"))
 }
