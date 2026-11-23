@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/models"
@@ -521,4 +522,135 @@ func testAccMSOSchemaTemplateBdConfigRemoveDhcpPolicies() string {
 		vrf_name                        = mso_schema_template_vrf.%[8]s.name
 	}`, testAccMSOSchemaTemplateBdPrerequisiteConfig(), testAccMSOSchemaTemplateBdDhcpPrerequisiteConfig(), testAccMSOSchemaTemplateBdDhcpRelayPolicyConfig(), testAccMSOSchemaTemplateBdDhcpOptionPolicyConfig(),
 		msoSchemaTemplateBdName, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateVrfL3MulticastName)
+}
+
+func TestAccMSOSchemaTemplateBdDHCPPoliciesUUID(t *testing.T) {
+	const bdResource = "mso_schema_template_bd.dhcp_parent"
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccVersionCheck(t, "4.0")
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() { fmt.Println("Test: Require an identifier for each inline DHCP policy") },
+				Config:      testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDConfigMissingRelayIdentifier(),
+				ExpectError: regexp.MustCompile(`each dhcp_policies entry must set exactly one of name or uuid`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject both inline DHCP Relay Policy identifiers") },
+				Config:      testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDConfigBothRelayIdentifiers(),
+				ExpectError: regexp.MustCompile(`each dhcp_policies entry must set exactly one of name or uuid`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject both inline DHCP Option Policy identifiers") },
+				Config:      testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDConfigBothOptionIdentifiers(),
+				ExpectError: regexp.MustCompile(`each dhcp_policies entry can set only one of dhcp_option_policy_name or dhcp_option_policy_uuid`),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Configure inline DHCP associations using UUID inputs") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDCreateConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.#", "1"),
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.0.name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttrPair(bdResource, "dhcp_policies.0.uuid", "mso_tenant_policies_dhcp_relay_policy."+msoTenantPoliciesDhcpRelayPolicyName, "uuid"),
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.0.dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName),
+					resource.TestCheckResourceAttrPair(bdResource, "dhcp_policies.0.dhcp_option_policy_uuid", "mso_tenant_policies_dhcp_option_policy."+msoTenantPoliciesDhcpOptionPolicyName, "uuid"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update inline DHCP Option Policy using its UUID") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDUpdateOptionConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.0.dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName2),
+					resource.TestCheckResourceAttrPair(bdResource, "dhcp_policies.0.dhcp_option_policy_uuid", "mso_tenant_policies_dhcp_option_policy."+msoTenantPoliciesDhcpOptionPolicyName2, "uuid"),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Verify inline UUID-managed DHCP policies have no diff") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDUpdateOptionConfig(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDConfigMissingRelayIdentifier() string {
+	return `resource "mso_schema_template_bd" "invalid" {
+  schema_id     = "schema"
+  template_name = "template"
+  name          = "bd"
+  display_name  = "bd"
+  vrf_name      = "vrf"
+  dhcp_policies {}
+}`
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDConfigBothRelayIdentifiers() string {
+	return `resource "mso_schema_template_bd" "invalid" {
+  schema_id     = "schema"
+  template_name = "template"
+  name          = "bd"
+  display_name  = "bd"
+  vrf_name      = "vrf"
+  dhcp_policies {
+    name = "relay"
+    uuid = "00000000-0000-4000-8000-000000000001"
+  }
+}`
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDConfigBothOptionIdentifiers() string {
+	return `resource "mso_schema_template_bd" "invalid" {
+  schema_id     = "schema"
+  template_name = "template"
+  name          = "bd"
+  display_name  = "bd"
+  vrf_name      = "vrf"
+  dhcp_policies {
+    name                         = "relay"
+    dhcp_option_policy_name      = "option"
+    dhcp_option_policy_uuid      = "00000000-0000-4000-8000-000000000002"
+  }
+}`
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDCreateConfig() string {
+	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() + fmt.Sprintf(`
+resource "mso_schema_template_bd" "dhcp_parent" {
+  schema_id              = mso_schema.%[1]s.id
+  template_name          = "%[2]s"
+  name                   = "%[3]s_dhcp_inline_uuid"
+  display_name           = "%[3]s_dhcp_inline_uuid"
+  vrf_name               = mso_schema_template_vrf.%[4]s.name
+  layer2_stretch         = true
+  layer2_unknown_unicast = "proxy"
+  intersite_bum_traffic  = true
+  dhcp_policies {
+    uuid                      = mso_tenant_policies_dhcp_relay_policy.%[5]s.uuid
+    dhcp_option_policy_uuid   = mso_tenant_policies_dhcp_option_policy.%[6]s.uuid
+  }
+}
+`, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdName, msoSchemaTemplateVrfName, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName)
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyInlineUUIDUpdateOptionConfig() string {
+	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() + fmt.Sprintf(`
+resource "mso_schema_template_bd" "dhcp_parent" {
+  schema_id              = mso_schema.%[1]s.id
+  template_name          = "%[2]s"
+  name                   = "%[3]s_dhcp_inline_uuid"
+  display_name           = "%[3]s_dhcp_inline_uuid"
+  vrf_name               = mso_schema_template_vrf.%[4]s.name
+  layer2_stretch         = true
+  layer2_unknown_unicast = "proxy"
+  intersite_bum_traffic  = true
+  dhcp_policies {
+    uuid                    = mso_tenant_policies_dhcp_relay_policy.%[5]s.uuid
+    dhcp_option_policy_uuid = mso_tenant_policies_dhcp_option_policy.%[6]s.uuid
+  }
+}
+`, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdName, msoSchemaTemplateVrfName, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName2)
 }

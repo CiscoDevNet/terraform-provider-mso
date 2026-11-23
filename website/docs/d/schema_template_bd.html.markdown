@@ -39,11 +39,13 @@ data "mso_schema_template_bd" "example" {
 * `optimize_wan_bandwidth` - (Read-Only)  Whether wan bandwidth optimization is enabled.
 * `layer2_stretch` - (Read-Only) Whether layer-2 stretch is enabled.
 * `layer3_multicast` - (Read-Only) Whether layer 3 multicast traffic is enabled.
-* `dhcp_policies` - (Read-Only) A list of dhcp_policy configurations for the BD.
-    * `name` - (Read-Only) The DHCP policy name of the BD.
-    * `version` - (Read-Only) The DHCP policy version of the BD.
-    * `dhcp_option_policy_name` - (Read-Only) The DHCP option policy name of the BD.
-    * `dhcp_option_policy_version` - (Read-Only) The DHCP option policy version of the BD.
+* `dhcp_policies` - (Read-Only) A list of DHCP Relay Policy associations for the BD.
+    * `name` - (Read-Only) Name of the associated DHCP Relay Policy.
+    * `uuid` - (Read-Only) UUID of the associated DHCP Relay Policy.
+    * `version` - (Read-Only) Version of the associated DHCP Relay Policy.
+    * `dhcp_option_policy_name` - (Read-Only) Name of the associated DHCP Option Policy.
+    * `dhcp_option_policy_uuid` - (Read-Only) UUID of the associated DHCP Option Policy.
+    * `dhcp_option_policy_version` - (Read-Only) Version of the associated DHCP Option Policy.
 * `unknown_multicast_flooding` - (Read-Only) The unknown multicast flooding settings of the BD.
 * `multi_destination_flooding` - (Read-Only) The multi destination flooding settings of the BD.
 * `ipv6_unknown_multicast_flooding` - (Read-Only) The IPv6 unknown multicast flooding settings of the BD.

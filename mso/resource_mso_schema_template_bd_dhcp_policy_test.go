@@ -2,6 +2,7 @@ package mso
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/ciscoecosystem/mso-go-client/container"
@@ -22,6 +23,21 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
+				PreConfig:   func() { fmt.Println("Test: Reject a standalone DHCP association with both relay identifiers") },
+				Config:      testAccMSOSchemaTemplateBdDHCPPolicyConfigBothRelayIdentifiers(),
+				ExpectError: regexp.MustCompile(`only one of .*name.*uuid.* can be specified`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Require a standalone DHCP association relay identifier") },
+				Config:      testAccMSOSchemaTemplateBdDHCPPolicyConfigNoRelayIdentifier(),
+				ExpectError: regexp.MustCompile(`one of .*name.*uuid.* must be specified`),
+			},
+			{
+				PreConfig:   func() { fmt.Println("Test: Reject both DHCP Option Policy identifiers") },
+				Config:      testAccMSOSchemaTemplateBdDHCPPolicyConfigBothOptionIdentifiers(),
+				ExpectError: regexp.MustCompile(`conflicts with.*dhcp_option_policy_uuid`),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Create a standalone DHCP policy with an option policy") },
 				Config:    testAccMSOSchemaTemplateBdDHCPPolicyCreateConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -30,11 +46,13 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Change the DHCP Option Policy association") },
-				Config:    testAccMSOSchemaTemplateBdDHCPPolicySwitchOptionConfig(),
+				PreConfig:          func() { fmt.Println("Test: Change the DHCP Option Policy association and detect external changes") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicySwitchOptionConfig(),
+				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
 					resource.TestCheckResourceAttr(relayPolicyResource, "dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName2),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyChangeOptionExternally(relayPolicyResource, msoTenantPoliciesDhcpOptionPolicyName),
 				),
 			},
 			{
@@ -45,6 +63,23 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(relayPolicyResource, "dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName2),
 					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
 					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "dhcp_option_policy_name", ""),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Detect an externally removed standalone DHCP policy association") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicyAddWithoutOptionConfig(),
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyRemoveExternally(relayPolicyWithoutOptionResource),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Recreate an externally removed standalone DHCP policy association") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyAddWithoutOptionConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
 				),
 			},
 			{
@@ -103,8 +138,164 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Create standalone DHCP associations using UUID inputs") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyUUIDCreateConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttrPair(relayPolicyResource, "uuid", "mso_tenant_policies_dhcp_relay_policy."+msoTenantPoliciesDhcpRelayPolicyName, "uuid"),
+					resource.TestCheckResourceAttr(relayPolicyResource, "dhcp_option_policy_name", ""),
+					resource.TestCheckResourceAttrPair(relayPolicyResource, "dhcp_option_policy_uuid", "mso_tenant_policies_dhcp_option_policy."+msoTenantPoliciesDhcpOptionPolicyName, "uuid"),
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
+					resource.TestCheckResourceAttrPair(relayPolicyWithoutOptionResource, "uuid", "mso_tenant_policies_dhcp_relay_policy."+msoTenantPoliciesDhcpRelayPolicyName2, "uuid"),
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "dhcp_option_policy_name", ""),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update the DHCP Option Policy using its UUID") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyUUIDUpdateOptionConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttr(relayPolicyResource, "dhcp_option_policy_name", ""),
+					resource.TestCheckResourceAttrPair(relayPolicyResource, "dhcp_option_policy_uuid", "mso_tenant_policies_dhcp_option_policy."+msoTenantPoliciesDhcpOptionPolicyName2, "uuid"),
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "dhcp_option_policy_name", ""),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Verify UUID-managed DHCP associations have no diff") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicyUUIDUpdateOptionConfig(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
 		},
 	})
+}
+
+func testAccCheckMSOSchemaTemplateBdDHCPPolicyChangeOptionExternally(resourceName, optionPolicyName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resource, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("DHCP policy resource not found in state: %s", resourceName)
+		}
+		attributes := resource.Primary.Attributes
+		schemaID := attributes["schema_id"]
+		templateName := attributes["template_name"]
+		bdName := attributes["bd_name"]
+		relayUUID := attributes["uuid"]
+
+		response, err := msoClientTest.ReadTemplateBDDHCPPolicy(schemaID)
+		if err != nil {
+			return fmt.Errorf("failed to read Bridge Domain DHCP policies: %w", err)
+		}
+		template, err := response.S("templates").SearchInObjectList(func(item *container.Container) bool {
+			return models.G(item, "name") == templateName
+		})
+		if err != nil {
+			return err
+		}
+		bd, err := template.S("bds").SearchInObjectList(func(item *container.Container) bool {
+			return models.G(item, "name") == bdName
+		})
+		if err != nil {
+			return err
+		}
+		count, err := bd.ArrayCount("dhcpLabels")
+		if err != nil {
+			return err
+		}
+		policies, err := getDHCPPolicesNameByRef(count, schemaID, templateName, bd, msoClientTest)
+		if err != nil {
+			return err
+		}
+		policyIndex := -1
+		for index, item := range policies {
+			if item.(map[string]interface{})["uuid"] == relayUUID {
+				policyIndex = index
+				break
+			}
+		}
+		if policyIndex == -1 {
+			return fmt.Errorf("DHCP Relay Policy UUID %q not found on Bridge Domain %q", relayUUID, bdName)
+		}
+
+		tenantID, err := msoClientTest.GetTenantIDFromSchemaTemplate(schemaID, templateName)
+		if err != nil {
+			return err
+		}
+		optionUUID, err := getDHCPPolicyUUIDByName(msoClientTest, tenantID, "dhcpOption", optionPolicyName)
+		if err != nil {
+			return err
+		}
+		payload := container.New()
+		payload.Array()
+		value := map[string]interface{}{
+			"ref":             relayUUID,
+			"dhcpOptionLabel": map[string]interface{}{"ref": optionUUID},
+		}
+		path := fmt.Sprintf("/templates/%s/bds/%s/dhcpLabels/%d", templateName, bdName, policyIndex)
+		if err := addPatchPayloadToContainer(payload, "replace", path, value); err != nil {
+			return err
+		}
+		if err := doPatchRequest(msoClientTest, "api/v1/schemas/"+schemaID, payload); err != nil {
+			return fmt.Errorf("failed to change DHCP Option Policy outside Terraform: %w", err)
+		}
+		return nil
+	}
+}
+
+func testAccCheckMSOSchemaTemplateBdDHCPPolicyRemoveExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resource, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("DHCP policy resource not found in state: %s", resourceName)
+		}
+		attributes := resource.Primary.Attributes
+		schemaID := attributes["schema_id"]
+		templateName := attributes["template_name"]
+		bdName := attributes["bd_name"]
+		relayUUID := attributes["uuid"]
+
+		response, err := msoClientTest.ReadTemplateBDDHCPPolicy(schemaID)
+		if err != nil {
+			return fmt.Errorf("failed to read Bridge Domain DHCP policies: %w", err)
+		}
+		template, err := response.S("templates").SearchInObjectList(func(item *container.Container) bool {
+			return models.G(item, "name") == templateName
+		})
+		if err != nil {
+			return err
+		}
+		bd, err := template.S("bds").SearchInObjectList(func(item *container.Container) bool {
+			return models.G(item, "name") == bdName
+		})
+		if err != nil {
+			return err
+		}
+		count, err := bd.ArrayCount("dhcpLabels")
+		if err != nil {
+			return err
+		}
+		policyIndex := -1
+		for index := 0; index < count; index++ {
+			label, err := bd.ArrayElement(index, "dhcpLabels")
+			if err != nil {
+				return err
+			}
+			if models.StripQuotes(label.S("ref").String()) == relayUUID {
+				policyIndex = index
+				break
+			}
+		}
+		if policyIndex == -1 {
+			return fmt.Errorf("DHCP Relay Policy UUID %q not found on Bridge Domain %q", relayUUID, bdName)
+		}
+
+		path := fmt.Sprintf("/templates/%s/bds/%s/dhcpLabels/%d", templateName, bdName, policyIndex)
+		if _, err := msoClientTest.PatchbyID("api/v1/schemas/"+schemaID, models.GetRemovePatchPayload(path)); err != nil {
+			return fmt.Errorf("failed to remove DHCP policy association outside Terraform: %w", err)
+		}
+		return nil
+	}
 }
 
 func testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResourceName string, expectedNames ...string) resource.TestCheckFunc {
@@ -168,6 +359,35 @@ func testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfig() string {
 		testAccMSOSchemaTemplateBdDhcpOptionPolicyConfig()
 }
 
+func testAccMSOSchemaTemplateBdDHCPPolicyConfigBothRelayIdentifiers() string {
+	return `resource "mso_schema_template_bd_dhcp_policy" "invalid" {
+  schema_id     = "schema"
+  template_name = "template"
+  bd_name       = "bd"
+  name          = "relay"
+  uuid          = "00000000-0000-4000-8000-000000000001"
+}`
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyConfigNoRelayIdentifier() string {
+	return `resource "mso_schema_template_bd_dhcp_policy" "invalid" {
+  schema_id     = "schema"
+  template_name = "template"
+  bd_name       = "bd"
+}`
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyConfigBothOptionIdentifiers() string {
+	return `resource "mso_schema_template_bd_dhcp_policy" "invalid" {
+  schema_id               = "schema"
+  template_name           = "template"
+  bd_name                 = "bd"
+  name                    = "relay"
+  dhcp_option_policy_name = "option"
+  dhcp_option_policy_uuid = "00000000-0000-4000-8000-000000000002"
+}`
+}
+
 func testAccMSOSchemaTemplateBdDHCPPolicyCreateConfig() string {
 	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfig() + testAccMSOSchemaTemplateBdDHCPPolicyBDConfig() + fmt.Sprintf(`
 resource "mso_schema_template_bd_dhcp_policy" "relay_policy" {
@@ -178,6 +398,46 @@ resource "mso_schema_template_bd_dhcp_policy" "relay_policy" {
   dhcp_option_policy_name = mso_tenant_policies_dhcp_option_policy.%s.name
 }
 `, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName)
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyUUIDCreateConfig() string {
+	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() + testAccMSOSchemaTemplateBdDHCPPolicyBDConfig() + fmt.Sprintf(`
+resource "mso_schema_template_bd_dhcp_policy" "relay_policy" {
+  depends_on                = [mso_schema_template_bd.dhcp_parent]
+  schema_id                 = mso_schema_template_bd.dhcp_parent.schema_id
+  template_name             = mso_schema_template_bd.dhcp_parent.template_name
+  bd_name                   = mso_schema_template_bd.dhcp_parent.name
+  uuid                      = mso_tenant_policies_dhcp_relay_policy.%s.uuid
+  dhcp_option_policy_uuid   = mso_tenant_policies_dhcp_option_policy.%s.uuid
+}
+resource "mso_schema_template_bd_dhcp_policy" "relay_policy_without_option" {
+  depends_on    = [mso_schema_template_bd_dhcp_policy.relay_policy]
+  schema_id     = mso_schema_template_bd.dhcp_parent.schema_id
+  template_name = mso_schema_template_bd.dhcp_parent.template_name
+  bd_name       = mso_schema_template_bd.dhcp_parent.name
+  uuid          = mso_tenant_policies_dhcp_relay_policy.%s.uuid
+}
+`, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName, msoTenantPoliciesDhcpRelayPolicyName2)
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyUUIDUpdateOptionConfig() string {
+	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() + testAccMSOSchemaTemplateBdDHCPPolicyBDConfig() + fmt.Sprintf(`
+resource "mso_schema_template_bd_dhcp_policy" "relay_policy" {
+  depends_on                = [mso_schema_template_bd.dhcp_parent]
+  schema_id                 = mso_schema_template_bd.dhcp_parent.schema_id
+  template_name             = mso_schema_template_bd.dhcp_parent.template_name
+  bd_name                   = mso_schema_template_bd.dhcp_parent.name
+  uuid                      = mso_tenant_policies_dhcp_relay_policy.%s.uuid
+  dhcp_option_policy_uuid   = mso_tenant_policies_dhcp_option_policy.%s.uuid
+}
+resource "mso_schema_template_bd_dhcp_policy" "relay_policy_without_option" {
+  depends_on    = [mso_schema_template_bd_dhcp_policy.relay_policy]
+  schema_id     = mso_schema_template_bd.dhcp_parent.schema_id
+  template_name = mso_schema_template_bd.dhcp_parent.template_name
+  bd_name       = mso_schema_template_bd.dhcp_parent.name
+  uuid          = mso_tenant_policies_dhcp_relay_policy.%s.uuid
+}
+`, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName2, msoTenantPoliciesDhcpRelayPolicyName2)
 }
 
 func testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() string {

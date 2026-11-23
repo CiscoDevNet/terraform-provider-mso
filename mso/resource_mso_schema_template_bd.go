@@ -1,6 +1,7 @@
 package mso
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -23,6 +24,30 @@ func resourceMSOTemplateBD() *schema.Resource {
 
 		Importer: &schema.ResourceImporter{
 			State: resourceMSOTemplateBDImport,
+		},
+		// The schema-level ConflictsWith only relates this set to deprecated
+		// dhcp_policy. SDKv2 cannot accurately express per-entry ExactlyOneOf or
+		// ConflictsWith rules for TypeSet elements, so validate each entry here.
+		CustomizeDiff: func(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+			policies := diff.GetRawConfig().GetAttr("dhcp_policies")
+			if policies.IsNull() || !policies.IsKnown() {
+				return nil
+			}
+			iterator := policies.ElementIterator()
+			for iterator.Next() {
+				_, item := iterator.Element()
+				name := item.GetAttr("name")
+				uuid := item.GetAttr("uuid")
+				if name.IsNull() == uuid.IsNull() {
+					return fmt.Errorf("each dhcp_policies entry must set exactly one of name or uuid")
+				}
+				optionName := item.GetAttr("dhcp_option_policy_name")
+				optionUUID := item.GetAttr("dhcp_option_policy_uuid")
+				if !optionName.IsNull() && !optionUUID.IsNull() {
+					return fmt.Errorf("each dhcp_policies entry can set only one of dhcp_option_policy_name or dhcp_option_policy_uuid")
+				}
+			}
+			return nil
 		},
 
 		SchemaVersion: version,
@@ -166,7 +191,12 @@ func resourceMSOTemplateBD() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
+							Computed: true,
+						},
+						"uuid": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
 						},
 						// We should investigate the need for this and else deprecate because in ND 4.1 this is not UI
 						"version": &schema.Schema{
@@ -178,6 +208,10 @@ func resourceMSOTemplateBD() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
+						},
+						"dhcp_option_policy_uuid": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
 						},
 						"dhcp_option_policy_version": &schema.Schema{
 							Type:     schema.TypeInt,
@@ -363,6 +397,9 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 								}
 								dhcpPoliciesList = append(dhcpPoliciesList, dhcpPolicyMap)
 							}
+							if err := setDHCPPolicyUUIDsByName(msoClient, schemaId, stateTemplate, dhcpPoliciesList); err != nil {
+								return nil, err
+							}
 						}
 					} else {
 						if bdCont.Exists("dhcpLabel") {
@@ -495,6 +532,9 @@ func resourceMSOTemplateBDCreate(d *schema.ResourceData, m interface{}) error {
 
 	dhcpPolList := make([]interface{}, 0)
 	if dhcpPolicies, ok := d.GetOk("dhcp_policies"); ok {
+		if versionInt != -1 && dhcpPoliciesContainUUID(dhcpPolicies) {
+			return fmt.Errorf("DHCP policy UUIDs require NDO 4.0 or later")
+		}
 		if versionInt == -1 {
 			dhcpRefList, err := mapDHCPPoliciesRefByName(schemaID, templateName, dhcpPolicies, msoClient)
 			if err != nil {
@@ -699,6 +739,9 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 									dhcpPolicyMap["dhcp_option_policy_version"] = version
 								}
 								dhcpPoliciesList = append(dhcpPoliciesList, dhcpPolicyMap)
+							}
+							if err := setDHCPPolicyUUIDsByName(msoClient, schemaId, stateTemplate, dhcpPoliciesList); err != nil {
+								return err
 							}
 						}
 					} else {
@@ -931,6 +974,9 @@ func resourceMSOTemplateBDUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("dhcp_policies") {
 		dhcpPolList := make([]interface{}, 0)
 		if dhcpPolicies, ok := d.GetOk("dhcp_policies"); ok {
+			if versionInt != -1 && dhcpPoliciesContainUUID(dhcpPolicies) {
+				return fmt.Errorf("DHCP policy UUIDs require NDO 4.0 or later")
+			}
 			if versionInt == -1 {
 				dhcpRefList, err := mapDHCPPoliciesRefByName(schemaID, templateName, dhcpPolicies, msoClient)
 				if err != nil {
@@ -1019,10 +1065,41 @@ func getDHCPPolicesNameByRef(dhcpCount int, schemaId, stateTemplate string, bdCo
 		dhcpPolicyMap["optionRef"] = models.StripQuotes(dhcpPolicy.S("dhcpOptionLabel", "ref").String())
 		dhcpPoliciesRefList = append(dhcpPoliciesRefList, dhcpPolicyMap)
 	}
-	return msoClient.GetDHCPPoliciesNameByUUID(tenantID, dhcpPoliciesRefList)
+	policies, err := msoClient.GetDHCPPoliciesNameByUUID(tenantID, dhcpPoliciesRefList)
+	if err != nil {
+		return nil, err
+	}
+	for index, item := range policies {
+		policy := item.(map[string]interface{})
+		refs := dhcpPoliciesRefList[index].(map[string]interface{})
+		policy["uuid"] = refs["relayRef"]
+		if optionRef, ok := refs["optionRef"].(string); ok && optionRef != "{}" {
+			policy["dhcp_option_policy_uuid"] = optionRef
+		} else {
+			policy["dhcp_option_policy_uuid"] = ""
+		}
+	}
+	return policies, nil
 }
 
-// mapDHCPPoliciesRefByName retrieves a list of DHCP policy UUIDs by name.
+func dhcpPoliciesContainUUID(dhcpPolicies interface{}) bool {
+	policies, ok := dhcpPolicies.(*schema.Set)
+	if !ok {
+		return false
+	}
+	for _, item := range policies.List() {
+		policy := item.(map[string]interface{})
+		if uuid, _ := policy["uuid"].(string); uuid != "" {
+			return true
+		}
+		if uuid, _ := policy["dhcp_option_policy_uuid"].(string); uuid != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// mapDHCPPoliciesRefByName retrieves a list of DHCP policy references.
 //
 // Parameters:
 // - schemaID: the ID of the schema.
@@ -1040,12 +1117,31 @@ func mapDHCPPoliciesRefByName(schemaID, templateName string, dhcpPolicies interf
 	dhcpPolicyNameList := make([]interface{}, 0)
 	for _, dhcpPolicy := range dhcpPolicies.(*schema.Set).List() {
 		policy := dhcpPolicy.(map[string]interface{})
-		dhcpPolicyNameMap := make(map[string]interface{})
-		dhcpPolicyNameMap["relayName"] = policy["name"]
-		dhcpPolicyNameMap["optionName"] = policy["dhcp_option_policy_name"]
-		dhcpPolicyNameList = append(dhcpPolicyNameList, dhcpPolicyNameMap)
+		relayName, _ := policy["name"].(string)
+		relayUUID, _ := policy["uuid"].(string)
+		if relayUUID == "" {
+			relayUUID, err = getDHCPPolicyUUIDByName(msoClient, tenantID, "dhcpRelay", relayName)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		optionName, _ := policy["dhcp_option_policy_name"].(string)
+		optionUUID, _ := policy["dhcp_option_policy_uuid"].(string)
+		if optionUUID == "" && optionName != "" {
+			optionUUID, err = getDHCPPolicyUUIDByName(msoClient, tenantID, "dhcpOption", optionName)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		policyRef := map[string]interface{}{"ref": relayUUID}
+		if optionUUID != "" {
+			policyRef["dhcpOptionLabel"] = map[string]interface{}{"ref": optionUUID}
+		}
+		dhcpPolicyNameList = append(dhcpPolicyNameList, policyRef)
 	}
-	return msoClient.GetDHCPPoliciesUUIDByName(tenantID, dhcpPolicyNameList)
+	return dhcpPolicyNameList, nil
 }
 
 // Keep the BD's DHCP state aligned with its established inline configuration.
@@ -1069,6 +1165,41 @@ func setTemplateBDDHCPStateFromRead(d *schema.ResourceData, dhcpPolicy interface
 	if !dhcpPoliciesConfigured {
 		d.Set("dhcp_policies", nil)
 	} else {
-		d.Set("dhcp_policies", dhcpPolicies)
+		d.Set("dhcp_policies", preserveConfiguredDHCPPolicyUUIDInputs(d.Get("dhcp_policies").(*schema.Set), dhcpPolicies))
 	}
+}
+
+// preserveConfiguredDHCPPolicyUUIDInputs removes API-resolved UUIDs when an
+// inline association is configured by name. The UUID fields are Optional, so
+// storing those resolved values would make Terraform plan them as configured
+// on the next run. Names remain available as Optional+Computed attributes.
+func preserveConfiguredDHCPPolicyUUIDInputs(configured *schema.Set, readPolicies interface{}) []interface{} {
+	policies, ok := readPolicies.([]interface{})
+	if !ok {
+		return nil
+	}
+	result := make([]interface{}, 0, len(policies))
+	for _, item := range policies {
+		policy := item.(map[string]interface{})
+		var configuredPolicy map[string]interface{}
+		for _, configuredItem := range configured.List() {
+			candidate := configuredItem.(map[string]interface{})
+			candidateUUID, _ := candidate["uuid"].(string)
+			candidateName, _ := candidate["name"].(string)
+			if candidateUUID != "" && candidateUUID == policy["uuid"] || candidateUUID == "" && candidateName == policy["name"] {
+				configuredPolicy = candidate
+				break
+			}
+		}
+		if configuredPolicy != nil {
+			if uuid, _ := configuredPolicy["uuid"].(string); uuid == "" {
+				delete(policy, "uuid")
+			}
+			if uuid, _ := configuredPolicy["dhcp_option_policy_uuid"].(string); uuid == "" {
+				delete(policy, "dhcp_option_policy_uuid")
+			}
+		}
+		result = append(result, policy)
+	}
+	return result
 }

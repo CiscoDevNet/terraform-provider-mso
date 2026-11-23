@@ -117,11 +117,19 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"uuid": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"version": &schema.Schema{
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
 						"dhcp_option_policy_name": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"dhcp_option_policy_uuid": &schema.Schema{
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -316,6 +324,9 @@ func setSchemaTemplateBDAttrs(schemaId, templateName, bdName string, cont *conta
 									dhcpPolicyMap["dhcp_option_policy_version"] = version
 								}
 								dhcpPoliciesList = append(dhcpPoliciesList, dhcpPolicyMap)
+							}
+							if err := setDHCPPolicyUUIDsByName(msoClient, schemaId, templateName, dhcpPoliciesList); err != nil {
+								return err
 							}
 						}
 					} else {

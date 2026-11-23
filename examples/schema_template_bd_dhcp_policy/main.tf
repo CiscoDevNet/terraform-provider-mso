@@ -78,6 +78,16 @@ resource "mso_tenant_policies_dhcp_relay_policy" "example" {
   }
 }
 
+resource "mso_tenant_policies_dhcp_relay_policy" "example_uuid" {
+  template_id = mso_template.dhcp_policies.id
+  name        = "example_dhcp_relay_policy_uuid"
+
+  dhcp_relay_providers {
+    dhcp_server_address  = "192.0.2.10"
+    application_epg_uuid = mso_schema_template_anp_epg.example.uuid
+  }
+}
+
 resource "mso_tenant_policies_dhcp_option_policy" "example" {
   template_id = mso_template.dhcp_policies.id
   name        = "example_dhcp_option_policy"
@@ -99,6 +109,18 @@ resource "mso_schema_template_bd_dhcp_policy" "example" {
   dhcp_option_policy_name = mso_tenant_policies_dhcp_option_policy.example.name
 }
 
+# This second association demonstrates configuring the same policy references
+# by UUID. Keep it ordered after the first write to the Bridge Domain.
+resource "mso_schema_template_bd_dhcp_policy" "example_uuid" {
+  depends_on    = [mso_schema_template_bd_dhcp_policy.example]
+  schema_id     = mso_schema_template_bd.example.schema_id
+  template_name = mso_schema_template_bd.example.template_name
+  bd_name       = mso_schema_template_bd.example.name
+
+  uuid                    = mso_tenant_policies_dhcp_relay_policy.example_uuid.uuid
+  dhcp_option_policy_uuid = mso_tenant_policies_dhcp_option_policy.example.uuid
+}
+
 data "mso_schema_template_bd_dhcp_policy" "example" {
   schema_id     = mso_schema_template_bd_dhcp_policy.example.schema_id
   template_name = mso_schema_template_bd_dhcp_policy.example.template_name
@@ -106,7 +128,19 @@ data "mso_schema_template_bd_dhcp_policy" "example" {
   name          = mso_schema_template_bd_dhcp_policy.example.name
 }
 
+data "mso_schema_template_bd_dhcp_policy" "example_uuid" {
+  schema_id     = mso_schema_template_bd_dhcp_policy.example_uuid.schema_id
+  template_name = mso_schema_template_bd_dhcp_policy.example_uuid.template_name
+  bd_name       = mso_schema_template_bd_dhcp_policy.example_uuid.bd_name
+  uuid          = mso_schema_template_bd_dhcp_policy.example_uuid.uuid
+}
+
 output "dhcp_option_policy_name" {
   description = "DHCP Option Policy associated with the name-configured DHCP Relay Policy."
   value       = data.mso_schema_template_bd_dhcp_policy.example.dhcp_option_policy_name
+}
+
+output "dhcp_option_policy_name_uuid" {
+  description = "DHCP Option Policy associated with the UUID-configured DHCP Relay Policy."
+  value       = data.mso_schema_template_bd_dhcp_policy.example_uuid.dhcp_option_policy_name
 }
