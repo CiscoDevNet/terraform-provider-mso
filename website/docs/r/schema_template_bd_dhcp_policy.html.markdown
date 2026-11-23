@@ -10,7 +10,7 @@ description: |-
 
 Manages one DHCP Relay Policy association on a Bridge Domain. Choose one way to manage DHCP policies for each Bridge Domain: configure the full list in the `dhcp_policies` block on `mso_schema_template_bd`, or use this resource for each policy. Mixing these methods for one Bridge Domain can make Terraform plan to remove policies managed by the other method.
 
-This resource is supported in NDO v4.0 and higher. The DHCP Relay Policy and optional DHCP Option Policy must exist in the tenant policy template. The provider resolves their names to references when associating them with the Bridge Domain.
+This resource is supported in NDO v4.0 and higher. The DHCP Relay Policy and optional DHCP Option Policy must exist in the tenant policy template. When a policy name is configured, the provider looks up its UUID; when a UUID is configured, the provider sends it directly to NDO.
 
 ## Example Usage
 
@@ -19,7 +19,20 @@ resource "mso_schema_template_bd_dhcp_policy" "example" {
   schema_id     = mso_schema_template_bd.example.schema_id
   template_name = mso_schema_template_bd.example.template_name
   bd_name       = mso_schema_template_bd.example.name
-  name          = mso_tenant_policies_dhcp_relay_policy.example.name
+  name                    = mso_tenant_policies_dhcp_relay_policy.example.name
+  dhcp_option_policy_name = mso_tenant_policies_dhcp_option_policy.example.name
+}
+```
+
+To configure the same association by UUID, use these arguments instead of `name` and `dhcp_option_policy_name`:
+
+```hcl
+resource "mso_schema_template_bd_dhcp_policy" "example" {
+  schema_id               = mso_schema_template_bd.example.schema_id
+  template_name           = mso_schema_template_bd.example.template_name
+  bd_name                 = mso_schema_template_bd.example.name
+  uuid                    = mso_tenant_policies_dhcp_relay_policy.example.uuid
+  dhcp_option_policy_uuid = mso_tenant_policies_dhcp_option_policy.example.uuid
 }
 ```
 
@@ -28,8 +41,10 @@ resource "mso_schema_template_bd_dhcp_policy" "example" {
 * `schema_id` - (Required) ID of the schema containing the Bridge Domain. Changing this forces a new resource.
 * `template_name` - (Required) Name of the template containing the Bridge Domain. Changing this forces a new resource.
 * `bd_name` - (Required) Name of the Bridge Domain. Changing this forces a new resource.
-* `name` - (Required) Name of the DHCP Relay Policy to associate. Changing this forces a new resource.
-* `dhcp_option_policy_name` - (Optional) Name of the DHCP Option Policy to associate.
+* `name` - (Optional) Name of the DHCP Relay Policy to associate. Mutually exclusive with `uuid`. Either `name` or `uuid` must be specified. When set, the provider looks up the policy in the tenant policy template and sends its UUID to NDO. When `uuid` is set, this is populated from the read response. Changing the configured identifier forces a new resource.
+* `uuid` - (Optional) UUID of the DHCP Relay Policy to associate. Mutually exclusive with `name`. Either `name` or `uuid` must be specified. When set, the UUID is sent directly to NDO without a provider-side lookup. When `name` is set, this is populated from the read response. Changing the configured identifier forces a new resource.
+* `dhcp_option_policy_name` - (Optional) Name of the DHCP Option Policy to associate. Mutually exclusive with `dhcp_option_policy_uuid`. When set, the provider looks up the policy in the tenant policy template and sends its UUID to NDO.
+* `dhcp_option_policy_uuid` - (Optional) UUID of the DHCP Option Policy to associate. Mutually exclusive with `dhcp_option_policy_name`. When set, the UUID is sent directly to NDO without a provider-side lookup.
 
 ## Import
 

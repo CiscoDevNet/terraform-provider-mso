@@ -30,6 +30,24 @@ resource "mso_schema_template_bd" "bridge_domain" {
 
 ```
 
+To configure the DHCP policy association by UUID, use `uuid` and `dhcp_option_policy_uuid` in the block instead of the policy name arguments:
+
+```hcl
+resource "mso_schema_template_bd" "bridge_domain" {
+    schema_id              = mso_schema.schema1.id
+    template_name          = "Template1"
+    name                   = "testBD"
+    display_name           = "test"
+    vrf_name               = mso_schema_template_vrf.vrf1.name
+    layer2_unknown_unicast = "proxy"
+
+    dhcp_policies {
+        uuid                      = mso_tenant_policies_dhcp_relay_policy.example.uuid
+        dhcp_option_policy_uuid   = mso_tenant_policies_dhcp_option_policy.example.uuid
+    }
+}
+```
+
 ## Argument Reference ##
 
 * `schema_id` - (Required) SchemaID under which you want to deploy Bridge Domain.
@@ -52,11 +70,13 @@ resource "mso_schema_template_bd" "bridge_domain" {
 * `ipv6_unknown_multicast_flooding` - (Optional) IPv6 Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
 * `multi_destination_flooding` - (Optional) Multi-destination flooding behavior. Allowed values are `flood_in_bd`, `drop` and `flood_in_encap`. Default to `flood_in_bd`.
 * `unknown_multicast_flooding` - (Optional) Unknown Multicast Flooding behavior. Allowed values are `flood` and `optimized_flooding`. Default to `flood`.
-* `dhcp_policies` - (Optional) Block to provide dhcp_policy configurations. Type: Block.
-  * `name` - (Optional) DHCP Policy name of the Bridge Domain on the MSO UI. Required if you specify the dhcp_policy.
-  * `version` - (Optional) DHCP Policy version of the Bridge Domain on the MSO UI. Required if you specify the dhcp_policy.
-  * `dhcp_option_policy_name` - (Optional) DHCP Option Policy name of the Bridge Domain on the MSO UI.
-  * `dhcp_option_policy_version` - (Optional) DHCP Option Policy version of the Bridge Domain on the MSO UI. Required if you specify the `dhcp_option_policy_name`.
+* `dhcp_policies` - (Optional) Block to configure DHCP Relay Policy associations for the Bridge Domain. Type: Block.
+  * `name` - (Optional) DHCP Relay Policy name. Mutually exclusive with `uuid`. Either `name` or `uuid` must be specified in each block. When set, the provider looks up the policy in the tenant policy template and sends its UUID to NDO; when `uuid` is set, the name is populated from the read response.
+  * `uuid` - (Optional) DHCP Relay Policy UUID. Mutually exclusive with `name`. Either `name` or `uuid` must be specified in each block. When set, the UUID is sent directly to NDO without a provider-side lookup.
+  * `version` - (Optional) Version of the associated DHCP Relay Policy.
+  * `dhcp_option_policy_name` - (Optional) DHCP Option Policy name. Mutually exclusive with `dhcp_option_policy_uuid`.
+  * `dhcp_option_policy_uuid` - (Optional) DHCP Option Policy UUID. Mutually exclusive with `dhcp_option_policy_name`; the UUID is sent directly to NDO.
+  * `dhcp_option_policy_version` - (Optional) Version of the associated DHCP Option Policy.
 
 You can instead manage individual DHCP policy associations with the [`mso_schema_template_bd_dhcp_policy` resource](schema_template_bd_dhcp_policy.html.markdown). Use one management method per Bridge Domain; do not configure the inline block and standalone resource for the same policy.
 

@@ -30,6 +30,16 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceName, "dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Find a standalone DHCP policy by UUID") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyDataSourceUUIDConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(dataSourceName, "name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttr(dataSourceName, "dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName),
+					resource.TestCheckResourceAttrPair(dataSourceName, "uuid", "mso_schema_template_bd_dhcp_policy.test", "uuid"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "dhcp_option_policy_uuid", "mso_tenant_policies_dhcp_option_policy."+msoTenantPoliciesDhcpOptionPolicyName, "uuid"),
+				),
+			},
 		},
 	})
 }
@@ -61,4 +71,23 @@ data "mso_schema_template_bd_dhcp_policy" "test" {
   name          = mso_schema_template_bd_dhcp_policy.test.name
 }
 `, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName)
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyDataSourceUUIDConfig() string {
+	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() + testAccMSOSchemaTemplateBdDHCPPolicyBDConfig() + fmt.Sprintf(`
+resource "mso_schema_template_bd_dhcp_policy" "test" {
+  depends_on              = [mso_schema_template_bd.dhcp_parent]
+  schema_id               = mso_schema_template_bd.dhcp_parent.schema_id
+  template_name           = mso_schema_template_bd.dhcp_parent.template_name
+  bd_name                 = mso_schema_template_bd.dhcp_parent.name
+  uuid                    = mso_tenant_policies_dhcp_relay_policy.%s.uuid
+  dhcp_option_policy_uuid = mso_tenant_policies_dhcp_option_policy.%s.uuid
+}
+data "mso_schema_template_bd_dhcp_policy" "test" {
+  schema_id     = mso_schema_template_bd_dhcp_policy.test.schema_id
+  template_name = mso_schema_template_bd_dhcp_policy.test.template_name
+  bd_name       = mso_schema_template_bd_dhcp_policy.test.bd_name
+  uuid          = mso_tenant_policies_dhcp_relay_policy.%s.uuid
+}
+`, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName, msoTenantPoliciesDhcpRelayPolicyName)
 }
