@@ -54,8 +54,8 @@ data "mso_schema_template_bd" "example" {
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
 
-* `dhcp_policy` - (Read-Only) A map to provide the dhcp_policy configuration.
-    * `name` - (Read-Only) The DHCP policy name of the BD.
-    * `version` - (Read-Only) The DHCP policy version of the BD.
-    * `dhcp_option_policy_name` - (Read-Only) The DHCP option policy name of the BD.
-    * `dhcp_option_policy_version` - (Read-Only) The DHCP option policy version of the BD.
+* `dhcp_policy` - (Read-Only) A map containing the DHCP Relay Policy association for the BD.
+    * `name` - (Read-Only) Name of the associated DHCP Relay Policy.
+    * `version` - (Read-Only) Version of the associated DHCP Relay Policy.
+    * `dhcp_option_policy_name` - (Read-Only) Name of the associated DHCP Option Policy.
+    * `dhcp_option_policy_version` - (Read-Only) Version of the associated DHCP Option Policy.
