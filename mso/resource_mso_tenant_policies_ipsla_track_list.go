@@ -263,7 +263,7 @@ func resourceMSOIPSLATrackListUpdate(d *schema.ResourceData, m interface{}) erro
 		}
 	}
 
-	if d.HasChange("type") || d.HasChange("threshold_up") || d.HasChange("threshold_up") {
+	if d.HasChange("type") || d.HasChange("threshold_up") || d.HasChange("threshold_down") {
 		err := addPatchPayloadToContainer(payloadCont, "replace", fmt.Sprintf("%s/type", updatePath), d.Get("type").(string))
 		if err != nil {
 			return err

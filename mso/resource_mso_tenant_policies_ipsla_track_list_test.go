@@ -149,12 +149,22 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Create IPSLA Track List without members") },
-				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(),
+				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(16, 11),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(noMembersResourceName, "name", msoTenantPolicyTemplateIPSLATrackListName+"_no_members"),
 					resource.TestCheckResourceAttr(noMembersResourceName, "type", "percentage"),
-					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "12"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "16"),
 					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_down", "11"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "members.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update only the IPSLA Track List threshold down value") },
+				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(16, 13),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(noMembersResourceName, "type", "percentage"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "16"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_down", "13"),
 					resource.TestCheckResourceAttr(noMembersResourceName, "members.#", "0"),
 				),
 			},
@@ -184,11 +194,11 @@ func TestAccMSOTenantPoliciesIPSLATrackListResource(t *testing.T) {
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Update IPSLA Track List from two members back to no members") },
-				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(),
+				Config:    testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(16, 11),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(noMembersResourceName, "members.#", "0"),
 					resource.TestCheckResourceAttr(noMembersResourceName, "type", "percentage"),
-					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "12"),
+					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_up", "16"),
 					resource.TestCheckResourceAttr(noMembersResourceName, "threshold_down", "11"),
 				),
 			},
@@ -217,15 +227,15 @@ func testAccMSOTenantPoliciesIPSLATrackListConfigCreate() string {
 	}`, msoTenantPolicyTemplateIPSLATrackListName, msoTenantPolicyTemplateName, msoTenantPolicyTemplateIPSLAMonitoringPolicyName, msoSchemaTemplateBdName, IPSLATrackListPreConfig)
 }
 
-func testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers() string {
+func testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(thresholdUp, thresholdDown int) string {
 	return fmt.Sprintf(`%[5]s
 	resource "mso_tenant_policies_ipsla_track_list" "%[1]s_no_members" {
 		template_id    = mso_template.%[2]s.id
 		name           = "%[1]s_no_members"
-		threshold_up   = 12
-		threshold_down = 11
+		threshold_up   = %[3]d
+		threshold_down = %[4]d
 		type           = "percentage"
-	}`, msoTenantPolicyTemplateIPSLATrackListName, msoTenantPolicyTemplateName, msoTenantPolicyTemplateIPSLAMonitoringPolicyName, msoSchemaTemplateBdName, IPSLATrackListPreConfig)
+	}`, msoTenantPolicyTemplateIPSLATrackListName, msoTenantPolicyTemplateName, thresholdUp, thresholdDown, IPSLATrackListPreConfig)
 }
 
 func testAccMSOTenantPoliciesIPSLATrackListConfigWithTwoMembers() string {
