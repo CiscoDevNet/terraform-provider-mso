@@ -101,11 +101,14 @@ None.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.control.originate`.
     - `suppress_forwarding_address_in_translated_lsa` (Boolean) Whether OSPF suppresses forwarding addresses in translated LSAs.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.control.suppressFA`.
+- `annotations` (Map of String) The L3Out annotations keyed by annotation key.
+    - **API**: `l3outTemplate.l3outs[].tagAnnotations[]`, using `tagKey` and `tagValue`.
 
 ## References
 
 ### Related Terraform Objects
 
+- [mso_l3out_annotation data source](/docs/providers/mso/d/l3out_annotation.html)
 - [mso_l3out resource](/docs/providers/mso/r/l3out.html)
 
 ### External Documentation

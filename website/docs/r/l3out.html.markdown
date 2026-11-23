@@ -46,6 +46,11 @@ resource "mso_l3out" "example" {
     attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control.attached_host_redistribution.uuid
   }
 
+  annotations = {
+    owner   = "network"
+    purpose = "external-routing"
+  }
+
   bgp = {
     enabled                   = true
     route_dampening_ipv4_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_ipv4.uuid
@@ -149,6 +154,9 @@ The full example requires Nexus Dashboard 4.1+ (NDO 5.1+) to create route-map co
     - `suppress_forwarding_address_in_translated_lsa` (Boolean) Whether OSPF suppresses the forwarding address in translated LSAs.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.control.suppressFA`.
         - **NDO default**: `false` when no configured or prior value is available.
+- `annotations` (Map of String) The L3Out annotations keyed by their unique annotation keys. When configured, the map manages the entire collection: removing a key removes its annotation, and `{}` clears all annotations. Leave this map omitted to manage keys with `mso_l3out_annotation` resources.
+    - **API**: `l3outTemplate.l3outs[].tagAnnotations[]`, using `tagKey` and `tagValue`.
+    - **Validation**: Keys must be nonempty and values cannot be null. NDO requires nonempty annotation values. Different keys can have the same value.
 
 ### Read-Only
 
@@ -180,6 +188,7 @@ import {
 
 ### Related Terraform Objects
 
+- [mso_l3out_annotation resource](/docs/providers/mso/r/l3out_annotation.html)
 - [mso_l3out data source](/docs/providers/mso/d/l3out.html)
 - [mso_template resource](/docs/providers/mso/r/template.html)
 - [mso_schema_template_vrf resource](/docs/providers/mso/r/schema_template_vrf.html)

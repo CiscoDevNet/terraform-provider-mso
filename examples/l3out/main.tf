@@ -377,6 +377,11 @@ resource "mso_l3out" "example" {
     attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control_context.attached_host_redistribution.route_map_policy_uuid
   }
 
+  annotations = {
+    owner   = "network"
+    purpose = "external-routing"
+  }
+
   bgp = {
     enabled                   = true
     route_dampening_ipv4_uuid = mso_tenant_policies_route_map_policy_route_control_context.dampening_ipv4.route_map_policy_uuid
