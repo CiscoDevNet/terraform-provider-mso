@@ -103,7 +103,7 @@ func (r *L3OutResource) Create(ctx context.Context, request resource.CreateReque
 		return
 	}
 
-	r.refreshL3OutState(
+	r.refreshState(
 		ctx,
 		plan.TemplateID.ValueString(),
 		plan.UUID.ValueString(),
@@ -131,7 +131,7 @@ func (r *L3OutResource) Read(ctx context.Context, request resource.ReadRequest, 
 		return
 	}
 
-	r.refreshL3OutState(
+	r.refreshState(
 		ctx,
 		state.TemplateID.ValueString(),
 		state.UUID.ValueString(),
@@ -194,7 +194,7 @@ func (r *L3OutResource) Update(ctx context.Context, request resource.UpdateReque
 		return
 	}
 
-	r.refreshL3OutState(
+	r.refreshState(
 		ctx,
 		plan.TemplateID.ValueString(),
 		state.UUID.ValueString(),
@@ -334,7 +334,7 @@ func getL3OutResourceModel(ctx context.Context, msoClient *client.Client, templa
 	return data, resolved, true, nil
 }
 
-func (r *L3OutResource) refreshL3OutState(ctx context.Context, templateID, uuid, name string, previousL3OutModel models.L3OutModel, removeIfMissing bool, state *tfsdk.State, identity *tfsdk.ResourceIdentity, diagnostics *diag.Diagnostics) {
+func (r *L3OutResource) refreshState(ctx context.Context, templateID, uuid, name string, previousL3OutModel models.L3OutModel, removeIfMissing bool, state *tfsdk.State, identity *tfsdk.ResourceIdentity, diagnostics *diag.Diagnostics) {
 	data, _, found, err := getL3OutResourceModel(
 		ctx,
 		r.client,
