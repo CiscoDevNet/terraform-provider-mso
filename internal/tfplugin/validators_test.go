@@ -2,6 +2,7 @@ package tfplugin
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -17,52 +18,89 @@ func TestRequireAttributesWhenEnabled(t *testing.T) {
 		return types.ObjectValueMust(attributeTypes, map[string]attr.Value{"enabled": enabled, "area_id": areaID})
 	}
 	tests := []struct {
-		name     string
-		config   types.Object
-		wantPath string
+		name             string
+		config           types.Object
+		wantDetailFormat string
 	}{
 		{name: "empty object", config: object(types.BoolNull(), types.StringNull())},
 		{name: "explicitly disabled", config: object(types.BoolValue(false), types.StringNull())},
 		{
-			name:     "settings require enablement",
-			config:   object(types.BoolNull(), types.StringValue("0.0.0.1")),
-			wantPath: "ospf.area_id",
+			name:             "settings require enablement",
+			config:           object(types.BoolNull(), types.StringValue("0.0.0.1")),
+			wantDetailFormat: "%s.area_id requires %s.enabled = true.",
 		},
 		{
-			name:     "enabled requires area",
-			config:   object(types.BoolValue(true), types.StringNull()),
-			wantPath: "ospf.area_id",
+			name:             "explicitly disabled with settings",
+			config:           object(types.BoolValue(false), types.StringValue("0.0.0.1")),
+			wantDetailFormat: "%s.area_id requires %s.enabled = true.",
+		},
+		{
+			name:             "enabled requires area",
+			config:           object(types.BoolValue(true), types.StringNull()),
+			wantDetailFormat: "%s.area_id must be configured when %s.enabled is true.",
+		},
+		{
+			name:             "enabled rejects empty area",
+			config:           object(types.BoolValue(true), types.StringValue("")),
+			wantDetailFormat: "%s.area_id must be configured when %s.enabled is true.",
 		},
 		{name: "enabled with area", config: object(types.BoolValue(true), types.StringValue("0.0.0.1"))},
 		{name: "unknown area defers validation", config: object(types.BoolValue(true), types.StringUnknown())},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			response := &validator.ObjectResponse{}
-			RequireAttributesWhenEnabled("enabled", "area_id").ValidateObject(
-				context.Background(),
-				validator.ObjectRequest{
-					Path:        path.Root("ospf"),
-					ConfigValue: test.config,
-				},
-				response,
-			)
-			if test.wantPath == "" {
-				if response.Diagnostics.HasError() {
-					t.Fatalf("unexpected diagnostics: %v", response.Diagnostics)
-				}
-				return
-			}
-			if len(response.Diagnostics.Errors()) != 1 {
-				t.Fatalf("expected one diagnostic at %s, got %v", test.wantPath, response.Diagnostics)
-			}
-			diagnostic, ok := response.Diagnostics.Errors()[0].(diag.DiagnosticWithPath)
-			if !ok || diagnostic.Path().String() != test.wantPath {
-				t.Fatalf(
-					"unexpected diagnostic path: got %#v, want %q",
-					response.Diagnostics.Errors()[0],
-					test.wantPath,
-				)
+	objectPaths := []struct {
+		name       string
+		objectPath path.Path
+		wantPrefix string
+	}{
+		{name: "OSPF object", objectPath: path.Root("ospf"), wantPrefix: "ospf"},
+		{
+			name:       "nested map object",
+			objectPath: path.Root("groups").AtMapKey("edge").AtName("ospf"),
+			wantPrefix: `groups["edge"].ospf`,
+		},
+		{
+			name:       "nested list object",
+			objectPath: path.Root("groups").AtListIndex(0).AtName("ospf"),
+			wantPrefix: "groups[0].ospf",
+		},
+	}
+	rule := RequireAttributesWhenEnabled("enabled", "area_id")
+	for _, objectPath := range objectPaths {
+		t.Run(objectPath.name, func(t *testing.T) {
+			for _, test := range tests {
+				t.Run(test.name, func(t *testing.T) {
+					response := &validator.ObjectResponse{}
+					rule.ValidateObject(
+						context.Background(),
+						validator.ObjectRequest{
+							Path:        objectPath.objectPath,
+							ConfigValue: test.config,
+						},
+						response,
+					)
+					if test.wantDetailFormat == "" {
+						if response.Diagnostics.HasError() {
+							t.Fatalf("unexpected diagnostics: %v", response.Diagnostics)
+						}
+						return
+					}
+					wantPath := fmt.Sprintf("%s.area_id", objectPath.wantPrefix)
+					if len(response.Diagnostics.Errors()) != 1 {
+						t.Fatalf("expected one diagnostic at %s, got %v", wantPath, response.Diagnostics)
+					}
+					diagnostic, ok := response.Diagnostics.Errors()[0].(diag.DiagnosticWithPath)
+					if !ok || diagnostic.Path().String() != wantPath {
+						t.Fatalf(
+							"unexpected diagnostic path: got %#v, want %q",
+							response.Diagnostics.Errors()[0],
+							wantPath,
+						)
+					}
+					wantDetail := fmt.Sprintf(test.wantDetailFormat, objectPath.wantPrefix, objectPath.wantPrefix)
+					if diagnostic.Detail() != wantDetail {
+						t.Fatalf("unexpected diagnostic detail: got %q, want %q", diagnostic.Detail(), wantDetail)
+					}
+				})
 			}
 		})
 	}
@@ -87,6 +125,79 @@ func TestAllowAttributesOnlyWhenValueMissingTrigger(t *testing.T) {
 	diagnostic, ok := response.Diagnostics.Errors()[0].(diag.DiagnosticWithPath)
 	if !ok || diagnostic.Path().String() != "bfd.key" {
 		t.Fatalf("unexpected diagnostic path: got %#v, want %q", response.Diagnostics.Errors()[0], "bfd.key")
+	}
+	wantDetail := "bfd.key may be set only when bfd.authentication_enabled is one of true"
+	if diagnostic.Detail() != wantDetail {
+		t.Fatalf("unexpected diagnostic detail: got %q, want %q", diagnostic.Detail(), wantDetail)
+	}
+}
+
+func TestAllowAttributesOnlyWhenValueDiagnosticPaths(t *testing.T) {
+	ctx := context.Background()
+	rule := AllowAttributesOnlyWhenValue(
+		"enabled",
+		[]attr.Value{types.BoolValue(true)},
+		[]attr.Value{types.StringValue("")},
+		"route_dampening_ipv4_uuid",
+		"route_dampening_ipv6_uuid",
+	)
+	config := types.ObjectValueMust(
+		map[string]attr.Type{
+			"enabled":                   types.BoolType,
+			"route_dampening_ipv4_uuid": types.StringType,
+			"route_dampening_ipv6_uuid": types.StringType,
+		},
+		map[string]attr.Value{
+			"enabled":                   types.BoolValue(false),
+			"route_dampening_ipv4_uuid": types.StringValue("ipv4-policy-uuid"),
+			"route_dampening_ipv6_uuid": types.StringValue("ipv6-policy-uuid"),
+		},
+	)
+	tests := []struct {
+		name       string
+		objectPath path.Path
+		wantPrefix string
+	}{
+		{name: "BGP object", objectPath: path.Root("bgp"), wantPrefix: "bgp"},
+		{
+			name:       "nested map object",
+			objectPath: path.Root("groups").AtMapKey("edge").AtName("bgp"),
+			wantPrefix: `groups["edge"].bgp`,
+		},
+		{
+			name:       "nested list object",
+			objectPath: path.Root("groups").AtListIndex(0).AtName("bgp"),
+			wantPrefix: "groups[0].bgp",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			response := &validator.ObjectResponse{}
+			rule.ValidateObject(ctx, validator.ObjectRequest{Path: test.objectPath, ConfigValue: config}, response)
+			if len(response.Diagnostics.Errors()) != 2 {
+				t.Fatalf("expected two diagnostics, got %v", response.Diagnostics)
+			}
+			wantDetail := fmt.Sprintf(
+				`%s.route_dampening_ipv4_uuid, %s.route_dampening_ipv6_uuid may be set only when %s.enabled is one of true; attribute values "" are exempt from this condition`,
+				test.wantPrefix,
+				test.wantPrefix,
+				test.wantPrefix,
+			)
+			for index, name := range []string{"route_dampening_ipv4_uuid", "route_dampening_ipv6_uuid"} {
+				diagnostic, ok := response.Diagnostics.Errors()[index].(diag.DiagnosticWithPath)
+				wantPath := fmt.Sprintf("%s.%s", test.wantPrefix, name)
+				if !ok || diagnostic.Path().String() != wantPath {
+					t.Fatalf(
+						"unexpected diagnostic path: got %#v, want %q",
+						response.Diagnostics.Errors()[index],
+						wantPath,
+					)
+				}
+				if diagnostic.Detail() != wantDetail {
+					t.Fatalf("unexpected diagnostic detail: got %q, want %q", diagnostic.Detail(), wantDetail)
+				}
+			}
+		})
 	}
 }
 

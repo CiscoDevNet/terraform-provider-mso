@@ -1760,7 +1760,12 @@ func TestAccMSOL3OutInvalid(t *testing.T) {
 	defaultRouteValidationError := regexp.MustCompile(
 		strings.ReplaceAll(regexp.QuoteMeta(defaultRouteValidationMessage), " ", `\s+`),
 	)
-	dampeningValidationMessage := `route_dampening_ipv4_uuid, route_dampening_ipv6_uuid may be set only when enabled is one of true`
+	dampeningValidationMessage := fmt.Sprintf(
+		"%s, %s may be set only when %s is one of true",
+		"bgp.route_dampening_ipv4_uuid",
+		"bgp.route_dampening_ipv6_uuid",
+		"bgp.enabled",
+	)
 	dampeningValidationError := regexp.MustCompile(
 		strings.ReplaceAll(regexp.QuoteMeta(dampeningValidationMessage), " ", `\s+`),
 	)
@@ -1784,9 +1789,11 @@ func TestAccMSOL3OutInvalid(t *testing.T) {
 				ExpectError: defaultRouteValidationError,
 			},
 			{
-				PreConfig:   func() { fmt.Println("Test: Reject OSPF settings while disabled") },
-				Config:      testAccMSOL3OutOSPFDisabledWithAreaConfig(siteName, l3outName),
-				ExpectError: regexp.MustCompile(`requires enabled = true`),
+				PreConfig: func() { fmt.Println("Test: Reject OSPF settings while disabled") },
+				Config:    testAccMSOL3OutOSPFDisabledWithAreaConfig(siteName, l3outName),
+				ExpectError: regexp.MustCompile(
+					`ospf\.area_id\s+requires\s+ospf\.enabled\s+=\s+true\.`,
+				),
 			},
 			{
 				PreConfig: func() {
@@ -1803,14 +1810,18 @@ func TestAccMSOL3OutInvalid(t *testing.T) {
 				ExpectError: dampeningValidationError,
 			},
 			{
-				PreConfig:   func() { fmt.Println("Test: Reject enabled OSPF without an area ID") },
-				Config:      testAccMSOL3OutInvalidOSPFWithoutAreaIDConfig(),
-				ExpectError: regexp.MustCompile(`area_id must be configured when enabled is true`),
+				PreConfig: func() { fmt.Println("Test: Reject enabled OSPF without an area ID") },
+				Config:    testAccMSOL3OutInvalidOSPFWithoutAreaIDConfig(),
+				ExpectError: regexp.MustCompile(
+					`ospf\.area_id\s+must\s+be\s+configured\s+when\s+ospf\.enabled\s+is\s+true\.`,
+				),
 			},
 			{
-				PreConfig:   func() { fmt.Println("Test: Reject enabled OSPF without an area type") },
-				Config:      testAccMSOL3OutInvalidOSPFWithoutAreaTypeConfig(),
-				ExpectError: regexp.MustCompile(`area_type must be configured when enabled is true`),
+				PreConfig: func() { fmt.Println("Test: Reject enabled OSPF without an area type") },
+				Config:    testAccMSOL3OutInvalidOSPFWithoutAreaTypeConfig(),
+				ExpectError: regexp.MustCompile(
+					`ospf\.area_type\s+must\s+be\s+configured\s+when\s+ospf\.enabled\s+is\s+true\.`,
+				),
 			},
 			{
 				PreConfig:   func() { fmt.Println("Test: Reject L3Out creation in a nonexistent template") },

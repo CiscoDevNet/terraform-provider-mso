@@ -208,43 +208,52 @@ type allowAttributesOnlyWhenValue struct {
 }
 
 func (rule allowAttributesOnlyWhenValue) Description(context.Context) string {
-	values := make([]string, len(rule.allowedTriggerValues))
-	for index, value := range rule.allowedTriggerValues {
-		values[index] = value.String()
-	}
-	description := fmt.Sprintf(
-		"%s may be set only when %s is one of %s",
-		strings.Join(rule.attributeNames, ", "),
-		rule.triggerAttribute,
-		strings.Join(values, ", "),
-	)
-	if len(rule.attributeValueExceptions) > 0 {
-		values = make([]string, len(rule.attributeValueExceptions))
-		for index, value := range rule.attributeValueExceptions {
-			values[index] = value.String()
-		}
-		description = fmt.Sprintf(
-			"%s; attribute values %s are exempt from this condition",
-			description,
-			strings.Join(values, ", "),
-		)
-	}
-	return description
+	return "Validates conditional relationships between object attributes."
 }
 
 func (rule allowAttributesOnlyWhenValue) MarkdownDescription(ctx context.Context) string {
 	return rule.Description(ctx)
 }
 
-func (rule allowAttributesOnlyWhenValue) ValidateObject(ctx context.Context, request validator.ObjectRequest, response *validator.ObjectResponse) {
+func (rule allowAttributesOnlyWhenValue) ValidateObject(_ context.Context, request validator.ObjectRequest, response *validator.ObjectResponse) {
 	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
 	}
+
 	attributes := request.ConfigValue.Attributes()
 	trigger, exists := attributes[rule.triggerAttribute]
 	if exists && (trigger.IsUnknown() || slices.ContainsFunc(rule.allowedTriggerValues, trigger.Equal)) {
 		return
 	}
+
+	names := make([]string, len(rule.attributeNames))
+	for index, name := range rule.attributeNames {
+		names[index] = request.Path.AtName(name).String()
+	}
+
+	values := make([]string, len(rule.allowedTriggerValues))
+	for index, value := range rule.allowedTriggerValues {
+		values[index] = value.String()
+	}
+	message := fmt.Sprintf(
+		"%s may be set only when %s is one of %s",
+		strings.Join(names, ", "),
+		request.Path.AtName(rule.triggerAttribute).String(),
+		strings.Join(values, ", "),
+	)
+
+	if len(rule.attributeValueExceptions) > 0 {
+		exceptions := make([]string, len(rule.attributeValueExceptions))
+		for index, value := range rule.attributeValueExceptions {
+			exceptions[index] = value.String()
+		}
+		message = fmt.Sprintf(
+			"%s; attribute values %s are exempt from this condition",
+			message,
+			strings.Join(exceptions, ", "),
+		)
+	}
+
 	for _, name := range rule.attributeNames {
 		value, exists := attributes[name]
 		if !exists || value.IsNull() || value.IsUnknown() ||
@@ -254,7 +263,7 @@ func (rule allowAttributesOnlyWhenValue) ValidateObject(ctx context.Context, req
 		response.Diagnostics.AddAttributeError(
 			request.Path.AtName(name),
 			"Invalid Conditional Attribute Value",
-			rule.Description(ctx),
+			message,
 		)
 	}
 }
@@ -292,25 +301,28 @@ func (required requireAttributesWhenEnabled) ValidateObject(_ context.Context, r
 	if !ok || enabled.IsUnknown() {
 		return
 	}
+	enabledPath := request.Path.AtName(required.enabledAttribute)
 	if !enabled.ValueBool() {
 		for name, value := range attributes {
 			if name != required.enabledAttribute && !value.IsNull() && !value.IsUnknown() {
+				attributePath := request.Path.AtName(name)
 				response.Diagnostics.AddAttributeError(
-					request.Path.AtName(name),
+					attributePath,
 					"Invalid Disabled Object Attribute",
-					fmt.Sprintf("%s requires %s = true.", name, required.enabledAttribute),
+					fmt.Sprintf("%s requires %s = true.", attributePath, enabledPath),
 				)
 			}
 		}
 		return
 	}
 	for _, name := range required.names {
+		attributePath := request.Path.AtName(name)
 		value, exists := attributes[name]
 		if !exists || value.IsNull() {
 			response.Diagnostics.AddAttributeError(
-				request.Path.AtName(name),
+				attributePath,
 				"Missing required object attribute",
-				fmt.Sprintf("%s must be configured when %s is true.", name, required.enabledAttribute),
+				fmt.Sprintf("%s must be configured when %s is true.", attributePath, enabledPath),
 			)
 			continue
 		}
@@ -319,9 +331,9 @@ func (required requireAttributesWhenEnabled) ValidateObject(_ context.Context, r
 		}
 		if stringValue, ok := value.(types.String); ok && stringValue.ValueString() == "" {
 			response.Diagnostics.AddAttributeError(
-				request.Path.AtName(name),
+				attributePath,
 				"Missing required object attribute",
-				fmt.Sprintf("%s must be configured when %s is true.", name, required.enabledAttribute),
+				fmt.Sprintf("%s must be configured when %s is true.", attributePath, enabledPath),
 			)
 		}
 	}
