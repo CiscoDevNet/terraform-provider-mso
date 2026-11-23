@@ -279,6 +279,11 @@ func testAccMsoSchemaTemplateErrorCrossTemplateVrfBdConfig() string {
     resource "mso_schema_template_deploy_ndo" "deploy_ndo2" {
         schema_id     = mso_schema_template_bd.bridgedomain2.schema_id
         template_name = tolist(mso_schema.schema_blocks.template)[1].name
+        depends_on = [
+            mso_schema_site.schema_site_1,
+            mso_schema_site.schema_site_2,
+            mso_schema_template_bd.bridgedomain,
+        ]
     }
     `, testAccSingleTenantConfig(), msoTfTenantName, msoTfTenantName, msoTemplateSiteName1, msoTemplateSiteName1)
 }
@@ -330,6 +335,10 @@ func testAccMsoSchemaTemplateVrfAndBdDeployWithRetry() string {
         force_apply = ""
         schema_id     = mso_schema_template_bd.bridgedomain.schema_id
         template_name = tolist(mso_schema.schema_blocks.template)[0].name
+        depends_on = [
+            mso_schema_site.schema_site_1,
+            mso_schema_template_vrf.vrf,
+        ]
     }
     `, testAccSingleTenantConfig(), msoTfTenantName, msoTemplateSiteName1)
 }
