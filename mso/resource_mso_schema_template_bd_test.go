@@ -429,6 +429,21 @@ resource "mso_tenant_policies_dhcp_option_policy" "%[1]s" {
 `, msoTenantPoliciesDhcpOptionPolicyName, msoTenantPolicyTemplateName)
 }
 
+func testAccMSOSchemaTemplateBdDhcpOptionPolicyConfig2() string {
+	return fmt.Sprintf(`
+resource "mso_tenant_policies_dhcp_option_policy" "%[1]s" {
+	depends_on  = [mso_tenant_policies_dhcp_option_policy.%[3]s]
+	template_id = mso_template.%[2]s.id
+	name        = "%[1]s"
+	options {
+		name = "option_2"
+		id   = 2
+		data = "data_2"
+	}
+}
+`, msoTenantPoliciesDhcpOptionPolicyName2, msoTenantPolicyTemplateName, msoTenantPoliciesDhcpOptionPolicyName)
+}
+
 func testAccMSOSchemaTemplateBdConfigWithOneDhcpPolicy() string {
 	return fmt.Sprintf(`%[1]s%[2]s%[3]s%[4]s
 	resource "mso_schema_template_bd" "%[5]s" {

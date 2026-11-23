@@ -21,6 +21,11 @@ resource "mso_schema_template_bd" "bridge_domain" {
     display_name           = "test"
     vrf_name               = mso_schema_template_vrf.vrf1.name
     layer2_unknown_unicast = "proxy" 
+
+    dhcp_policies {
+        name                    = mso_tenant_policies_dhcp_relay_policy.example.name
+        dhcp_option_policy_name = mso_tenant_policies_dhcp_option_policy.example.name
+    }
 }
 
 ```
@@ -52,6 +57,8 @@ resource "mso_schema_template_bd" "bridge_domain" {
   * `version` - (Optional) DHCP Policy version of the Bridge Domain on the MSO UI. Required if you specify the dhcp_policy.
   * `dhcp_option_policy_name` - (Optional) DHCP Option Policy name of the Bridge Domain on the MSO UI.
   * `dhcp_option_policy_version` - (Optional) DHCP Option Policy version of the Bridge Domain on the MSO UI. Required if you specify the `dhcp_option_policy_name`.
+
+You can instead manage individual DHCP policy associations with the [`mso_schema_template_bd_dhcp_policy` resource](schema_template_bd_dhcp_policy.html.markdown). Use one management method per Bridge Domain; do not configure the inline block and standalone resource for the same policy.
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
 

@@ -382,8 +382,7 @@ func resourceMSOTemplateBDImport(d *schema.ResourceData, m interface{}) ([]*sche
 							}
 						}
 					}
-					d.Set("dhcp_policy", dhcpPolMap)
-					d.Set("dhcp_policies", dhcpPoliciesList)
+					setTemplateBDDHCPStateFromRead(d, dhcpPolMap, dhcpPoliciesList)
 					found = true
 					break
 				}
@@ -720,8 +719,7 @@ func resourceMSOTemplateBDRead(d *schema.ResourceData, m interface{}) error {
 							}
 						}
 					}
-					d.Set("dhcp_policy", dhcpPolMap)
-					d.Set("dhcp_policies", dhcpPoliciesList)
+					setTemplateBDDHCPStateFromRead(d, dhcpPolMap, dhcpPoliciesList)
 					found = true
 					break
 				}
@@ -1047,4 +1045,29 @@ func mapDHCPPoliciesRefByName(schemaID, templateName string, dhcpPolicies interf
 		dhcpPolicyNameList = append(dhcpPolicyNameList, dhcpPolicyNameMap)
 	}
 	return msoClient.GetDHCPPoliciesUUIDByName(tenantID, dhcpPolicyNameList)
+}
+
+// Keep the BD's DHCP state aligned with its established inline configuration.
+// The SDKv2 Read callback does not reliably retain the raw configuration, so
+// use the existing non-empty state values as the signal that the BD manages
+// DHCP inline. An empty field leaves DHCP associations to standalone resources.
+func setTemplateBDDHCPStateFromRead(d *schema.ResourceData, dhcpPolicy interface{}, dhcpPolicies interface{}) {
+	dhcpPolicyConfigured := false
+	if current, ok := d.Get("dhcp_policy").(map[string]interface{}); ok {
+		dhcpPolicyConfigured = len(current) > 0
+	}
+	dhcpPoliciesConfigured := false
+	if current, ok := d.Get("dhcp_policies").(*schema.Set); ok {
+		dhcpPoliciesConfigured = current.Len() > 0
+	}
+	if !dhcpPolicyConfigured {
+		d.Set("dhcp_policy", nil)
+	} else {
+		d.Set("dhcp_policy", dhcpPolicy)
+	}
+	if !dhcpPoliciesConfigured {
+		d.Set("dhcp_policies", nil)
+	} else {
+		d.Set("dhcp_policies", dhcpPolicies)
+	}
 }
