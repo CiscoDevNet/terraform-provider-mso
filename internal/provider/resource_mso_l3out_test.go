@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"maps"
 	"regexp"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccMSOL3OutResource(t *testing.T) {
@@ -3044,4 +3046,323 @@ resource "mso_template" "l3out_test" {
 }
 	`, l3outName, siteName,
 	)
+}
+
+func testAccCheckL3OutAnnotations(templateID, l3outUUID *string, expected map[string]string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		if *templateID == "" || *l3outUUID == "" {
+			return fmt.Errorf("L3Out template ID or UUID has not been captured")
+		}
+		template, err := ndoapi.GetTemplate(testAccAPIClient(), *templateID)
+		if err != nil {
+			return err
+		}
+		resolved, found, err := template.Find(models.NewL3OutPath(*l3outUUID, ""))
+		if err != nil {
+			return err
+		}
+		if !found {
+			return fmt.Errorf("L3Out %q not found in template %q", *l3outUUID, *templateID)
+		}
+		var actual models.AnnotationsModel
+		if err := actual.SetFromNDOObject(resolved.Object); err != nil {
+			return err
+		}
+		if !maps.Equal(map[string]string(actual), expected) {
+			return fmt.Errorf("unexpected remote annotations: got %v, want %v", actual, expected)
+		}
+		return nil
+	}
+}
+
+func testAccReplaceL3OutAnnotations(t *testing.T, templateID, l3outUUID string, annotations models.AnnotationsModel) {
+	t.Helper()
+	template, err := ndoapi.GetTemplate(testAccAPIClient(), templateID)
+	if err != nil {
+		t.Fatalf("unable to read L3Out template: %v", err)
+	}
+	resolved, found, err := template.Find(models.NewL3OutPath(l3outUUID, ""))
+	if err != nil {
+		t.Fatalf("unable to resolve L3Out for annotation replacement: %v", err)
+	}
+	if !found {
+		t.Fatalf("L3Out %q not found in template %q", l3outUUID, templateID)
+	}
+	_, err = testAccAPIClient().PatchbyID(
+		ndoapi.TemplateEndpoint(templateID),
+		ndoapi.NewPatchPayload(
+			"replace",
+			fmt.Sprintf("%s/tagAnnotations", resolved.PatchPath()),
+			annotations.ToPayload(),
+		),
+	)
+	if err != nil {
+		t.Fatalf("unable to replace L3Out annotations out of band: %v", err)
+	}
+}
+func TestAccMSOL3OutAnnotations(t *testing.T) {
+	siteName := testAccSiteName()
+	l3outName := testAccResourceName("terraform_l3out_annotations")
+	var templateID, l3outUUID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "4.3")
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Create L3Out with annotations sharing a value") },
+				Config:    testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
+					testAccCheckL3OutAnnotations(
+						&templateID,
+						&l3outUUID,
+						map[string]string{"foo": "shared", "bar": "shared"},
+					),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Reorder L3Out annotation keys without changing the plan") },
+				Config:    testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					testAccCheckL3OutAnnotations(
+						&templateID,
+						&l3outUUID,
+						map[string]string{"foo": "shared", "bar": "shared"},
+					),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update and add L3Out annotations") },
+				Config:    testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.bar", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					testAccCheckL3OutAnnotations(
+						&templateID,
+						&l3outUUID,
+						map[string]string{"foo": "updated", "bar": "shared", "baz": "shared"},
+					),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove one L3Out annotation") },
+				Config:    testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					testAccCheckL3OutAnnotations(
+						&templateID,
+						&l3outUUID,
+						map[string]string{"foo": "updated", "baz": "shared"},
+					),
+				),
+			},
+			{
+				PreConfig:    func() { fmt.Println("Test: Import L3Out with annotations") },
+				Config:       testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName),
+				ResourceName: "mso_l3out.test",
+				ImportState:  true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resourceState, ok := state.RootModule().Resources["mso_l3out.test"]
+					if !ok {
+						return "", fmt.Errorf("mso_l3out.test not found in Terraform state")
+					}
+					return fmt.Sprintf(
+						"%s/%s",
+						resourceState.Primary.Attributes["template_id"],
+						resourceState.Primary.Attributes["uuid"],
+					), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Omit L3Out annotations and preserve remote values")
+					testAccReplaceL3OutAnnotations(t, templateID, l3outUUID, models.AnnotationsModel{
+						"foo": "updated", "baz": "shared", "external": "shared",
+					})
+				},
+				Config: testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.baz", "shared"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.external", "shared"),
+					testAccCheckL3OutAnnotations(
+						&templateID,
+						&l3outUUID,
+						map[string]string{"foo": "updated", "baz": "shared", "external": "shared"},
+					),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove all L3Out annotations with an empty map") },
+				Config:    testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "annotations.%", "0"),
+					testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{}),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Populate annotations from a computed map") },
+				Config: testAccMSOL3OutAnnotationsComputedConfig(siteName, l3outName, `{
+    owner = "computed-network"
+    purpose = "external-routing"
+  }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("mso_l3out.test", tfjsonpath.New("annotations")),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: testAccCheckL3OutAnnotations(
+					&templateID,
+					&l3outUUID,
+					map[string]string{"owner": "computed-network", "purpose": "external-routing"},
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Update and remove annotations through a computed map") },
+				Config: testAccMSOL3OutAnnotationsComputedConfig(siteName, l3outName, `{
+    owner = "computed-operations"
+  }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("mso_l3out.test", tfjsonpath.New("annotations")),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: testAccCheckL3OutAnnotations(
+					&templateID,
+					&l3outUUID,
+					map[string]string{"owner": "computed-operations"},
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Clear annotations through a computed empty map") },
+				Config:    testAccMSOL3OutAnnotationsComputedConfig(siteName, l3outName, "{}"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("mso_l3out.test", tfjsonpath.New("annotations")),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: testAccCheckL3OutAnnotations(&templateID, &l3outUUID, map[string]string{}),
+			},
+		},
+	})
+}
+
+func testAccMSOL3OutAnnotationsCreateConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "initial annotations"
+  annotations = {
+    foo = "shared"
+    bar = "shared"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutAnnotationsReorderedConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "initial annotations"
+  annotations = {
+    bar = "shared"
+    foo = "shared"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutAnnotationsUpdateConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "updated annotations"
+  annotations = {
+    bar = "shared"
+    foo = "updated"
+    baz = "shared"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutAnnotationsRemoveOneConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "updated annotations"
+  annotations = {
+    foo = "updated"
+    baz = "shared"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutAnnotationsOmittedConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "annotations omitted"
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "annotations cleared"
+  annotations = {}
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName))
+}
+
+func testAccMSOL3OutAnnotationsComputedConfig(siteName, l3outName, annotations string) string {
+	return fmt.Sprintf(`%s
+resource "terraform_data" "annotations" {
+  input = %s
+}
+
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+  description = "computed annotations"
+  annotations = terraform_data.annotations.output
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), annotations)
 }

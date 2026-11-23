@@ -34,7 +34,7 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Read L3Out datasource by name") },
+				PreConfig: func() { fmt.Println("Test: Read L3Out datasource by name with inline annotations") },
 				Config:    testAccMSOL3OutDataSourceCreateConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
@@ -63,6 +63,9 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "pim_enabled", "true"),
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "bgp.enabled", "false"),
 					resource.TestCheckResourceAttr("data.mso_l3out.test", "ospf.enabled", "false"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "2"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.foo", "shared"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.bar", "shared"),
 					resource.TestCheckResourceAttrSet("data.mso_l3out.test", "id"),
 				),
 			},
@@ -93,7 +96,7 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: func() { fmt.Println("Test: Refresh L3Out datasource after the resource changes") },
+				PreConfig: func() { fmt.Println("Test: Refresh L3Out datasource after resource and annotation changes") },
 				Config:    testAccMSOL3OutDataSourceUpdateConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
@@ -138,7 +141,16 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 						"ospf.originate_default_route_always",
 						"false",
 					),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "3"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.foo", "updated"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.bar", "shared"),
+					resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.baz", "shared"),
 				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Read cleared annotations through the parent datasource") },
+				Config:    testAccMSOL3OutDataSourceClearAnnotationsConfig(siteName, l3outName),
+				Check:     resource.TestCheckResourceAttr("data.mso_l3out.test", "annotations.%", "0"),
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Refresh L3Out datasource with all route-map references") },
@@ -221,6 +233,10 @@ resource "mso_l3out" "test" {
   l3_domain   = mso_fabric_policies_l3_domain.l3out_test_domain_1.name
   target_dscp = "af11"
   pim_enabled = true
+  annotations = {
+    foo = "shared"
+    bar = "shared"
+  }
 }
 
 data "mso_l3out" "test" {
@@ -317,6 +333,11 @@ resource "mso_l3out" "test" {
     originate_default_route_always                 = false
   }
   originate_default_route = "only"
+  annotations = {
+    bar = "shared"
+    foo = "updated"
+    baz = "shared"
+  }
 }
 
 data "mso_l3out" "test" {
@@ -333,4 +354,13 @@ data "mso_l3out" "test" {
   name        = mso_l3out.test.name
 }
 `, testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName))
+}
+
+func testAccMSOL3OutDataSourceClearAnnotationsConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+data "mso_l3out" "test" {
+  template_id = mso_l3out.test.template_id
+  name        = mso_l3out.test.name
+}
+`, testAccMSOL3OutAnnotationsClearConfig(siteName, l3outName))
 }
