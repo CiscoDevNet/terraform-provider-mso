@@ -103,6 +103,7 @@ func dataSourceMSOTemplateBD() *schema.Resource {
 				Type:        schema.TypeMap,
 				Description: "Configure dhcp policy in versions before NDO 3.2",
 				Computed:    true,
+				Deprecated:  "Use the `dhcp_policies` attribute or the `mso_schema_template_bd_dhcp_policy` resource instead.",
 				// SDKv2 does not support Elem with schema.Resource on TypeMap fields.
 				// Expected keys: "name" (string), "version" (int), "dhcp_option_policy_name" (string), "dhcp_option_policy_version" (int). Validation skipped - field is deprecated.
 			},

@@ -62,11 +62,11 @@ You can instead manage individual DHCP policy associations with the [`mso_schema
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
 
-* `dhcp_policy` - (Optional) Map to provide dhcp_policy configurations. Type: Block.
-  * `name` - (Optional) DHCP Policy name of the Bridge Domain on the MSO UI. Required if you specify the dhcp_policy.
-  * `version` - (Optional) DHCP Policy version of the Bridge Domain on the MSO UI. Required if you specify the dhcp_policy.
-  * `dhcp_option_policy_name` - (Optional) DHCP Option Policy name of the Bridge Domain on the MSO UI.
-  * `dhcp_option_policy_version` - (Optional) DHCP Option Policy version of the Bridge Domain on the MSO UI. Required if you specify the `dhcp_option_policy_name`.
+* `dhcp_policy` - (Optional) Deprecated map for a DHCP Relay Policy association. Type: Block.
+  * `name` - (Optional) Name of the associated DHCP Relay Policy.
+  * `version` - (Optional) Version of the associated DHCP Relay Policy.
+  * `dhcp_option_policy_name` - (Optional) Name of the associated DHCP Option Policy.
+  * `dhcp_option_policy_version` - (Optional) Version of the associated DHCP Option Policy.
 
 ## Attribute Reference ##
 
