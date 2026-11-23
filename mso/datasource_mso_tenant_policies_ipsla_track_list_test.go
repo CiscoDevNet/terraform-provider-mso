@@ -39,6 +39,19 @@ func TestAccMSOTenantPoliciesIPSLATrackListDataSource(t *testing.T) {
 					),
 				),
 			},
+			{
+				PreConfig: func() { fmt.Println("Test: Remove the original IPSLA Track List and retain its fixtures") },
+				Config:    IPSLATrackListPreConfig,
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: IPSLA Track List Data Source with no members") },
+				Config:    testAccMSOTenantPoliciesIPSLATrackListDataSourceWithoutMembers(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName+"_no_members_data", "name", msoTenantPolicyTemplateIPSLATrackListName+"_no_members"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName+"_no_members_data", "type", "percentage"),
+					resource.TestCheckResourceAttr("data.mso_tenant_policies_ipsla_track_list."+msoTenantPolicyTemplateIPSLATrackListName+"_no_members_data", "members.#", "0"),
+				),
+			},
 		},
 	})
 }
@@ -49,6 +62,14 @@ func testAccMSOTenantPoliciesIPSLATrackListDataSource() string {
 	    template_id	= mso_tenant_policies_ipsla_track_list.%[2]s.template_id
 	    name		= "%[2]s"
     }`, testAccMSOTenantPoliciesIPSLATrackListConfigUpdateRemovingExtraEntry(), msoTenantPolicyTemplateIPSLATrackListName)
+}
+
+func testAccMSOTenantPoliciesIPSLATrackListDataSourceWithoutMembers() string {
+	return fmt.Sprintf(`%[1]s
+	data "mso_tenant_policies_ipsla_track_list" "%[2]s_no_members_data" {
+		template_id = mso_tenant_policies_ipsla_track_list.%[2]s_no_members.template_id
+		name        = "%[2]s_no_members"
+	}`, testAccMSOTenantPoliciesIPSLATrackListConfigWithoutMembers(12, 11), msoTenantPolicyTemplateIPSLATrackListName)
 }
 
 func testAccMSOTenantPoliciesIPSLATrackListDataSourceMissing() string {
