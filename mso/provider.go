@@ -110,6 +110,7 @@ func Provider() *schema.Provider {
 			"mso_schema_template_anp_epg_subnet":                         resourceMSOSchemaTemplateAnpEpgSubnet(),
 			"mso_schema_template_anp_epg_useg_attr":                      resourceMSOSchemaTemplateAnpEpgUsegAttr(),
 			"mso_schema_template_bd":                                     resourceMSOTemplateBD(),
+			"mso_schema_template_bd_dhcp_policy":                         resourceMSOTemplateBDDHCPPolicy(),
 			"mso_schema_template_bd_subnet":                              resourceMSOTemplateBDSubnet(),
 			"mso_schema_template_contract":                               resourceMSOTemplateContract(),
 			"mso_schema_template_contract_filter":                        resourceMSOTemplateContractFilter(),

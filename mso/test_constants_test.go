@@ -75,6 +75,7 @@ var msoSchemaTemplateExternalEpgWithVrfInCommonTenantName = acctest.RandStringFr
 var msoTenantPoliciesDhcpRelayPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPoliciesDhcpRelayPolicyName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoTenantPoliciesDhcpOptionPolicyName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+var msoTenantPoliciesDhcpOptionPolicyName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateAnpEpgUsegAttrName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoSchemaTemplateAnpEpgUsegAttrName2 = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 var msoServiceDeviceTemplateName = acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
