@@ -120,21 +120,23 @@ func setIPSLATrackListData(d *schema.ResourceData, response *container.Container
 	d.Set("threshold_up", response.S(typeValues[trackListType][0]).Data().(float64))
 	d.Set("threshold_down", response.S(typeValues[trackListType][1]).Data().(float64))
 
-	membersDataList, err := response.S("trackListMembers").Children()
-	if err != nil {
-		return err
-	}
 	membersList := make([]map[string]interface{}, 0)
-	for _, member := range membersDataList {
-		trackMember := member.S("trackMember")
-		memberMap := map[string]interface{}{
-			"destination_ip":               models.StripQuotes(trackMember.S("destIP").String()),
-			"ipsla_monitoring_policy_uuid": models.StripQuotes(trackMember.S("ipslaMonitoringRef").String()),
-			"scope_type":                   models.StripQuotes(trackMember.S("scopeType").String()),
-			"scope_uuid":                   models.StripQuotes(trackMember.S("scope").String()),
-			"weight":                       member.S("weight").Data().(float64),
+	if response.Exists("trackListMembers") {
+		membersDataList, err := response.S("trackListMembers").Children()
+		if err != nil {
+			return err
 		}
-		membersList = append(membersList, memberMap)
+		for _, member := range membersDataList {
+			trackMember := member.S("trackMember")
+			memberMap := map[string]interface{}{
+				"destination_ip":               models.StripQuotes(trackMember.S("destIP").String()),
+				"ipsla_monitoring_policy_uuid": models.StripQuotes(trackMember.S("ipslaMonitoringRef").String()),
+				"scope_type":                   models.StripQuotes(trackMember.S("scopeType").String()),
+				"scope_uuid":                   models.StripQuotes(trackMember.S("scope").String()),
+				"weight":                       member.S("weight").Data().(float64),
+			}
+			membersList = append(membersList, memberMap)
+		}
 	}
 
 	d.Set("members", membersList)
