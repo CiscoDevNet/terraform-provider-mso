@@ -133,20 +133,20 @@ See the [full L3Out example](https://github.com/CiscoDevNet/terraform-provider-m
         - **Validation**: Required when `ospf.enabled` is true.
     - `cost` (Number) The cost assigned to the OSPF area.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.cost`.
-        - **Default**: `1` when OSPF is enabled and no configured or prior value is available.
+        - **NDO default**: `1` when OSPF is enabled and no configured or prior value is available.
     - `originate_default_route_always` (Boolean) Whether OSPF advertises the default route even when it is absent from the routing table.
         - **API**: `l3outTemplate.l3outs[].defaultRouteLeak.always`.
-        - **Default**: `false` when OSPF is enabled and no configured or prior value is available.
+        - **Provider default**: `false` when OSPF is enabled and no configured or prior value is available.
         - **Validation**: True requires `originate_default_route` explicitly set to `only` or `in_addition`.
     - `send_redistributed_lsa` (Boolean) Whether OSPF sends redistributed LSAs.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.control.redistribute`.
-        - **Default**: `false` when no configured or prior value is available.
+        - **NDO default**: `false` when no configured or prior value is available.
     - `originate_summary_lsa` (Boolean) Whether OSPF originates summary LSAs.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.control.originate`.
-        - **Default**: `false` when no configured or prior value is available.
+        - **NDO default**: `false` when no configured or prior value is available.
     - `suppress_forwarding_address_in_translated_lsa` (Boolean) Whether OSPF suppresses the forwarding address in translated LSAs.
         - **API**: `l3outTemplate.l3outs[].ospfAreaConfig.control.suppressFA`.
-        - **Default**: `false` when no configured or prior value is available.
+        - **NDO default**: `false` when no configured or prior value is available.
 
 ### Read-Only
 
