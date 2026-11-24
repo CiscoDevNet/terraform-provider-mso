@@ -10,12 +10,20 @@ import (
 )
 
 func TestUseConfiguredDisabledObject(t *testing.T) {
-	attributeTypes := map[string]attr.Type{"enabled": types.BoolType, "name": types.StringType}
-	object := func(enabled types.Bool, name types.String) types.Object {
-		return types.ObjectValueMust(attributeTypes, map[string]attr.Value{"enabled": enabled, "name": name})
+	attributeTypes := map[string]attr.Type{
+		"enabled":     types.BoolType,
+		"name":        types.StringType,
+		"description": types.StringType,
 	}
-	previous := object(types.BoolValue(true), types.StringValue("previous"))
-	disabled := object(types.BoolValue(false), types.StringNull())
+	object := func(enabled types.Bool, name, description types.String) types.Object {
+		return types.ObjectValueMust(attributeTypes, map[string]attr.Value{
+			"enabled":     enabled,
+			"name":        name,
+			"description": description,
+		})
+	}
+	previous := object(types.BoolValue(true), types.StringValue("previous"), types.StringValue("previous description"))
+	disabled := object(types.BoolValue(false), types.StringNull(), types.StringNull())
 	tests := []struct {
 		name   string
 		config types.Object
@@ -23,15 +31,51 @@ func TestUseConfiguredDisabledObject(t *testing.T) {
 	}{
 		{
 			name:   "empty object disables and clears prior settings",
-			config: object(types.BoolNull(), types.StringNull()),
+			config: object(types.BoolNull(), types.StringNull(), types.StringNull()),
 			want:   disabled,
 		},
 		{name: "explicit false clears prior settings", config: disabled, want: disabled},
 		{
+			name:   "explicit empty setting is retained while omitted sibling is cleared",
+			config: object(types.BoolValue(false), types.StringValue(""), types.StringNull()),
+			want:   object(types.BoolValue(false), types.StringValue(""), types.StringNull()),
+		},
+		{
+			name:   "default false retains explicit empty setting and clears omitted sibling",
+			config: object(types.BoolNull(), types.StringValue(""), types.StringNull()),
+			want:   object(types.BoolValue(false), types.StringValue(""), types.StringNull()),
+		},
+		{
+			name:   "explicit setting is retained while omitted sibling is cleared",
+			config: object(types.BoolValue(false), types.StringValue("configured"), types.StringNull()),
+			want:   object(types.BoolValue(false), types.StringValue("configured"), types.StringNull()),
+		},
+		{
+			name:   "unknown setting is retained while omitted sibling is cleared",
+			config: object(types.BoolValue(false), types.StringUnknown(), types.StringNull()),
+			want:   object(types.BoolValue(false), types.StringUnknown(), types.StringNull()),
+		},
+		{
+			name:   "default false retains unknown setting and clears omitted sibling",
+			config: object(types.BoolNull(), types.StringUnknown(), types.StringNull()),
+			want:   object(types.BoolValue(false), types.StringUnknown(), types.StringNull()),
+		},
+		{
+			name:   "all explicit settings are retained",
+			config: object(types.BoolValue(false), types.StringValue("configured"), types.StringValue("configured description")),
+			want:   object(types.BoolValue(false), types.StringValue("configured"), types.StringValue("configured description")),
+		},
+		{
 			name:   "enabled object retains planned settings",
-			config: object(types.BoolValue(true), types.StringNull()),
+			config: object(types.BoolValue(true), types.StringNull(), types.StringNull()),
 			want:   previous,
 		},
+		{
+			name:   "unknown enabled retains planned settings",
+			config: object(types.BoolUnknown(), types.StringNull(), types.StringNull()),
+			want:   previous,
+		},
+		{name: "unknown object retains planned settings", config: types.ObjectUnknown(attributeTypes), want: previous},
 		{name: "omitted object retains planned settings", config: types.ObjectNull(attributeTypes), want: previous},
 	}
 	for _, test := range tests {

@@ -37,11 +37,6 @@ func (disabled useConfiguredDisabledObject) PlanModifyObject(ctx context.Context
 	if !ok || enabled.IsUnknown() || enabled.ValueBool() {
 		return
 	}
-	for name, value := range attributes {
-		if name != disabled.enabledAttribute && !value.IsNull() {
-			return
-		}
-	}
 	configured := make(map[string]attr.Value, len(attributes))
 	for name, value := range attributes {
 		configured[name] = value

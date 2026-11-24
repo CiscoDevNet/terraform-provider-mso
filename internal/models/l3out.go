@@ -452,6 +452,14 @@ func BuildPatchOperations(ctx context.Context, resolved ndoapi.ResolvedObject, p
 	if diagnostics.HasError() {
 		return operations
 	}
+	if bgpConfigured && !bgp.Enabled.IsNull() && !bgp.Enabled.IsUnknown() && !bgp.Enabled.ValueBool() {
+		if bgpRouteMaps.RouteDampeningIPv4UUID.IsNull() {
+			bgpRouteMaps.RouteDampeningIPv4UUID = types.StringValue("")
+		}
+		if bgpRouteMaps.RouteDampeningIPv6UUID.IsNull() {
+			bgpRouteMaps.RouteDampeningIPv6UUID = types.StringValue("")
+		}
+	}
 	if routeMapsConfigured || bgpConfigured {
 		if err := setL3OutRouteMapOperations(operations, resolved.Object, routeMaps, bgpRouteMaps); err != nil {
 			diagnostics.AddError("Failed to Read L3Out Route Maps", err.Error())

@@ -110,14 +110,14 @@ See the [full L3Out example](https://github.com/CiscoDevNet/terraform-provider-m
         - **API**: `l3outTemplate.l3outs[].advancedRouteMapRefs.connectedRouteRedistRef`.
     - `attached_host_route_redistribution_uuid` (String) Attached-host-route redistribution route-map policy UUID. Set to `""` to remove the attached-host-route redistribution route-map policy association.
         - **API**: `l3outTemplate.l3outs[].advancedRouteMapRefs.attachedHostRouteRedistRef`.
-- `bgp` (Object) The BGP protocol settings for the L3Out.
+- `bgp` (Object) The BGP protocol settings for the L3Out. Omitting the block preserves BGP and its route-dampening policy associations.
     - **Validation**: Non-empty dampening UUIDs require `bgp.enabled = true`.
-    - `enabled` (Boolean) Whether BGP is enabled.
+    - `enabled` (Boolean) Whether BGP is enabled. Set to `false`, or configure `bgp = {}`, to disable BGP and remove both route-dampening policy associations.
         - **API**: `l3outTemplate.l3outs[].routingProtocol`.
         - **Provider default**: `false` when the `bgp` object is configured without `enabled`.
-    - `route_dampening_ipv4_uuid` (String) IPv4 route-dampening route-map policy UUID. Set to `""` to remove the IPv4 route-dampening route-map policy association.
+    - `route_dampening_ipv4_uuid` (String) IPv4 route-dampening route-map policy UUID. Omit while BGP remains enabled to preserve the association. Set to `""` to remove the IPv4 route-dampening route-map policy association.
         - **API**: `l3outTemplate.l3outs[].advancedRouteMapRefs.routeDampeningV4Ref`.
-    - `route_dampening_ipv6_uuid` (String) IPv6 route-dampening route-map policy UUID. Set to `""` to remove the IPv6 route-dampening route-map policy association.
+    - `route_dampening_ipv6_uuid` (String) IPv6 route-dampening route-map policy UUID. Omit while BGP remains enabled to preserve the association. Set to `""` to remove the IPv6 route-dampening route-map policy association.
         - **API**: `l3outTemplate.l3outs[].advancedRouteMapRefs.routeDampeningV6Ref`.
 - `ospf` (Object) The OSPF routing and area settings for the L3Out.
     - `enabled` (Boolean) Whether OSPF is enabled.

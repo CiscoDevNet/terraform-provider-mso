@@ -776,7 +776,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() { fmt.Println("Test: Configure common route maps without a routing protocol") },
-				Config:    testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "none"),
+				Config:    testAccMSOL3OutRouteMapsNoProtocolConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCaptureResourceIdentifiers("mso_l3out.test", &templateID, &l3outUUID),
 					resource.TestCheckNoResourceAttr("mso_l3out.test", "route_maps.outbound_uuid"),
@@ -812,7 +812,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 				PreConfig: func() {
 					fmt.Println("Test: Configure BGP dampening route maps without an outbound route map")
 				},
-				Config: testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "bgp"),
+				Config: testAccMSOL3OutRouteMapsBGPConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "true"),
 					resource.TestCheckResourceAttrPair(
@@ -876,7 +876,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 				PreConfig: func() {
 					fmt.Println("Test: Restore both BGP dampening route maps before changing protocols")
 				},
-				Config: testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "bgp"),
+				Config: testAccMSOL3OutRouteMapsBGPConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "true"),
 					resource.TestCheckResourceAttrPair(
@@ -896,8 +896,303 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 				),
 			},
 			{
+				PreConfig: func() {
+					fmt.Println("Test: Disable BGP with an empty object and clear both dampening references")
+				},
+				Config: testAccMSOL3OutRouteMapsBGPEmptyConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "false"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "false"),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv4_uuid"),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv6_uuid"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "route_maps.outbound_uuid"),
+					testAccCheckL3OutBGPDampeningCleared(&templateID, &l3outUUID),
+					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "none"),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Restore both BGP dampening references after an empty BGP object")
+				},
+				Config: testAccMSOL3OutRouteMapsBGPConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "true"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv4_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv6_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "false"),
+					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "bgp"),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Disable BGP explicitly and clear both dampening references")
+				},
+				Config: testAccMSOL3OutRouteMapsBGPDisabledConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "false"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "false"),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv4_uuid"),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv6_uuid"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "route_maps.outbound_uuid"),
+					testAccCheckL3OutBGPDampeningCleared(&templateID, &l3outUUID),
+					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "none"),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Restore both dampening references and enable OSPF before the mixed clear")
+				},
+				Config: testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "true"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv4_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv6_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "true"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.outbound_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.outbound",
+						"uuid",
+					),
+					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "bgpOspf"),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Disable BGP with IPv4 explicitly cleared while retaining OSPF and common route maps")
+				},
+				Config: testAccMSOL3OutRouteMapsBGPDisabledIPv4ClearConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "false"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "true"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv4_uuid", ""),
+					resource.TestCheckNoResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv6_uuid"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.outbound_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.outbound",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.area_id", "0.0.0.10"),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.area_type", "regular"),
+					testAccCheckL3OutBGPDampeningCleared(&templateID, &l3outUUID),
+					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "ospf"),
+				),
+			},
+			{
+				PreConfig: func() {
+					fmt.Println("Test: Restore BGP while retaining OSPF after the mixed dampening clear")
+				},
+				Config: testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "true"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv4_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv6_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "true"),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.outbound_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.outbound",
+						"uuid",
+					),
+					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "bgpOspf"),
+				),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Configure OSPF route maps and clear BGP dampening references") },
-				Config:    testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "ospf"),
+				Config:    testAccMSOL3OutRouteMapsOSPFConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "false"),
 					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.route_dampening_ipv4_uuid", ""),
@@ -914,7 +1209,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Configure all route-map references with BGP and OSPF") },
-				Config:    testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "both"),
+				Config:    testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_l3out.test", "bgp.enabled", "true"),
 					resource.TestCheckResourceAttr("mso_l3out.test", "ospf.enabled", "true"),
@@ -941,7 +1236,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 			},
 			{
 				PreConfig:         func() { fmt.Println("Test: Import L3Out with all route-map references") },
-				Config:            testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "both"),
+				Config:            testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName),
 				ResourceName:      "mso_l3out.test",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -950,7 +1245,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 				PreConfig: func() {
 					fmt.Println("Test: Clear interleak while configuring the other route-map references")
 				},
-				Config: testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "clear_interleak"),
+				Config: testAccMSOL3OutRouteMapsInterleakClearConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mso_l3out.test", "route_maps.interleak_uuid", ""),
 					resource.TestCheckResourceAttrPair(
@@ -982,7 +1277,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 			},
 			{
 				PreConfig: func() { fmt.Println("Test: Restore all route-map references before replacing a policy") },
-				Config:    testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "both"),
+				Config:    testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"mso_l3out.test",
@@ -1143,50 +1438,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 	})
 }
 
-func testAccPolicyUUID(name string) string {
-	return fmt.Sprintf("mso_tenant_policies_route_map_policy_route_control.%s.uuid", name)
-}
-
-func testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, protocol string) string {
-	bgpConfig := ""
-	ospfConfig := ""
-	includeOutbound := protocol == "ospf" || protocol == "both" || protocol == "clear_interleak"
-	switch protocol {
-	case "bgp", "both", "clear_interleak":
-		bgpConfig = fmt.Sprintf(`
-  bgp = {
-    enabled                = true
-    route_dampening_ipv4_uuid = %s
-    route_dampening_ipv6_uuid = %s
-  }
-`, testAccPolicyUUID("dampening_v4"), testAccPolicyUUID("dampening_v6"))
-	case "ospf":
-		bgpConfig = `
-  bgp = {
-    enabled                  = false
-    route_dampening_ipv4_uuid = ""
-    route_dampening_ipv6_uuid = ""
-  }
-`
-	}
-	if protocol == "ospf" || protocol == "both" || protocol == "clear_interleak" {
-		ospfConfig = `
-  ospf = {
-    enabled   = true
-    area_id   = "0.0.0.10"
-    area_type = "regular"
-  }
-`
-	}
-	outbound := ""
-	if includeOutbound {
-		outbound = fmt.Sprintf("    outbound_uuid = %s\n", testAccPolicyUUID("outbound"))
-	}
-	interleak := fmt.Sprintf("    interleak_uuid = %s\n", testAccPolicyUUID("interleak"))
-	if protocol == "clear_interleak" {
-		interleak = "    interleak_uuid = \"\"\n"
-	}
-
+func testAccMSOL3OutRouteMapsNoProtocolConfig(siteName, l3outName string) string {
 	return fmt.Sprintf(`%s%s
 resource "mso_l3out" "test" {
   template_id = mso_template.l3out_test.id
@@ -1194,22 +1446,197 @@ resource "mso_l3out" "test" {
   vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
 
   route_maps = {
-%s%s    static_route_redistribution_uuid       = %s
-    connected_route_redistribution_uuid    = %s
-    attached_host_route_redistribution_uuid = %s
+    interleak_uuid                          = mso_tenant_policies_route_map_policy_route_control.interleak.uuid
+    static_route_redistribution_uuid        = mso_tenant_policies_route_map_policy_route_control.static.uuid
+    connected_route_redistribution_uuid     = mso_tenant_policies_route_map_policy_route_control.connected.uuid
+    attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control.attached.uuid
   }
-%s%s}
-`,
-		testAccMSOL3OutPrerequisites(siteName, l3outName),
-		testAccMSOL3OutRouteMapPolicyPrerequisites(),
-		outbound,
-		interleak,
-		testAccPolicyUUID("static"),
-		testAccPolicyUUID("connected"),
-		testAccPolicyUUID("attached"),
-		bgpConfig,
-		ospfConfig,
-	)
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsBGPConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  route_maps = {
+    interleak_uuid                          = mso_tenant_policies_route_map_policy_route_control.interleak.uuid
+    static_route_redistribution_uuid        = mso_tenant_policies_route_map_policy_route_control.static.uuid
+    connected_route_redistribution_uuid     = mso_tenant_policies_route_map_policy_route_control.connected.uuid
+    attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control.attached.uuid
+  }
+
+  bgp = {
+    enabled                   = true
+    route_dampening_ipv4_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v4.uuid
+    route_dampening_ipv6_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v6.uuid
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsOSPFConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  route_maps = {
+    outbound_uuid                          = mso_tenant_policies_route_map_policy_route_control.outbound.uuid
+    interleak_uuid                          = mso_tenant_policies_route_map_policy_route_control.interleak.uuid
+    static_route_redistribution_uuid        = mso_tenant_policies_route_map_policy_route_control.static.uuid
+    connected_route_redistribution_uuid     = mso_tenant_policies_route_map_policy_route_control.connected.uuid
+    attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control.attached.uuid
+  }
+
+  bgp = {
+    enabled                  = false
+    route_dampening_ipv4_uuid = ""
+    route_dampening_ipv6_uuid = ""
+  }
+
+  ospf = {
+    enabled   = true
+    area_id   = "0.0.0.10"
+    area_type = "regular"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  route_maps = {
+    outbound_uuid                          = mso_tenant_policies_route_map_policy_route_control.outbound.uuid
+    interleak_uuid                          = mso_tenant_policies_route_map_policy_route_control.interleak.uuid
+    static_route_redistribution_uuid        = mso_tenant_policies_route_map_policy_route_control.static.uuid
+    connected_route_redistribution_uuid     = mso_tenant_policies_route_map_policy_route_control.connected.uuid
+    attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control.attached.uuid
+  }
+
+  bgp = {
+    enabled                   = true
+    route_dampening_ipv4_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v4.uuid
+    route_dampening_ipv6_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v6.uuid
+  }
+
+  ospf = {
+    enabled   = true
+    area_id   = "0.0.0.10"
+    area_type = "regular"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsInterleakClearConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  route_maps = {
+    outbound_uuid                          = mso_tenant_policies_route_map_policy_route_control.outbound.uuid
+    interleak_uuid                          = ""
+    static_route_redistribution_uuid        = mso_tenant_policies_route_map_policy_route_control.static.uuid
+    connected_route_redistribution_uuid     = mso_tenant_policies_route_map_policy_route_control.connected.uuid
+    attached_host_route_redistribution_uuid = mso_tenant_policies_route_map_policy_route_control.attached.uuid
+  }
+
+  bgp = {
+    enabled                   = true
+    route_dampening_ipv4_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v4.uuid
+    route_dampening_ipv6_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v6.uuid
+  }
+
+  ospf = {
+    enabled   = true
+    area_id   = "0.0.0.10"
+    area_type = "regular"
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsBGPEmptyConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  depends_on = [
+    mso_tenant_policies_route_map_policy_route_control.outbound,
+    mso_tenant_policies_route_map_policy_route_control.interleak,
+    mso_tenant_policies_route_map_policy_route_control.static,
+    mso_tenant_policies_route_map_policy_route_control.connected,
+    mso_tenant_policies_route_map_policy_route_control.attached,
+    mso_tenant_policies_route_map_policy_route_control.dampening_v4,
+    mso_tenant_policies_route_map_policy_route_control.dampening_v6,
+  ]
+
+  bgp = {}
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsBGPDisabledConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  depends_on = [
+    mso_tenant_policies_route_map_policy_route_control.outbound,
+    mso_tenant_policies_route_map_policy_route_control.interleak,
+    mso_tenant_policies_route_map_policy_route_control.static,
+    mso_tenant_policies_route_map_policy_route_control.connected,
+    mso_tenant_policies_route_map_policy_route_control.attached,
+    mso_tenant_policies_route_map_policy_route_control.dampening_v4,
+    mso_tenant_policies_route_map_policy_route_control.dampening_v6,
+  ]
+
+  bgp = {
+    enabled = false
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
+}
+
+func testAccMSOL3OutRouteMapsBGPDisabledIPv4ClearConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s%s
+resource "mso_l3out" "test" {
+  template_id = mso_template.l3out_test.id
+  name        = local.l3out_name
+  vrf_uuid    = mso_schema_template_vrf.l3out_test_vrf_1.uuid
+
+  depends_on = [
+    mso_tenant_policies_route_map_policy_route_control.outbound,
+    mso_tenant_policies_route_map_policy_route_control.interleak,
+    mso_tenant_policies_route_map_policy_route_control.static,
+    mso_tenant_policies_route_map_policy_route_control.connected,
+    mso_tenant_policies_route_map_policy_route_control.attached,
+    mso_tenant_policies_route_map_policy_route_control.dampening_v4,
+    mso_tenant_policies_route_map_policy_route_control.dampening_v6,
+  ]
+
+  bgp = {
+    enabled                   = false
+    route_dampening_ipv4_uuid = ""
+  }
+}
+`, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
 }
 
 func testAccMSOL3OutRouteMapsPartialInterleakClearConfig(siteName, l3outName string) string {
@@ -1642,6 +2069,58 @@ func testAccCheckL3OutDeleted(templateID, l3outUUID *string) resource.TestCheckF
 		}
 		if found {
 			return fmt.Errorf("L3Out %q still exists in template %q after deletion", *l3outUUID, *templateID)
+		}
+		return nil
+	}
+}
+
+func testAccCheckL3OutBGPDampeningCleared(templateID, l3outUUID *string) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		template, err := ndoapi.GetTemplate(testAccAPIClient(), *templateID)
+		if err != nil {
+			return err
+		}
+		resolved, found, err := template.Find(models.NewL3OutPath(*l3outUUID, ""))
+		if err != nil {
+			return err
+		}
+		if !found {
+			return fmt.Errorf("L3Out %q was not found in template %q", *l3outUUID, *templateID)
+		}
+		advanced, _, err := ndoapi.MapField(resolved.Object, "advancedRouteMapRefs", ndoapi.OptionalField)
+		if err != nil {
+			return err
+		}
+		l3out, exists := state.RootModule().Resources["mso_l3out.test"]
+		if !exists {
+			return fmt.Errorf("mso_l3out.test was not found in Terraform state")
+		}
+		outbound, _, err := ndoapi.StringField(resolved.Object, "exportRouteMapRef", ndoapi.OptionalField)
+		if err != nil {
+			return err
+		}
+		if outbound != l3out.Primary.Attributes["route_maps.outbound_uuid"] {
+			return fmt.Errorf("L3Out %q did not preserve its outbound route map: %s", *l3outUUID, outbound)
+		}
+		for _, field := range []string{"routeDampeningV4Ref", "routeDampeningV6Ref"} {
+			if value, exists := advanced[field]; exists && value != nil {
+				return fmt.Errorf("L3Out %q still has %s after BGP was disabled: %v", *l3outUUID, field, value)
+			}
+		}
+		for _, reference := range []struct{ field, policy string }{
+			{"interleakRef", "interleak"},
+			{"staticRouteRedistRef", "static"},
+			{"connectedRouteRedistRef", "connected"},
+			{"attachedHostRouteRedistRef", "attached"},
+		} {
+			resourceName := fmt.Sprintf("mso_tenant_policies_route_map_policy_route_control.%s", reference.policy)
+			policy, exists := state.RootModule().Resources[resourceName]
+			if !exists {
+				return fmt.Errorf("%s was not found in Terraform state", resourceName)
+			}
+			if advanced[reference.field] != policy.Primary.Attributes["uuid"] {
+				return fmt.Errorf("L3Out %q did not preserve %s: %v", *l3outUUID, reference.field, advanced[reference.field])
+			}
 		}
 		return nil
 	}

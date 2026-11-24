@@ -57,7 +57,7 @@ func l3OutBGPResourceSchema() map[string]schema.Attribute {
 			Optional:            true,
 			Computed:            true,
 			Default:             booldefault.StaticBool(false),
-			MarkdownDescription: "Whether BGP is enabled on the L3Out.",
+			MarkdownDescription: "Whether BGP is enabled on the L3Out. Disabling BGP removes both route-dampening policy associations.",
 		},
 		"route_dampening_ipv4_uuid": schema.StringAttribute{
 			Optional: true,
@@ -65,7 +65,7 @@ func l3OutBGPResourceSchema() map[string]schema.Attribute {
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
-			MarkdownDescription: "UUID of the IPv4 route-dampening route-map policy. Route dampening is supported only when BGP is enabled on the L3Out. Omit to preserve it or set to an empty string to clear it.",
+			MarkdownDescription: "UUID of the IPv4 route-dampening route-map policy. Route dampening is supported only when BGP is enabled on the L3Out. Omit while BGP remains enabled to preserve the association, or set to an empty string to clear it.",
 		},
 		"route_dampening_ipv6_uuid": schema.StringAttribute{
 			Optional: true,
@@ -73,7 +73,7 @@ func l3OutBGPResourceSchema() map[string]schema.Attribute {
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
-			MarkdownDescription: "UUID of the IPv6 route-dampening route-map policy. Route dampening is supported only when BGP is enabled on the L3Out. Omit to preserve it or set to an empty string to clear it.",
+			MarkdownDescription: "UUID of the IPv6 route-dampening route-map policy. Route dampening is supported only when BGP is enabled on the L3Out. Omit while BGP remains enabled to preserve the association, or set to an empty string to clear it.",
 		},
 	}
 }

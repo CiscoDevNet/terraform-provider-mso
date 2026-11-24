@@ -332,5 +332,5 @@ data "mso_l3out" "test" {
   template_id = mso_template.l3out_test.id
   name        = mso_l3out.test.name
 }
-`, testAccMSOL3OutRouteMapsResourceConfig(siteName, l3outName, "both"))
+`, testAccMSOL3OutRouteMapsBGPWithOSPFConfig(siteName, l3outName))
 }
