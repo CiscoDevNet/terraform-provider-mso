@@ -9,6 +9,7 @@ import (
 	"github.com/CiscoDevNet/terraform-provider-mso/internal/models"
 	ndoapi "github.com/CiscoDevNet/terraform-provider-mso/internal/ndoapi"
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -93,11 +94,10 @@ func (r *L3OutResource) Create(ctx context.Context, request resource.CreateReque
 	if response.Diagnostics.HasError() {
 		return
 	}
-	_, err = r.client.PatchbyID(ndoapi.TemplateEndpoint(plan.TemplateID.ValueString()), ndoapi.NewPatchPayload(
-		"add",
-		appendPath,
-		payload,
-	))
+	patchResponse, err := r.client.PatchbyID(
+		ndoapi.TemplateEndpoint(plan.TemplateID.ValueString()),
+		ndoapi.NewPatchPayload("add", appendPath, payload),
+	)
 	if err != nil {
 		response.Diagnostics.AddError("Failed to Create L3Out", err.Error())
 		return
@@ -105,11 +105,10 @@ func (r *L3OutResource) Create(ctx context.Context, request resource.CreateReque
 
 	r.refreshState(
 		ctx,
-		plan.TemplateID.ValueString(),
-		plan.UUID.ValueString(),
-		plan.Name.ValueString(),
 		plan,
-		false,
+		"",
+		patchResponse,
+		true,
 		&response.State,
 		response.Identity,
 		&response.Diagnostics,
@@ -133,11 +132,10 @@ func (r *L3OutResource) Read(ctx context.Context, request resource.ReadRequest, 
 
 	r.refreshState(
 		ctx,
-		state.TemplateID.ValueString(),
-		state.UUID.ValueString(),
-		state.Name.ValueString(),
 		state,
-		true,
+		state.UUID.ValueString(),
+		nil,
+		false,
 		&response.State,
 		response.Identity,
 		&response.Diagnostics,
@@ -189,22 +187,33 @@ func (r *L3OutResource) Update(ctx context.Context, request resource.UpdateReque
 	if response.Diagnostics.HasError() {
 		return
 	}
-	if err = operations.Apply(r.client, ndoapi.TemplateEndpoint(plan.TemplateID.ValueString())); err != nil {
-		response.Diagnostics.AddError("Failed to Update L3Out", err.Error())
-		return
+	// NDO may already match the plan while Terraform state still differs, such
+	// as null becoming "" for an absent reference. Decode the existing object
+	// with the new plan to update state without another API request.
+	if len(operations.Operations()) == 0 {
+		var data models.L3OutModel
+		if err := data.SetFromNDOObject(ctx, plan.TemplateID.ValueString(), resolved.Object, plan); err != nil {
+			response.Diagnostics.AddError("Failed to Read L3Out After Apply", err.Error())
+			return
+		}
+		setL3OutResourceState(ctx, data, nil, &response.State, response.Identity, &response.Diagnostics)
+	} else {
+		patchResponse, err := operations.Apply(r.client, ndoapi.TemplateEndpoint(plan.TemplateID.ValueString()))
+		if err != nil {
+			response.Diagnostics.AddError("Failed to Update L3Out", err.Error())
+			return
+		}
+		r.refreshState(
+			ctx,
+			plan,
+			state.UUID.ValueString(),
+			patchResponse,
+			true,
+			&response.State,
+			response.Identity,
+			&response.Diagnostics,
+		)
 	}
-
-	r.refreshState(
-		ctx,
-		plan.TemplateID.ValueString(),
-		state.UUID.ValueString(),
-		plan.Name.ValueString(),
-		plan,
-		false,
-		&response.State,
-		response.Identity,
-		&response.Diagnostics,
-	)
 	if !response.Diagnostics.HasError() {
 		tflog.Debug(
 			ctx,
@@ -334,38 +343,105 @@ func getL3OutResourceModel(ctx context.Context, msoClient *client.Client, templa
 	return data, resolved, true, nil
 }
 
-func (r *L3OutResource) refreshState(ctx context.Context, templateID, uuid, name string, previousL3OutModel models.L3OutModel, removeIfMissing bool, state *tfsdk.State, identity *tfsdk.ResourceIdentity, diagnostics *diag.Diagnostics) {
-	data, _, found, err := getL3OutResourceModel(
-		ctx,
-		r.client,
-		templateID,
-		models.NewL3OutPath(uuid, name),
-		previousL3OutModel,
-	)
-	if err != nil {
-		if removeIfMissing && errors.Is(err, ndoapi.ErrNotFound) {
+// refreshState uses a successful PATCH response when afterPatch is true,
+// falling back to one GET if the response is missing or cannot be resolved or
+// decoded. A missing template or L3Out on that fallback is an error, and any
+// confirmed identity is retained. Read (afterPatch=false), including Read after
+// import, uses GET directly and removes missing objects from state.
+// Update's initial GET and subsequent PATCH are still not atomic.
+func (r *L3OutResource) refreshState(ctx context.Context, previousL3OutModel models.L3OutModel, uuid string, patchResponse *container.Container, afterPatch bool, state *tfsdk.State, identity *tfsdk.ResourceIdentity, diagnostics *diag.Diagnostics) {
+	templateID := previousL3OutModel.TemplateID.ValueString()
+	var patchError error
+	if afterPatch {
+		l3OutTemplate, err := ndoapi.TemplateFromResponse(templateID, patchResponse)
+		if err == nil {
+			uuid, err = setL3OutStateFromTemplate(
+				ctx, l3OutTemplate, uuid, previousL3OutModel, state, identity, diagnostics,
+			)
+		}
+		if diagnostics.HasError() || err == nil {
+			return
+		}
+		patchError = err
+	}
+
+	l3OutTemplate, err := ndoapi.GetTemplate(r.client, templateID)
+	if err == nil {
+		_, err = setL3OutStateFromTemplate(
+			ctx, l3OutTemplate, uuid, previousL3OutModel, state, identity, diagnostics,
+		)
+	}
+	if diagnostics.HasError() {
+		return
+	}
+	if err == nil {
+		if afterPatch {
+			tflog.Debug(
+				ctx,
+				"MSO L3Out Resource: Recovered PATCH response with template GET",
+				map[string]interface{}{"reason": patchError.Error()},
+			)
+		}
+		return
+	}
+	if !afterPatch {
+		var missingPath *ndoapi.TemplatePathNotFoundError
+		if errors.Is(err, ndoapi.ErrNotFound) || errors.As(err, &missingPath) {
 			state.RemoveResource(ctx)
 			return
 		}
 		diagnostics.AddError(l3OutDiagnosticTitle(err, ""), err.Error())
 		return
 	}
-	if !found {
-		if removeIfMissing {
-			state.RemoveResource(ctx)
-		} else {
-			diagnostics.AddError(
-				"L3Out Not Found After Apply",
-				fmt.Sprintf("L3Out %q was not found in template %q after the change was applied.", name, templateID),
-			)
-		}
+	diagnostics.AddError(
+		"Failed to Refresh L3Out After Apply",
+		fmt.Sprintf(
+			"The L3Out PATCH succeeded, but its state could not be refreshed. PATCH response: %s. GET fallback: %s.",
+			patchError,
+			err,
+		),
+	)
+}
+
+// setL3OutStateFromTemplate resolves and decodes one object. The state writer
+// preserves confirmed identity if decoding fails, and the returned UUID pins
+// any fallback lookup to the same object.
+func setL3OutStateFromTemplate(ctx context.Context, l3OutTemplate *ndoapi.Template, uuid string, previousL3OutModel models.L3OutModel, state *tfsdk.State, identity *tfsdk.ResourceIdentity, diagnostics *diag.Diagnostics) (string, error) {
+	resolved, err := l3OutTemplate.FindRequired(models.NewL3OutPath(uuid, previousL3OutModel.Name.ValueString()))
+	if err != nil {
+		return uuid, err
+	}
+
+	templateID := previousL3OutModel.TemplateID.ValueString()
+	var data models.L3OutModel
+	decodeErr := data.SetFromNDOObject(ctx, templateID, resolved.Object, previousL3OutModel)
+	if uuid == "" {
+		uuid = data.UUID.ValueString()
+	}
+	setL3OutResourceState(ctx, data, decodeErr, state, identity, diagnostics)
+	return uuid, decodeErr
+}
+
+// setL3OutResourceState records confirmed identity first, retaining it if full
+// state conversion fails. A partially decoded model supplies identity only.
+func setL3OutResourceState(ctx context.Context, data models.L3OutModel, decodeErr error, state *tfsdk.State, identity *tfsdk.ResourceIdentity, diagnostics *diag.Diagnostics) {
+	if data.UUID.IsNull() || data.UUID.IsUnknown() || data.UUID.ValueString() == "" {
 		return
 	}
-	diagnostics.Append(state.Set(ctx, &data)...)
+	diagnostics.Append(state.SetAttribute(ctx, path.Root("template_id"), data.TemplateID)...)
+	diagnostics.Append(state.SetAttribute(ctx, path.Root("uuid"), data.UUID)...)
+	diagnostics.Append(state.SetAttribute(ctx, path.Root("id"), data.ID)...)
+	if diagnostics.HasError() {
+		return
+	}
 	if identity != nil {
 		diagnostics.Append(identity.Set(ctx, models.L3OutResourceIdentityModel{
 			TemplateID: data.TemplateID,
 			UUID:       data.UUID,
 		})...)
 	}
+	if diagnostics.HasError() || decodeErr != nil {
+		return
+	}
+	diagnostics.Append(state.Set(ctx, &data)...)
 }

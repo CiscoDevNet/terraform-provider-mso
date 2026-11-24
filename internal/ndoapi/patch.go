@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 	"github.com/ciscoecosystem/mso-go-client/models"
 )
 
@@ -92,18 +93,18 @@ func (operations *PatchOperations) attributePath(attribute string) string {
 	return fmt.Sprintf("%s/%s", operations.pathPrefix, attribute)
 }
 
-// Apply applies the recorded JSON-Patch operations to an NDO endpoint.
-func (operations *PatchOperations) Apply(msoClient *client.Client, endpoint string) error {
+// Apply applies the recorded JSON-Patch operations and returns the NDO response.
+// Empty operations return a nil response without making a request.
+func (operations *PatchOperations) Apply(msoClient *client.Client, endpoint string) (*container.Container, error) {
 	patchOperations, err := operations.toModels()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(patchOperations) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	_, err = msoClient.PatchbyID(endpoint, patchOperations...)
-	return err
+	return msoClient.PatchbyID(endpoint, patchOperations...)
 }
 
 func (operations *PatchOperations) toModels() ([]models.Model, error) {

@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/ciscoecosystem/mso-go-client/client"
+	"github.com/ciscoecosystem/mso-go-client/container"
 )
 
 const templatesEndpoint = "api/v1/templates"
@@ -20,6 +21,18 @@ func TemplateEndpoint(templateID string) string {
 type Template struct {
 	id     string
 	object map[string]any
+}
+
+// TemplateFromResponse decodes a template returned by an NDO request.
+func TemplateFromResponse(templateID string, response *container.Container) (*Template, error) {
+	if response == nil {
+		return nil, fmt.Errorf("template %q: empty response body", templateID)
+	}
+	object, ok := response.Data().(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("unexpected template response type %T", response.Data())
+	}
+	return &Template{id: templateID, object: object}, nil
 }
 
 // Find resolves a model path in the fetched template. Absence is allowed;
@@ -69,15 +82,10 @@ func GetTemplate(msoClient *client.Client, templateID string) (*Template, error)
 	if err = errorForObjectNotFound(endpoint, httpResponse, err); err != nil {
 		return nil, fmt.Errorf("template %q: %w", templateID, err)
 	}
-	if response == nil {
-		return nil, fmt.Errorf("template %q: empty response body", templateID)
+	if response != nil {
+		if err := client.CheckForErrors(response, http.MethodGet); err != nil {
+			return nil, fmt.Errorf("template %q: %w", templateID, err)
+		}
 	}
-	if err := client.CheckForErrors(response, http.MethodGet); err != nil {
-		return nil, fmt.Errorf("template %q: %w", templateID, err)
-	}
-	object, ok := response.Data().(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("unexpected template response type %T", response.Data())
-	}
-	return &Template{id: templateID, object: object}, nil
+	return TemplateFromResponse(templateID, response)
 }

@@ -136,7 +136,24 @@ func TestPatchOperationsPaths(t *testing.T) {
 func TestPatchOperationsApplyNoOp(t *testing.T) {
 	operations := NewPatchOperations(nil, "")
 
-	if err := operations.Apply(nil, ""); err != nil {
+	response, err := operations.Apply(nil, "")
+	if err != nil {
 		t.Fatalf("applying empty patch operations: %v", err)
+	}
+	if response != nil {
+		t.Fatalf("expected no response for empty patch operations, got %v", response)
+	}
+}
+
+func TestPatchOperationsApplyRejectsNilOperations(t *testing.T) {
+	operations := NewPatchOperations(nil, "")
+	operations.Append(nil)
+
+	response, err := operations.Apply(nil, "")
+	if err == nil || err.Error() != "patch operation 0 is nil" {
+		t.Fatalf("expected a nil-operation error, got %v", err)
+	}
+	if response != nil {
+		t.Fatalf("expected no response for invalid patch operations, got %v", response)
 	}
 }

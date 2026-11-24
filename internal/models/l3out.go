@@ -91,6 +91,7 @@ func (data L3OutModel) Path() ndoapi.Path {
 }
 
 // SetFromNDOObject translates an NDO L3Out object into Terraform state.
+// Confirmed identity fields remain available if a later field cannot be decoded.
 func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string, object map[string]any, previousL3OutModel L3OutModel) error {
 	// Terraform validates configuration, but these fields come from NDO and
 	// must be valid before they are written to state.
@@ -98,6 +99,11 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 	if err != nil {
 		return err
 	}
+	data.TemplateID = types.StringValue(templateID)
+	data.UUID = types.StringValue(uuid)
+	identity := L3OutResourceIdentityModel{TemplateID: data.TemplateID, UUID: data.UUID}
+	data.ID = types.StringValue(identity.ID())
+
 	name, _, err := ndoapi.StringField(object, "name", ndoapi.RequiredNonEmptyField)
 	if err != nil {
 		return err
@@ -114,10 +120,6 @@ func (data *L3OutModel) SetFromNDOObject(ctx context.Context, templateID string,
 	if err != nil {
 		return err
 	}
-	data.TemplateID = types.StringValue(templateID)
-	data.UUID = types.StringValue(uuid)
-	identity := L3OutResourceIdentityModel{TemplateID: data.TemplateID, UUID: data.UUID}
-	data.ID = types.StringValue(identity.ID())
 	data.Name = types.StringValue(name)
 	data.VRFUUID = types.StringValue(vrfRef)
 	description, descriptionExists, err := ndoapi.StringField(object, "description", ndoapi.OptionalField)
