@@ -46,3 +46,17 @@ jobs:
           version: latest
       - name: GoReleaser Release Check
         run: goreleaser release --skip=publish,sign --snapshot --clean
+
+  unit-tests:
+    name: Unit Tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      TF_ACC: ""
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+      - name: Run unit tests
+        run: go test -v -mod=vendor ./internal/...
