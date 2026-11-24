@@ -20,7 +20,10 @@ func TestAccMSOL3OutResource(t *testing.T) {
 	var l3outUUID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "5.1")
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
@@ -309,7 +312,10 @@ func TestAccMSOL3OutFullyConfigured(t *testing.T) {
 	var templateID, l3outUUID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "5.1")
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
@@ -453,7 +459,10 @@ func TestAccMSOL3OutRoutingProtocol(t *testing.T) {
 	var templateID, l3outUUID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "5.1")
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
@@ -759,7 +768,10 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 	var templateID, l3outUUID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "5.1")
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
@@ -1771,7 +1783,10 @@ func TestAccMSOL3OutInvalid(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "5.1")
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{

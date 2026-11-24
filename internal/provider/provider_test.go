@@ -48,6 +48,19 @@ func testAccProviderPreCheck(t *testing.T) {
 	}
 }
 
+// testAccVersionCheck skips tests that require a newer NDO version.
+// Call it after testAccProviderPreCheck in the same PreCheck function.
+func testAccVersionCheck(t *testing.T, minVersion string) {
+	t.Helper()
+	result, err := testAccAPIClient().CompareVersion(minVersion)
+	if err != nil {
+		t.Skipf("Skipping: could not determine NDO version: %s", err)
+	}
+	if result > 0 {
+		t.Skipf("Skipping: requires NDO >= %s", minVersion)
+	}
+}
+
 func testAccSiteName() string {
 	if siteName := os.Getenv("MSO_SITE_NAME1"); siteName != "" {
 		return siteName

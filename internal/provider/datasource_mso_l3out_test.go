@@ -13,7 +13,10 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 	l3outName := testAccResourceName("terraform_l3out")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccProviderPreCheck(t) },
+		PreCheck: func() {
+			testAccProviderPreCheck(t)
+			testAccVersionCheck(t, "5.1")
+		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
 			{
