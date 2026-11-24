@@ -11,7 +11,7 @@ description: |-
 
 Manages one L3Out in a Nexus Dashboard Orchestration (NDO) L3Out template. Create an `mso_template` with `template_type = "l3out"` and an associated VRF first. The `mso_schema_template_l3out` resource manages the older schema-template representation.
 
-- **Supported versions**: Nexus Dashboard 4.1+ (NDO 5.1+).
+- **Supported versions**: Nexus Dashboard 3.1+ (NDO 4.3+).
 
 ## API Information
 
@@ -22,7 +22,7 @@ Manages one L3Out in a Nexus Dashboard Orchestration (NDO) L3Out template. Creat
 
 ## GUI Information
 
-In Nexus Dashboard, choose **Manage > Orchestration > Tenant Templates > L3Out** and open the template. Choose **Create Object > L3Out** to create an L3Out, or select an existing L3Out to view or edit its settings.
+In Nexus Dashboard 4.1+ (NDO 5.1+), choose **Manage > Orchestration > Tenant Templates > L3Out**. On earlier supported versions, choose **Configure > Tenant Templates > L3Out**. Open the template, then choose **Create Object > L3Out** to create an L3Out, or select an existing L3Out to view or edit its settings.
 
 ## Example Usage
 
@@ -66,6 +66,8 @@ resource "mso_l3out" "example" {
 ```
 
 See the [full L3Out example](https://github.com/CiscoDevNet/terraform-provider-mso/tree/develop/examples/l3out) for details on how the L3Out relates to other Terraform resources and data sources.
+
+The full example requires Nexus Dashboard 4.1+ (NDO 5.1+) to create route-map contexts and separate match-rule and set-rule policies. On earlier supported versions, use the UUIDs of existing route-map policies.
 
 ## Schema
 

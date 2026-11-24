@@ -1,3 +1,4 @@
+# Requires Nexus Dashboard 4.1+ (NDO 5.1+) for route-map contexts and separate match/set-rule policies.
 terraform {
   required_providers {
     mso = {

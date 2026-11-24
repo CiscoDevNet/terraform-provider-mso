@@ -22,7 +22,7 @@ func TestAccMSOL3OutResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccProviderPreCheck(t)
-			testAccVersionCheck(t, "5.1")
+			testAccVersionCheck(t, "4.3")
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
@@ -314,7 +314,7 @@ func TestAccMSOL3OutFullyConfigured(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccProviderPreCheck(t)
-			testAccVersionCheck(t, "5.1")
+			testAccVersionCheck(t, "4.3")
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
@@ -408,6 +408,319 @@ func TestAccMSOL3OutFullyConfigured(t *testing.T) {
 					testAccCheckL3OutRoutingProtocol(&templateID, &l3outUUID, "bgpOspf"),
 				),
 			},
+			{
+				SkipFunc: func() (bool, error) {
+					result, err := testAccAPIClient().CompareVersion("5.1")
+					if err != nil || result > 0 {
+						return result > 0, err
+					}
+					fmt.Println("Test: Configure route-map match rules, set rules and contexts")
+					return false, nil
+				},
+				Config: testAccMSOL3OutFullyConfiguredWithRouteMapRulesConfig(siteName, l3outName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					func(state *terraform.State) error {
+						l3out := state.RootModule().Resources["mso_l3out.test"]
+						if l3out == nil || l3out.Primary == nil || l3out.Primary.Attributes["uuid"] != l3outUUID {
+							return fmt.Errorf("L3Out UUID changed while configuring route-map rules")
+						}
+						return nil
+					},
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.outbound_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.outbound",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.outbound",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.outbound",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.outbound",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.outbound",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.outbound",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.outbound",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.outbound",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.interleak_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.interleak",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.interleak",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.interleak",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.interleak",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.interleak",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.interleak",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.static_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.static",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.static",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.static",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.static",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.static",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.static",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.connected_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.connected",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.connected",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.connected",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.connected",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.connected",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.connected",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"route_maps.attached_host_route_redistribution_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.attached",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.attached",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.attached",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.attached",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.attached",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.attached",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv4_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v4",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v4",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v4",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v4",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v4",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v4",
+						"set_rule_uuid",
+						"mso_tenant_policies_set_rule_policy.dampening_v4",
+						"uuid",
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"mso_tenant_policies_match_rule_policy.dampening_v4",
+						"match_prefix.*",
+						map[string]string{"prefix": "203.0.113.0/24"},
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v4",
+						"set_dampening.0.half_life",
+						"15",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v4",
+						"set_dampening.0.reuse_limit",
+						"750",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v4",
+						"set_dampening.0.suppress_limit",
+						"2000",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v4",
+						"set_dampening.0.max_suppress_time",
+						"60",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_l3out.test",
+						"bgp.route_dampening_ipv6_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v6",
+						"route_map_policy_uuid",
+						"mso_tenant_policies_route_map_policy_route_control.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v6",
+						"match_rule_uuids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v6",
+						"match_rule_uuids.*",
+						"mso_tenant_policies_match_rule_policy.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v6",
+						"action",
+						"permit",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v6",
+						"order",
+						"0",
+					),
+					resource.TestCheckResourceAttrPair(
+						"mso_tenant_policies_route_map_policy_route_control_context.dampening_v6",
+						"set_rule_uuid",
+						"mso_tenant_policies_set_rule_policy.dampening_v6",
+						"uuid",
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"mso_tenant_policies_match_rule_policy.dampening_v6",
+						"match_prefix.*",
+						map[string]string{"prefix": "2001:db8:10::/48"},
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v6",
+						"set_dampening.0.half_life",
+						"15",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v6",
+						"set_dampening.0.reuse_limit",
+						"750",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v6",
+						"set_dampening.0.suppress_limit",
+						"2000",
+					),
+					resource.TestCheckResourceAttr(
+						"mso_tenant_policies_set_rule_policy.dampening_v6",
+						"set_dampening.0.max_suppress_time",
+						"60",
+					),
+				),
+			},
 		},
 	})
 }
@@ -453,6 +766,182 @@ resource "mso_l3out" "test" {
 `, testAccMSOL3OutPrerequisites(siteName, l3outName), testAccMSOL3OutRouteMapPolicyPrerequisites())
 }
 
+func testAccMSOL3OutFullyConfiguredWithRouteMapRulesConfig(siteName, l3outName string) string {
+	return fmt.Sprintf(`%s
+resource "mso_tenant_policies_match_rule_policy" "outbound" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_outbound_match"
+
+  match_prefix {
+    prefix = "203.0.113.0/24"
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "outbound" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.outbound.uuid
+  name                  = "outbound_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.outbound.uuid]
+}
+
+resource "mso_tenant_policies_match_rule_policy" "interleak" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_interleak_match"
+
+  match_prefix {
+    prefix = "10.10.0.0/16"
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "interleak" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.interleak.uuid
+  name                  = "interleak_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.interleak.uuid]
+}
+
+resource "mso_tenant_policies_match_rule_policy" "static" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_static_match"
+
+  match_prefix {
+    prefix = "198.51.100.0/24"
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "static" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.static.uuid
+  name                  = "static_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.static.uuid]
+}
+
+resource "mso_tenant_policies_match_rule_policy" "connected" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_connected_match"
+
+  match_prefix {
+    prefix = "192.0.2.0/24"
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "connected" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.connected.uuid
+  name                  = "connected_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.connected.uuid]
+}
+
+resource "mso_tenant_policies_match_rule_policy" "attached" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_attached_match"
+
+  match_prefix {
+    prefix = "198.51.100.10/32"
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "attached" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.attached.uuid
+  name                  = "attached_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.attached.uuid]
+}
+
+resource "mso_tenant_policies_match_rule_policy" "dampening_v4" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_dampening_v4_match"
+
+  match_prefix {
+    prefix = "203.0.113.0/24"
+  }
+}
+
+resource "mso_tenant_policies_set_rule_policy" "dampening_v4" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_dampening_v4_set"
+  set_metric  = 100
+
+  set_route_tag {
+    value = 500
+  }
+  set_weight {
+    value = 50
+  }
+  set_preference {
+    value = 200
+  }
+  set_dampening {
+    half_life         = 15
+    reuse_limit       = 750
+    suppress_limit    = 2000
+    max_suppress_time = 60
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "dampening_v4" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v4.uuid
+  name                  = "dampening_v4_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.dampening_v4.uuid]
+  set_rule_uuid         = mso_tenant_policies_set_rule_policy.dampening_v4.uuid
+}
+
+resource "mso_tenant_policies_match_rule_policy" "dampening_v6" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_dampening_v6_match"
+
+  match_prefix {
+    prefix = "2001:db8:10::/48"
+  }
+}
+
+resource "mso_tenant_policies_set_rule_policy" "dampening_v6" {
+  template_id = mso_template.l3out_test_route_map_policies.id
+  name        = "${local.l3out_name}_dampening_v6_set"
+  set_metric  = 100
+
+  set_route_tag {
+    value = 500
+  }
+  set_weight {
+    value = 50
+  }
+  set_preference {
+    value = 200
+  }
+  set_dampening {
+    half_life         = 15
+    reuse_limit       = 750
+    suppress_limit    = 2000
+    max_suppress_time = 60
+  }
+}
+
+resource "mso_tenant_policies_route_map_policy_route_control_context" "dampening_v6" {
+  template_id           = mso_template.l3out_test_route_map_policies.id
+  route_map_policy_uuid = mso_tenant_policies_route_map_policy_route_control.dampening_v6.uuid
+  name                  = "dampening_v6_context"
+  order                 = 0
+  action                = "permit"
+  match_rule_uuids      = [mso_tenant_policies_match_rule_policy.dampening_v6.uuid]
+  set_rule_uuid         = mso_tenant_policies_set_rule_policy.dampening_v6.uuid
+}
+`, testAccMSOL3OutFullyConfiguredConfig(siteName, l3outName))
+}
+
 func TestAccMSOL3OutRoutingProtocol(t *testing.T) {
 	siteName := testAccSiteName()
 	l3outName := testAccResourceName("terraform_l3out_routing_protocol")
@@ -461,7 +950,7 @@ func TestAccMSOL3OutRoutingProtocol(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccProviderPreCheck(t)
-			testAccVersionCheck(t, "5.1")
+			testAccVersionCheck(t, "4.3")
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
@@ -770,7 +1259,7 @@ func TestAccMSOL3OutRouteMaps(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccProviderPreCheck(t)
-			testAccVersionCheck(t, "5.1")
+			testAccVersionCheck(t, "4.3")
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
@@ -2264,7 +2753,7 @@ func TestAccMSOL3OutInvalid(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccProviderPreCheck(t)
-			testAccVersionCheck(t, "5.1")
+			testAccVersionCheck(t, "4.3")
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{

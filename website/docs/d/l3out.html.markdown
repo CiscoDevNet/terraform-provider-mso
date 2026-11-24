@@ -11,7 +11,7 @@ description: |-
 
 Reads an L3Out by name from a Nexus Dashboard Orchestration (NDO) L3Out template. The template and L3Out must already exist.
 
-- **Supported versions**: Nexus Dashboard 4.1+ (NDO 5.1+).
+- **Supported versions**: Nexus Dashboard 3.1+ (NDO 4.3+).
 
 ## API Information
 
@@ -19,7 +19,7 @@ Reads an L3Out by name from a Nexus Dashboard Orchestration (NDO) L3Out template
 
 ## GUI Information
 
-In Nexus Dashboard, choose **Manage > Orchestration > Tenant Templates > L3Out**, open the template, and select the L3Out.
+In Nexus Dashboard 4.1+ (NDO 5.1+), choose **Manage > Orchestration > Tenant Templates > L3Out**. On earlier supported versions, choose **Configure > Tenant Templates > L3Out**. Open the template and select the L3Out.
 
 ## Example Usage
 
@@ -31,6 +31,8 @@ data "mso_l3out" "example" {
 ```
 
 See the [full L3Out example](https://github.com/CiscoDevNet/terraform-provider-mso/tree/develop/examples/l3out) for details on how the L3Out relates to other Terraform resources and data sources.
+
+The full example also creates route-map contexts and separate match-rule and set-rule policies, which require Nexus Dashboard 4.1+ (NDO 5.1+).
 
 ## Schema
 

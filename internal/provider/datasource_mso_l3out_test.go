@@ -15,7 +15,7 @@ func TestAccMSOL3OutDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccProviderPreCheck(t)
-			testAccVersionCheck(t, "5.1")
+			testAccVersionCheck(t, "4.3")
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
 		Steps: []resource.TestStep{
