@@ -10,6 +10,8 @@ description: |-
 
 Manages one DHCP Relay Policy association on a Bridge Domain. Choose one way to manage DHCP policies for each Bridge Domain: configure the full list in the `dhcp_policies` block on `mso_schema_template_bd`, or use this resource for each policy. Mixing these methods for one Bridge Domain can make Terraform plan to remove policies managed by the other method.
 
+For steps to switch between the two methods while retaining the existing associations, see [Migrating DHCP Policy Management](schema_template_bd.html.markdown#migrating-dhcp-policy-management).
+
 This resource is supported in NDO v4.0 and higher. The DHCP Relay Policy and optional DHCP Option Policy must exist in the tenant policy template. When a policy name is configured, the provider looks up its UUID; when a UUID is configured, the provider sends it directly to NDO.
 
 ## Example Usage

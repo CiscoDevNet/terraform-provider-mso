@@ -234,6 +234,47 @@ func TestAccMSOSchemaTemplateBdResource(t *testing.T) {
 	})
 }
 
+func TestAccMSOSchemaTemplateBdDHCPPolicyMigrationInlineToStandaloneApply(t *testing.T) {
+	const bdResource = "mso_schema_template_bd.dhcp_parent"
+	const relayPolicyResource = "mso_schema_template_bd_dhcp_policy.relay_policy"
+	const relayPolicyWithoutOptionResource = "mso_schema_template_bd_dhcp_policy.relay_policy_without_option"
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccVersionCheck(t, "4.0")
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Start migration with two inline DHCP policies") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyInlineMigrationConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.#", "2"),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Replace inline DHCP policies with standalone resources") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyAddWithoutOptionConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.#", "0"),
+					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttr(relayPolicyResource, "dhcp_option_policy_name", msoTenantPoliciesDhcpOptionPolicyName2),
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Verify standalone-managed DHCP policies have no migration diff") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicyAddWithoutOptionConfig(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+				Check:              testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
+			},
+		},
+	})
+}
+
 func testAccMSOSchemaTemplateBdPrerequisiteConfig() string {
 	return fmt.Sprintf(`%s%s%s%s`, testSiteConfigAnsibleTest(), testTenantConfig(), testSchemaConfig(), testSchemaTemplateVrfL3MulticastConfig())
 }
@@ -470,6 +511,29 @@ resource "mso_tenant_policies_dhcp_option_policy" "%[1]s" {
 	}
 }
 `, msoTenantPoliciesDhcpOptionPolicyName2, msoTenantPolicyTemplateName, msoTenantPoliciesDhcpOptionPolicyName)
+}
+
+func testAccMSOSchemaTemplateBdDHCPPolicyInlineMigrationConfig() string {
+	return testAccMSOSchemaTemplateBdDHCPPolicyPrerequisiteConfigWithTwoOptionPolicies() + fmt.Sprintf(`
+resource "mso_schema_template_bd" "dhcp_parent" {
+  schema_id              = mso_schema.%s.id
+  template_name          = "%s"
+  name                   = "%s_dhcp"
+  display_name           = "%s_dhcp"
+  vrf_name               = mso_schema_template_vrf.%s.name
+  layer2_stretch         = true
+  layer2_unknown_unicast = "proxy"
+  intersite_bum_traffic  = true
+  dhcp_policies {
+    name                    = mso_tenant_policies_dhcp_relay_policy.%s.name
+    dhcp_option_policy_name = mso_tenant_policies_dhcp_option_policy.%s.name
+  }
+  dhcp_policies {
+    name = mso_tenant_policies_dhcp_relay_policy.%s.name
+  }
+}
+`, msoSchemaName, msoSchemaTemplateName, msoSchemaTemplateBdName, msoSchemaTemplateBdName, msoSchemaTemplateVrfName,
+		msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpOptionPolicyName2, msoTenantPoliciesDhcpRelayPolicyName2)
 }
 
 func testAccMSOSchemaTemplateBdConfigWithOneDhcpPolicy() string {

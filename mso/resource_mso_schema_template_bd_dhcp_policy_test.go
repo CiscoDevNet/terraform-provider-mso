@@ -204,6 +204,47 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 	})
 }
 
+func TestAccMSOSchemaTemplateBdDHCPPolicyMigrationStandaloneToInlineApply(t *testing.T) {
+	const bdResource = "mso_schema_template_bd.dhcp_parent"
+	const relayPolicyResource = "mso_schema_template_bd_dhcp_policy.relay_policy"
+	const relayPolicyWithoutOptionResource = "mso_schema_template_bd_dhcp_policy.relay_policy_without_option"
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccVersionCheck(t, "4.0")
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(t),
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() { fmt.Println("Test: Start migration with two standalone DHCP policies") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyAddWithoutOptionConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Replace standalone DHCP resources with the inline policy list") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyInlineMigrationConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(bdResource, "dhcp_policies.#", "2"),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyResourceAbsent(relayPolicyResource),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyResourceAbsent(relayPolicyWithoutOptionResource),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
+				),
+			},
+			{
+				PreConfig:          func() { fmt.Println("Test: Verify inline-managed DHCP policies have no migration diff") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicyInlineMigrationConfig(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+				Check:              testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
+			},
+		},
+	})
+}
+
 func testAccCheckMSOSchemaTemplateBdDHCPPolicyChangeOptionExternally(resourceName, optionPolicyName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resource, ok := s.RootModule().Resources[resourceName]
@@ -383,6 +424,15 @@ func testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResourceName string, expec
 			if !found {
 				return fmt.Errorf("expected DHCP policy %q to remain attached to Bridge Domain %q", expectedName, bdName)
 			}
+		}
+		return nil
+	}
+}
+
+func testAccCheckMSOSchemaTemplateBdDHCPPolicyResourceAbsent(address string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if _, ok := s.RootModule().Resources[address]; ok {
+			return fmt.Errorf("expected resource %q to be absent from state", address)
 		}
 		return nil
 	}
