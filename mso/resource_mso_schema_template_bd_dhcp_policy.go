@@ -204,6 +204,9 @@ func setTemplateBDDHCPPolicy(c *client.Client, d *schema.ResourceData, op string
 			if err != nil {
 				return err
 			}
+			if index == -1 {
+				return fmt.Errorf("DHCP policy %q not found on Bridge Domain %q", getTemplateBDDHCPPolicyInput(d, "name"), d.Get("bd_name"))
+			}
 			path = fmt.Sprintf("/templates/%s/bds/%s/dhcpLabels/%d", d.Get("template_name"), d.Get("bd_name"), index)
 		}
 	} else {
@@ -221,6 +224,9 @@ func setTemplateBDDHCPPolicy(c *client.Client, d *schema.ResourceData, op string
 		index, err := getTemplateBDDHCPPolicyIndex(c, d, ref["ref"].(string))
 		if err != nil {
 			return err
+		}
+		if index == -1 {
+			return nil
 		}
 		path = fmt.Sprintf("/templates/%s/bds/%s/dhcpLabels/%d", d.Get("template_name"), d.Get("bd_name"), index)
 	}
@@ -247,9 +253,12 @@ func getTemplateBDDHCPPolicyIndex(c *client.Client, d *schema.ResourceData, rela
 	if err != nil {
 		return -1, err
 	}
-	count, err := bd.ArrayCount("dhcpLabels")
-	if err != nil {
-		return -1, err
+	count := 0
+	if bd.Exists("dhcpLabels") {
+		count, err = bd.ArrayCount("dhcpLabels")
+		if err != nil {
+			return -1, err
+		}
 	}
 	for index := 0; index < count; index++ {
 		label, err := bd.ArrayElement(index, "dhcpLabels")
@@ -260,7 +269,7 @@ func getTemplateBDDHCPPolicyIndex(c *client.Client, d *schema.ResourceData, rela
 			return index, nil
 		}
 	}
-	return -1, fmt.Errorf("DHCP policy %q not found on Bridge Domain %q", d.Get("name"), d.Get("bd_name"))
+	return -1, nil
 }
 
 func resourceMSOTemplateBDDHCPPolicyCreate(d *schema.ResourceData, m interface{}) error {
@@ -344,9 +353,12 @@ func getTemplateBDDHCPPolicy(d *schema.ResourceData, c *client.Client) (map[stri
 	if err != nil {
 		return nil, err
 	}
-	count, err := bd.ArrayCount("dhcpLabels")
-	if err != nil {
-		return nil, err
+	count := 0
+	if bd.Exists("dhcpLabels") {
+		count, err = bd.ArrayCount("dhcpLabels")
+		if err != nil {
+			return nil, err
+		}
 	}
 	policies, err := getDHCPPolicesNameByRef(count, d.Get("schema_id").(string), d.Get("template_name").(string), bd, c)
 	if err != nil {
