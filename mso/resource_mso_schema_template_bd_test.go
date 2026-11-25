@@ -194,6 +194,33 @@ func TestAccMSOSchemaTemplateBdResource(t *testing.T) {
 				),
 			},
 			{
+				PreConfig:    func() { fmt.Println("Test: Import BD with configured inline DHCP policies") },
+				Config:       testAccMSOSchemaTemplateBdConfigWithOneDhcpPolicy(),
+				ResourceName: "mso_schema_template_bd." + msoSchemaTemplateBdName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["mso_schema_template_bd."+msoSchemaTemplateBdName]
+					if !ok {
+						return "", fmt.Errorf("BD resource not found in state")
+					}
+					return fmt.Sprintf("%s/templates/%s/bds/%s", rs.Primary.Attributes["schema_id"], rs.Primary.Attributes["template_name"], rs.Primary.Attributes["name"]), nil
+				},
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"dhcp_policies"},
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					for _, state := range states {
+						if state.Attributes["name"] != msoSchemaTemplateBdName {
+							continue
+						}
+						if count := state.Attributes["dhcp_policies.#"]; count != "" && count != "0" {
+							return fmt.Errorf("expected imported BD state to omit inline DHCP policies, found %s entries", count)
+						}
+						return nil
+					}
+					return fmt.Errorf("imported BD %q not found in state", msoSchemaTemplateBdName)
+				},
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Remove all DHCP policies from BD") },
 				Config:    testAccMSOSchemaTemplateBdConfigRemoveDhcpPolicies(),
 				Check: resource.ComposeAggregateTestCheckFunc(
