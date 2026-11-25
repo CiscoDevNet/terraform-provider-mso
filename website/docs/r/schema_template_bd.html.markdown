@@ -99,3 +99,5 @@ An existing MSO Schema Template Bridge Domain can be [imported][docs-import] int
 ```bash
 terraform import mso_schema_template_bd.bridge_domain {schema_id}/template/{template_name}/bd/{name}
 ```
+
+-> **Note:** Import does not populate the inline `dhcp_policies` attribute in state. If it is configured, the first plan may show existing policies as additions. Apply once to reconcile the configured list with NDO.

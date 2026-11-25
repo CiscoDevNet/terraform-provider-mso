@@ -102,6 +102,21 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 				),
 			},
 			{
+				PreConfig:    func() { fmt.Println("Test: Import BD while standalone DHCP policies are attached") },
+				Config:       testAccMSOSchemaTemplateBdDHCPPolicyUpdateConfig(),
+				ResourceName: bdResource,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					resource, ok := s.RootModule().Resources[bdResource]
+					if !ok {
+						return "", fmt.Errorf("BD resource not found in state")
+					}
+					attributes := resource.Primary.Attributes
+					return fmt.Sprintf("%s/templates/%s/bds/%s", attributes["schema_id"], attributes["template_name"], attributes["name"]), nil
+				},
+				ImportStateVerify: true,
+			},
+			{
 				PreConfig:          func() { fmt.Println("Test: Plan with one DHCP policy inline and another standalone") },
 				Config:             testAccMSOSchemaTemplateBdDHCPPolicyMixedConfig(),
 				PlanOnly:           true,
@@ -109,6 +124,7 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(relayPolicyResource, "name", msoTenantPoliciesDhcpRelayPolicyName),
 					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName, msoTenantPoliciesDhcpRelayPolicyName2),
 				),
 			},
 			{
