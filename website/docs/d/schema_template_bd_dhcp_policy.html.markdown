@@ -23,6 +23,17 @@ data "mso_schema_template_bd_dhcp_policy" "example" {
 }
 ```
 
+To look up the association by UUID, replace the `name` argument with `uuid`:
+
+```hcl
+data "mso_schema_template_bd_dhcp_policy" "example" {
+  schema_id     = mso_schema_template_bd.example.schema_id
+  template_name = mso_schema_template_bd.example.template_name
+  bd_name       = mso_schema_template_bd.example.name
+  uuid          = mso_tenant_policies_dhcp_relay_policy.example.uuid
+}
+```
+
 ## Argument Reference
 
 * `schema_id` - (Required) ID of the schema containing the Bridge Domain.
@@ -37,14 +48,3 @@ data "mso_schema_template_bd_dhcp_policy" "example" {
 * `uuid` - UUID of the associated DHCP Relay Policy.
 * `dhcp_option_policy_name` - Name of the associated DHCP Option Policy.
 * `dhcp_option_policy_uuid` - UUID of the associated DHCP Option Policy.
-
-To look up the association by UUID, replace the `name` argument with `uuid`:
-
-```hcl
-data "mso_schema_template_bd_dhcp_policy" "example" {
-  schema_id     = mso_schema_template_bd.example.schema_id
-  template_name = mso_schema_template_bd.example.template_name
-  bd_name       = mso_schema_template_bd.example.name
-  uuid          = mso_tenant_policies_dhcp_relay_policy.example.uuid
-}
-```
