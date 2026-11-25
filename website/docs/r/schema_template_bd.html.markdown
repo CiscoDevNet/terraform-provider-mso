@@ -92,6 +92,47 @@ You can instead manage individual DHCP policy associations with the [`mso_schema
 
 No attributes are exported.
 
+## Migrating DHCP Policy Management ##
+
+Use either the inline `dhcp_policies` block on this resource or one `mso_schema_template_bd_dhcp_policy` resource per association for a Bridge Domain. Do not configure both methods for the same Bridge Domain.
+
+### Keep associations attached while changing management
+
+These steps transfer Terraform management while keeping the associations attached to the Bridge Domain in NDO. Back up the Terraform state first. The `terraform state rm` commands remove Terraform's state records; they do not delete the Bridge Domain or its DHCP associations from NDO.
+
+#### Inline block to standalone resources
+
+Update the configuration to remove the Bridge Domain's `dhcp_policies` block and add one `mso_schema_template_bd_dhcp_policy` resource for each existing association. Do not apply yet. Remove and reimport the Bridge Domain with the inline block absent, then import each association by its DHCP Relay Policy name:
+
+```shell
+terraform state rm 'mso_schema_template_bd.bridge_domain'
+terraform import 'mso_schema_template_bd.bridge_domain' '<schema_id>/template/<template_name>/bd/<bd_name>'
+terraform import 'mso_schema_template_bd_dhcp_policy.relay' '<schema_id>/<template_name>/<bd_name>/<relay_policy_name>'
+```
+
+Repeat the last command for each association, using that resource's address and DHCP Relay Policy name. Run `terraform plan`. A no-change plan is expected; when it is, no `terraform apply` is needed.
+
+#### Standalone resources to inline block
+
+Remove each standalone DHCP policy resource from Terraform state, then replace its configuration with the full `dhcp_policies` list on the Bridge Domain. Do not run a plan or apply between these steps:
+
+```shell
+terraform state rm 'mso_schema_template_bd_dhcp_policy.relay'
+```
+
+Repeat the command for each standalone policy resource. Include every association to retain in the inline list, then run:
+
+```shell
+terraform apply
+terraform plan
+```
+
+The apply makes the Bridge Domain take over the full list; the plan should show no further changes.
+
+### Alternative: Direct configuration change
+
+Alternatively, replace the inline block with standalone resources, or vice versa, and run `terraform apply` once. Terraform updates the DHCP association list during the transition, so verify and reconcile it if the apply fails.
+
 ## Importing ##
 
 An existing MSO Schema Template Bridge Domain can be [imported][docs-import] into this resource via its Id, via the following command: [docs-import]: <https://www.terraform.io/docs/import/index.html>
@@ -100,4 +141,4 @@ An existing MSO Schema Template Bridge Domain can be [imported][docs-import] int
 terraform import mso_schema_template_bd.bridge_domain {schema_id}/template/{template_name}/bd/{name}
 ```
 
--> **Note:** Import does not populate the inline `dhcp_policies` attribute in state. If it is configured, the first plan may show existing policies as additions. Apply once to reconcile the configured list with NDO.
+-> **Note:** Import does not populate the inline `dhcp_policies` attribute in state. If one or more policies are configured, the first plan will show them as additions, even if those associations already exist in NDO. Run `terraform apply` once to reconcile the configured list with NDO.
