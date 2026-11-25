@@ -139,6 +139,23 @@ func TestAccMSOSchemaTemplateBdDHCPPolicyResource(t *testing.T) {
 				),
 			},
 			{
+				PreConfig:          func() { fmt.Println("Test: Detect out-of-band removal of the last standalone DHCP policy") },
+				Config:             testAccMSOSchemaTemplateBdDHCPPolicyRemoveFirstConfig(),
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyRemoveExternally(relayPolicyWithoutOptionResource),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource),
+				),
+			},
+			{
+				PreConfig: func() { fmt.Println("Test: Recreate the last out-of-band removed DHCP policy") },
+				Config:    testAccMSOSchemaTemplateBdDHCPPolicyRemoveFirstConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(relayPolicyWithoutOptionResource, "name", msoTenantPoliciesDhcpRelayPolicyName2),
+					testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResource, msoTenantPoliciesDhcpRelayPolicyName2),
+				),
+			},
+			{
 				PreConfig: func() { fmt.Println("Test: Create standalone DHCP associations using UUID inputs") },
 				Config:    testAccMSOSchemaTemplateBdDHCPPolicyUUIDCreateConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -324,9 +341,12 @@ func testAccCheckMSOSchemaTemplateBdDHCPPolicyNames(bdResourceName string, expec
 		if err != nil {
 			return fmt.Errorf("Bridge Domain %q not found in template %q: %w", bdName, templateName, err)
 		}
-		count, err := bd.ArrayCount("dhcpLabels")
-		if err != nil {
-			return fmt.Errorf("failed to count DHCP policies on Bridge Domain %q: %w", bdName, err)
+		count := 0
+		if bd.Exists("dhcpLabels") {
+			count, err = bd.ArrayCount("dhcpLabels")
+			if err != nil {
+				return fmt.Errorf("failed to count DHCP policies on Bridge Domain %q: %w", bdName, err)
+			}
 		}
 		if count != len(expectedNames) {
 			return fmt.Errorf("expected DHCP policies %v on Bridge Domain %q, found %d associations", expectedNames, bdName, count)
