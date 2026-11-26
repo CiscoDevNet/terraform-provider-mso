@@ -78,7 +78,7 @@ resource "mso_schema_template_bd" "bridge_domain" {
   * `dhcp_option_policy_uuid` - (Optional) DHCP Option Policy UUID. Mutually exclusive with `dhcp_option_policy_name`; the UUID is sent directly to NDO.
   * `dhcp_option_policy_version` - (Optional) Version of the associated DHCP Option Policy.
 
-You can instead manage individual DHCP policy associations with the [`mso_schema_template_bd_dhcp_policy` resource](schema_template_bd_dhcp_policy.html.markdown). Use one management method per Bridge Domain; do not configure the inline block and standalone resource for the same policy.
+You can instead manage individual DHCP policy associations with the [`mso_schema_template_bd_dhcp_policy` resource](https://registry.terraform.io/providers/CiscoDevNet/mso/latest/docs/resources/schema_template_bd_dhcp_policy). Use one management method per Bridge Domain; do not configure the inline block and standalone resource for the same policy.
 
 ### Deprecation warning: do not use 'dhcp_policy' map below in combination with NDO releases 3.2 and higher, use above 'dhcp_policies' block instead.
 
