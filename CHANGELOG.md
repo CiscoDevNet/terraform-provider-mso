@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.2.0 (November 27, 2026)
+
+IMPROVEMENTS:
+- Add dhcp policy resource
+- Add dhcp policy data source
+- Add dhcp policy uuid support
+
+BUG FIXES:
+- Fix no-member reads for mso_tenant_policies_ipsla_track_list resource and data source
+- Fix ipsla track list threshold down updates
+
 ## 3.1.0 (November 21, 2026)
 
 This release adds a Terraform Plugin Framework provider, combined with the existing SDKv2 provider through a protocol 6 mux server. The existing SDKv2 provider continues to serve all current resources and datasources; no functionality is exposed through the Plugin Framework provider yet. The provider now requires Terraform CLI v1.1.7 or later. See the [README](https://github.com/CiscoDevNet/terraform-provider-mso#upgrading-from-legacy-terraform-012) for details on upgrading from a legacy Terraform version (0.12+).
